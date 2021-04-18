@@ -812,7 +812,7 @@ public class JdbcMapper {
    */
   public String selectCols(String tableName, String tableAlias) {
     List<String> dbColumnNames = getDbColumnNames(tableName);
-    StringBuilder sb = new StringBuilder();
+    StringBuilder sb = new StringBuilder(" ");
     for (String colName : dbColumnNames) {
       sb.append(tableAlias)
           .append(".")
@@ -826,7 +826,7 @@ public class JdbcMapper {
     String str = sb.toString();
     if (str != null && str.length() > 0) {
       // remove the last comma.
-      return str.substring(0, str.length() - 1);
+      return str.substring(0, str.length() - 1) + " ";
     } else {
       return null;
     }
