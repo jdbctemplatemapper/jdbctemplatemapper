@@ -40,6 +40,14 @@ INSERT INTO jdbctemplatemapper.product
 (id, name, cost)
 VALUES(3, 'laces', 1.25);
 
+INSERT INTO jdbctemplatemapper.product
+(id, name, cost)
+VALUES(4, 'product4 for delete test', 1.25);
+
+INSERT INTO jdbctemplatemapper.product
+(id, name, cost)
+VALUES(5, 'product5 for delete test', 1.25);
+
 
 
 

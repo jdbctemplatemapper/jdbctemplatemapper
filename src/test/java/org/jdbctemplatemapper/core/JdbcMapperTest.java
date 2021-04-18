@@ -2,6 +2,7 @@ package org.jdbctemplatemapper.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDateTime;
@@ -127,6 +128,34 @@ public class JdbcMapperTest {
       assertNotNull(orders.get(idx).getVersion());
     }
   }
+  
+  @Test
+  public void deleteByObjectTest() throws Exception {
+    Product product = jdbcMapper.findById(4, Product.class);
+    
+    int cnt = jdbcMapper.delete(product);
+
+    assertTrue(cnt == 1);
+
+    Product product1 = jdbcMapper.findById(4, Product.class);
+    
+    assertNull(product1);
+    
+  }
+  
+  @Test
+  public void deleteByIdTest() throws Exception {    
+    int cnt = jdbcMapper.deleteById(5, Product.class);
+
+    assertTrue(cnt == 1);
+
+    Product product1 = jdbcMapper.findById(5, Product.class);
+    
+    assertNull(product1);
+    
+  }
+  
+  
 
   @Test
   public void toOneMapperForObjectTest() throws Exception {
