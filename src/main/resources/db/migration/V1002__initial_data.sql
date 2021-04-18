@@ -1,11 +1,11 @@
 
 INSERT INTO jdbctemplatemapper.order
-(id, order_date, customer_id, version)
-VALUES(1, '2020-06-20 00:00:00.000', 1, 1);
+(id, order_date, customer_id, created_on, created_by, updated_on, updated_by, version)
+VALUES(1, '2020-06-20 00:00:00.000', 1, '2020-06-20 00:00:00.000', 'system', '2020-06-20 00:00:00.000', 'system', 1);
 
 INSERT INTO jdbctemplatemapper.order
-(id, order_date, customer_id, version)
-VALUES(2, '2020-06-2` 00:00:00.000', 2, 1);
+(id, order_date, customer_id, created_on, created_by, updated_on, updated_by,  version)
+VALUES(2, '2020-06-2` 00:00:00.000', 2, '2020-06-20 00:00:00.000', 'system', '2020-06-20 00:00:00.000', 'system', 1);
 
 INSERT INTO jdbctemplatemapper.order_line
 (id, order_id, product_id, num_of_units)

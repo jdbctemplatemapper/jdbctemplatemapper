@@ -266,6 +266,7 @@ public class JdbcMapper {
                 + pojo.getClass().getSimpleName());
       } else {
         attributes.put("incrementedVersion", ++versionVal);
+        bw.setPropertyValue(versionPropertyName, versionVal);
       }
       int cnt = npJdbcTemplate.update(updateSql, attributes);
       if (cnt == 0) {
@@ -374,6 +375,7 @@ public class JdbcMapper {
                 + pojo.getClass().getSimpleName());
       } else {
         attributes.put("incrementedVersion", ++versionVal);
+        bw.setPropertyValue(versionPropertyName, versionVal);
       }
       int cnt = npJdbcTemplate.update(updateSql, attributes);
       if (cnt == 0) {
