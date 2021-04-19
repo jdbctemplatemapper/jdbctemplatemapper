@@ -33,8 +33,9 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 /**
  * 1) Simple CRUD one liners using spring's JDBC template.
  *
- * <p>2) Methods to map relationships (toOne, toMany etc) 3) Uses springsecurity's Principal to
- * populate createdBy, updateBy .. fields.
+ * <p>2) Methods to map relationships (toOne, toMany etc) 
+ * 
+ * <p> 3) Uses springsecurity's Principal to populate createdBy, updateBy .. fields.
  *
  * <p>TODO 1) fix id so it can be integer/long. Maybe it can be any type.
  *
@@ -239,8 +240,6 @@ public class JdbcMapper {
     if (updateSql == null) {
       updateSql = buildUpdateSql(pojo);
     }
-    
-    System.out.println(updateSql);
 
     LocalDateTime now = LocalDateTime.now();
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
@@ -921,7 +920,7 @@ public class JdbcMapper {
     try {
       Object obj = clazz.newInstance();
       BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
-      // need below for java.sql.Timestamp to java.time.LocalDateTime conversion
+      // need below for java.sql.Timestamp to java.time.LocalDateTime conversion etc
       bw.setConversionService(defaultConversionService);
       List<String> propertyNames = getPropertyNames(obj);
       for (String propName : propertyNames) {

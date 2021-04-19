@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import org.jdbctemplatemapper.model.Customer;
 import org.jdbctemplatemapper.model.Order;
 import org.jdbctemplatemapper.model.OrderLine;
+import org.jdbctemplatemapper.model.OrderLong;
 import org.jdbctemplatemapper.model.Product;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,7 +51,7 @@ public class JdbcMapperTest {
     assertEquals(1, order.getVersion());
     assertEquals("tester", order.getCreatedBy());
     assertEquals("tester", order.getUpdatedBy());
-  }
+  }  
 
   @Test
   public void updateTest() throws Exception {
@@ -95,6 +96,8 @@ public class JdbcMapperTest {
     assertNotNull(order.getUpdatedOn());
     assertNotNull(order.getVersion());
   }
+  
+
 
   @Test
   public void findAllTest() throws Exception {
