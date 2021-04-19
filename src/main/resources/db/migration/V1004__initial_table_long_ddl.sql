@@ -2,7 +2,7 @@
 CREATE TABLE jdbctemplatemapper.order_long (
 	id bigserial NOT NULL,
 	order_date timestamp NULL,
-	customer_id int4 NULL,
+	customer_long_id bigint NULL,
 	status varchar(100) NULL,
 	created_on timestamp NULL,
 	created_by varchar(100) NULL,
@@ -14,8 +14,8 @@ CREATE TABLE jdbctemplatemapper.order_long (
 
 CREATE TABLE jdbctemplatemapper.order_line_long (
 	id bigserial NOT NULL,
-	order_id int4 NOT NULL,
-	product_id int4 NOT NULL,
+	order_long_id bigint NOT NULL,
+	product_long_id bigint NOT NULL,
 	num_of_units int4 NULL,
 	CONSTRAINT order_line_long_pk PRIMARY KEY (id)
 );

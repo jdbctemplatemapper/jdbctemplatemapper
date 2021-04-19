@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 import org.jdbctemplatemapper.model.Customer;
 import org.jdbctemplatemapper.model.Order;
 import org.jdbctemplatemapper.model.OrderLine;
-import org.jdbctemplatemapper.model.OrderLong;
 import org.jdbctemplatemapper.model.Product;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -379,6 +378,7 @@ public class JdbcMapperTest {
   }
 
   @Test
+  @SuppressWarnings("all")
   public void multipleModelMapperTest() throws Exception {
 
     /*

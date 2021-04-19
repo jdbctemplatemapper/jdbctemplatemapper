@@ -1,6 +1,7 @@
 package org.jdbctemplatemapper.model;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import lombok.Data;
 
@@ -8,7 +9,7 @@ import lombok.Data;
 public class OrderLong {
     private Long id;
     private LocalDateTime orderDate;
-    private Long customerId;
+    private Long customerLongId;
     private String status;
     private LocalDateTime createdOn;
     private String createdBy;
@@ -16,5 +17,9 @@ public class OrderLong {
     private String updatedBy;
     
     private Integer version;
+    
+    
+    private CustomerLong customer;
+    private List<OrderLineLong> orderLines;
 	
 }

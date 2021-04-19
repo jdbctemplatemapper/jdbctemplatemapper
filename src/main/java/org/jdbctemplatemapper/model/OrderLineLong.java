@@ -5,13 +5,13 @@ import lombok.Data;
 @Data
 public class OrderLineLong {
     private Long id;
-    private Long orderId;
-    private Long productId;
+    private Long orderLongId;
+    private Long productLongId;
     private Integer numOfUnits;
     
     /**************************************/
-    private Order order;
-    private Product product;
+    private OrderLong order;
+    private ProductLong product;
 	
 	
 }

@@ -1,22 +1,22 @@
 
 INSERT INTO jdbctemplatemapper.order_long
-(id, order_date, customer_id, created_on, created_by, updated_on, updated_by, version)
+(id, order_date, customer_long_id, created_on, created_by, updated_on, updated_by, version)
 VALUES(1, '2020-06-20 00:00:00.000', 1, '2020-06-20 00:00:00.000', 'system', '2020-06-20 00:00:00.000', 'system', 1);
 
 INSERT INTO jdbctemplatemapper.order_long
-(id, order_date, customer_id, created_on, created_by, updated_on, updated_by,  version)
+(id, order_date, customer_long_id, created_on, created_by, updated_on, updated_by,  version)
 VALUES(2, '2020-06-2` 00:00:00.000', 2, '2020-06-20 00:00:00.000', 'system', '2020-06-20 00:00:00.000', 'system', 1);
 
 INSERT INTO jdbctemplatemapper.order_line_long
-(id, order_id, product_id, num_of_units)
+(id, order_long_id, product_long_id, num_of_units)
 VALUES(1, 1, 1, 10);
 
 INSERT INTO jdbctemplatemapper.order_line_long
-(id, order_id, product_id, num_of_units)
+(id, order_long_id, product_long_id, num_of_units)
 VALUES(2, 1, 2, 5);
 
 INSERT INTO jdbctemplatemapper.order_line_long
-(id, order_id, product_id, num_of_units)
+(id, order_long_id, product_long_id, num_of_units)
 VALUES(3, 2, 3, 1);
 
 

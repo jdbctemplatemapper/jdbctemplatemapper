@@ -35,11 +35,11 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  *
  * <p>2) Methods to map relationships (toOne, toMany etc)
  *
- * <p>3) Uses springsecurity's Principal to populate createdBy, updateBy .. fields.
+ * <p>3) Uses an implementation or IRecordOperatorResolver to populate createdBy, updateBy .. fields.
  *
  * <p>TODO 1) fix id so it can be integer/long. Maybe it can be any type.
  *
- * <p>Code written so there are no external dependencies other that spring framework
+ * <p>Code written so there are no external dependencies other than spring framework
  *
  * @author ajoseph
  */
@@ -414,7 +414,7 @@ public class JdbcMapper {
    * @param clazz - Type of object to be deleted.
    * @return 0 if no records were deleted
    */
-  public <T> Integer deleteById(Integer id, Class<T> clazz) {
+  public <T> Integer deleteById(Object id, Class<T> clazz) {
     String tableName = convertCamelToSnakeCase(clazz.getSimpleName());
     String sql = "delete from " + tableName + " where id = ?";
     return jdbcTemplate.update(sql, id);
@@ -485,20 +485,20 @@ public class JdbcMapper {
       String joinColumnName = tableName + "_id";
       String joinPropertyName = convertSnakeToCamelCase(joinColumnName);
 
-      List<Integer> allColumnIds = new ArrayList<>();
+      List<Number> allColumnIds = new ArrayList<>();
       for (T mainObj : mainObjList) {
         BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
-        Integer joinPropertyValue = (Integer) bw.getPropertyValue(joinPropertyName);
-        if (joinPropertyValue != null && joinPropertyValue > 0) {
-          allColumnIds.add((Integer) bw.getPropertyValue(joinPropertyName));
+        Number joinPropertyValue = (Number) bw.getPropertyValue(joinPropertyName);
+        if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {
+          allColumnIds.add((Number) bw.getPropertyValue(joinPropertyName));
         }
       }
       List<U> relatedObjList = new ArrayList<>();
       // to avoid query being issued with large number of ids
       // for the 'IN (:columnIds) clause the list is chunked by IN_CLAUSE_CHUNK_SIZE
       // and multiple queries issued if needed.
-      Collection<List<Integer>> chunkedColumnIds = chunkList(allColumnIds, IN_CLAUSE_CHUNK_SIZE);
-      for (List<Integer> columnIds : chunkedColumnIds) {
+      Collection<List<Number>> chunkedColumnIds = chunkList(allColumnIds, IN_CLAUSE_CHUNK_SIZE);
+      for (List<Number> columnIds : chunkedColumnIds) {
         String sql = "select * from " + schemaName + "." + tableName + " where id in (:columnIds)";
         MapSqlParameterSource params = new MapSqlParameterSource("columnIds", columnIds);
         RowMapper<U> mapper = BeanPropertyRowMapper.newInstance(relationshipClazz);
@@ -554,14 +554,14 @@ public class JdbcMapper {
       String relationshipPropertyName,
       String joinPropertyName) {
     if (isNotEmpty(mainObjList) && isNotEmpty(relatedObjList)) {
-      Map<Integer, U> idToObjectMap =
+      Map<Number, U> idToObjectMap =
           relatedObjList
               .stream()
-              .collect(Collectors.toMap(e -> (Integer) getSimpleProperty(e, "id"), obj -> obj));
+              .collect(Collectors.toMap(e -> (Number) getSimpleProperty(e, "id"), obj -> obj));
 
       for (T mainObj : mainObjList) {
-        Integer joinPropertyValue = (Integer) getSimpleProperty(mainObj, joinPropertyName);
-        if (joinPropertyValue != null && joinPropertyValue > 0) {
+        Number joinPropertyValue = (Number) getSimpleProperty(mainObj, joinPropertyName);
+        if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {
           BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
           bw.setPropertyValue(relationshipPropertyName, idToObjectMap.get(joinPropertyValue));
         }
@@ -593,18 +593,18 @@ public class JdbcMapper {
       String orderByClause) {
     String tableName = convertCamelToSnakeCase(manySideClazz.getSimpleName());
     if (isNotEmpty(mainObjList)) {
-      Set<Integer> allIds = new LinkedHashSet<>();
+      Set<Number> allIds = new LinkedHashSet<>();
       for (T mainObj : mainObjList) {
         BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
-        Integer idVal = (Integer) bw.getPropertyValue("id");
-        if (idVal != null && idVal > 0) {
+        Number idVal = (Number) bw.getPropertyValue("id");
+        if (idVal != null && idVal.longValue() > 0) {
           allIds.add((idVal));
         } else {
           throw new RuntimeException("id property in mainObjList cannot be null");
         }
       }
 
-      List<Integer> uniqueIds = new ArrayList<>(allIds);
+      List<Number> uniqueIds = new ArrayList<>(allIds);
 
       String joinColumnName =
           convertCamelToSnakeCase(mainObjList.get(0).getClass().getSimpleName()) + "_id";
@@ -612,8 +612,8 @@ public class JdbcMapper {
       // to avoid query being issued with large number of
       // records for the 'IN (:columnIds) clause the list is chunked by IN_CLAUSE_CHUNK_SIZE
       // and multiple queries issued
-      Collection<List<Integer>> chunkedColumnIds = chunkList(uniqueIds, IN_CLAUSE_CHUNK_SIZE);
-      for (List<Integer> columnIds : chunkedColumnIds) {
+      Collection<List<Number>> chunkedColumnIds = chunkList(uniqueIds, IN_CLAUSE_CHUNK_SIZE);
+      for (List<Number> columnIds : chunkedColumnIds) {
         String sql =
             "select * from "
                 + schemaName
@@ -671,19 +671,21 @@ public class JdbcMapper {
       List<U> manySideList,
       String collectionPropertyName,
       String joinPropertyName) {
+	  
+	  
     try {
       Map<Integer, T> resultMap = new LinkedHashMap<>();
       if (isNotEmpty(manySideList)) {
-        Map<Integer, List<U>> mapColumnIdToManySide =
+        Map<Number, List<U>> mapColumnIdToManySide =
             manySideList
                 .stream()
                 .collect(
-                    Collectors.groupingBy(e -> (Integer) getSimpleProperty(e, joinPropertyName)));
+                    Collectors.groupingBy(e -> (Number) getSimpleProperty(e, joinPropertyName)));
 
         // assign the manyside list to the mainobj
         for (T mainObj : mainObjList) {
           BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
-          Integer idValue = (Integer) bw.getPropertyValue("id");
+          Number idValue = (Number) bw.getPropertyValue("id");
           List<U> relatedList = mapColumnIdToManySide.get(idValue);
           bw.setPropertyValue(collectionPropertyName, relatedList);
         }
@@ -714,8 +716,8 @@ public class JdbcMapper {
       List<String> resultSetColumnNames = getResultSetColumnNames(rs);
       while (rs.next()) {
         for (SelectMapper selectMapper : selectMappers) {
-          Integer id = rs.getInt(selectMapper.getSqlColumnPrefix() + "id");
-          if (id == null || id == 0) {
+          Number id = (Number) rs.getObject(selectMapper.getSqlColumnPrefix() + "id");       
+          if (id == null || id.longValue() == 0) {
             new RuntimeException(
                 "Mapper expects '" + selectMapper.getSqlColumnPrefix() + "id' in select statement");
           }
@@ -1008,9 +1010,9 @@ public class JdbcMapper {
     return camelCase;
   }
 
-  private Collection<List<Integer>> chunkList(List<Integer> list, Integer chunkSize) {
+  private Collection<List<Number>> chunkList(List<Number> list, Integer chunkSize) {
     AtomicInteger counter = new AtomicInteger();
-    Collection<List<Integer>> result =
+    Collection<List<Number>> result =
         list.stream()
             .collect(Collectors.groupingBy(it -> counter.getAndIncrement() / chunkSize))
             .values();
@@ -1019,10 +1021,10 @@ public class JdbcMapper {
 
   private List<Object> uniqueByIdList(List<Object> list) {
     if (isNotEmpty(list)) {
-      Map<Integer, Object> idToObjectMap = new LinkedHashMap<>();
+      Map<Number, Object> idToObjectMap = new LinkedHashMap<>();
       for (Object obj : list) {
         BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
-        Integer id = (Integer) bw.getPropertyValue("id");
+        Number id = (Number) bw.getPropertyValue("id");
         if (!idToObjectMap.containsKey(id)) {
           idToObjectMap.put(id, obj);
         }
