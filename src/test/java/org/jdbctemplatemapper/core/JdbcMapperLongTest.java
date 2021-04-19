@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.jdbctemplatemapper.model.Order;
 import org.jdbctemplatemapper.model.OrderLong;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,7 +46,7 @@ public class JdbcMapperLongTest {
   
   
   @Test
-  public void updateTest() throws Exception {
+  public void updateLongTest() throws Exception {
     OrderLong order = jdbcMapper.findById(1L, OrderLong.class);
     LocalDateTime prevUpdatedOn = order.getUpdatedOn();
 
@@ -64,7 +63,7 @@ public class JdbcMapperLongTest {
   
   
   @Test
-  public void updatePropertyTest() throws Exception {
+  public void updateLongPropertyTest() throws Exception {
     OrderLong order = jdbcMapper.findById(2L, OrderLong.class);
     LocalDateTime prevUpdatedOn = order.getUpdatedOn();
 

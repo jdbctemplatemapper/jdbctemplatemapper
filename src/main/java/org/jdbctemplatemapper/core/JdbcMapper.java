@@ -33,9 +33,9 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 /**
  * 1) Simple CRUD one liners using spring's JDBC template.
  *
- * <p>2) Methods to map relationships (toOne, toMany etc) 
- * 
- * <p> 3) Uses springsecurity's Principal to populate createdBy, updateBy .. fields.
+ * <p>2) Methods to map relationships (toOne, toMany etc)
+ *
+ * <p>3) Uses springsecurity's Principal to populate createdBy, updateBy .. fields.
  *
  * <p>TODO 1) fix id so it can be integer/long. Maybe it can be any type.
  *
@@ -54,7 +54,7 @@ public class JdbcMapper {
   private String updatedOnPropertyName;
   private String schemaName;
   private String versionPropertyName;
-  
+
   // Need this for type conversions like java.sql.Timestamp to java.time.LocalDateTime etc
   private DefaultConversionService defaultConversionService = new DefaultConversionService();
 
@@ -89,7 +89,7 @@ public class JdbcMapper {
   //     value - snake case string
   private Map<String, String> camelToSnakeCache = new ConcurrentHashMap<>();
 
-  //Constructor
+  // Constructor
   public JdbcMapper(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
     this.npJdbcTemplate = namedParameterJdbcTemplate;
     this.jdbcTemplate = namedParameterJdbcTemplate.getJdbcTemplate();
@@ -310,18 +310,17 @@ public class JdbcMapper {
       for (String propertyName : propertyNames) {
         dbColumnNameList.add(convertCamelToSnakeCase(propertyName));
       }
-          
-      // add updated info to the column list 
+
+      // add updated info to the column list
       if (updatedOnPropertyName != null && bw.isReadableProperty(updatedOnPropertyName)) {
-          dbColumnNameList.add(convertCamelToSnakeCase(updatedOnPropertyName));
-        }
-        if (updatedByPropertyName != null
-            && recordOperatorResolver != null
-            && bw.isReadableProperty(updatedByPropertyName)) {
-          dbColumnNameList.add(convertCamelToSnakeCase(updatedByPropertyName));
-        }
-      
-      
+        dbColumnNameList.add(convertCamelToSnakeCase(updatedOnPropertyName));
+      }
+      if (updatedByPropertyName != null
+          && recordOperatorResolver != null
+          && bw.isReadableProperty(updatedByPropertyName)) {
+        dbColumnNameList.add(convertCamelToSnakeCase(updatedByPropertyName));
+      }
+
       boolean first = true;
       for (String columnName : dbColumnNameList) {
         if (!first) {
@@ -494,29 +493,19 @@ public class JdbcMapper {
           allColumnIds.add((Integer) bw.getPropertyValue(joinPropertyName));
         }
       }
-      List<U> list = new ArrayList<>();
+      List<U> relatedObjList = new ArrayList<>();
       // to avoid query being issued with large number of ids
       // for the 'IN (:columnIds) clause the list is chunked by IN_CLAUSE_CHUNK_SIZE
       // and multiple queries issued if needed.
       Collection<List<Integer>> chunkedColumnIds = chunkList(allColumnIds, IN_CLAUSE_CHUNK_SIZE);
       for (List<Integer> columnIds : chunkedColumnIds) {
         String sql = "select * from " + schemaName + "." + tableName + " where id in (:columnIds)";
-
         MapSqlParameterSource params = new MapSqlParameterSource("columnIds", columnIds);
         RowMapper<U> mapper = BeanPropertyRowMapper.newInstance(relationshipClazz);
-        list.addAll(npJdbcTemplate.query(sql, params, mapper));
+        relatedObjList.addAll(npJdbcTemplate.query(sql, params, mapper));
       }
-      Map<Integer, U> idToObjectMap =
-          list.stream()
-              .collect(Collectors.toMap(e -> (Integer) getSimpleProperty(e, "id"), obj -> obj));
 
-      for (T mainObj : mainObjList) {
-        BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
-        Integer joinPropertyValue = (Integer) bw.getPropertyValue(joinPropertyName);
-        if (joinPropertyValue != null && joinPropertyValue > 0) {
-          bw.setPropertyValue(relationshipPropertyName, idToObjectMap.get(joinPropertyValue));
-        }
-      }
+      toOneMerge(mainObjList, relatedObjList, relationshipPropertyName, joinPropertyName);
     }
   }
 
@@ -546,33 +535,17 @@ public class JdbcMapper {
       SelectMapper<T> mainObjMapper,
       String relationshipPropertyName,
       SelectMapper<U> relatedObjMapper) {
-    try {
-      List<T> list = new ArrayList<>();
-      List<String> resultSetColumnNames = getResultSetColumnNames(rs);
-      while (rs.next()) {
-        T mainObj =
-            newInstance(
-                mainObjMapper.getClazz(),
-                rs,
-                mainObjMapper.getSqlColumnPrefix(),
-                resultSetColumnNames);
-        Integer relatedObjId = rs.getInt(relatedObjMapper.getSqlColumnPrefix() + "id");
-        if (relatedObjId != null && relatedObjId > 0) {
-          Object relatedObj =
-              newInstance(
-                  relatedObjMapper.getClazz(),
-                  rs,
-                  relatedObjMapper.getSqlColumnPrefix(),
-                  resultSetColumnNames);
-          BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
-          bw.setPropertyValue(relationshipPropertyName, relatedObj);
-        }
-        list.add(mainObj);
-      }
-      return list;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+
+    Map<String, List> resultMap = multipleModelMapper(rs, mainObjMapper, relatedObjMapper);
+
+    List<T> mainObjList = resultMap.get(mainObjMapper.getSqlColumnPrefix());
+    List<U> relatedObjList = resultMap.get(relatedObjMapper.getSqlColumnPrefix());
+
+    String joinPropertyName = toLowerCaseFirstChar(relatedObjMapper.getClazz().getSimpleName()) + "Id";
+
+    toOneMerge(mainObjList, relatedObjList, relationshipPropertyName, joinPropertyName);
+
+    return mainObjList;
   }
 
   public <T, U> void toOneMerge(
@@ -641,7 +614,14 @@ public class JdbcMapper {
       // and multiple queries issued
       Collection<List<Integer>> chunkedColumnIds = chunkList(uniqueIds, IN_CLAUSE_CHUNK_SIZE);
       for (List<Integer> columnIds : chunkedColumnIds) {
-        String sql = "select * from " + schemaName + "." + tableName + " where " + joinColumnName + " in (:columnIds)";
+        String sql =
+            "select * from "
+                + schemaName
+                + "."
+                + tableName
+                + " where "
+                + joinColumnName
+                + " in (:columnIds)";
         if (isNotEmpty(orderByClause)) {
           sql += " " + orderByClause;
         } else {
@@ -652,27 +632,11 @@ public class JdbcMapper {
         manySideList.addAll(npJdbcTemplate.query(sql, params, mapper));
       }
 
-      if (isNotEmpty(manySideList)) {
-        String joinPropertyName = convertSnakeToCamelCase(joinColumnName);
-
-        // map: key - joinPropertyName, value - List of manyside for the join property
-        Map<Integer, List<U>> mapColumnIdToManySide =
-            manySideList
-                .stream()
-                .collect(
-                    Collectors.groupingBy(e -> (Integer) getSimpleProperty(e, joinPropertyName)));
-
-        // assign the manyside list to the mainobj
-        for (T mainObj : mainObjList) {
-          BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
-          Integer idValue = (Integer) bw.getPropertyValue("id");
-          List<U> relatedList = mapColumnIdToManySide.get(idValue);
-          bw.setPropertyValue(collectionPropertyName, relatedList);
-        }
-      }
+      String joinPropertyName = convertSnakeToCamelCase(joinColumnName);
+      toManyMerge(mainObjList, manySideList, collectionPropertyName, joinPropertyName);
     }
   }
-  
+
   @SuppressWarnings("all")
   public <T, U> T toManyMapperForObject(
       ResultSet rs,
@@ -688,44 +652,17 @@ public class JdbcMapper {
       ResultSet rs,
       SelectMapper<T> mainObjMapper,
       String collectionPropertyName,
-      SelectMapper<U> relatedObjMapper) {
-    try {
-      Map<Integer, T> resultMap = new LinkedHashMap<>();
-      List<String> resultSetColumnNames = getResultSetColumnNames(rs);
-      String colMainObjId = mainObjMapper.getSqlColumnPrefix() + "id";
-      String colRelatedObjId = relatedObjMapper.getSqlColumnPrefix() + "id";
-      while (rs.next()) {
-        Integer mainObjId = rs.getInt(colMainObjId);
-        T mainObj =
-            resultMap.getOrDefault(
-                mainObjId,
-                newInstance(
-                    mainObjMapper.getClazz(),
-                    rs,
-                    mainObjMapper.getSqlColumnPrefix(),
-                    resultSetColumnNames));
-        Integer relatedObjId = rs.getInt(colRelatedObjId);
-        if (relatedObjId != null && relatedObjId != 0) {
-          Object relatedObj =
-              newInstance(
-                  relatedObjMapper.getClazz(),
-                  rs,
-                  relatedObjMapper.getSqlColumnPrefix(),
-                  resultSetColumnNames);
-          BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
-          List list = (List) bw.getPropertyValue(collectionPropertyName);
-          if (list == null) {
-            list = new ArrayList<>();
-            bw.setPropertyValue(collectionPropertyName, list);
-          }
-          list.add(relatedObj);
-        }
-        resultMap.put(mainObjId, mainObj);
-      }
-      return new ArrayList<T>(resultMap.values());
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+      SelectMapper<U> manySideObjMapper) {
+
+    Map<String, List> resultMap = multipleModelMapper(rs, mainObjMapper, manySideObjMapper);
+
+    List<T> mainObjList = resultMap.get(mainObjMapper.getSqlColumnPrefix());
+    List<U> manySideObjList = resultMap.get(manySideObjMapper.getSqlColumnPrefix());
+
+    String joinPropertyName = toLowerCaseFirstChar(mainObjMapper.getClazz().getSimpleName()) + "Id";
+
+    toManyMerge(mainObjList, manySideObjList, collectionPropertyName, joinPropertyName);
+    return mainObjList;
   }
 
   @SuppressWarnings("all")
@@ -759,8 +696,8 @@ public class JdbcMapper {
   /**
    * Returns lists for each mapper passed in as an argument. The values in the list are UNIQUE and
    * in same order as the ResultSet values.
-   * 
-   *  Returns a map. The key is the SqlMapper columnPrefix.
+   *
+   * <p>Returns a map. The key is the SqlMapper columnPrefix.
    *
    * @param rs - The result set
    * @param selectMappers - array of sql mappers.
@@ -1112,6 +1049,15 @@ public class JdbcMapper {
   @SuppressWarnings("all")
   private boolean isNotEmpty(Collection coll) {
     return !isEmpty(coll);
+  }
+
+  private String toLowerCaseFirstChar(String str) {
+    if (str != null) {
+      char c[] = str.toCharArray();
+      c[0] = Character.toLowerCase(c[0]);
+      return new String(c);
+    }
+    return str;
   }
 
   /**

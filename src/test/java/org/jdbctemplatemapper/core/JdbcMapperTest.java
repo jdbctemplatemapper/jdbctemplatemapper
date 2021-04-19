@@ -163,7 +163,7 @@ public class JdbcMapperTest {
   @Test
   public void toOneMapperForObjectTest() throws Exception {
     String sql =
-        "select o.id o_id, o.order_date o_order_date,"
+        "select o.id o_id, o.order_date o_order_date, o.customer_id o_customer_id,"
             + " c.id c_id, c.first_name c_first_name, c.last_name c_last_name"
             + " from jdbctemplatemapper.order o"
             + " join customer c on o.customer_id = c.id"
@@ -193,7 +193,7 @@ public class JdbcMapperTest {
   @Test
   public void toOneMapperListTest() throws Exception {
     String sql =
-        "select o.id o_id, o.order_date o_order_date,"
+        "select o.id o_id, o.order_date o_order_date, o.customer_id o_customer_id,"
             + " c.id c_id, c.first_name c_first_name, c.last_name c_last_name"
             + " from jdbctemplatemapper.order o"
             + " join customer c on o.customer_id = c.id"
