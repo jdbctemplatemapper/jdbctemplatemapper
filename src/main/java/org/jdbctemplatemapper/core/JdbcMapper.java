@@ -466,8 +466,10 @@ public class JdbcMapper {
    */
   public <T, U> void toOne(T mainObj, String relationshipPropertyName, Class<U> relationshipClazz) {
     List<T> mainObjList = new ArrayList<>();
-    mainObjList.add(mainObj);
-    toOne(mainObjList, relationshipPropertyName, relationshipClazz);
+    if(mainObj != null) {
+      mainObjList.add(mainObj);
+      toOne(mainObjList, relationshipPropertyName, relationshipClazz);
+    }
   }
 
   /**
@@ -672,9 +674,7 @@ public class JdbcMapper {
       String collectionPropertyName,
       String joinPropertyName) {
 	  
-	  
     try {
-      Map<Integer, T> resultMap = new LinkedHashMap<>();
       if (isNotEmpty(manySideList)) {
         Map<Number, List<U>> mapColumnIdToManySide =
             manySideList
@@ -717,17 +717,16 @@ public class JdbcMapper {
       while (rs.next()) {
         for (SelectMapper selectMapper : selectMappers) {
           Number id = (Number) rs.getObject(selectMapper.getSqlColumnPrefix() + "id");       
-          if (id == null || id.longValue() == 0) {
-            new RuntimeException(
-                "Mapper expects '" + selectMapper.getSqlColumnPrefix() + "id' in select statement");
+          if (id != null && id.longValue() > 0) {
+              Object obj =
+                      newInstance(
+                          selectMapper.getClazz(),
+                          rs,
+                          selectMapper.getSqlColumnPrefix(),
+                          resultSetColumnNames);
+                  tempMap.get(selectMapper.getSqlColumnPrefix()).add(obj);
           }
-          Object obj =
-              newInstance(
-                  selectMapper.getClazz(),
-                  rs,
-                  selectMapper.getSqlColumnPrefix(),
-                  resultSetColumnNames);
-          tempMap.get(selectMapper.getSqlColumnPrefix()).add(obj);
+
         }
       }
 

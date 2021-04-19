@@ -50,7 +50,7 @@ public class JdbcMapperTest {
     assertEquals(1, order.getVersion());
     assertEquals("tester", order.getCreatedBy());
     assertEquals("tester", order.getUpdatedBy());
-  }  
+  }
 
   @Test
   public void updateTest() throws Exception {
@@ -95,8 +95,6 @@ public class JdbcMapperTest {
     assertNotNull(order.getUpdatedOn());
     assertNotNull(order.getVersion());
   }
-  
-
 
   @Test
   public void findAllTest() throws Exception {
@@ -130,34 +128,30 @@ public class JdbcMapperTest {
       assertNotNull(orders.get(idx).getVersion());
     }
   }
-  
+
   @Test
   public void deleteByObjectTest() throws Exception {
     Product product = jdbcMapper.findById(4, Product.class);
-    
+
     int cnt = jdbcMapper.delete(product);
 
     assertTrue(cnt == 1);
 
     Product product1 = jdbcMapper.findById(4, Product.class);
-    
+
     assertNull(product1);
-    
   }
-  
+
   @Test
-  public void deleteByIdTest() throws Exception {    
+  public void deleteByIdTest() throws Exception {
     int cnt = jdbcMapper.deleteById(5, Product.class);
 
     assertTrue(cnt == 1);
 
     Product product1 = jdbcMapper.findById(5, Product.class);
-    
+
     assertNull(product1);
-    
   }
-  
-  
 
   @Test
   public void toOneMapperForObjectTest() throws Exception {
@@ -190,13 +184,70 @@ public class JdbcMapperTest {
   }
 
   @Test
+  public void toOneMapperForObjectNullRelationshipTest() throws Exception {
+    String sql =
+        "select o.id o_id, o.order_date o_order_date, o.customer_id o_customer_id,"
+            + " c.id c_id, c.first_name c_first_name, c.last_name c_last_name"
+            + " from jdbctemplatemapper.order o"
+            + " left join customer c on o.customer_id = c.id"
+            + " where o.id = ?";
+
+    // order 3 has null customer
+    Integer orderId = 3;
+
+    Order order =
+        jdbcTemplate.query(
+            sql,
+            new Object[] {orderId}, // args
+            new int[] {java.sql.Types.INTEGER}, // arg types
+            rs -> {
+              return jdbcMapper.toOneMapperForObject(
+                  rs,
+                  new SelectMapper<Order>(Order.class, "o_"),
+                  "customer",
+                  new SelectMapper<Customer>(Customer.class, "c_"));
+            });
+
+    assertNotNull(order);
+    assertNotNull(order.getOrderDate());
+    assertNull(order.getCustomer());
+  }
+
+  @Test
+  public void toOneMapperForObjectNoRecordTest() throws Exception {
+    String sql =
+        "select o.id o_id, o.order_date o_order_date, o.customer_id o_customer_id,"
+            + " c.id c_id, c.first_name c_first_name, c.last_name c_last_name"
+            + " from jdbctemplatemapper.order o"
+            + " left join customer c on o.customer_id = c.id"
+            + " where o.id = ?";
+
+    // order 999 does not exist
+    Integer orderId = 999;
+
+    Order order =
+        jdbcTemplate.query(
+            sql,
+            new Object[] {orderId}, // args
+            new int[] {java.sql.Types.INTEGER}, // arg types
+            rs -> {
+              return jdbcMapper.toOneMapperForObject(
+                  rs,
+                  new SelectMapper<Order>(Order.class, "o_"),
+                  "customer",
+                  new SelectMapper<Customer>(Customer.class, "c_"));
+            });
+
+    assertNull(order);
+  }
+
+  @Test
   public void toOneMapperListTest() throws Exception {
     String sql =
         "select o.id o_id, o.order_date o_order_date, o.customer_id o_customer_id,"
             + " c.id c_id, c.first_name c_first_name, c.last_name c_last_name"
             + " from jdbctemplatemapper.order o"
-            + " join customer c on o.customer_id = c.id"
-            + " where o.id in (1,2)"
+            + " left join customer c on o.customer_id = c.id"
             + " order by o.id";
 
     List<Order> orders =
@@ -210,9 +261,36 @@ public class JdbcMapperTest {
                   new SelectMapper<Customer>(Customer.class, "c_"));
             });
 
-    assertEquals(2, orders.size());
+    assertTrue(orders.size() >= 3);
     assertEquals("tony", orders.get(0).getCustomer().getFirstName());
     assertEquals("doe", orders.get(1).getCustomer().getLastName());
+    assertNull(orders.get(2).getCustomer()); // order 3 has null customer
+  }
+
+  @Test
+  public void toOneMapperListNoRecordTest() throws Exception {
+
+    //  This query returns no records
+    String sql =
+        "select o.id o_id, o.order_date o_order_date, o.customer_id o_customer_id,"
+            + " c.id c_id, c.first_name c_first_name, c.last_name c_last_name"
+            + " from jdbctemplatemapper.order o"
+            + " left join customer c on o.customer_id = c.id"
+            + " where o.id in (998, 999)"
+            + " order by o.id";
+
+    List<Order> orders =
+        jdbcTemplate.query(
+            sql,
+            rs -> {
+              return jdbcMapper.toOneMapper(
+                  rs,
+                  new SelectMapper<Order>(Order.class, "o_"),
+                  "customer",
+                  new SelectMapper<Customer>(Customer.class, "c_"));
+            });
+
+    assertEquals(0, orders.size());
   }
 
   @Test
@@ -226,15 +304,43 @@ public class JdbcMapperTest {
   }
 
   @Test
+  public void toOneNullRelationshipTest() throws Exception {
+    Order order = jdbcMapper.findById(3, Order.class);
+    // order 3 has null customer
+    jdbcMapper.toOne(order, "customer", Customer.class);
+
+    assertNull(order.getCustomer());
+  }
+
+  @Test
+  public void toOneNoRecordTest() throws Exception {
+    Order order = jdbcMapper.findById(999, Order.class);
+    // order 3 has null customer
+    jdbcMapper.toOne(order, "customer", Customer.class);
+
+    assertNull(order);
+  }
+
+  @Test
   public void toOneListTest() throws Exception {
     List<Order> orders = jdbcMapper.findAll(Order.class, "order by id");
 
     // this method issues a query behind the scenes to populate customer
     jdbcMapper.toOne(orders, "customer", Customer.class);
 
-    assertTrue(orders.size() >= 2);
+    assertTrue(orders.size() >= 3);
     assertEquals("tony", orders.get(0).getCustomer().getFirstName());
     assertEquals("doe", orders.get(1).getCustomer().getLastName());
+    assertNull(orders.get(2).getCustomer()); // order 3 has null customer
+  }
+
+  @Test
+  public void toOneListNoRecordTest() throws Exception {
+    // mimicking query returned null
+    List<Order> orders = null;
+    jdbcMapper.toOne(orders, "customer", Customer.class);
+
+    assertNull(orders);
   }
 
   @Test
@@ -255,6 +361,16 @@ public class JdbcMapperTest {
     assertTrue(orders.size() >= 2);
     assertEquals("tony", orders.get(0).getCustomer().getFirstName());
     assertEquals("doe", orders.get(1).getCustomer().getLastName());
+  }
+
+  @Test
+  public void toOneMergeNullArgsTest() throws Exception {
+
+    List<Order> orders = null;
+    List<Customer> customers = null;
+    jdbcMapper.toOneMerge(orders, customers, "customer", "customerId");
+
+    assertNull(orders);
   }
 
   @Test
@@ -293,6 +409,70 @@ public class JdbcMapperTest {
   }
 
   @Test
+  public void toManyMapperForObjectNoManyRecordTest() throws Exception {
+
+    // Query to get order and related orderLines
+    String sql =
+        "select o.id o_id, o.order_date o_order_date,"
+            + " ol.id ol_id, ol.order_id ol_order_id, ol.product_id ol_product_id, ol.num_of_units ol_num_of_units"
+            + " from jdbctemplatemapper.order o"
+            + " left join order_line ol on o.id = ol.order_id"
+            + " where o.id = ?"
+            + " order by ol.id";
+
+    // order 3 has no orderLines
+    Integer orderId = 3;
+
+    Order order =
+        jdbcTemplate.query(
+            sql,
+            new Object[] {orderId}, // args
+            new int[] {java.sql.Types.INTEGER}, // arg types
+            rs -> {
+              return jdbcMapper.toManyMapperForObject(
+                  rs,
+                  new SelectMapper<Order>(Order.class, "o_"),
+                  "orderLines",
+                  new SelectMapper<OrderLine>(OrderLine.class, "ol_"));
+            });
+
+    assertNotNull(order);
+    assertNotNull(order.getOrderDate());
+    assertNull(order.getOrderLines());
+  }
+
+  @Test
+  public void toManyMapperForObjectNoRecordTest() throws Exception {
+
+    // Query to get order and related orderLines
+    String sql =
+        "select o.id o_id, o.order_date o_order_date,"
+            + " ol.id ol_id, ol.order_id ol_order_id, ol.product_id ol_product_id, ol.num_of_units ol_num_of_units"
+            + " from jdbctemplatemapper.order o"
+            + " left join order_line ol on o.id = ol.order_id"
+            + " where o.id = ?"
+            + " order by ol.id";
+
+    // invalid order number
+    Integer orderId = 999;
+
+    Order order =
+        jdbcTemplate.query(
+            sql,
+            new Object[] {orderId}, // args
+            new int[] {java.sql.Types.INTEGER}, // arg types
+            rs -> {
+              return jdbcMapper.toManyMapperForObject(
+                  rs,
+                  new SelectMapper<Order>(Order.class, "o_"),
+                  "orderLines",
+                  new SelectMapper<OrderLine>(OrderLine.class, "ol_"));
+            });
+
+    assertNull(order);
+  }
+
+  @Test
   public void toManyMapperListTest() throws Exception {
 
     // Query to get list of orders and their related orderLines
@@ -322,6 +502,32 @@ public class JdbcMapperTest {
   }
 
   @Test
+  public void toManyMapperListNoRecordTest() throws Exception {
+
+    // Query returns no records
+    String sql =
+        "select o.id o_id, o.order_date o_order_date,"
+            + " ol.id ol_id, ol.order_id ol_order_id, ol.product_id ol_product_id, ol.num_of_units ol_num_of_units"
+            + " from jdbctemplatemapper.order o"
+            + " join order_line ol on o.id = ol.order_id"
+            + " where o.id in (998, 999)"
+            + " order by ol.id";
+
+    List<Order> orders =
+        jdbcTemplate.query(
+            sql,
+            rs -> {
+              return jdbcMapper.toManyMapper(
+                  rs,
+                  new SelectMapper<Order>(Order.class, "o_"),
+                  "orderLines",
+                  new SelectMapper<OrderLine>(OrderLine.class, "ol_"));
+            });
+
+    assertEquals(0, orders.size());
+  }
+
+  @Test
   public void toManyTest() throws Exception {
     Order order = jdbcMapper.findById(1, Order.class);
 
@@ -335,13 +541,25 @@ public class JdbcMapperTest {
   }
 
   @Test
+  public void toManyWithNoManyRecordsTest() throws Exception {
+
+    // Order 3 has no orderLines
+    Order order = jdbcMapper.findById(3, Order.class);
+
+    // This issues a query to get the orderlines
+    jdbcMapper.toMany(order, "orderLines", OrderLine.class, "order by id");
+
+    assertNull(order.getOrderLines());
+  }
+
+  @Test
   public void toManyListTest() throws Exception {
     List<Order> orders = jdbcMapper.findAll(Order.class, "order by id");
 
     // This issues a query to get the orderlines
     jdbcMapper.toMany(orders, "orderLines", OrderLine.class, "order by id");
 
-    assertTrue(orders.size() >= 2);
+    assertTrue(orders.size() >= 3);
     assertEquals(2, orders.get(0).getOrderLines().size());
     assertEquals(1, orders.get(1).getOrderLines().size());
 
@@ -350,6 +568,17 @@ public class JdbcMapperTest {
     assertEquals(10, orders.get(0).getOrderLines().get(0).getNumOfUnits());
     assertEquals(5, orders.get(0).getOrderLines().get(1).getNumOfUnits());
     assertEquals(1, orders.get(1).getOrderLines().get(0).getNumOfUnits());
+    assertNull(orders.get(2).getOrderLines());
+  }
+
+  @Test
+  public void toManyListWithNoRecordsTest() throws Exception {
+    List<Order> orders = null;
+
+    // This issues a query to get the orderlines
+    jdbcMapper.toMany(orders, "orderLines", OrderLine.class, "order by id");
+
+    assertNull(orders);
   }
 
   @Test
@@ -366,7 +595,7 @@ public class JdbcMapperTest {
 
     jdbcMapper.toManyMerge(orders, orderLines, "orderLines", "orderId");
 
-    assertTrue(orders.size() >= 2);
+    assertTrue(orders.size() >= 3);
     assertEquals(2, orders.get(0).getOrderLines().size());
     assertEquals(1, orders.get(1).getOrderLines().size());
 
@@ -375,6 +604,29 @@ public class JdbcMapperTest {
     assertEquals(10, orders.get(0).getOrderLines().get(0).getNumOfUnits());
     assertEquals(5, orders.get(0).getOrderLines().get(1).getNumOfUnits());
     assertEquals(1, orders.get(1).getOrderLines().get(0).getNumOfUnits());
+
+    assertNull(orders.get(2).getOrderLines());
+  }
+
+  @Test
+  public void toManyMergeWithNoRecordsTest() throws Exception {
+    List<Order> orders = jdbcMapper.findAll(Order.class, "order by id");
+    List<OrderLine> orderLines = null;
+    jdbcMapper.toManyMerge(orders, orderLines, "orderLines", "orderId");
+
+    assertTrue(orders.size() >= 3);
+    assertNull(orders.get(0).getOrderLines());
+    assertNull(orders.get(1).getOrderLines());
+  }
+
+  @Test
+  public void toManyMergeWithNoManyRecordsTest() throws Exception {
+
+    List<Order> orders = null;
+    List<OrderLine> orderLines = null;
+    jdbcMapper.toManyMerge(orders, orderLines, "orderLines", "orderId");
+
+    assertNull(orders);
   }
 
   @Test
@@ -399,11 +651,9 @@ public class JdbcMapperTest {
             + jdbcMapper.selectCols("product", "p")
             + " from jdbctemplatemapper.order o"
             + " left join order_line ol on o.id = ol.order_id"
-            + " join customer c on o.customer_id = c.id"
-            + " join product p on ol.product_id = p.id"
-            + " where o.id in (1, 2)";
-
-    System.out.println(sql);
+            + " left join customer c on o.customer_id = c.id"
+            + " left join product p on ol.product_id = p.id"
+            + " where o.id in (1, 2, 3)";
 
     Map<String, List> resultMap =
         jdbcTemplate.query(
@@ -422,7 +672,7 @@ public class JdbcMapperTest {
     List<Customer> customers = resultMap.get("c_");
     List<Product> products = resultMap.get("p_");
 
-    assertEquals(2, orders.size());
+    assertEquals(3, orders.size());
     assertEquals(3, orderLines.size());
     assertEquals(2, customers.size());
     assertEquals(3, products.size());
@@ -449,5 +699,48 @@ public class JdbcMapperTest {
 
     assertEquals(3, orders.get(1).getOrderLines().get(0).getProduct().getId());
     assertEquals(1, orders.get(1).getOrderLines().get(0).getNumOfUnits());
+  }
+
+  @Test
+  @SuppressWarnings("all")
+  public void multipleModelMapperNoRecordsTest() throws Exception {
+
+    // query returns no records
+    String sql =
+        "select "
+            + jdbcMapper.selectCols("order", "o")
+            + ","
+            + jdbcMapper.selectCols("order_line", "ol")
+            + ","
+            + jdbcMapper.selectCols("customer", "c")
+            + ","
+            + jdbcMapper.selectCols("product", "p")
+            + " from jdbctemplatemapper.order o"
+            + " left join order_line ol on o.id = ol.order_id"
+            + " left join customer c on o.customer_id = c.id"
+            + " left join product p on ol.product_id = p.id"
+            + " where o.id in (998,999)";
+
+    Map<String, List> resultMap =
+        jdbcTemplate.query(
+            sql,
+            rs -> {
+              return jdbcMapper.multipleModelMapper(
+                  rs,
+                  new SelectMapper<Order>(Order.class, "o_"),
+                  new SelectMapper<OrderLine>(OrderLine.class, "ol_"),
+                  new SelectMapper<Customer>(Customer.class, "c_"),
+                  new SelectMapper<Product>(Product.class, "p_"));
+            });
+
+    List<Order> orders = resultMap.get("o_");
+    List<OrderLine> orderLines = resultMap.get("ol_");
+    List<Customer> customers = resultMap.get("c_");
+    List<Product> products = resultMap.get("p_");
+
+    assertEquals(0, orders.size());
+    assertEquals(0, orderLines.size());
+    assertEquals(0, customers.size());
+    assertEquals(0, products.size());
   }
 }
