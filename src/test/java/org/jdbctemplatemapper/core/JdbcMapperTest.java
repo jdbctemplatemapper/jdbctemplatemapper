@@ -412,7 +412,6 @@ public class JdbcMapperTest {
   @Test
   public void toManyMapperForObjectNoManyRecordTest() throws Exception {
 
-    // Query to get order and related orderLines
     String sql =
         "select o.id o_id, o.order_date o_order_date,"
             + " ol.id ol_id, ol.order_id ol_order_id, ol.product_id ol_product_id, ol.num_of_units ol_num_of_units"
@@ -445,7 +444,6 @@ public class JdbcMapperTest {
   @Test
   public void toManyMapperForObjectNoRecordTest() throws Exception {
 
-    // Query to get order and related orderLines
     String sql =
         "select o.id o_id, o.order_date o_order_date,"
             + " ol.id ol_id, ol.order_id ol_order_id, ol.product_id ol_product_id, ol.num_of_units ol_num_of_units"
