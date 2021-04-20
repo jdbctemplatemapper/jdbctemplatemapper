@@ -337,7 +337,7 @@ public class JdbcMapperTest {
 
   @Test
   public void toOneListNoRecordTest() throws Exception {
-    // mimicking query returned null
+    // mimick query returning no orders
     List<Order> orders = null;
     jdbcMapper.toOne(orders, "customer", Customer.class);
 
@@ -452,7 +452,7 @@ public class JdbcMapperTest {
             + " where o.id = ?"
             + " order by ol.id";
 
-    // invalid order number
+    // invalid order number will return no records
     Integer orderId = 999;
 
     Order order =
@@ -545,7 +545,6 @@ public class JdbcMapperTest {
     // Order 3 has no orderLines
     Order order = jdbcMapper.findById(3, Order.class);
 
-    // This issues a query to get the orderlines
     jdbcMapper.toMany(order, "orderLines", OrderLine.class, "order by id");
 
     assertNull(order.getOrderLines());
@@ -572,6 +571,8 @@ public class JdbcMapperTest {
 
   @Test
   public void toManyListWithNoRecordsTest() throws Exception {
+	  
+	// mimick no order results
     List<Order> orders = null;
 
     // This issues a query to get the orderlines
@@ -610,6 +611,8 @@ public class JdbcMapperTest {
   @Test
   public void toManyMergeWithNoRecordsTest() throws Exception {
     List<Order> orders = jdbcMapper.findAll(Order.class, "order by id");
+    
+    // mimick no orderLines
     List<OrderLine> orderLines = null;
     jdbcMapper.toManyMerge(orders, orderLines, "orderLines", "orderId");
 
@@ -621,6 +624,7 @@ public class JdbcMapperTest {
   @Test
   public void toManyMergeWithNoManyRecordsTest() throws Exception {
 
+	// mimick no orders and orderlines
     List<Order> orders = null;
     List<OrderLine> orderLines = null;
     jdbcMapper.toManyMerge(orders, orderLines, "orderLines", "orderId");
