@@ -471,7 +471,7 @@ public class JdbcMapper {
     List<T> mainObjList = new ArrayList<>();
     if (mainObj != null) {
       mainObjList.add(mainObj);
-      toOne(mainObjList, relationshipPropertyName, relationshipClazz);
+      toOneForList(mainObjList, relationshipPropertyName, relationshipClazz);
     }
   }
 
@@ -487,7 +487,7 @@ public class JdbcMapper {
    * @param relationshipPropertyName - The propertyName of the toOne relationship
    * @param relationShipClazz - The relationship class
    */
-  public <T, U> void toOne(
+  public <T, U> void toOneForList(
       List<T> mainObjList, String relationshipPropertyName, Class<U> relationshipClazz) {
     String tableName = convertCamelToSnakeCase(relationshipClazz.getSimpleName());
     if (isNotEmpty(mainObjList)) {
@@ -534,12 +534,12 @@ public class JdbcMapper {
       SelectMapper<T> mainObjMapper,
       String relationshipPropertyName,
       SelectMapper<U> relatedObjMapper) {
-    List<T> list = toOneMapper(rs, mainObjMapper, relationshipPropertyName, relatedObjMapper);
+    List<T> list = toOneMapperForList(rs, mainObjMapper, relationshipPropertyName, relatedObjMapper);
     return isNotEmpty(list) ? list.get(0) : null;
   }
 
   @SuppressWarnings("all")
-  public <T, U> List<T> toOneMapper(
+  public <T, U> List<T> toOneMapperForList(
       ResultSet rs,
       SelectMapper<T> mainObjMapper,
       String relationshipPropertyName,
@@ -603,7 +603,7 @@ public class JdbcMapper {
       T mainObj, String collectionPropertyName, Class<U> manySideClazz, String orderByClause) {
     List<T> mainObjList = new ArrayList<>();
     mainObjList.add(mainObj);
-    toMany(mainObjList, collectionPropertyName, manySideClazz, orderByClause);
+    toManyForList(mainObjList, collectionPropertyName, manySideClazz, orderByClause);
   }
 
   /**
@@ -616,7 +616,7 @@ public class JdbcMapper {
    * @param manySideClass - The many side class
    * @param orderByClause - The order by clause for the many side query
    */
-  public <T, U> void toMany(
+  public <T, U> void toManyForList(
       List<T> mainObjList,
       String collectionPropertyName,
       Class<U> manySideClazz,
@@ -673,12 +673,12 @@ public class JdbcMapper {
       SelectMapper<T> mainObjMapper,
       String collectionPropertyName,
       SelectMapper<U> relatedObjMapper) {
-    List<T> list = toManyMapper(rs, mainObjMapper, collectionPropertyName, relatedObjMapper);
+    List<T> list = toManyMapperForList(rs, mainObjMapper, collectionPropertyName, relatedObjMapper);
     return isNotEmpty(list) ? list.get(0) : null;
   }
 
   @SuppressWarnings("all")
-  public <T, U> List<T> toManyMapper(
+  public <T, U> List<T> toManyMapperForList(
       ResultSet rs,
       SelectMapper<T> mainObjMapper,
       String collectionPropertyName,
