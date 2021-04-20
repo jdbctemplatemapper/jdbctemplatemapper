@@ -155,6 +155,7 @@ public class JdbcMapperTest {
 
   @Test
   public void toOneMapperForObjectTest() throws Exception {
+	// query which gets order and related customer
     String sql =
         "select o.id o_id, o.order_date o_order_date, o.customer_id o_customer_id,"
             + " c.id c_id, c.first_name c_first_name, c.last_name c_last_name"
@@ -475,7 +476,7 @@ public class JdbcMapperTest {
   @Test
   public void toManyMapperListTest() throws Exception {
 
-    // Query to get list of orders and their related orderLines
+    // Query to get a list of orders and their related orderLines
     String sql =
         "select o.id o_id, o.order_date o_order_date,"
             + " ol.id ol_id, ol.order_id ol_order_id, ol.product_id ol_product_id, ol.num_of_units ol_num_of_units"
