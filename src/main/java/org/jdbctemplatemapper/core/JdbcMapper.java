@@ -130,28 +130,6 @@ public class JdbcMapper {
   }
 
   /**
-   * Returns the object by Id. Return null if not found
-   *
-   * @param id - Id of object
-   * @param type - Class of object
-   * @return - The object of the specific type
-   */
-  public <T> T findById(Object id, Class<T> clazz) {
-    if (!(id instanceof Integer || id instanceof Long)) {
-      throw new IllegalArgumentException("id has to be type of Integer or Long");
-    }
-    String tableName = convertCamelToSnakeCase(clazz.getSimpleName());
-    String sql = "select * from " + schemaName + "." + tableName + " where id = ?";
-    RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
-    try {
-      Object obj = jdbcTemplate.queryForObject(sql, mapper, id);
-      return clazz.cast(obj);
-    } catch (EmptyResultDataAccessException e) {
-      return null;
-    }
-  }
-
-  /**
    * Inserts an object. For objects which have auto increment database id, after the insert the
    * object will get assigned the id. Also assigns createdBy, createdOn, updatedBy, updatedOn values
    * if these properties exist for the object
@@ -285,7 +263,7 @@ public class JdbcMapper {
   }
 
   /**
-   * Updates the propertyNames of the object. Will also set updatedBy and updatedOn values if these
+   * Updates the propertyNames (passed in as args) of the object. Will also set updatedBy and updatedOn values if these
    * properties exist for the object
    *
    * @param pojo - object to be updated
@@ -420,16 +398,27 @@ public class JdbcMapper {
   }
 
   /**
-   * Get the next sequence number for the sequence name
+   * Returns the object by Id. Return null if not found
    *
-   * @param sequenceName - The name of the sequence
-   * @return the next sequence number
+   * @param id - Id of object
+   * @param type - Class of object
+   * @return - The object of the specific type
    */
-  public Integer getNextSequence(String sequenceName) {
-    String sql = "select nextval('" + sequenceName + "')";
-    return jdbcTemplate.queryForObject(sql, Integer.class);
+  public <T> T findById(Object id, Class<T> clazz) {
+    if (!(id instanceof Integer || id instanceof Long)) {
+      throw new IllegalArgumentException("id has to be type of Integer or Long");
+    }
+    String tableName = convertCamelToSnakeCase(clazz.getSimpleName());
+    String sql = "select * from " + schemaName + "." + tableName + " where id = ?";
+    RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
+    try {
+      Object obj = jdbcTemplate.queryForObject(sql, mapper, id);
+      return clazz.cast(obj);
+    } catch (EmptyResultDataAccessException e) {
+      return null;
+    }
   }
-
+  
   /**
    * Find all objects
    *
@@ -444,7 +433,7 @@ public class JdbcMapper {
   }
 
   /**
-   * Find all objects
+   * Find all objects with the order by clause passed as argument
    *
    * @param clazz - Type of object
    * @return List of objects
@@ -454,6 +443,17 @@ public class JdbcMapper {
     String sql = "select * from " + schemaName + "." + tableName + " " + orderByClause;
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
     return jdbcTemplate.query(sql, mapper);
+  }
+  
+  /**
+   * Get the next sequence number for the sequence name
+   *
+   * @param sequenceName - The name of the sequence
+   * @return the next sequence number
+   */
+  public Integer getNextSequence(String sequenceName) {
+    String sql = "select nextval('" + sequenceName + "')";
+    return jdbcTemplate.queryForObject(sql, Integer.class);
   }
 
   /**
@@ -467,7 +467,7 @@ public class JdbcMapper {
    * @param relationshipPropertyName - The propertyName of the toOne relationship
    * @param relationShipClazz - The relationship class
    */
-  public <T, U> void toOne(T mainObj, String relationshipPropertyName, Class<U> relationshipClazz) {
+  public <T, U> void toOneForObject(T mainObj, String relationshipPropertyName, Class<U> relationshipClazz) {
     List<T> mainObjList = new ArrayList<>();
     if (mainObj != null) {
       mainObjList.add(mainObj);
@@ -599,7 +599,7 @@ public class JdbcMapper {
     }
   }
 
-  public <T, U> void toMany(
+  public <T, U> void toManyForObject(
       T mainObj, String collectionPropertyName, Class<U> manySideClazz, String orderByClause) {
     List<T> mainObjList = new ArrayList<>();
     mainObjList.add(mainObj);

@@ -152,6 +152,56 @@ public class JdbcMapperTest {
 
     assertNull(product1);
   }
+  
+  @Test
+  public void toOneForObjectTest() throws Exception {
+    Order order = jdbcMapper.findById(1, Order.class);
+    // this method issues a query behind the scenes to populate customer
+    jdbcMapper.toOneForObject(order, "customer", Customer.class);
+
+    assertEquals("tony", order.getCustomer().getFirstName());
+    assertEquals("joe", order.getCustomer().getLastName());
+  }
+
+  @Test
+  public void toOneForObjectNullRelationshipTest() throws Exception {
+    Order order = jdbcMapper.findById(3, Order.class);
+    // order 3 has null customer
+    jdbcMapper.toOneForObject(order, "customer", Customer.class);
+
+    assertNull(order.getCustomer());
+  }
+
+  @Test
+  public void toOneForObjectNoRecordTest() throws Exception {
+    Order order = jdbcMapper.findById(999, Order.class);
+    // order 3 has null customer
+    jdbcMapper.toOneForObject(order, "customer", Customer.class);
+
+    assertNull(order);
+  }
+
+  @Test
+  public void toOneTest() throws Exception {
+    List<Order> orders = jdbcMapper.findAll(Order.class, "order by id");
+
+    // this method issues a query behind the scenes to populate customer
+    jdbcMapper.toOne(orders, "customer", Customer.class);
+
+    assertTrue(orders.size() >= 3);
+    assertEquals("tony", orders.get(0).getCustomer().getFirstName());
+    assertEquals("doe", orders.get(1).getCustomer().getLastName());
+    assertNull(orders.get(2).getCustomer()); // order 3 has null customer
+  }
+
+  @Test
+  public void toOneNoRecordTest() throws Exception {
+    // mimick query returning no orders
+    List<Order> orders = null;
+    jdbcMapper.toOne(orders, "customer", Customer.class);
+
+    assertNull(orders);
+  }
 
   @Test
   public void toOneMapperForObjectTest() throws Exception {
@@ -243,7 +293,7 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void toOneMapperListTest() throws Exception {
+  public void toOneMapperTest() throws Exception {
     String sql =
         "select o.id o_id, o.order_date o_order_date, o.customer_id o_customer_id,"
             + " c.id c_id, c.first_name c_first_name, c.last_name c_last_name"
@@ -269,7 +319,7 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void toOneMapperListNoRecordTest() throws Exception {
+  public void toOneMapperNoRecordTest() throws Exception {
 
     //  This query returns no records
     String sql =
@@ -293,57 +343,7 @@ public class JdbcMapperTest {
 
     assertEquals(0, orders.size());
   }
-
-  @Test
-  public void toOneTest() throws Exception {
-    Order order = jdbcMapper.findById(1, Order.class);
-    // this method issues a query behind the scenes to populate customer
-    jdbcMapper.toOne(order, "customer", Customer.class);
-
-    assertEquals("tony", order.getCustomer().getFirstName());
-    assertEquals("joe", order.getCustomer().getLastName());
-  }
-
-  @Test
-  public void toOneNullRelationshipTest() throws Exception {
-    Order order = jdbcMapper.findById(3, Order.class);
-    // order 3 has null customer
-    jdbcMapper.toOne(order, "customer", Customer.class);
-
-    assertNull(order.getCustomer());
-  }
-
-  @Test
-  public void toOneNoRecordTest() throws Exception {
-    Order order = jdbcMapper.findById(999, Order.class);
-    // order 3 has null customer
-    jdbcMapper.toOne(order, "customer", Customer.class);
-
-    assertNull(order);
-  }
-
-  @Test
-  public void toOneListTest() throws Exception {
-    List<Order> orders = jdbcMapper.findAll(Order.class, "order by id");
-
-    // this method issues a query behind the scenes to populate customer
-    jdbcMapper.toOne(orders, "customer", Customer.class);
-
-    assertTrue(orders.size() >= 3);
-    assertEquals("tony", orders.get(0).getCustomer().getFirstName());
-    assertEquals("doe", orders.get(1).getCustomer().getLastName());
-    assertNull(orders.get(2).getCustomer()); // order 3 has null customer
-  }
-
-  @Test
-  public void toOneListNoRecordTest() throws Exception {
-    // mimick query returning no orders
-    List<Order> orders = null;
-    jdbcMapper.toOne(orders, "customer", Customer.class);
-
-    assertNull(orders);
-  }
-
+  
   @Test
   public void toOneMergeTest() throws Exception {
     List<Order> orders = jdbcMapper.findAll(Order.class, "order by id");
@@ -363,13 +363,119 @@ public class JdbcMapperTest {
     assertEquals("tony", orders.get(0).getCustomer().getFirstName());
     assertEquals("doe", orders.get(1).getCustomer().getLastName());
   }
-
+  
   @Test
   public void toOneMergeNullArgsTest() throws Exception {
 
     List<Order> orders = null;
     List<Customer> customers = null;
     jdbcMapper.toOneMerge(orders, customers, "customer", "customerId");
+
+    assertNull(orders);
+  }
+ 
+  @Test
+  public void toManyForObjectTest() throws Exception {
+    Order order = jdbcMapper.findById(1, Order.class);
+
+    // This issues a query to get the orderlines
+    jdbcMapper.toManyForObject(order, "orderLines", OrderLine.class, "order by id");
+
+    assertEquals(1, order.getOrderLines().get(0).getProductId());
+    assertEquals(2, order.getOrderLines().get(1).getProductId());
+    assertEquals(10, order.getOrderLines().get(0).getNumOfUnits());
+    assertEquals(5, order.getOrderLines().get(1).getNumOfUnits());
+  }
+
+  @Test
+  public void toManyForObjectWithNoManyRecordsTest() throws Exception {
+
+    // Order 3 has no orderLines
+    Order order = jdbcMapper.findById(3, Order.class);
+
+    jdbcMapper.toManyForObject(order, "orderLines", OrderLine.class, "order by id");
+
+    assertNull(order.getOrderLines());
+  }
+
+  @Test
+  public void toManyTest() throws Exception {
+    List<Order> orders = jdbcMapper.findAll(Order.class, "order by id");
+
+    // This issues a query to get the orderlines
+    jdbcMapper.toMany(orders, "orderLines", OrderLine.class, "order by id");
+
+    assertTrue(orders.size() >= 3);
+    assertEquals(2, orders.get(0).getOrderLines().size());
+    assertEquals(1, orders.get(1).getOrderLines().size());
+
+    assertEquals(1, orders.get(0).getOrderLines().get(0).getProductId());
+    assertEquals(2, orders.get(0).getOrderLines().get(1).getProductId());
+    assertEquals(10, orders.get(0).getOrderLines().get(0).getNumOfUnits());
+    assertEquals(5, orders.get(0).getOrderLines().get(1).getNumOfUnits());
+    assertEquals(1, orders.get(1).getOrderLines().get(0).getNumOfUnits());
+    assertNull(orders.get(2).getOrderLines());
+  }
+
+  @Test
+  public void toManyNoRecordsTest() throws Exception {
+	  
+	// mimick no order results
+    List<Order> orders = null;
+
+    // This issues a query to get the orderlines
+    jdbcMapper.toMany(orders, "orderLines", OrderLine.class, "order by id");
+
+    assertNull(orders);
+  }
+
+  @Test
+  public void toManyMergeTest() throws Exception {
+    List<Order> orders = jdbcMapper.findAll(Order.class, "order by id");
+
+    List<Integer> orderIds = orders.stream().map(Order::getCustomerId).collect(Collectors.toList());
+
+    String sql = "select * from order_line where order_id in (:orderIds)";
+
+    RowMapper<OrderLine> mapper = BeanPropertyRowMapper.newInstance(OrderLine.class);
+    MapSqlParameterSource params = new MapSqlParameterSource("orderIds", orderIds);
+    List<OrderLine> orderLines = npJdbcTemplate.query(sql, params, mapper);
+
+    jdbcMapper.toManyMerge(orders, orderLines, "orderLines", "orderId");
+
+    assertTrue(orders.size() >= 3);
+    assertEquals(2, orders.get(0).getOrderLines().size());
+    assertEquals(1, orders.get(1).getOrderLines().size());
+
+    assertEquals(1, orders.get(0).getOrderLines().get(0).getProductId());
+    assertEquals(2, orders.get(0).getOrderLines().get(1).getProductId());
+    assertEquals(10, orders.get(0).getOrderLines().get(0).getNumOfUnits());
+    assertEquals(5, orders.get(0).getOrderLines().get(1).getNumOfUnits());
+    assertEquals(1, orders.get(1).getOrderLines().get(0).getNumOfUnits());
+
+    assertNull(orders.get(2).getOrderLines());
+  }
+
+  @Test
+  public void toManyMergeNoRecordsTest() throws Exception {
+    List<Order> orders = jdbcMapper.findAll(Order.class, "order by id");
+    
+    // mimick no orderLines
+    List<OrderLine> orderLines = null;
+    jdbcMapper.toManyMerge(orders, orderLines, "orderLines", "orderId");
+
+    assertTrue(orders.size() >= 3);
+    assertNull(orders.get(0).getOrderLines());
+    assertNull(orders.get(1).getOrderLines());
+  }
+
+  @Test
+  public void toManyMergeNoManyRecordsTest() throws Exception {
+
+	// mimick no orders and orderlines
+    List<Order> orders = null;
+    List<OrderLine> orderLines = null;
+    jdbcMapper.toManyMerge(orders, orderLines, "orderLines", "orderId");
 
     assertNull(orders);
   }
@@ -472,7 +578,7 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void toManyMapperListTest() throws Exception {
+  public void toManyMapperTest() throws Exception {
 
     // Query to get a list of orders and their related orderLines
     String sql =
@@ -501,7 +607,7 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void toManyMapperListNoRecordTest() throws Exception {
+  public void toManyMapperNoRecordTest() throws Exception {
 
     // Query returns no records
     String sql =
@@ -524,112 +630,6 @@ public class JdbcMapperTest {
             });
 
     assertEquals(0, orders.size());
-  }
-
-  @Test
-  public void toManyTest() throws Exception {
-    Order order = jdbcMapper.findById(1, Order.class);
-
-    // This issues a query to get the orderlines
-    jdbcMapper.toMany(order, "orderLines", OrderLine.class, "order by id");
-
-    assertEquals(1, order.getOrderLines().get(0).getProductId());
-    assertEquals(2, order.getOrderLines().get(1).getProductId());
-    assertEquals(10, order.getOrderLines().get(0).getNumOfUnits());
-    assertEquals(5, order.getOrderLines().get(1).getNumOfUnits());
-  }
-
-  @Test
-  public void toManyWithNoManyRecordsTest() throws Exception {
-
-    // Order 3 has no orderLines
-    Order order = jdbcMapper.findById(3, Order.class);
-
-    jdbcMapper.toMany(order, "orderLines", OrderLine.class, "order by id");
-
-    assertNull(order.getOrderLines());
-  }
-
-  @Test
-  public void toManyListTest() throws Exception {
-    List<Order> orders = jdbcMapper.findAll(Order.class, "order by id");
-
-    // This issues a query to get the orderlines
-    jdbcMapper.toMany(orders, "orderLines", OrderLine.class, "order by id");
-
-    assertTrue(orders.size() >= 3);
-    assertEquals(2, orders.get(0).getOrderLines().size());
-    assertEquals(1, orders.get(1).getOrderLines().size());
-
-    assertEquals(1, orders.get(0).getOrderLines().get(0).getProductId());
-    assertEquals(2, orders.get(0).getOrderLines().get(1).getProductId());
-    assertEquals(10, orders.get(0).getOrderLines().get(0).getNumOfUnits());
-    assertEquals(5, orders.get(0).getOrderLines().get(1).getNumOfUnits());
-    assertEquals(1, orders.get(1).getOrderLines().get(0).getNumOfUnits());
-    assertNull(orders.get(2).getOrderLines());
-  }
-
-  @Test
-  public void toManyListWithNoRecordsTest() throws Exception {
-	  
-	// mimick no order results
-    List<Order> orders = null;
-
-    // This issues a query to get the orderlines
-    jdbcMapper.toMany(orders, "orderLines", OrderLine.class, "order by id");
-
-    assertNull(orders);
-  }
-
-  @Test
-  public void toManyMergeTest() throws Exception {
-    List<Order> orders = jdbcMapper.findAll(Order.class, "order by id");
-
-    List<Integer> orderIds = orders.stream().map(Order::getCustomerId).collect(Collectors.toList());
-
-    String sql = "select * from order_line where order_id in (:orderIds)";
-
-    RowMapper<OrderLine> mapper = BeanPropertyRowMapper.newInstance(OrderLine.class);
-    MapSqlParameterSource params = new MapSqlParameterSource("orderIds", orderIds);
-    List<OrderLine> orderLines = npJdbcTemplate.query(sql, params, mapper);
-
-    jdbcMapper.toManyMerge(orders, orderLines, "orderLines", "orderId");
-
-    assertTrue(orders.size() >= 3);
-    assertEquals(2, orders.get(0).getOrderLines().size());
-    assertEquals(1, orders.get(1).getOrderLines().size());
-
-    assertEquals(1, orders.get(0).getOrderLines().get(0).getProductId());
-    assertEquals(2, orders.get(0).getOrderLines().get(1).getProductId());
-    assertEquals(10, orders.get(0).getOrderLines().get(0).getNumOfUnits());
-    assertEquals(5, orders.get(0).getOrderLines().get(1).getNumOfUnits());
-    assertEquals(1, orders.get(1).getOrderLines().get(0).getNumOfUnits());
-
-    assertNull(orders.get(2).getOrderLines());
-  }
-
-  @Test
-  public void toManyMergeWithNoRecordsTest() throws Exception {
-    List<Order> orders = jdbcMapper.findAll(Order.class, "order by id");
-    
-    // mimick no orderLines
-    List<OrderLine> orderLines = null;
-    jdbcMapper.toManyMerge(orders, orderLines, "orderLines", "orderId");
-
-    assertTrue(orders.size() >= 3);
-    assertNull(orders.get(0).getOrderLines());
-    assertNull(orders.get(1).getOrderLines());
-  }
-
-  @Test
-  public void toManyMergeWithNoManyRecordsTest() throws Exception {
-
-	// mimick no orders and orderlines
-    List<Order> orders = null;
-    List<OrderLine> orderLines = null;
-    jdbcMapper.toManyMerge(orders, orderLines, "orderLines", "orderId");
-
-    assertNull(orders);
   }
 
   @Test

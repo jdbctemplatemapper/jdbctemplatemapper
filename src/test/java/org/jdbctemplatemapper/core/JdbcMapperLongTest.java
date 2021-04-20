@@ -153,6 +153,21 @@ public class JdbcMapperLongTest {
     assertNull(product1);
   }
 
+  
+  @Test
+  public void toOneLongTest() throws Exception {
+    List<OrderLong> orders = jdbcMapper.findAll(OrderLong.class, "order by id");
+
+    // this method issues a query behind the scenes to populate customer
+    jdbcMapper.toOne(orders, "customer", CustomerLong.class);
+
+    assertTrue(orders.size() >= 2);
+    assertEquals("tony", orders.get(0).getCustomer().getFirstName());
+    assertEquals("doe", orders.get(1).getCustomer().getLastName());
+  }
+
+
+  
   @Test
   public void toOneMapperForObjectLongTest() throws Exception {
     String sql =
@@ -184,7 +199,7 @@ public class JdbcMapperLongTest {
   }
 
   @Test
-  public void toOneMapperListLongTest() throws Exception {
+  public void toOneMapperLongTest() throws Exception {
     String sql =
         "select o.id o_id, o.order_date o_order_date, o.customer_long_id o_customer_long_id,"
             + " c.id c_id, c.first_name c_first_name, c.last_name c_last_name"
@@ -210,27 +225,15 @@ public class JdbcMapperLongTest {
   }
 
   @Test
-  public void toOneLongTest() throws Exception {
+  public void toOneForObjectLongTest() throws Exception {
     OrderLong order = jdbcMapper.findById(1L, OrderLong.class);
     // this method issues a query behind the scenes to populate customer
-    jdbcMapper.toOne(order, "customer", CustomerLong.class);
+    jdbcMapper.toOneForObject(order, "customer", CustomerLong.class);
 
     assertEquals("tony", order.getCustomer().getFirstName());
     assertEquals("joe", order.getCustomer().getLastName());
   }
-
-  @Test
-  public void toOneListLongTest() throws Exception {
-    List<OrderLong> orders = jdbcMapper.findAll(OrderLong.class, "order by id");
-
-    // this method issues a query behind the scenes to populate customer
-    jdbcMapper.toOne(orders, "customer", CustomerLong.class);
-
-    assertTrue(orders.size() >= 2);
-    assertEquals("tony", orders.get(0).getCustomer().getFirstName());
-    assertEquals("doe", orders.get(1).getCustomer().getLastName());
-  }
-
+  
   @Test
   public void toOneMergeLongTest() throws Exception {
     List<OrderLong> orders = jdbcMapper.findAll(OrderLong.class, "order by id");
@@ -249,6 +252,37 @@ public class JdbcMapperLongTest {
     assertTrue(orders.size() >= 2);
     assertEquals("tony", orders.get(0).getCustomer().getFirstName());
     assertEquals("doe", orders.get(1).getCustomer().getLastName());
+  }
+  
+  @Test
+  public void toManyForObjectLongTest() throws Exception {
+    OrderLong order = jdbcMapper.findById(1L, OrderLong.class);
+
+    // This issues a query to get the orderlines
+    jdbcMapper.toManyForObject(order, "orderLines", OrderLineLong.class, "order by id");
+
+    assertEquals(1, order.getOrderLines().get(0).getProductLongId());
+    assertEquals(2, order.getOrderLines().get(1).getProductLongId());
+    assertEquals(10, order.getOrderLines().get(0).getNumOfUnits());
+    assertEquals(5, order.getOrderLines().get(1).getNumOfUnits());
+  }
+  
+  @Test
+  public void toManyLongTest() throws Exception {
+    List<OrderLong> orders = jdbcMapper.findAll(OrderLong.class, "order by id");
+
+    // This issues a query to get the orderlines
+    jdbcMapper.toMany(orders, "orderLines", OrderLineLong.class, "order by id");
+
+    assertTrue(orders.size() >= 2);
+    assertEquals(2, orders.get(0).getOrderLines().size());
+    assertEquals(1, orders.get(1).getOrderLines().size());
+
+    assertEquals(1, orders.get(0).getOrderLines().get(0).getProductLongId());
+    assertEquals(2, orders.get(0).getOrderLines().get(1).getProductLongId());
+    assertEquals(10, orders.get(0).getOrderLines().get(0).getNumOfUnits());
+    assertEquals(5, orders.get(0).getOrderLines().get(1).getNumOfUnits());
+    assertEquals(1, orders.get(1).getOrderLines().get(0).getNumOfUnits());
   }
 
   @Test
@@ -287,7 +321,7 @@ public class JdbcMapperLongTest {
   }
 
   @Test
-  public void toManyMapperListLongTest() throws Exception {
+  public void toManyMapperLongTest() throws Exception {
 
     // Query to get list of orders and their related orderLines
     String sql =
@@ -315,36 +349,7 @@ public class JdbcMapperLongTest {
     assertEquals(1, orders.get(1).getOrderLines().get(0).getNumOfUnits());
   }
 
-  @Test
-  public void toManyLongTest() throws Exception {
-    OrderLong order = jdbcMapper.findById(1L, OrderLong.class);
 
-    // This issues a query to get the orderlines
-    jdbcMapper.toMany(order, "orderLines", OrderLineLong.class, "order by id");
-
-    assertEquals(1, order.getOrderLines().get(0).getProductLongId());
-    assertEquals(2, order.getOrderLines().get(1).getProductLongId());
-    assertEquals(10, order.getOrderLines().get(0).getNumOfUnits());
-    assertEquals(5, order.getOrderLines().get(1).getNumOfUnits());
-  }
-
-  @Test
-  public void toManyListLongTest() throws Exception {
-    List<OrderLong> orders = jdbcMapper.findAll(OrderLong.class, "order by id");
-
-    // This issues a query to get the orderlines
-    jdbcMapper.toMany(orders, "orderLines", OrderLineLong.class, "order by id");
-
-    assertTrue(orders.size() >= 2);
-    assertEquals(2, orders.get(0).getOrderLines().size());
-    assertEquals(1, orders.get(1).getOrderLines().size());
-
-    assertEquals(1, orders.get(0).getOrderLines().get(0).getProductLongId());
-    assertEquals(2, orders.get(0).getOrderLines().get(1).getProductLongId());
-    assertEquals(10, orders.get(0).getOrderLines().get(0).getNumOfUnits());
-    assertEquals(5, orders.get(0).getOrderLines().get(1).getNumOfUnits());
-    assertEquals(1, orders.get(1).getOrderLines().get(0).getNumOfUnits());
-  }
 
   @Test
   public void toManyMergeLongTest() throws Exception {
