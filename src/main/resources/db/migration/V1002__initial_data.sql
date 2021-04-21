@@ -31,6 +31,11 @@ INSERT INTO jdbctemplatemapper.customer
 (id, first_name, last_name)
 VALUES(2, 'jane', 'doe');
 
+INSERT INTO jdbctemplatemapper.customer
+(id, first_name, last_name)
+VALUES(3, 'customer 3 test for property update', 'customer 3 last name');
+
+
 
 INSERT INTO jdbctemplatemapper.product
 (id, name, cost)
@@ -51,6 +56,11 @@ VALUES(4, 'product4 for delete test', 1.25);
 INSERT INTO jdbctemplatemapper.product
 (id, name, cost)
 VALUES(5, 'product5 for delete test', 1.25);
+
+
+INSERT INTO jdbctemplatemapper.product
+(id, name, cost)
+VALUES(6, 'product 6 update test', 2.45);
 
 
 

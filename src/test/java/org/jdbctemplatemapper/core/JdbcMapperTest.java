@@ -51,6 +51,24 @@ public class JdbcMapperTest {
     assertEquals("tester", order.getCreatedBy());
     assertEquals("tester", order.getUpdatedBy());
   }
+  
+  @Test
+  public void insert_withNoVersionAndCreatedInfoTest() throws Exception {
+	  
+	// Product table does not have version, create_on, created_by etc  
+    Product product = new Product();
+    product.setName("hat");
+    product.setCost(25.40);
+
+    jdbcMapper.insert(product);
+    
+    Product product1 = jdbcMapper.findById(product.getId(), Product.class);
+
+    assertNotNull(product1.getId());
+    assertEquals("hat", product1.getName());
+    assertEquals(25.40, product1.getCost());
+  }
+  
 
   @Test
   public void update_Test() throws Exception {
@@ -67,9 +85,19 @@ public class JdbcMapperTest {
     assertTrue(order.getUpdatedOn().isAfter(prevUpdatedOn));
     assertEquals("tester", order.getUpdatedBy());
   }
+  
+  @Test
+  public void update_withNoVersionAndUpdateInfoTest() throws Exception {
+    Product product = jdbcMapper.findById(6, Product.class);
+    product.setName("xyz");
+    jdbcMapper.update(product);
+
+    Product product1 = jdbcMapper.findById(6, Product.class); // requery
+    assertEquals("xyz", product1.getName());
+  }  
 
   @Test
-  public void update_PropertyTest() throws Exception {
+  public void update_SingePropertyTest() throws Exception {
     Order order = jdbcMapper.findById(2, Order.class);
     LocalDateTime prevUpdatedOn = order.getUpdatedOn();
 
@@ -82,6 +110,22 @@ public class JdbcMapperTest {
     assertTrue(order.getUpdatedOn().isAfter(prevUpdatedOn));
     assertEquals("tester", order.getUpdatedBy());
   }
+  
+  @Test
+  public void update_MultiPropertyTest() throws Exception {
+    Customer customer = jdbcMapper.findById(3, Customer.class);
+
+    customer.setFirstName("Dan");
+    customer.setLastName("Hughes");
+    jdbcMapper.update(customer, "lastName", "firstName");
+
+    customer = jdbcMapper.findById(3, Customer.class); // requery
+    assertEquals("Dan", customer.getFirstName());
+    assertEquals("Hughes", customer.getLastName());
+
+  }
+  
+  
 
   @Test
   public void findById_Test() throws Exception {
