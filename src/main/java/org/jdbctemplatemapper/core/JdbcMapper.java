@@ -379,7 +379,7 @@ public class JdbcMapper {
   public Integer delete(Object pojo) {
     String tableName = convertCamelToSnakeCase(pojo.getClass().getSimpleName());
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
-    String sql = "delete from " + tableName + " where id = ?";
+    String sql = "delete from " + schemaName + "." + tableName + " where id = ?";
     Object id = bw.getPropertyValue("id");
     return jdbcTemplate.update(sql, id);
   }
@@ -393,7 +393,7 @@ public class JdbcMapper {
    */
   public <T> Integer deleteById(Object id, Class<T> clazz) {
     String tableName = convertCamelToSnakeCase(clazz.getSimpleName());
-    String sql = "delete from " + tableName + " where id = ?";
+    String sql = "delete from " + schemaName + "." + tableName + " where id = ?";
     return jdbcTemplate.update(sql, id);
   }
 
@@ -459,12 +459,13 @@ public class JdbcMapper {
   /**
    * Populates the toOne relationship. Issues an sql query to get the relationship.
    *
-   * <p>Note: the joinPropertyName is figured out from the relationshipClazz name so for example if
-   * the relationShipClass is 'Project' the joinPropertyName will be 'projectId' and the
-   * corresponding column in table will be 'project_id'
+   * The join property to tie the mainObj to the relatedObject is figured out from the relationshipClazz name 
+   * So for example if the relationShipClass is 'Project' the join property will be 'projectId' of the mainObj. 
+   * Make sure the join property of mainObj is populated so it can be tied to its corresponding
+   * relationship object.
    *
    * @param mainObj - the main object
-   * @param relationshipPropertyName - The propertyName of the toOne relationship
+   * @param relationshipPropertyName - The propertyName of the toOne relationship (on mainOjb)
    * @param relationShipClazz - The relationship class
    */
   public <T, U> void toOneForObject(T mainObj, String relationshipPropertyName, Class<U> relationshipClazz) {
@@ -479,9 +480,10 @@ public class JdbcMapper {
    * Populates the toOne relationship for all the main objects in the list Issues an sql query using
    * the 'IN' clause to get all the relationship objects corresponding to the main object list
    *
-   * <p>Note: the joinPropertyName is figured out from the relationshipClazz name so for example if
-   * the relationShipClass is 'Project' the joinPropertyName will be 'projectId' and the
-   * corresponding column in table will be 'project_id'
+   * The join property to tie the mainObj to the relatedObject is figured out from the relationshipClazz name. 
+   * So for example if the relationShipClass is 'Project' the join property will be 'projectId' of the mainObj. 
+   * Make sure the join property of mainObj is populated so it can be tied to its corresponding
+   * relationship object.
    *
    * @param mainObjList - list of main objects
    * @param relationshipPropertyName - The propertyName of the toOne relationship
@@ -524,7 +526,7 @@ public class JdbcMapper {
    *
    * @param rs - The jdbc ResultSet
    * @param mainObjMapper - The main object mapper.
-   * @param relationshipPropertyName - The toOne relationship name
+   * @param relationshipPropertyName - The toOne relationship name on mainObj
    * @param relatedObjMapper - The related object mapper
    * @return The main object with its toOne relationship populated.
    */
