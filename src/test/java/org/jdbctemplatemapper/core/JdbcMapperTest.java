@@ -14,6 +14,7 @@ import org.jdbctemplatemapper.model.Customer;
 import org.jdbctemplatemapper.model.Order;
 import org.jdbctemplatemapper.model.OrderLine;
 import org.jdbctemplatemapper.model.Product;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +36,7 @@ public class JdbcMapperTest {
   @Autowired private NamedParameterJdbcTemplate npJdbcTemplate;
 
   @Test
-  public void insert_Test() throws Exception {
+  public void insert_Test() {
     Order order = new Order();
     order.setOrderDate(LocalDateTime.now());
     order.setCustomerId(2);
@@ -51,27 +52,26 @@ public class JdbcMapperTest {
     assertEquals("tester", order.getCreatedBy());
     assertEquals("tester", order.getUpdatedBy());
   }
-  
+
   @Test
-  public void insert_withNoVersionAndCreatedInfoTest() throws Exception {
-	  
-	// Product table does not have version, create_on, created_by etc  
+  public void insert_withNoVersionAndCreatedInfoTest(){
+
+    // Product table does not have version, create_on, created_by etc
     Product product = new Product();
     product.setName("hat");
     product.setCost(25.40);
 
     jdbcMapper.insert(product);
-    
+
     Product product1 = jdbcMapper.findById(product.getId(), Product.class);
 
     assertNotNull(product1.getId());
     assertEquals("hat", product1.getName());
     assertEquals(25.40, product1.getCost());
   }
-  
 
   @Test
-  public void update_Test() throws Exception {
+  public void update_Test(){
     Order order = jdbcMapper.findById(1, Order.class);
     LocalDateTime prevUpdatedOn = order.getUpdatedOn();
 
@@ -85,19 +85,19 @@ public class JdbcMapperTest {
     assertTrue(order.getUpdatedOn().isAfter(prevUpdatedOn));
     assertEquals("tester", order.getUpdatedBy());
   }
-  
+
   @Test
-  public void update_withNoVersionAndUpdateInfoTest() throws Exception {
+  public void update_withNoVersionAndUpdateInfoTest(){
     Product product = jdbcMapper.findById(6, Product.class);
     product.setName("xyz");
     jdbcMapper.update(product);
 
     Product product1 = jdbcMapper.findById(6, Product.class); // requery
     assertEquals("xyz", product1.getName());
-  }  
+  }
 
   @Test
-  public void update_SingePropertyTest() throws Exception {
+  public void update_byPropertyTest(){
     Order order = jdbcMapper.findById(2, Order.class);
     LocalDateTime prevUpdatedOn = order.getUpdatedOn();
 
@@ -110,9 +110,9 @@ public class JdbcMapperTest {
     assertTrue(order.getUpdatedOn().isAfter(prevUpdatedOn));
     assertEquals("tester", order.getUpdatedBy());
   }
-  
+
   @Test
-  public void update_MultiPropertyTest() throws Exception {
+  public void update_byMultiPropertyTest() {
     Customer customer = jdbcMapper.findById(3, Customer.class);
 
     customer.setFirstName("Dan");
@@ -122,13 +122,33 @@ public class JdbcMapperTest {
     customer = jdbcMapper.findById(3, Customer.class); // requery
     assertEquals("Dan", customer.getFirstName());
     assertEquals("Hughes", customer.getLastName());
+  }
 
+  @Test
+  public void update_byPropertythrowsOptimisticLockingExceptionTest() {
+    Assertions.assertThrows(
+        OptimisticLockingException.class,
+        () -> {
+          Order order = jdbcMapper.findById(2, Order.class);
+          order.setVersion(order.getVersion() - 1);
+          jdbcMapper.update(order, "status"); // just update status
+        });
   }
   
+  @Test
+  public void update_throwsOptimisticLockingExceptionTest() {
+    Assertions.assertThrows(
+        OptimisticLockingException.class,
+        () -> {
+          Order order = jdbcMapper.findById(2, Order.class);
+          order.setVersion(order.getVersion() - 1);
+          jdbcMapper.update(order);
+        });
+  }
   
 
   @Test
-  public void findById_Test() throws Exception {
+  public void findById_Test(){
     Order order = jdbcMapper.findById(1, Order.class);
 
     assertNotNull(order.getId());
@@ -141,7 +161,7 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void findAll_Test() throws Exception {
+  public void findAll_Test(){
     List<Order> orders = jdbcMapper.findAll(Order.class);
     assertTrue(orders.size() >= 2);
 
@@ -157,7 +177,7 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void findAll_WithOrderByClauseTest() throws Exception {
+  public void findAll_WithOrderByClauseTest(){
     List<Order> orders = jdbcMapper.findAll(Order.class, "order by id");
 
     assertTrue(orders.size() >= 2);
@@ -174,7 +194,7 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void deleteByObject_Test() throws Exception {
+  public void deleteByObject_Test(){
     Product product = jdbcMapper.findById(4, Product.class);
 
     int cnt = jdbcMapper.delete(product);
@@ -187,7 +207,7 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void deleteById_Test() throws Exception {
+  public void deleteById_Test(){
     int cnt = jdbcMapper.deleteById(5, Product.class);
 
     assertTrue(cnt == 1);
@@ -196,9 +216,9 @@ public class JdbcMapperTest {
 
     assertNull(product1);
   }
-  
+
   @Test
-  public void toOneForObject_Test() throws Exception {
+  public void toOneForObject_Test(){
     Order order = jdbcMapper.findById(1, Order.class);
     // this method issues a query behind the scenes to populate customer
     jdbcMapper.toOneForObject(order, "customer", Customer.class);
@@ -208,7 +228,7 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void toOneForObject_NullRelationshipTest() throws Exception {
+  public void toOneForObject_NullRelationshipTest(){
     Order order = jdbcMapper.findById(3, Order.class);
     // order 3 has null customer
     jdbcMapper.toOneForObject(order, "customer", Customer.class);
@@ -217,7 +237,7 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void toOneForObject_NoRecordTest() throws Exception {
+  public void toOneForObject_NoRecordTest(){
     Order order = jdbcMapper.findById(999, Order.class);
     // order 3 has null customer
     jdbcMapper.toOneForObject(order, "customer", Customer.class);
@@ -226,7 +246,7 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void toOneForList_Test() throws Exception {
+  public void toOneForList_Test(){
     List<Order> orders = jdbcMapper.findAll(Order.class, "order by id");
 
     // this method issues a query behind the scenes to populate customer
@@ -239,7 +259,7 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void toOneForList_NoRecordTest() throws Exception {
+  public void toOneForList_NoRecordTest(){
     // mimick query returning no orders
     List<Order> orders = null;
     jdbcMapper.toOneForList(orders, "customer", Customer.class);
@@ -248,8 +268,8 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void toOneMapperForObject_Test() throws Exception {
-	// query which gets order and related customer
+  public void toOneMapperForObject_Test(){
+    // query which gets order and related customer
     String sql =
         "select o.id o_id, o.order_date o_order_date, o.customer_id o_customer_id,"
             + " c.id c_id, c.first_name c_first_name, c.last_name c_last_name"
@@ -279,7 +299,7 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void toOneMapperForObject_NullRelationshipTest() throws Exception {
+  public void toOneMapperForObject_NullRelationshipTest(){
     String sql =
         "select o.id o_id, o.order_date o_order_date, o.customer_id o_customer_id,"
             + " c.id c_id, c.first_name c_first_name, c.last_name c_last_name"
@@ -309,7 +329,7 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void toOneMapperForObject_NoRecordTest() throws Exception {
+  public void toOneMapperForObject_NoRecordTest(){
     String sql =
         "select o.id o_id, o.order_date o_order_date, o.customer_id o_customer_id,"
             + " c.id c_id, c.first_name c_first_name, c.last_name c_last_name"
@@ -337,7 +357,7 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void toOneMapperForList_Test() throws Exception {
+  public void toOneMapperForList_Test(){
     String sql =
         "select o.id o_id, o.order_date o_order_date, o.customer_id o_customer_id,"
             + " c.id c_id, c.first_name c_first_name, c.last_name c_last_name"
@@ -363,7 +383,7 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void toOneMapperForList_NoRecordTest() throws Exception {
+  public void toOneMapperForList_NoRecordTest(){
 
     //  This query returns no records
     String sql =
@@ -387,9 +407,9 @@ public class JdbcMapperTest {
 
     assertEquals(0, orders.size());
   }
-  
+
   @Test
-  public void toOneMerge_Test() throws Exception {
+  public void toOneMerge_Test(){
     List<Order> orders = jdbcMapper.findAll(Order.class, "order by id");
 
     List<Integer> customerIds =
@@ -407,9 +427,9 @@ public class JdbcMapperTest {
     assertEquals("tony", orders.get(0).getCustomer().getFirstName());
     assertEquals("doe", orders.get(1).getCustomer().getLastName());
   }
-  
+
   @Test
-  public void toOneMerge_NullArgsTest() throws Exception {
+  public void toOneMerge_NullArgsTest(){
 
     List<Order> orders = null;
     List<Customer> customers = null;
@@ -417,9 +437,9 @@ public class JdbcMapperTest {
 
     assertNull(orders);
   }
- 
+
   @Test
-  public void toManyForObject_Test() throws Exception {
+  public void toManyForObject_Test(){
     Order order = jdbcMapper.findById(1, Order.class);
 
     // This issues a query to get the orderlines
@@ -432,7 +452,7 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void toManyForObject_NoManyRecordsTest() throws Exception {
+  public void toManyForObject_NoManyRecordsTest(){
 
     // Order 3 has no orderLines
     Order order = jdbcMapper.findById(3, Order.class);
@@ -443,7 +463,7 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void toManyForList_Test() throws Exception {
+  public void toManyForList_Test(){
     List<Order> orders = jdbcMapper.findAll(Order.class, "order by id");
 
     // This issues a query to get the orderlines
@@ -462,9 +482,9 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void toManyForList_NoRecordsTest() throws Exception {
-	  
-	// mimick no order results
+  public void toManyForList_NoRecordsTest(){
+
+    // mimick no order results
     List<Order> orders = null;
 
     // This issues a query to get the orderlines
@@ -474,7 +494,7 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void toManyMerge_Test() throws Exception {
+  public void toManyMerge_Test(){
     List<Order> orders = jdbcMapper.findAll(Order.class, "order by id");
 
     List<Integer> orderIds = orders.stream().map(Order::getCustomerId).collect(Collectors.toList());
@@ -501,9 +521,9 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void toManyMerge_NoRecordsTest() throws Exception {
+  public void toManyMerge_NoRecordsTest(){
     List<Order> orders = jdbcMapper.findAll(Order.class, "order by id");
-    
+
     // mimick no orderLines
     List<OrderLine> orderLines = null;
     jdbcMapper.toManyMerge(orders, orderLines, "orderLines", "orderId");
@@ -514,9 +534,9 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void toManyMerge_NoManyRecordsTest() throws Exception {
+  public void toManyMerge_NoManyRecordsTest(){
 
-	// mimick no orders and orderlines
+    // mimick no orders and orderlines
     List<Order> orders = null;
     List<OrderLine> orderLines = null;
     jdbcMapper.toManyMerge(orders, orderLines, "orderLines", "orderId");
@@ -525,7 +545,7 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void toManyMapperForObject_Test() throws Exception {
+  public void toManyMapperForObject_Test(){
 
     // Query to get order and related orderLines
     String sql =
@@ -560,7 +580,7 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void toManyMapperForObject_NoManyRecordTest() throws Exception {
+  public void toManyMapperForObject_NoManyRecordTest(){
 
     String sql =
         "select o.id o_id, o.order_date o_order_date,"
@@ -592,7 +612,7 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void toManyMapperForObject_NoRecordTest() throws Exception {
+  public void toManyMapperForObject_NoRecordTest(){
 
     String sql =
         "select o.id o_id, o.order_date o_order_date,"
@@ -622,7 +642,7 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void toManyMapperForList_Test() throws Exception {
+  public void toManyMapperForList_Test(){
 
     // Query to get a list of orders and their related orderLines
     String sql =
@@ -651,7 +671,7 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void toManyMapperForList_NoRecordTest() throws Exception {
+  public void toManyMapperForList_NoRecordTest(){
 
     // Query returns no records
     String sql =
@@ -678,7 +698,7 @@ public class JdbcMapperTest {
 
   @Test
   @SuppressWarnings("all")
-  public void multipleModelMapper_Test() throws Exception {
+  public void multipleModelMapper_Test(){
 
     /*
      * query gets:
@@ -750,7 +770,7 @@ public class JdbcMapperTest {
 
   @Test
   @SuppressWarnings("all")
-  public void multipleModelMapper_NoRecordsTest() throws Exception {
+  public void multipleModelMapper_NoRecordsTest(){
 
     // query returns no records
     String sql =

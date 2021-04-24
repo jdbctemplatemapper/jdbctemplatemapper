@@ -35,7 +35,7 @@ public class JdbcMapperLongTest {
   @Autowired private NamedParameterJdbcTemplate npJdbcTemplate;
 
   @Test
-  public void insert_LongTest() throws Exception {
+  public void insert_LongTest(){
     OrderLong order = new OrderLong();
     order.setOrderDate(LocalDateTime.now());
     order.setCustomerLongId(2L);
@@ -53,7 +53,7 @@ public class JdbcMapperLongTest {
   }
 
   @Test
-  public void update_LongTest() throws Exception {
+  public void update_LongTest(){
     OrderLong order = jdbcMapper.findById(1L, OrderLong.class);
     LocalDateTime prevUpdatedOn = order.getUpdatedOn();
 
@@ -69,7 +69,7 @@ public class JdbcMapperLongTest {
   }
 
   @Test
-  public void update_LongPropertyTest() throws Exception {
+  public void update_LongPropertyTest(){
     OrderLong order = jdbcMapper.findById(2L, OrderLong.class);
     LocalDateTime prevUpdatedOn = order.getUpdatedOn();
 
@@ -84,7 +84,7 @@ public class JdbcMapperLongTest {
   }
 
   @Test
-  public void findById_LongTest() throws Exception {
+  public void findById_LongTest(){
     OrderLong order = jdbcMapper.findById(1L, OrderLong.class);
 
     assertNotNull(order.getId());
@@ -97,7 +97,7 @@ public class JdbcMapperLongTest {
   }
 
   @Test
-  public void findAll_LongTest() throws Exception {
+  public void findAll_LongTest(){
     List<OrderLong> orders = jdbcMapper.findAll(OrderLong.class);
     assertTrue(orders.size() >= 2);
 
@@ -113,7 +113,7 @@ public class JdbcMapperLongTest {
   }
 
   @Test
-  public void findAll_WithOrderByClauseLongTest() throws Exception {
+  public void findAll_WithOrderByClauseLongTest(){
     List<OrderLong> orders = jdbcMapper.findAll(OrderLong.class, "order by id");
 
     assertTrue(orders.size() >= 2);
@@ -130,7 +130,7 @@ public class JdbcMapperLongTest {
   }
 
   @Test
-  public void deleteByObject_LongTest() throws Exception {
+  public void deleteByObject_LongTest(){
     ProductLong product = jdbcMapper.findById(4L, ProductLong.class);
 
     int cnt = jdbcMapper.delete(product);
@@ -143,7 +143,7 @@ public class JdbcMapperLongTest {
   }
 
   @Test
-  public void deleteById_LongTest() throws Exception {
+  public void deleteById_LongTest(){
     int cnt = jdbcMapper.deleteById(5L, ProductLong.class);
 
     assertTrue(cnt == 1);
@@ -154,7 +154,7 @@ public class JdbcMapperLongTest {
   }
 
   @Test
-  public void toOneForObject_LongTest() throws Exception {
+  public void toOneForObject_LongTest(){
     OrderLong order = jdbcMapper.findById(1L, OrderLong.class);
     // this method issues a query behind the scenes to populate customer
     jdbcMapper.toOneForObject(order, "customer", CustomerLong.class);
@@ -164,7 +164,7 @@ public class JdbcMapperLongTest {
   }
   
   @Test
-  public void toOneForList_LongTest() throws Exception {
+  public void toOneForList_LongTest(){
     List<OrderLong> orders = jdbcMapper.findAll(OrderLong.class, "order by id");
 
     // this method issues a query behind the scenes to populate customer
@@ -176,7 +176,7 @@ public class JdbcMapperLongTest {
   }
   
   @Test
-  public void toOneMapperForObject_LongTest() throws Exception {
+  public void toOneMapperForObject_LongTest(){
     String sql =
         "select o.id o_id, o.order_date o_order_date, o.customer_long_id o_customer_long_id,"
             + " c.id c_id, c.first_name c_first_name, c.last_name c_last_name"
@@ -206,7 +206,7 @@ public class JdbcMapperLongTest {
   }
 
   @Test
-  public void toOneMapperForList_LongTest() throws Exception {
+  public void toOneMapperForList_LongTest(){
     String sql =
         "select o.id o_id, o.order_date o_order_date, o.customer_long_id o_customer_long_id,"
             + " c.id c_id, c.first_name c_first_name, c.last_name c_last_name"
@@ -234,7 +234,7 @@ public class JdbcMapperLongTest {
 
   
   @Test
-  public void toOneMerge_LongTest() throws Exception {
+  public void toOneMerge_LongTest(){
     List<OrderLong> orders = jdbcMapper.findAll(OrderLong.class, "order by id");
 
     List<Long> customerIds =
@@ -254,7 +254,7 @@ public class JdbcMapperLongTest {
   }
   
   @Test
-  public void toManyForObject_LongTest() throws Exception {
+  public void toManyForObject_LongTest(){
     OrderLong order = jdbcMapper.findById(1L, OrderLong.class);
 
     // This issues a query to get the orderlines
@@ -267,7 +267,7 @@ public class JdbcMapperLongTest {
   }
   
   @Test
-  public void toManyForList_LongTest() throws Exception {
+  public void toManyForList_LongTest(){
     List<OrderLong> orders = jdbcMapper.findAll(OrderLong.class, "order by id");
 
     // This issues a query to get the orderlines
@@ -285,7 +285,7 @@ public class JdbcMapperLongTest {
   }
 
   @Test
-  public void toManyMapperForObject_LongTest() throws Exception {
+  public void toManyMapperForObject_LongTest(){
 
     // Query to get order and related orderLines
     String sql =
@@ -320,7 +320,7 @@ public class JdbcMapperLongTest {
   }
 
   @Test
-  public void toManyMapperForList_LongTest() throws Exception {
+  public void toManyMapperForList_LongTest(){
 
     // Query to get list of orders and their related orderLines
     String sql =
@@ -351,7 +351,7 @@ public class JdbcMapperLongTest {
 
 
   @Test
-  public void toManyMerge_LongTest() throws Exception {
+  public void toManyMerge_LongTest(){
     List<OrderLong> orders = jdbcMapper.findAll(OrderLong.class, "order by id");
 
     List<Long> orderIds =
@@ -378,7 +378,7 @@ public class JdbcMapperLongTest {
 
   @Test
   @SuppressWarnings("all")
-  public void multipleModelMapper_LongTest() throws Exception {
+  public void multipleModelMapper_LongTest(){
 
     /*
      * query gets:
