@@ -57,6 +57,9 @@ public class JdbcMapper {
   // Need this for type conversions like java.sql.Timestamp to java.time.LocalDateTime etc
   private DefaultConversionService defaultConversionService = new DefaultConversionService();
 
+  // to avoid query being issued with large number of ids
+  // for the sql 'IN' clause the id list is chunked by this size
+  // and multiple queries issued if needed.
   private static int IN_CLAUSE_CHUNK_SIZE = 100;
 
   // Convert camel case to snake case regex pattern
@@ -133,6 +136,9 @@ public class JdbcMapper {
    * Inserts an object. For objects which have auto increment database id, after the insert the
    * object will get assigned the id. Also assigns createdBy, createdOn, updatedBy, updatedOn values
    * if these properties exist for the object
+   * 
+   * For tables with autoincrement ids the id property of object has to be null.
+   * For tables with normal ids (ie NON autoincrement) the id property of objects has to be NOT null.
    *
    * @param pojo - The object to be saved
    */
@@ -1045,6 +1051,11 @@ public class JdbcMapper {
     return rsColNames;
   }
 
+  /**
+   * Get property names of an object. The property names are cached by the object class name
+   * @param pojo
+   * @return List of property names.
+   */
   private List<String> getPropertyNames(Object pojo) {
     List<String> list = objectPropertyNamesCache.get(pojo.getClass().getSimpleName());
     if (list == null) {
@@ -1113,6 +1124,13 @@ public class JdbcMapper {
     return camelCase;
   }
 
+  /**
+   * splits the list into multiple lists of chunk size. Used to split the sql IN clauses since
+   * some databases have a  limitation of 1024. We set the chuck size to IN_CLAUSE_CHUNK_SIZE
+   * @param list
+   * @param chunkSize
+   * @return
+   */
   private Collection<List<Number>> chunkList(List<Number> list, Integer chunkSize) {
     AtomicInteger counter = new AtomicInteger();
     Collection<List<Number>> result =
