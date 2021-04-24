@@ -460,8 +460,8 @@ public class JdbcMapper {
    * Populates the toOne relationship. Issues an sql query to get the relationship.
    *
    * The join property to tie the mainObj to the relatedObject is figured out from the relationshipClazz name 
-   * So for example if the relationShipClass is 'Project' the join property will be 'projectId' of the mainObj. 
-   * Make sure the join property of mainObj is populated so it can be tied to its corresponding
+   * For example if the relationShipClass is 'Project' the join property will be 'projectId' of the mainObj. 
+   * Make sure the join property of the argument mainObj is assigned so it can be tied to its corresponding
    * relationship object.
    *
    * @param mainObj - the main object
@@ -477,12 +477,12 @@ public class JdbcMapper {
   }
 
   /**
-   * Populates the toOne relationship for all the main objects in the list Issues an sql query using
-   * the 'IN' clause to get all the relationship objects corresponding to the main object list
+   * Populates the toOne relationship for all the main objects in the argument list. Issues an sql query using
+   * the 'IN' clause to get all the relationship objects corresponding to the main object list.
    *
-   * The join property to tie the mainObj to the relatedObject is figured out from the relationshipClazz name. 
-   * So for example if the relationShipClass is 'Project' the join property will be 'projectId' of the mainObj. 
-   * Make sure the join property of mainObj is populated so it can be tied to its corresponding
+   * The join property to tie the mainObj to the relatedObject is figured out from the relationshipClazz name 
+   * For example if the relationShipClass is 'Project' the join property will be 'projectId' of the mainObj. 
+   * Make sure the join property of the argument mainObj is assigned so it can be tied to its corresponding
    * relationship object.
    *
    * @param mainObjList - list of main objects
@@ -523,6 +523,12 @@ public class JdbcMapper {
   /**
    * Populates a single main object and its toOne relationship object with the data from the
    * resultSet using their respective SqlMappers.
+   * 
+   * The jdbc ResultSet argument object should have the join property assigned so the code
+   * can tie the the main object and relationship object together.
+   * 
+   * The join property name on the main object is figured out from the mapper class of
+   * the related object.
    *
    * @param rs - The jdbc ResultSet
    * @param mainObjMapper - The main object mapper.
@@ -539,6 +545,23 @@ public class JdbcMapper {
     List<T> list = toOneMapperForList(rs, mainObjMapper, relationshipPropertyName, relatedObjMapper);
     return isNotEmpty(list) ? list.get(0) : null;
   }
+  
+  /**
+   * Populates the main object list with their corresponding toOne relationship object from the
+   * jdbc ResultSet using their respective SqlMappers.
+   * 
+   * The jdbc ResultSet argument object should have the join property assigned so the code
+   * can tie the the main object and relationship object together.
+   * 
+   * The join property name on the main object is figured out from the mapper class of
+   * the related object.
+   * 
+   * @param rs The jdbc ResultSet
+   * @param mainObjMapper
+   * @param relationshipPropertyName
+   * @param relatedObjMapper
+   * @return List of mainObj with its toOne property assigned
+   */
 
   @SuppressWarnings("all")
   public <T, U> List<T> toOneMapperForList(
@@ -560,29 +583,20 @@ public class JdbcMapper {
     return mainObjList;
   }
 
+  /**
+   * Merges relatedObjeList to the mainObj list by assigning the relationshipPropertyName on mainObj 
+   * using the join property name.
+   * 
+   * @param mainObjList
+   * @param relatedObjList
+   * @param relationshipPropertyName
+   * @param joinPropertyName
+   */
   public <T, U> void toOneMerge(
       List<T> mainObjList,
       List<U> relatedObjList,
       String relationshipPropertyName,
       String joinPropertyName) {
-
-    // do some checks to make sure properties exist
-    if (isNotEmpty(mainObjList) && mainObjList.get(0) != null) {
-      if (!propertyExists(mainObjList.get(0), relationshipPropertyName)) {
-        throw new RuntimeException(
-            "relationshipPropertyName:"
-                + relationshipPropertyName
-                + " not found in class "
-                + mainObjList.get(0).getClass().getSimpleName());
-      }
-      if (!propertyExists(mainObjList.get(0), joinPropertyName)) {
-        throw new RuntimeException(
-            " derived joinPropertyName:"
-                + joinPropertyName
-                + " not found in class "
-                + mainObjList.get(0).getClass().getSimpleName());
-      }
-    }
 
     if (isNotEmpty(mainObjList) && isNotEmpty(relatedObjList)) {
       Map<Number, U> idToObjectMap =
@@ -601,6 +615,16 @@ public class JdbcMapper {
     }
   }
 
+  /**
+   * Populates the collectionPropertyName of the mainObj.
+   *
+   * <p>Executes a query with 'IN' clause to get the many side records
+   *
+   * @param mainObjList - the main object list
+   * @param collectionPropertyName - The collection property name on mainObj
+   * @param manySideClass - The many side class
+   * @param orderByClause - The order by clause for the many side query
+   */
   public <T, U> void toManyForObject(
       T mainObj, String collectionPropertyName, Class<U> manySideClazz, String orderByClause) {
     List<T> mainObjList = new ArrayList<>();
@@ -609,7 +633,7 @@ public class JdbcMapper {
   }
 
   /**
-   * When provided a list of one side objects populates the many side list.
+   * When provided a mainObj list populates its collectionPropertyName.
    *
    * <p>Executes a query with 'IN' clause to get the many side records
    *
@@ -668,7 +692,22 @@ public class JdbcMapper {
       toManyMerge(mainObjList, manySideList, collectionPropertyName, joinPropertyName);
     }
   }
-
+  /**
+   * Populates a single main object and its collection PropertyName object with the data from the
+   * resultSet using their respective SqlMappers.
+   * 
+   * The jdbc ResultSet argument object should have the join property assigned so the code
+   * can tie the the main objects and its related objects together.
+   * 
+   * The join property name on the main object is figured out from the mapper class of
+   * the related object.
+   *
+   * @param rs - The jdbc ResultSet
+   * @param mainObjMapper - The main object mapper.
+   * @param relationshipPropertyName - The toOne relationship name on mainObj
+   * @param relatedObjMapper - The related object mapper
+   * @return The main object with its toMany relationship assigned.
+   */
   @SuppressWarnings("all")
   public <T, U> T toManyMapperForObject(
       ResultSet rs,
@@ -679,6 +718,23 @@ public class JdbcMapper {
     return isNotEmpty(list) ? list.get(0) : null;
   }
 
+  /**
+   * Populates the main object list with their corresponding toMany relationship object from the
+   * jdbc ResultSet using their respective SqlMappers.
+   * 
+   * The jdbc ResultSet argument object should have the join property assigned so the code
+   * can tie the the main object and related object together.
+   * 
+   * The join property name on the main object is figured out from the mapper class of
+   * the related object.
+   * 
+   * @param rs The jdbc ResultSet
+   * @param mainObjMapper
+   * @param relationshipPropertyName
+   * @param relatedObjMapper
+   * @return List of mainObj with its collectionPropertyName assigned
+   */
+  
   @SuppressWarnings("all")
   public <T, U> List<T> toManyMapperForList(
       ResultSet rs,
@@ -703,26 +759,6 @@ public class JdbcMapper {
       List<U> manySideList,
       String collectionPropertyName,
       String joinPropertyName) {
-
-    // do some checks to make sure properties exist
-    if (isNotEmpty(mainObjList) && mainObjList.get(0) != null) {
-      if (!propertyExists(mainObjList.get(0), collectionPropertyName)) {
-        throw new RuntimeException(
-            "collectionPropertyName:"
-                + collectionPropertyName
-                + " not found in class "
-                + mainObjList.get(0).getClass().getSimpleName());
-      }
-    }
-    if (isNotEmpty(manySideList) && manySideList.get(0) != null) {
-      if (!propertyExists(manySideList.get(0), joinPropertyName)) {
-        throw new RuntimeException(
-            "joinPropertyName:"
-                + joinPropertyName
-                + " not found in class "
-                + manySideList.get(0).getClass().getSimpleName());
-      }
-    }
 
     try {
       if (isNotEmpty(manySideList)) {
@@ -749,11 +785,11 @@ public class JdbcMapper {
    * Returns lists for each mapper passed in as an argument. The values in the list are UNIQUE and
    * in same order as the ResultSet values.
    *
-   * <p>Returns a map. The key is the SqlMapper columnPrefix.
+   * <p>Returns a map. The keys in the map are the SqlMapper column prefixes.
    *
    * @param rs - The result set
    * @param selectMappers - array of sql mappers.
-   * @return Map - key: 'sqlColumnPrefix' of sqlmapper, value - unique list
+   * @return Map - key: 'sqlColumnPrefix' of each sqlMapper, value - unique list for each sqlMapper
    */
   @SuppressWarnings("all")
   public Map<String, List> multipleModelMapper(ResultSet rs, SelectMapper... selectMappers) {
@@ -792,11 +828,14 @@ public class JdbcMapper {
 
   /**
    * Generates a string which can be used in a sql select statement with all columns of the table.
+   * 
+   * Example: for method call selectCols("employee", "emp") where "emp" is the alias will return:
+   *  "emp.id emp_id, emp.last_name emp_last_name, emp.first_name emp_first_name" .....
+   * 
    *
    * @param tableName - the Table name
    * @param tableAlias - the alias being used in the sql statement for the table.
-   * @return a string for the select columns. Example if tableAlias is 'emp' returns something like:
-   *     "emp.id emp_id, emp.last_name emp_last_name, emp.first_name emp_first_name ....."
+   * @return comma separated select column string
    */
   public String selectCols(String tableName, String tableAlias) {
     List<String> dbColumnNames = getDbColumnNames(tableName);
@@ -1026,20 +1065,23 @@ public class JdbcMapper {
     return list;
   }
 
+  /**
+   * Gets the property value of an object using Springs BeanWrapper
+   * 
+   * @param obj
+   * @param propertyName
+   * @return The property value
+   */
   private Object getSimpleProperty(Object obj, String propertyName) {
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
     return bw.getPropertyValue(propertyName);
   }
 
-  private boolean propertyExists(Object obj, String propertyName) {
-    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
-    return bw.isReadableProperty(propertyName);
-  }
-
   /**
-   * Converts camel case to snake case. Ex: userLastName gets converted to user_last_name
+   * Converts camel case to snake case. Ex: userLastName gets converted to user_last_name.
+   * The conversion info is cached.
    *
-   * @param property - property name in camel case
+   * @param str - camel case String
    * @return the snake case string
    */
   private String convertCamelToSnakeCase(String str) {
@@ -1054,6 +1096,14 @@ public class JdbcMapper {
     return snakeCase;
   }
 
+  /**
+   * Converts sname case to camel case. Ex: user_last_name gets converted to userLastName.
+   * The conversion info is cached.
+   *
+   * @param str - snake case string
+   * @return the camel case string
+   */
+  
   private String convertSnakeToCamelCase(String str) {
     String camelCase = snakeToCamelCache.get(str);
     if (camelCase == null) {
@@ -1116,7 +1166,7 @@ public class JdbcMapper {
   }
 
   /**
-   * Code copied from apache common CaseUtils project Converts all the delimiter separated words in
+   * Code copied from apache common CaseUtils project. Converts all the delimiter separated words in
    * a String into camelCase, that is each word is made up of a titlecase character and then a
    * series of lowercase characters.
    *
@@ -1185,6 +1235,7 @@ public class JdbcMapper {
   }
 
   /**
+   * Used by toCamelCase() method.
    * Converts an array of delimiters to a hash set of code points. Code point of space(32) is added
    * as the default value. The generated hash set provides O(1) lookup time.
    *
