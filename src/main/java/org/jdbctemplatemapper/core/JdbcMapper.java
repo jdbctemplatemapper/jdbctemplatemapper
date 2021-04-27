@@ -131,6 +131,54 @@ public class JdbcMapper {
     this.versionPropertyName = propName;
     return this;
   }
+  
+  /**
+   * Returns the object by Id. Return null if not found
+   *
+   * @param id - Id of object
+   * @param type - Class of object
+   * @return - The object of the specific type
+   */
+  public <T> T findById(Object id, Class<T> clazz) {
+    if (!(id instanceof Integer || id instanceof Long)) {
+      throw new IllegalArgumentException("id has to be type of Integer or Long");
+    }
+    String tableName = convertCamelToSnakeCase(clazz.getSimpleName());
+    String sql = "select * from " + schemaName + "." + tableName + " where id = ?";
+    RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
+    try {
+      Object obj = jdbcTemplate.queryForObject(sql, mapper, id);
+      return clazz.cast(obj);
+    } catch (EmptyResultDataAccessException e) {
+      return null;
+    }
+  }
+
+  /**
+   * Find all objects
+   *
+   * @param clazz - Type of object
+   * @return List of objects
+   */
+  public <T> List<T> findAll(Class<T> clazz) {
+    String tableName = convertCamelToSnakeCase(clazz.getSimpleName());
+    String sql = "select * from " + schemaName + "." + tableName;
+    RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
+    return jdbcTemplate.query(sql, mapper);
+  }
+
+  /**
+   * Find all objects with the order by clause passed as argument
+   *
+   * @param clazz - Type of object
+   * @return List of objects
+   */
+  public <T> List<T> findAll(Class<T> clazz, String orderByClause) {
+    String tableName = convertCamelToSnakeCase(clazz.getSimpleName());
+    String sql = "select * from " + schemaName + "." + tableName + " " + orderByClause;
+    RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
+    return jdbcTemplate.query(sql, mapper);
+  }
 
   /**
    * Inserts an object whose id in database is auto increment. Note the 'id' has to be null for the
@@ -433,54 +481,6 @@ public class JdbcMapper {
     String tableName = convertCamelToSnakeCase(clazz.getSimpleName());
     String sql = "delete from " + schemaName + "." + tableName + " where id = ?";
     return jdbcTemplate.update(sql, id);
-  }
-
-  /**
-   * Returns the object by Id. Return null if not found
-   *
-   * @param id - Id of object
-   * @param type - Class of object
-   * @return - The object of the specific type
-   */
-  public <T> T findById(Object id, Class<T> clazz) {
-    if (!(id instanceof Integer || id instanceof Long)) {
-      throw new IllegalArgumentException("id has to be type of Integer or Long");
-    }
-    String tableName = convertCamelToSnakeCase(clazz.getSimpleName());
-    String sql = "select * from " + schemaName + "." + tableName + " where id = ?";
-    RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
-    try {
-      Object obj = jdbcTemplate.queryForObject(sql, mapper, id);
-      return clazz.cast(obj);
-    } catch (EmptyResultDataAccessException e) {
-      return null;
-    }
-  }
-
-  /**
-   * Find all objects
-   *
-   * @param clazz - Type of object
-   * @return List of objects
-   */
-  public <T> List<T> findAll(Class<T> clazz) {
-    String tableName = convertCamelToSnakeCase(clazz.getSimpleName());
-    String sql = "select * from " + schemaName + "." + tableName;
-    RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
-    return jdbcTemplate.query(sql, mapper);
-  }
-
-  /**
-   * Find all objects with the order by clause passed as argument
-   *
-   * @param clazz - Type of object
-   * @return List of objects
-   */
-  public <T> List<T> findAll(Class<T> clazz, String orderByClause) {
-    String tableName = convertCamelToSnakeCase(clazz.getSimpleName());
-    String sql = "select * from " + schemaName + "." + tableName + " " + orderByClause;
-    RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
-    return jdbcTemplate.query(sql, mapper);
   }
 
   /**
