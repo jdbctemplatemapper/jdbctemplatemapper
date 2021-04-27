@@ -405,19 +405,16 @@ public class JdbcMapperLongTest {
 
     
      // query gets:
-     //  1) order toMany orderLines
+     // 1) order toMany orderLines
      // 2) order toOne customer
      // 3) orderline toOne product
 
     String sql =
         "select "
             + jdbcMapper.selectCols("order_long", "o")
-            + ","
             + jdbcMapper.selectCols("order_line_long", "ol")
-            + ","
             + jdbcMapper.selectCols("customer_long", "c")
-            + ","
-            + jdbcMapper.selectCols("product_long", "p")
+            + jdbcMapper.selectCols("product_long", "p", false)
             + " from jdbctemplatemapper.order_long o"
             + " left join order_line_long ol on o.id = ol.order_long_id"
             + " join customer_long c on o.customer_long_id = c.id"
@@ -425,8 +422,6 @@ public class JdbcMapperLongTest {
             + " where o.id in (1, 2)"
             + " order by o.id, ol.id";
 
-    
-    System.out.println(sql);
 
     Map<String, List> resultMap =
         jdbcTemplate.query(

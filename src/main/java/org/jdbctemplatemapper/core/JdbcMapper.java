@@ -865,36 +865,57 @@ public class JdbcMapper {
   }
 
   /**
-   * Generates a string which can be used in a sql select statement with all columns of the table.
+   * Generates a string which can be used in a sql select statement with the all columns of the table.
+   * 
+   * Note: the string which contains all the columns of the table will have a comma as its last character.
    *
    * <p>Example: for method call selectCols("employee", "emp") where "emp" is the alias will return:
-   * "emp.id emp_id, emp.last_name emp_last_name, emp.first_name emp_first_name" .....
+   * "emp.id emp_id, emp.last_name emp_last_name, emp.first_name emp_first_name" .....,
    *
    * @param tableName - the Table name
    * @param tableAlias - the alias being used in the sql statement for the table.
-   * @return comma separated select column string
+   * @return comma separated select column string with a comma at the end of string
    */
   public String selectCols(String tableName, String tableAlias) {
-    List<String> dbColumnNames = getDbColumnNames(tableName);
-    StringBuilder sb = new StringBuilder(" ");
-    for (String colName : dbColumnNames) {
-      sb.append(tableAlias)
-          .append(".")
-          .append(colName)
-          .append(" ")
-          .append(tableAlias)
-          .append("_")
-          .append(colName)
-          .append(",");
-    }
-    String str = sb.toString();
-    if (str != null && str.length() > 0) {
-      // remove the last comma.
-      return str.substring(0, str.length() - 1) + " ";
-    } else {
-      return null;
-    }
+    return selectCols(tableName, tableAlias, true);
   }
+  
+  /**
+   * Generates a string which can be used in a sql select statement with all the columns of the table.
+   *
+   * <p>Example: for method call selectCols("employee", "emp") where "emp" is the alias will return:
+   * "emp.id emp_id, emp.last_name emp_last_name, emp.first_name emp_first_name"
+   *
+   * @param tableName - the Table name
+   * @param tableAlias - the alias being used in the sql statement for the table.
+   * @param includeLastComma - if true a comma will be last character of string; 
+   *                           if false there will be no last comma at end of string                        
+   * @return comma separated select column string
+   */
+  
+  public String selectCols(String tableName, String tableAlias, boolean includeLastComma) {
+	    List<String> dbColumnNames = getDbColumnNames(tableName);
+	    if(isEmpty(dbColumnNames)) {
+	    	throw new RuntimeException("invalid table name: " + tableName);
+	    }
+	    StringBuilder sb = new StringBuilder(" ");
+	    for (String colName : dbColumnNames) {
+	      sb.append(tableAlias)
+	          .append(".")
+	          .append(colName)
+	          .append(" ")
+	          .append(tableAlias)
+	          .append("_")
+	          .append(colName)
+	          .append(",");
+	    }
+	    String str = sb.toString();
+	    if(!includeLastComma) {
+	    	// remove the last comma.
+	    	str = str.substring(0, str.length() - 1) + " ";
+	    }
+        return str;
+	  }
 
   /**
    * Builds sql update statement with named parameters for the object.

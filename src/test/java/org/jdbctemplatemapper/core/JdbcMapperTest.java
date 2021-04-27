@@ -757,12 +757,9 @@ public class JdbcMapperTest {
     String sql =
         "select "
             + jdbcMapper.selectCols("order", "o")
-            + ","
             + jdbcMapper.selectCols("order_line", "ol")
-            + ","
             + jdbcMapper.selectCols("customer", "c")
-            + ","
-            + jdbcMapper.selectCols("product", "p")
+            + jdbcMapper.selectCols("product", "p", false)
             + " from jdbctemplatemapper.order o"
             + " left join order_line ol on o.id = ol.order_id"
             + " left join customer c on o.customer_id = c.id"
@@ -770,6 +767,7 @@ public class JdbcMapperTest {
             + " where o.id in (1, 2, 3)"
             + " order by o.id, ol.id";
 
+    // the map key is the SelectMapper() prefix
     Map<String, List> resultMap =
         jdbcTemplate.query(
             sql,
@@ -824,12 +822,9 @@ public class JdbcMapperTest {
     String sql =
         "select "
             + jdbcMapper.selectCols("order", "o")
-            + ","
             + jdbcMapper.selectCols("order_line", "ol")
-            + ","
             + jdbcMapper.selectCols("customer", "c")
-            + ","
-            + jdbcMapper.selectCols("product", "p")
+            + jdbcMapper.selectCols("product", "p", false)
             + " from jdbctemplatemapper.order o"
             + " left join order_line ol on o.id = ol.order_id"
             + " left join customer c on o.customer_id = c.id"
