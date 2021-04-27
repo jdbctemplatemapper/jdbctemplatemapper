@@ -191,7 +191,7 @@ public class JdbcMapper {
   }
   /**
    * Inserts an object whose id in database is NOT autoincrement. In this case the object's 'id'
-   * cannot be null ie it is already assigned.
+   * has to be assigned and cannot be null. 
    *
    * <p>Also assigns createdBy, createdOn, updatedBy, updatedOn, version if these properties exist
    * for the object

@@ -56,7 +56,7 @@ public class JdbcMapperTest {
   @Test
   public void insert_withNonNullIdFailureTest() {
     Order order = new Order();
-    order.setId(1002);
+    order.setId(2002);
     order.setOrderDate(LocalDateTime.now());
     order.setCustomerId(2);
 
