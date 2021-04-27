@@ -27,9 +27,14 @@ CREATE TABLE jdbctemplatemapper.customer (
 );
 
 CREATE TABLE jdbctemplatemapper.product (
-	id serial NOT NULL,
+	id int4 NOT NULL,
 	name varchar(100) NOT NULL,
 	cost numeric(10,3) NULL,
+	created_on timestamp NULL,
+	created_by varchar(100) NULL,
+	updated_on timestamp NULL,
+	updated_by varchar(100) NULL,
+	version int4 NULL,
 	CONSTRAINT product_pk PRIMARY KEY (id)
 );
 

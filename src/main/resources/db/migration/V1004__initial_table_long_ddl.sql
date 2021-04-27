@@ -28,8 +28,13 @@ CREATE TABLE jdbctemplatemapper.customer_long (
 );
 
 CREATE TABLE jdbctemplatemapper.product_long (
-	id bigserial NOT NULL,
+	id bigint NOT NULL,
 	name varchar(100) NOT NULL,
 	cost numeric(10,3) NULL,
+	created_on timestamp NULL,
+	created_by varchar(100) NULL,
+	updated_on timestamp NULL,
+	updated_by varchar(100) NULL,
+	version int4 NULL,
 	CONSTRAINT product_long_pk PRIMARY KEY (id)
 );

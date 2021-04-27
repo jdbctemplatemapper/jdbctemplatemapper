@@ -133,19 +133,81 @@ public class JdbcMapper {
   }
 
   /**
-   * Inserts an object. For objects which have auto increment database id, after the insert the
-   * object will get assigned the id. Also assigns createdBy, createdOn, updatedBy, updatedOn values
-   * if these properties exist for the object
-   * 
-   * For tables with autoincrement ids the id property of object has to be null.
-   * For tables with normal ids (ie NON autoincrement) the id property of objects has to be NOT null.
+   * Inserts an object whose id in database is auto increment. Note the 'id' has to be null for the
+   * object to be inserted. Once inserted the object will have the id assigned.
+   *
+   * <p>Also assigns createdBy, createdOn, updatedBy, updatedOn, version if these properties exist
+   * for the object
    *
    * @param pojo - The object to be saved
    */
   public void insert(Object pojo) {
+    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
+    Object idValue = bw.getPropertyValue("id");
+    if (idValue != null) {
+      throw new RuntimeException(
+          "For method insert() the objects 'id' property has to be null since this insert is for an object whose id is autoincrement in database.");
+    }
+
     String tableName = convertCamelToSnakeCase(pojo.getClass().getSimpleName());
     LocalDateTime now = LocalDateTime.now();
+
+    if (createdOnPropertyName != null && bw.isReadableProperty(createdOnPropertyName)) {
+      bw.setPropertyValue(createdOnPropertyName, now);
+    }
+
+    if (createdByPropertyName != null
+        && recordOperatorResolver != null
+        && bw.isReadableProperty(createdByPropertyName)) {
+      bw.setPropertyValue(createdByPropertyName, recordOperatorResolver.getRecordOperator());
+    }
+    if (updatedOnPropertyName != null && bw.isReadableProperty(updatedOnPropertyName)) {
+      bw.setPropertyValue(updatedOnPropertyName, now);
+    }
+    if (updatedByPropertyName != null
+        && recordOperatorResolver != null
+        && bw.isReadableProperty(updatedByPropertyName)) {
+      bw.setPropertyValue(updatedByPropertyName, recordOperatorResolver.getRecordOperator());
+    }
+    if (versionPropertyName != null && bw.isReadableProperty(versionPropertyName)) {
+      bw.setPropertyValue(versionPropertyName, 1);
+    }
+
+    Map<String, Object> attributes = convertToDbColumnAttributes(pojo);
+
+    SimpleJdbcInsert jdbcInsert = simpleJdbcInsertCache.get(tableName);
+    if (jdbcInsert == null) {
+      jdbcInsert =
+          new SimpleJdbcInsert(jdbcTemplate)
+              .withSchemaName(schemaName)
+              .withTableName(tableName)
+              .usingGeneratedKeyColumns("id");
+      simpleJdbcInsertCache.put(tableName, jdbcInsert);
+    }
+
+    // object whose id in database is auto increment
+    Number idNumber = jdbcInsert.executeAndReturnKey(attributes);
+    bw.setPropertyValue("id", idNumber);
+  }
+  /**
+   * Inserts an object whose id in database is NOT autoincrement. In this case the object's 'id'
+   * cannot be null ie it is already assigned.
+   *
+   * <p>Also assigns createdBy, createdOn, updatedBy, updatedOn, version if these properties exist
+   * for the object
+   *
+   * @param pojo - The object to be saved
+   */
+  public void insertWithId(Object pojo) {
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
+    Object idValue = bw.getPropertyValue("id");
+    if (idValue == null) {
+      throw new RuntimeException(
+          "For method insertById() the objects 'id' property cannot be null.");
+    }
+
+    String tableName = convertCamelToSnakeCase(pojo.getClass().getSimpleName());
+    LocalDateTime now = LocalDateTime.now();
 
     if (createdOnPropertyName != null && bw.isReadableProperty(createdOnPropertyName)) {
       bw.setPropertyValue(createdOnPropertyName, now);
@@ -167,46 +229,16 @@ public class JdbcMapper {
       bw.setPropertyValue(versionPropertyName, 1);
     }
 
-    Map<String, Object> attributes = convertToDbColumnAttributes(pojo);
-    Object idValue = bw.getPropertyValue("id");
-
     SimpleJdbcInsert jdbcInsert = simpleJdbcInsertCache.get(tableName);
     if (jdbcInsert == null) {
-      if (idValue == null) {
-        // object whose id in database is auto increment
-        if (schemaName != null) {
-          jdbcInsert =
-              new SimpleJdbcInsert(jdbcTemplate)
-                  .withSchemaName(schemaName)
-                  .withTableName(tableName)
-                  .usingGeneratedKeyColumns("id");
-        } else {
-          new SimpleJdbcInsert(jdbcTemplate)
-              .withTableName(tableName)
-              .usingGeneratedKeyColumns("id");
-        }
-      } else {
-        // object has already assigned id; ie NOT auto increment in database
-        if (schemaName != null) {
-          jdbcInsert =
-              new SimpleJdbcInsert(jdbcTemplate)
-                  .withSchemaName(schemaName)
-                  .withTableName(tableName);
-        } else {
-          jdbcInsert = new SimpleJdbcInsert(jdbcTemplate).withTableName(tableName);
-        }
-      }
+      jdbcInsert =
+          new SimpleJdbcInsert(jdbcTemplate).withSchemaName(schemaName).withTableName(tableName);
+
       simpleJdbcInsertCache.put(tableName, jdbcInsert);
     }
 
-    if (idValue == null) {
-      // object whose id in database is auto increment
-      Number idNumber = jdbcInsert.executeAndReturnKey(attributes);
-      bw.setPropertyValue("id", idNumber);
-    } else {
-      // object with id that is NOT auto increment in database
-      jdbcInsert.execute(attributes);
-    }
+    Map<String, Object> attributes = convertToDbColumnAttributes(pojo);
+    jdbcInsert.execute(attributes);
   }
 
   /**
@@ -269,8 +301,8 @@ public class JdbcMapper {
   }
 
   /**
-   * Updates the propertyNames (passed in as args) of the object. Will also set updatedBy and updatedOn values if these
-   * properties exist for the object
+   * Updates the propertyNames (passed in as args) of the object. Will also set updatedBy and
+   * updatedOn values if these properties exist for the object
    *
    * @param pojo - object to be updated
    * @param propertyNames - array of property names that should be updated
@@ -424,7 +456,7 @@ public class JdbcMapper {
       return null;
     }
   }
-  
+
   /**
    * Find all objects
    *
@@ -450,7 +482,7 @@ public class JdbcMapper {
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
     return jdbcTemplate.query(sql, mapper);
   }
-  
+
   /**
    * Get the next sequence number for the sequence name
    *
@@ -465,16 +497,17 @@ public class JdbcMapper {
   /**
    * Populates the toOne relationship. Issues an sql query to get the relationship.
    *
-   * The join property to tie the mainObj to the relatedObject is figured out from the relationshipClazz name 
-   * For example if the relationShipClass is 'Project' the join property will be 'projectId' of the mainObj. 
-   * Make sure the join property of the argument mainObj is assigned so it can be tied to its corresponding
-   * relationship object.
+   * <p>The join property to tie the mainObj to the relatedObject is figured out from the
+   * relationshipClazz name For example if the relationShipClass is 'Project' the join property will
+   * be 'projectId' of the mainObj. Make sure the join property of the argument mainObj is assigned
+   * so it can be tied to its corresponding relationship object.
    *
    * @param mainObj - the main object
    * @param relationshipPropertyName - The propertyName of the toOne relationship (on mainOjb)
    * @param relationShipClazz - The relationship class
    */
-  public <T, U> void toOneForObject(T mainObj, String relationshipPropertyName, Class<U> relationshipClazz) {
+  public <T, U> void toOneForObject(
+      T mainObj, String relationshipPropertyName, Class<U> relationshipClazz) {
     List<T> mainObjList = new ArrayList<>();
     if (mainObj != null) {
       mainObjList.add(mainObj);
@@ -483,13 +516,14 @@ public class JdbcMapper {
   }
 
   /**
-   * Populates the toOne relationship for all the main objects in the argument list. Issues an sql query using
-   * the 'IN' clause to get all the relationship objects corresponding to the main object list.
+   * Populates the toOne relationship for all the main objects in the argument list. Issues an sql
+   * query using the 'IN' clause to get all the relationship objects corresponding to the main
+   * object list.
    *
-   * The join property to tie the mainObj to the relatedObject is figured out from the relationshipClazz name 
-   * For example if the relationShipClass is 'Project' the join property will be 'projectId' of the mainObj. 
-   * Make sure the join property of the argument mainObj is assigned so it can be tied to its corresponding
-   * relationship object.
+   * <p>The join property to tie the mainObj to the relatedObject is figured out from the
+   * relationshipClazz name For example if the relationShipClass is 'Project' the join property will
+   * be 'projectId' of the mainObj. Make sure the join property of the argument mainObj is assigned
+   * so it can be tied to its corresponding relationship object.
    *
    * @param mainObjList - list of main objects
    * @param relationshipPropertyName - The propertyName of the toOne relationship
@@ -529,12 +563,12 @@ public class JdbcMapper {
   /**
    * Populates a single main object and its toOne relationship object with the data from the
    * resultSet using their respective SqlMappers.
-   * 
-   * The jdbc ResultSet argument object should have the join property assigned so the code
-   * can tie the the main object and relationship object together.
-   * 
-   * The join property name on the main object is figured out from the mapper class of
-   * the related object.
+   *
+   * <p>The jdbc ResultSet argument object should have the join property assigned so the code can
+   * tie the the main object and relationship object together.
+   *
+   * <p>The join property name on the main object is figured out from the mapper class of the
+   * related object.
    *
    * @param rs - The jdbc ResultSet
    * @param mainObjMapper - The main object mapper.
@@ -548,27 +582,27 @@ public class JdbcMapper {
       SelectMapper<T> mainObjMapper,
       String relationshipPropertyName,
       SelectMapper<U> relatedObjMapper) {
-    List<T> list = toOneMapperForList(rs, mainObjMapper, relationshipPropertyName, relatedObjMapper);
+    List<T> list =
+        toOneMapperForList(rs, mainObjMapper, relationshipPropertyName, relatedObjMapper);
     return isNotEmpty(list) ? list.get(0) : null;
   }
-  
+
   /**
-   * Populates the main object list with their corresponding toOne relationship object from the
-   * jdbc ResultSet using their respective SqlMappers.
-   * 
-   * The jdbc ResultSet argument object should have the join property assigned so the code
-   * can tie the the main object and relationship object together.
-   * 
-   * The join property name on the main object is figured out from the mapper class of
-   * the related object.
-   * 
+   * Populates the main object list with their corresponding toOne relationship object from the jdbc
+   * ResultSet using their respective SqlMappers.
+   *
+   * <p>The jdbc ResultSet argument object should have the join property assigned so the code can
+   * tie the the main object and relationship object together.
+   *
+   * <p>The join property name on the main object is figured out from the mapper class of the
+   * related object.
+   *
    * @param rs The jdbc ResultSet
    * @param mainObjMapper
    * @param relationshipPropertyName
    * @param relatedObjMapper
    * @return List of mainObj with its toOne property assigned
    */
-
   @SuppressWarnings("all")
   public <T, U> List<T> toOneMapperForList(
       ResultSet rs,
@@ -590,9 +624,9 @@ public class JdbcMapper {
   }
 
   /**
-   * Merges relatedObjeList to the mainObj list by assigning the relationshipPropertyName on mainObj 
+   * Merges relatedObjeList to the mainObj list by assigning the relationshipPropertyName on mainObj
    * using the join property name.
-   * 
+   *
    * @param mainObjList
    * @param relatedObjList
    * @param relationshipPropertyName
@@ -701,12 +735,12 @@ public class JdbcMapper {
   /**
    * Populates a single main object and its collection PropertyName object with the data from the
    * resultSet using their respective SqlMappers.
-   * 
-   * The jdbc ResultSet argument object should have the join property assigned so the code
-   * can tie the the main objects and its related objects together.
-   * 
-   * The join property name on the main object is figured out from the mapper class of
-   * the related object.
+   *
+   * <p>The jdbc ResultSet argument object should have the join property assigned so the code can
+   * tie the the main objects and its related objects together.
+   *
+   * <p>The join property name on the main object is figured out from the mapper class of the
+   * related object.
    *
    * @param rs - The jdbc ResultSet
    * @param mainObjMapper - The main object mapper.
@@ -727,20 +761,19 @@ public class JdbcMapper {
   /**
    * Populates the main object list with their corresponding toMany relationship object from the
    * jdbc ResultSet using their respective SqlMappers.
-   * 
-   * The jdbc ResultSet argument object should have the join property assigned so the code
-   * can tie the the main object and related object together.
-   * 
-   * The join property name on the main object is figured out from the mapper class of
-   * the related object.
-   * 
+   *
+   * <p>The jdbc ResultSet argument object should have the join property assigned so the code can
+   * tie the the main object and related object together.
+   *
+   * <p>The join property name on the main object is figured out from the mapper class of the
+   * related object.
+   *
    * @param rs The jdbc ResultSet
    * @param mainObjMapper
    * @param relationshipPropertyName
    * @param relatedObjMapper
    * @return List of mainObj with its collectionPropertyName assigned
    */
-  
   @SuppressWarnings("all")
   public <T, U> List<T> toManyMapperForList(
       ResultSet rs,
@@ -834,10 +867,9 @@ public class JdbcMapper {
 
   /**
    * Generates a string which can be used in a sql select statement with all columns of the table.
-   * 
-   * Example: for method call selectCols("employee", "emp") where "emp" is the alias will return:
-   *  "emp.id emp_id, emp.last_name emp_last_name, emp.first_name emp_first_name" .....
-   * 
+   *
+   * <p>Example: for method call selectCols("employee", "emp") where "emp" is the alias will return:
+   * "emp.id emp_id, emp.last_name emp_last_name, emp.first_name emp_first_name" .....
    *
    * @param tableName - the Table name
    * @param tableAlias - the alias being used in the sql statement for the table.
@@ -1053,6 +1085,7 @@ public class JdbcMapper {
 
   /**
    * Get property names of an object. The property names are cached by the object class name
+   *
    * @param pojo
    * @return List of property names.
    */
@@ -1078,7 +1111,7 @@ public class JdbcMapper {
 
   /**
    * Gets the property value of an object using Springs BeanWrapper
-   * 
+   *
    * @param obj
    * @param propertyName
    * @return The property value
@@ -1089,8 +1122,8 @@ public class JdbcMapper {
   }
 
   /**
-   * Converts camel case to snake case. Ex: userLastName gets converted to user_last_name.
-   * The conversion info is cached.
+   * Converts camel case to snake case. Ex: userLastName gets converted to user_last_name. The
+   * conversion info is cached.
    *
    * @param str - camel case String
    * @return the snake case string
@@ -1108,13 +1141,12 @@ public class JdbcMapper {
   }
 
   /**
-   * Converts sname case to camel case. Ex: user_last_name gets converted to userLastName.
-   * The conversion info is cached.
+   * Converts sname case to camel case. Ex: user_last_name gets converted to userLastName. The
+   * conversion info is cached.
    *
    * @param str - snake case string
    * @return the camel case string
    */
-  
   private String convertSnakeToCamelCase(String str) {
     String camelCase = snakeToCamelCache.get(str);
     if (camelCase == null) {
@@ -1125,8 +1157,9 @@ public class JdbcMapper {
   }
 
   /**
-   * splits the list into multiple lists of chunk size. Used to split the sql IN clauses since
-   * some databases have a  limitation of 1024. We set the chuck size to IN_CLAUSE_CHUNK_SIZE
+   * splits the list into multiple lists of chunk size. Used to split the sql IN clauses since some
+   * databases have a limitation of 1024. We set the chuck size to IN_CLAUSE_CHUNK_SIZE
+   *
    * @param list
    * @param chunkSize
    * @return
@@ -1253,9 +1286,9 @@ public class JdbcMapper {
   }
 
   /**
-   * Used by toCamelCase() method.
-   * Converts an array of delimiters to a hash set of code points. Code point of space(32) is added
-   * as the default value. The generated hash set provides O(1) lookup time.
+   * Used by toCamelCase() method. Converts an array of delimiters to a hash set of code points.
+   * Code point of space(32) is added as the default value. The generated hash set provides O(1)
+   * lookup time.
    *
    * @param delimiters set of characters to determine capitalization, null means whitespace
    * @return Set<Integer>

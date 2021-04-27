@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import org.jdbctemplatemapper.model.CustomerLong;
 import org.jdbctemplatemapper.model.OrderLineLong;
 import org.jdbctemplatemapper.model.OrderLong;
+import org.jdbctemplatemapper.model.Product;
 import org.jdbctemplatemapper.model.ProductLong;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,6 +51,28 @@ public class JdbcMapperLongTest {
     assertEquals(1, order.getVersion());
     assertEquals("tester", order.getCreatedBy());
     assertEquals("tester", order.getUpdatedBy());
+  }
+  
+  @Test
+  public void insertWithId_Test() {
+    ProductLong product = new ProductLong();
+    product.setId(1000000000001L);
+    product.setName("hat");
+    product.setCost(12.25);
+
+    jdbcMapper.insertWithId(product);
+
+    product = jdbcMapper.findById(1000000000001L, ProductLong.class);
+    assertNotNull(product.getId());
+    assertEquals("hat", product.getName());
+    assertEquals(12.25, product.getCost());
+    assertNotNull(product.getCreatedBy());
+    assertNotNull(product.getCreatedOn());
+    assertNotNull(product.getUpdatedBy());
+    assertNotNull(product.getUpdatedOn());
+    assertEquals(1, product.getVersion());
+    assertEquals("tester", product.getCreatedBy());
+    assertEquals("tester", product.getUpdatedBy());
   }
 
   @Test
@@ -380,13 +403,12 @@ public class JdbcMapperLongTest {
   @SuppressWarnings("all")
   public void multipleModelMapper_LongTest(){
 
-    /*
-     * query gets:
-     * 1) order toMany orderLines
-     * 2) order toOne customer
-     * 3) orderline toOne product
-     *
-     */
+    
+     // query gets:
+     //  1) order toMany orderLines
+     // 2) order toOne customer
+     // 3) orderline toOne product
+
     String sql =
         "select "
             + jdbcMapper.selectCols("order_long", "o")
@@ -400,8 +422,11 @@ public class JdbcMapperLongTest {
             + " left join order_line_long ol on o.id = ol.order_long_id"
             + " join customer_long c on o.customer_long_id = c.id"
             + " join product_long p on ol.product_long_id = p.id"
-            + " where o.id in (1, 2)";
+            + " where o.id in (1, 2)"
+            + " order by o.id, ol.id";
 
+    
+    System.out.println(sql);
 
     Map<String, List> resultMap =
         jdbcTemplate.query(
