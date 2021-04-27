@@ -233,13 +233,12 @@ public class JdbcMapper {
       simpleJdbcInsertCache.put(tableName, jdbcInsert);
     }
 
-    // object whose id in database is auto increment
     Number idNumber = jdbcInsert.executeAndReturnKey(attributes);
-    bw.setPropertyValue("id", idNumber);
+    bw.setPropertyValue("id", idNumber); // set auto increment id value on object
   }
   /**
-   * Inserts an object whose id in database is NOT autoincrement. In this case the object's 'id'
-   * has to be assigned and cannot be null. 
+   * Inserts an object whose id in database is NOT auto increment. In this case the object's 'id'
+   * has to be assigned up front and cannot be null. 
    *
    * <p>Also assigns createdBy, createdOn, updatedBy, updatedOn, version if these properties exist
    * for the object
