@@ -641,7 +641,7 @@ public class JdbcMapper {
   }
 
   /**
-   * Merges relatedObjeList to the mainObj list by assigning the relationshipPropertyName on mainObj
+   * Merges relatedObjecList to the mainObj list by assigning the relationshipPropertyName on mainObj
    * using the join property name.
    *
    * @param mainObjList
@@ -1047,7 +1047,8 @@ public class JdbcMapper {
    * object value.
    *
    * @param pojo - The object to convert
-   * @return A map with keys that are in snake case to match database column names
+   * @return A map with keys that are in snake case to match database column names 
+   *         and values corresponding to the object property
    */
   private Map<String, Object> convertToDbColumnAttributes(Object pojo) {
     Map<String, Object> camelCaseAttrs = convertObjectToMap(pojo);
