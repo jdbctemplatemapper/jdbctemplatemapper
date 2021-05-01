@@ -853,4 +853,13 @@ public class JdbcMapperTest {
     assertEquals(0, customers.size());
     assertEquals(0, products.size());
   }
+
+  @Test
+  public void selectCol_InvalidTableNameFailureTest() {
+    Assertions.assertThrows(
+        RuntimeException.class,
+        () -> {
+          jdbcMapper.selectCols("aaaaaaaaa", "a");
+        });
+  }
 }

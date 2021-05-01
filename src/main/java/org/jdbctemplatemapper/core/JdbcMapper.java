@@ -895,9 +895,6 @@ public class JdbcMapper {
   
   public String selectCols(String tableName, String tableAlias, boolean includeLastComma) {
 	    List<String> dbColumnNames = getDbColumnNames(tableName);
-	    if(isEmpty(dbColumnNames)) {
-	    	throw new RuntimeException("invalid table name: " + tableName);
-	    }
 	    StringBuilder sb = new StringBuilder(" ");
 	    for (String colName : dbColumnNames) {
 	      sb.append(tableAlias)
@@ -1024,8 +1021,10 @@ public class JdbcMapper {
   }
 
   /**
-   * Converts an object to a map with key as database column names. ie the camel case property names
-   * are converted to snake case. For example 'userLastName' will get converted to 'user_last_name'
+   * Converts an object to a map with key as database column names and assigned corresponding object value. 
+   * Camel case property names are converted to snake case. 
+   * For example property name 'userLastName' will get converted to map key 'user_last_name' and assigned
+   * the corresponding object value.
    *
    * @param pojo - The object to convert
    * @return A map with keys that are in snake case to match database column names
@@ -1042,15 +1041,16 @@ public class JdbcMapper {
   }
 
   /**
-   * Converts an object to a Map
+   * Converts an object to a Map. The map key will be object property name and value with corresponding 
+   * object property value.
    *
    * @param pojo - The object to be converted.
    * @return Map with key: property name, value: object value
    */
   private Map<String, Object> convertObjectToMap(Object pojo) {
     Map<String, Object> camelCaseAttrs = new HashMap<>();
-    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
     List<String> propertyNames = getPropertyNames(pojo);
+    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
     for (String propName : propertyNames) {
       Object propValue = bw.getPropertyValue(propName);
       camelCaseAttrs.put(propName, propValue);
@@ -1066,7 +1066,7 @@ public class JdbcMapper {
    */
   private List<String> getDbColumnNames(String table) {
     List<String> columns = tableColumnNamesCache.get(table);
-    if (columns == null) {
+    if (isEmpty(columns)) {
       columns = new ArrayList<>();
       try {
         DatabaseMetaData metadata = jdbcTemplate.getDataSource().getConnection().getMetaData();
@@ -1074,6 +1074,9 @@ public class JdbcMapper {
         while (resultSet.next()) {
           columns.add(resultSet.getString("COLUMN_NAME"));
         }
+	    if(isEmpty(columns)) {
+	    	throw new RuntimeException("Invalid table name: " + table);
+	    }
         tableColumnNamesCache.put(table, columns);
       } catch (Exception e) {
         throw new RuntimeException(e);
@@ -1153,7 +1156,6 @@ public class JdbcMapper {
     if (snakeCase == null) {
       if (str != null) {
         snakeCase = TO_SNAKE_CASE_PATTERN.matcher(str).replaceAll("$1_$2").toLowerCase();
-        // snakeCase = RegExUtils.replaceAll(str, TO_SNAKE_CASE_PATTERN, "$1_$2").toLowerCase();
         camelToSnakeCache.put(str, snakeCase);
       }
     }
@@ -1177,12 +1179,12 @@ public class JdbcMapper {
   }
 
   /**
-   * splits the list into multiple lists of chunk size. Used to split the sql IN clauses since some
+   * Splits the list into multiple lists of chunk size. Used to split the sql IN clauses since some
    * databases have a limitation of 1024. We set the chuck size to IN_CLAUSE_CHUNK_SIZE
    *
    * @param list
    * @param chunkSize
-   * @return
+   * @return Collection of lists broken down by chunkSize
    */
   private Collection<List<Number>> chunkList(List<Number> list, Integer chunkSize) {
     AtomicInteger counter = new AtomicInteger();
@@ -1193,6 +1195,12 @@ public class JdbcMapper {
     return result;
   }
 
+  /**
+   * Get list with unique objects by object.id
+   * 
+   * @param list
+   * @return List of unique objects by id
+   */
   private List<Object> uniqueByIdList(List<Object> list) {
     if (isNotEmpty(list)) {
       Map<Number, Object> idToObjectMap = new LinkedHashMap<>();
