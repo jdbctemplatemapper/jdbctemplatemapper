@@ -85,6 +85,15 @@ public class JdbcMapperTest {
   }
 
   @Test
+  public void insert_nullObjectFailureTest() {
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          jdbcMapper.insert(null);
+        });
+  }
+
+  @Test
   public void insertWithId_Test() {
     Product product = new Product();
     product.setId(1001);
@@ -119,6 +128,15 @@ public class JdbcMapperTest {
   }
 
   @Test
+  public void insertWithId_nullObjectFailureTest() {
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          jdbcMapper.insertWithId(null);
+        });
+  }
+
+  @Test
   public void update_Test() {
     Order order = jdbcMapper.findById(1, Order.class);
     LocalDateTime prevUpdatedOn = order.getUpdatedOn();
@@ -142,6 +160,26 @@ public class JdbcMapperTest {
 
     Customer customer1 = jdbcMapper.findById(4, Customer.class); // requery
     assertEquals("xyz", customer1.getFirstName());
+  }
+
+  @Test
+  public void update_throwsOptimisticLockingExceptionTest() {
+    Assertions.assertThrows(
+        OptimisticLockingException.class,
+        () -> {
+          Order order = jdbcMapper.findById(2, Order.class);
+          order.setVersion(order.getVersion() - 1);
+          jdbcMapper.update(order);
+        });
+  }
+
+  @Test
+  public void update_nullObjectFailureTest() {
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          jdbcMapper.update(null);
+        });
   }
 
   @Test
@@ -184,13 +222,11 @@ public class JdbcMapperTest {
   }
 
   @Test
-  public void update_throwsOptimisticLockingExceptionTest() {
+  public void update_byPropertyNullObjectFailureTest() {
     Assertions.assertThrows(
-        OptimisticLockingException.class,
+        IllegalArgumentException.class,
         () -> {
-          Order order = jdbcMapper.findById(2, Order.class);
-          order.setVersion(order.getVersion() - 1);
-          jdbcMapper.update(order);
+          jdbcMapper.update(null, "abc");
         });
   }
 
@@ -254,6 +290,15 @@ public class JdbcMapperTest {
   }
 
   @Test
+  public void delete_nullObjectFailureTest() {
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          jdbcMapper.delete(null);
+        });
+  }
+
+  @Test
   public void deleteById_Test() {
     int cnt = jdbcMapper.deleteById(5, Product.class);
 
@@ -262,6 +307,15 @@ public class JdbcMapperTest {
     Product product1 = jdbcMapper.findById(5, Product.class);
 
     assertNull(product1);
+  }
+
+  @Test
+  public void deleteById_nullObjectFailureTest() {
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          jdbcMapper.deleteById(null, Product.class);
+        });
   }
 
   @Test

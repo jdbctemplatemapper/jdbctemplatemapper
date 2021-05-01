@@ -131,7 +131,7 @@ public class JdbcMapper {
     this.versionPropertyName = propName;
     return this;
   }
-  
+
   /**
    * Returns the object by Id. Return null if not found
    *
@@ -190,6 +190,9 @@ public class JdbcMapper {
    * @param pojo - The object to be saved
    */
   public void insert(Object pojo) {
+    if (pojo == null) {
+      throw new IllegalArgumentException("Object cannot be null");
+    }
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
     Object idValue = bw.getPropertyValue("id");
     if (idValue != null) {
@@ -238,7 +241,7 @@ public class JdbcMapper {
   }
   /**
    * Inserts an object whose id in database is NOT auto increment. In this case the object's 'id'
-   * has to be assigned up front and cannot be null. 
+   * has to be assigned up front and cannot be null.
    *
    * <p>Also assigns createdBy, createdOn, updatedBy, updatedOn, version if these properties exist
    * for the object
@@ -246,6 +249,9 @@ public class JdbcMapper {
    * @param pojo - The object to be saved
    */
   public void insertWithId(Object pojo) {
+    if (pojo == null) {
+      throw new IllegalArgumentException("Object cannot be null");
+    }
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
     Object idValue = bw.getPropertyValue("id");
     if (idValue == null) {
@@ -297,6 +303,9 @@ public class JdbcMapper {
    * @return 0 if no records were updated
    */
   public Integer update(Object pojo) {
+    if (pojo == null) {
+      throw new IllegalArgumentException("Object cannot be null");
+    }
     String tableName = convertCamelToSnakeCase(pojo.getClass().getSimpleName());
     String updateSql = updateSqlCache.get(tableName);
     if (updateSql == null) {
@@ -356,6 +365,9 @@ public class JdbcMapper {
    * @return 0 if no records were updated
    */
   public Integer update(Object pojo, String... propertyNames) {
+    if (pojo == null) {
+      throw new IllegalArgumentException("Object cannot be null");
+    }
     String tableName = convertCamelToSnakeCase(pojo.getClass().getSimpleName());
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
     // cachekey ex: className-propertyName1-propertyName2
@@ -462,6 +474,9 @@ public class JdbcMapper {
    * @return 0 if no records were deleted
    */
   public Integer delete(Object pojo) {
+    if (pojo == null) {
+      throw new IllegalArgumentException("Object cannot be null");
+    }
     String tableName = convertCamelToSnakeCase(pojo.getClass().getSimpleName());
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
     String sql = "delete from " + schemaName + "." + tableName + " where id = ?";
@@ -477,6 +492,9 @@ public class JdbcMapper {
    * @return 0 if no records were deleted
    */
   public <T> Integer deleteById(Object id, Class<T> clazz) {
+    if (!(id instanceof Integer || id instanceof Long)) {
+      throw new IllegalArgumentException("id has to be type of Integer or Long");
+    }
     String tableName = convertCamelToSnakeCase(clazz.getSimpleName());
     String sql = "delete from " + schemaName + "." + tableName + " where id = ?";
     return jdbcTemplate.update(sql, id);
@@ -865,9 +883,11 @@ public class JdbcMapper {
   }
 
   /**
-   * Generates a string which can be used in a sql select statement with the all columns of the table.
-   * 
-   * Note: the string which contains all the columns of the table will have a comma as its last character.
+   * Generates a string which can be used in a sql select statement with the all columns of the
+   * table.
+   *
+   * <p>Note: the string which contains all the columns of the table will have a comma as its last
+   * character.
    *
    * <p>Example: for method call selectCols("employee", "emp") where "emp" is the alias will return:
    * "emp.id emp_id, emp.last_name emp_last_name, emp.first_name emp_first_name" .....,
@@ -879,40 +899,40 @@ public class JdbcMapper {
   public String selectCols(String tableName, String tableAlias) {
     return selectCols(tableName, tableAlias, true);
   }
-  
+
   /**
-   * Generates a string which can be used in a sql select statement with all the columns of the table.
+   * Generates a string which can be used in a sql select statement with all the columns of the
+   * table.
    *
    * <p>Example: for method call selectCols("employee", "emp") where "emp" is the alias will return:
    * "emp.id emp_id, emp.last_name emp_last_name, emp.first_name emp_first_name"
    *
    * @param tableName - the Table name
    * @param tableAlias - the alias being used in the sql statement for the table.
-   * @param includeLastComma - if true a comma will be last character of string; 
-   *                           if false there will be no last comma at end of string                        
+   * @param includeLastComma - if true a comma will be last character of string; if false there will
+   *     be no last comma at end of string
    * @return comma separated select column string
    */
-  
   public String selectCols(String tableName, String tableAlias, boolean includeLastComma) {
-	    List<String> dbColumnNames = getDbColumnNames(tableName);
-	    StringBuilder sb = new StringBuilder(" ");
-	    for (String colName : dbColumnNames) {
-	      sb.append(tableAlias)
-	          .append(".")
-	          .append(colName)
-	          .append(" ")
-	          .append(tableAlias)
-	          .append("_")
-	          .append(colName)
-	          .append(",");
-	    }
-	    String str = sb.toString();
-	    if(!includeLastComma) {
-	    	// remove the last comma.
-	    	str = str.substring(0, str.length() - 1) + " ";
-	    }
-        return str;
-	  }
+    List<String> dbColumnNames = getDbColumnNames(tableName);
+    StringBuilder sb = new StringBuilder(" ");
+    for (String colName : dbColumnNames) {
+      sb.append(tableAlias)
+          .append(".")
+          .append(colName)
+          .append(" ")
+          .append(tableAlias)
+          .append("_")
+          .append(colName)
+          .append(",");
+    }
+    String str = sb.toString();
+    if (!includeLastComma) {
+      // remove the last comma.
+      str = str.substring(0, str.length() - 1) + " ";
+    }
+    return str;
+  }
 
   /**
    * Builds sql update statement with named parameters for the object.
@@ -1021,10 +1041,10 @@ public class JdbcMapper {
   }
 
   /**
-   * Converts an object to a map with key as database column names and assigned corresponding object value. 
-   * Camel case property names are converted to snake case. 
-   * For example property name 'userLastName' will get converted to map key 'user_last_name' and assigned
-   * the corresponding object value.
+   * Converts an object to a map with key as database column names and assigned corresponding object
+   * value. Camel case property names are converted to snake case. For example property name
+   * 'userLastName' will get converted to map key 'user_last_name' and assigned the corresponding
+   * object value.
    *
    * @param pojo - The object to convert
    * @return A map with keys that are in snake case to match database column names
@@ -1041,8 +1061,8 @@ public class JdbcMapper {
   }
 
   /**
-   * Converts an object to a Map. The map key will be object property name and value with corresponding 
-   * object property value.
+   * Converts an object to a Map. The map key will be object property name and value with
+   * corresponding object property value.
    *
    * @param pojo - The object to be converted.
    * @return Map with key: property name, value: object value
@@ -1074,9 +1094,9 @@ public class JdbcMapper {
         while (resultSet.next()) {
           columns.add(resultSet.getString("COLUMN_NAME"));
         }
-	    if(isEmpty(columns)) {
-	    	throw new RuntimeException("Invalid table name: " + table);
-	    }
+        if (isEmpty(columns)) {
+          throw new RuntimeException("Invalid table name: " + table);
+        }
         tableColumnNamesCache.put(table, columns);
       } catch (Exception e) {
         throw new RuntimeException(e);
@@ -1197,7 +1217,7 @@ public class JdbcMapper {
 
   /**
    * Get list with unique objects by object.id
-   * 
+   *
    * @param list
    * @return List of unique objects by id
    */
