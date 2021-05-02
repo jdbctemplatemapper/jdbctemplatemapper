@@ -719,9 +719,7 @@ public class JdbcMapper {
           throw new RuntimeException("id property in mainObjList cannot be null");
         }
       }
-
       List<Number> uniqueIds = new ArrayList<>(allIds);
-
       String joinColumnName =
           convertCamelToSnakeCase(mainObjList.get(0).getClass().getSimpleName()) + "_id";
       List<U> manySideList = new ArrayList<>();
