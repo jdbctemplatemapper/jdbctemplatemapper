@@ -1184,7 +1184,7 @@ public class JdbcMapper {
   }
 
   /**
-   * Converts sname case to camel case. Ex: user_last_name gets converted to userLastName. The
+   * Converts snake case to camel case. Ex: user_last_name gets converted to userLastName. The
    * conversion info is cached.
    *
    * @param str - snake case string
