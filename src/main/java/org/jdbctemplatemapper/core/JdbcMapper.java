@@ -665,7 +665,6 @@ public class JdbcMapper {
               .collect(Collectors.toMap(e -> (Number) getSimpleProperty(e, "id"), obj -> obj));
 
       for (T mainObj : mainObjList) {
-
         Number joinPropertyValue = (Number) getSimpleProperty(mainObj, joinPropertyName);
         if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {
           BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
