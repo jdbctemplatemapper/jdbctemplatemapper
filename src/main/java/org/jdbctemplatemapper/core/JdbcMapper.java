@@ -92,18 +92,21 @@ public class JdbcMapper {
   private Map<String, String> camelToSnakeCache = new ConcurrentHashMap<>();
 
   // Constructor
-  public JdbcMapper(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+  public JdbcMapper(String schemaName, NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+    if (isEmpty(schemaName)) {
+      throw new IllegalArgumentException("schemaName cannot be null");
+    }
+    if (namedParameterJdbcTemplate == null) {
+      throw new IllegalArgumentException("namedParameterJdbcTemplate cannot be null");
+    }
+    
+    this.schemaName = schemaName;
     this.npJdbcTemplate = namedParameterJdbcTemplate;
     this.jdbcTemplate = namedParameterJdbcTemplate.getJdbcTemplate();
   }
 
   public JdbcMapper withRecordOperatorResolver(IRecordOperatorResolver recordOperatorResolver) {
     this.recordOperatorResolver = recordOperatorResolver;
-    return this;
-  }
-
-  public JdbcMapper withSchemaName(String schemaName) {
-    this.schemaName = schemaName;
     return this;
   }
 
@@ -641,8 +644,8 @@ public class JdbcMapper {
   }
 
   /**
-   * Merges relatedObjecList to the mainObj list by assigning the relationshipPropertyName on mainObj
-   * using the join property name.
+   * Merges relatedObjecList to the mainObj list by assigning the relationshipPropertyName on
+   * mainObj using the join property name.
    *
    * @param mainObjList
    * @param relatedObjList
@@ -1047,8 +1050,8 @@ public class JdbcMapper {
    * object value.
    *
    * @param pojo - The object to convert
-   * @return A map with keys that are in snake case to match database column names 
-   *         and values corresponding to the object property
+   * @return A map with keys that are in snake case to match database column names and values
+   *     corresponding to the object property
    */
   private Map<String, Object> convertToDbColumnAttributes(Object pojo) {
     Map<String, Object> camelCaseAttrs = convertObjectToMap(pojo);

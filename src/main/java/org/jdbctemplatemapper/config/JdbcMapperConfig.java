@@ -11,10 +11,8 @@ public class JdbcMapperConfig {
 
   @Bean(name = "jdbcMapper")
   public JdbcMapper jdbcMapper(@Qualifier("npJdbcTemplate") NamedParameterJdbcTemplate npJdbcTemplate) {
-    JdbcMapper jdbcMapper = new JdbcMapper(npJdbcTemplate);
-    jdbcMapper
-        .withSchemaName("jdbctemplatemapper")
-        .withRecordOperatorResolver(new RecordOperatorResolver())
+    JdbcMapper jdbcMapper = new JdbcMapper("jdbctemplatemapper", npJdbcTemplate);
+    jdbcMapper.withRecordOperatorResolver(new RecordOperatorResolver())
         .withCreatedOnPropertyName("createdOn")
         .withCreatedByPropertyName("createdBy")
         .withUpdatedOnPropertyName("updatedOn")
