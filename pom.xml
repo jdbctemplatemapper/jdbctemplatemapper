@@ -12,9 +12,9 @@
     <relativePath /> <!-- lookup parent from repository -->
   </parent>
 
-  <groupId>org.auroralogix</groupId>
+  <groupId>org.jdbctemplatemapper</groupId>
   <artifactId>jdbctemplatemapper</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>1.0</version>
   <name>jdbctemplatemapper</name>
   <description>jdbctemplate mapper</description>
 
@@ -70,9 +70,26 @@
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <!--  Need the the prevent plugin to from erroring out on 'No main class found' on repackging -->
+          <skip>true</skip>
+          <classifier>exec</classifier>
+        </configuration>
+      </plugin>
+      <plugin>
+        <!--  the libary jar file which other applications can use. Only includes the java classes in org.jdbctemplatemapper.core  -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <!-- need this to prevent plugin to NOT create the unwanted /maven dir in META-INF -->
+         <archive>
+          <addMavenDescriptor>false</addMavenDescriptor>
+          </archive>
+          <includes>
+            <include>**/core/*</include>
+          </includes>
+        </configuration>
       </plugin>
     </plugins>
-    <finalName>${project.artifactId}</finalName>
   </build>
-
 </project>
