@@ -179,7 +179,7 @@ public class JdbcMapperLongTest {
   public void toOneForObject_LongTest(){
     OrderLong order = jdbcMapper.findById(1L, OrderLong.class);
     // this method issues a query behind the scenes to populate customer
-    jdbcMapper.toOneForObject(order, "customer", CustomerLong.class);
+    jdbcMapper.toOneForObject(order, CustomerLong.class, "customer", "customerLongId");
 
     assertEquals("tony", order.getCustomer().getFirstName());
     assertEquals("joe", order.getCustomer().getLastName());
@@ -190,7 +190,7 @@ public class JdbcMapperLongTest {
     List<OrderLong> orders = jdbcMapper.findAll(OrderLong.class, "order by id");
 
     // this method issues a query behind the scenes to populate customer
-    jdbcMapper.toOneForList(orders, "customer", CustomerLong.class);
+    jdbcMapper.toOneForList(orders, CustomerLong.class, "customer", "customerLongId");
 
     assertTrue(orders.size() >= 2);
     assertEquals("tony", orders.get(0).getCustomer().getFirstName());
@@ -216,9 +216,10 @@ public class JdbcMapperLongTest {
             rs -> {
               return jdbcMapper.toOneMapperForObject(
                   rs,
-                  new SelectMapper<OrderLong>(OrderLong.class, "o_"),
+                  new SelectMapper<OrderLong>(OrderLong.class, "o_"),    
+                  new SelectMapper<CustomerLong>(CustomerLong.class, "c_"),
                   "customer",
-                  new SelectMapper<CustomerLong>(CustomerLong.class, "c_"));
+                  "customerLongId");
             });
 
     assertNotNull(order);
@@ -244,8 +245,9 @@ public class JdbcMapperLongTest {
               return jdbcMapper.toOneMapperForList(
                   rs,
                   new SelectMapper<OrderLong>(OrderLong.class, "o_"),
+                  new SelectMapper<CustomerLong>(CustomerLong.class, "c_"),
                   "customer",
-                  new SelectMapper<CustomerLong>(CustomerLong.class, "c_"));
+                  "customerLongId");
             });
 
     assertEquals(2, orders.size());

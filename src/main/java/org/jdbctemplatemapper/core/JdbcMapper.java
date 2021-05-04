@@ -314,10 +314,10 @@ public class JdbcMapper {
   }
   /**
    * Inserts an object whose id in database is NOT auto increment. In this case the object's 'id'
-   * has to be assigned up front and cannot be null.
+   * has to be assigned up front (using a sequence or some other way) and cannot be null.
    *
-   * <p>Also assigns createdBy, createdOn, updatedBy, updatedOn, version if these properties exist
-   * for the object
+   * Assigns created by, created on, updated by, updated on, version if these properties exist
+   * for the object and the jdbcMapper is configured for these fields.
    *
    * @param pojo - The object to be saved
    */
@@ -368,12 +368,13 @@ public class JdbcMapper {
   }
 
   /**
-   * Updates object. Will also set updatedBy and updatedOn values if these properties exist for the
-   * object. if 'version' property exists for object throws an OptimisticLockingException if fails
-   * to update the record
+   * Updates object. 
+   * Assigns updated by, updated on if these properties exist
+   * for the object and the jdbcMapper is configured for these fields.
+   * if 'version' property exists for object throws an OptimisticLockingException if object is stale
    *
    * @param pojo - object to be updated
-   * @return 0 if no records were updated
+   * @return number of records updated
    */
   public Integer update(Object pojo) {
     if (pojo == null) {
@@ -430,9 +431,10 @@ public class JdbcMapper {
   }
 
   /**
-   * Updates the propertyNames (passed in as args) of the object. Will also set updatedBy and
-   * updatedOn values if these properties exist for the object
-   *
+   * Updates the propertyNames (passed in as args) of the object. 
+   * Assigns updated by, updated on if these properties exist
+   * for the object and the jdbcMapper is configured for these fields.
+   * 
    * @param pojo - object to be updated
    * @param propertyNames - array of property names that should be updated
    * @return 0 if no records were updated
@@ -586,8 +588,7 @@ public class JdbcMapper {
 
   /**
    * Populates the toOne relationship. Issues an sql query to get the relationship.
-   *
-   * <p>The join property to tie the mainObj to the relatedObject is figured out from the
+   * The join property to tie the mainObj to the relatedObject is figured out from the
    * relationshipClazz name For example if the relationShipClass is 'Project' the join property will
    * be 'projectId' of the mainObj. Make sure the join property of the argument mainObj is assigned
    * so it can be tied to its corresponding relationship object.
@@ -597,11 +598,11 @@ public class JdbcMapper {
    * @param relationShipClazz - The relationship class
    */
   public <T, U> void toOneForObject(
-      T mainObj, String relationshipPropertyName, Class<U> relationshipClazz) {
+      T mainObj, Class<U> relationshipClazz, String relationshipPropertyName, String joinPropertyName) {
     List<T> mainObjList = new ArrayList<>();
     if (mainObj != null) {
       mainObjList.add(mainObj);
-      toOneForList(mainObjList, relationshipPropertyName, relationshipClazz);
+      toOneForList(mainObjList, relationshipClazz, relationshipPropertyName, joinPropertyName);
     }
   }
 
@@ -620,12 +621,9 @@ public class JdbcMapper {
    * @param relationShipClazz - The relationship class
    */
   public <T, U> void toOneForList(
-      List<T> mainObjList, String relationshipPropertyName, Class<U> relationshipClazz) {
+      List<T> mainObjList, Class<U> relationshipClazz, String relationshipPropertyName, String joinPropertyName) {
     String tableName = convertCamelToSnakeCase(relationshipClazz.getSimpleName());
     if (isNotEmpty(mainObjList)) {
-      String joinColumnName = tableName + "_id";
-      String joinPropertyName = convertSnakeToCamelCase(joinColumnName);
-
       List<Number> allColumnIds = new ArrayList<>();
       for (T mainObj : mainObjList) {
         BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
@@ -670,10 +668,11 @@ public class JdbcMapper {
   public <T, U> T toOneMapperForObject(
       ResultSet rs,
       SelectMapper<T> mainObjMapper,
+      SelectMapper<U> relatedObjMapper,
       String relationshipPropertyName,
-      SelectMapper<U> relatedObjMapper) {
+      String joinPropertyName) {
     List<T> list =
-        toOneMapperForList(rs, mainObjMapper, relationshipPropertyName, relatedObjMapper);
+        toOneMapperForList(rs, mainObjMapper, relatedObjMapper, relationshipPropertyName, joinPropertyName);
     return isNotEmpty(list) ? list.get(0) : null;
   }
 
@@ -697,19 +696,15 @@ public class JdbcMapper {
   public <T, U> List<T> toOneMapperForList(
       ResultSet rs,
       SelectMapper<T> mainObjMapper,
+      SelectMapper<U> relatedObjMapper,
       String relationshipPropertyName,
-      SelectMapper<U> relatedObjMapper) {
-
+      String joinPropertyName) {
+	  
     Map<String, List> resultMap = multipleModelMapper(rs, mainObjMapper, relatedObjMapper);
-
     List<T> mainObjList = resultMap.get(mainObjMapper.getSqlColumnPrefix());
     List<U> relatedObjList = resultMap.get(relatedObjMapper.getSqlColumnPrefix());
-
-    String joinPropertyName =
-        toLowerCaseFirstChar(relatedObjMapper.getClazz().getSimpleName()) + "Id";
-
+    
     toOneMerge(mainObjList, relatedObjList, relationshipPropertyName, joinPropertyName);
-
     return mainObjList;
   }
 
@@ -1016,7 +1011,7 @@ public class JdbcMapper {
    * Builds sql update statement with named parameters for the object.
    *
    * @param pojo - the object that needs to be update.
-   * @return sql update string
+   * @return The sql update string
    */
   private String buildUpdateSql(Object pojo) {
     String tableName = convertCamelToSnakeCase(pojo.getClass().getSimpleName());
@@ -1332,15 +1327,6 @@ public class JdbcMapper {
   @SuppressWarnings("all")
   private boolean isNotEmpty(Collection coll) {
     return !isEmpty(coll);
-  }
-
-  private String toLowerCaseFirstChar(String str) {
-    if (str != null) {
-      char c[] = str.toCharArray();
-      c[0] = Character.toLowerCase(c[0]);
-      return new String(c);
-    }
-    return str;
   }
 
   /**

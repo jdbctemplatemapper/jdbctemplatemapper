@@ -322,7 +322,7 @@ public class JdbcMapperTest {
   public void toOneForObject_Test() {
     Order order = jdbcMapper.findById(1, Order.class);
     // this method issues a query behind the scenes to populate customer
-    jdbcMapper.toOneForObject(order, "customer", Customer.class);
+    jdbcMapper.toOneForObject(order,  Customer.class, "customer", "customerId");
 
     assertEquals("tony", order.getCustomer().getFirstName());
     assertEquals("joe", order.getCustomer().getLastName());
@@ -332,7 +332,7 @@ public class JdbcMapperTest {
   public void toOneForObject_NullRelationshipTest() {
     Order order = jdbcMapper.findById(3, Order.class);
     // order 3 has null customer
-    jdbcMapper.toOneForObject(order, "customer", Customer.class);
+    jdbcMapper.toOneForObject(order, Customer.class, "customer", "customerId");
 
     assertNull(order.getCustomer());
   }
@@ -341,7 +341,7 @@ public class JdbcMapperTest {
   public void toOneForObject_NoRecordTest() {
     Order order = jdbcMapper.findById(999, Order.class);
     // order 3 has null customer
-    jdbcMapper.toOneForObject(order, "customer", Customer.class);
+    jdbcMapper.toOneForObject(order, Customer.class, "customer", "customerId");
 
     assertNull(order);
   }
@@ -351,7 +351,7 @@ public class JdbcMapperTest {
     List<Order> orders = jdbcMapper.findAll(Order.class, "order by id");
 
     // this method issues a query behind the scenes to populate customer
-    jdbcMapper.toOneForList(orders, "customer", Customer.class);
+    jdbcMapper.toOneForList(orders, Customer.class, "customer", "customerId");
 
     assertTrue(orders.size() >= 3);
     assertEquals("tony", orders.get(0).getCustomer().getFirstName());
@@ -363,7 +363,7 @@ public class JdbcMapperTest {
   public void toOneForList_NoRecordTest() {
     // mimick query returning no orders
     List<Order> orders = null;
-    jdbcMapper.toOneForList(orders, "customer", Customer.class);
+    jdbcMapper.toOneForList(orders, Customer.class, "customer", "customerId");
 
     assertNull(orders);
   }
@@ -389,8 +389,9 @@ public class JdbcMapperTest {
               return jdbcMapper.toOneMapperForObject(
                   rs,
                   new SelectMapper<Order>(Order.class, "o_"),
+                  new SelectMapper<Customer>(Customer.class, "c_"),
                   "customer",
-                  new SelectMapper<Customer>(Customer.class, "c_"));
+                  "customerId");
             });
 
     assertNotNull(order);
@@ -420,8 +421,9 @@ public class JdbcMapperTest {
               return jdbcMapper.toOneMapperForObject(
                   rs,
                   new SelectMapper<Order>(Order.class, "o_"),
+                  new SelectMapper<Customer>(Customer.class, "c_"),
                   "customer",
-                  new SelectMapper<Customer>(Customer.class, "c_"));
+                  "customerId");
             });
 
     assertNotNull(order);
@@ -450,8 +452,9 @@ public class JdbcMapperTest {
               return jdbcMapper.toOneMapperForObject(
                   rs,
                   new SelectMapper<Order>(Order.class, "o_"),
+                  new SelectMapper<Customer>(Customer.class, "c_"),
                   "customer",
-                  new SelectMapper<Customer>(Customer.class, "c_"));
+                  "customerId");
             });
 
     assertNull(order);
@@ -473,8 +476,9 @@ public class JdbcMapperTest {
               return jdbcMapper.toOneMapperForList(
                   rs,
                   new SelectMapper<Order>(Order.class, "o_"),
+                  new SelectMapper<Customer>(Customer.class, "c_"),
                   "customer",
-                  new SelectMapper<Customer>(Customer.class, "c_"));
+                  "customerId");
             });
 
     assertTrue(orders.size() >= 3);
@@ -502,8 +506,9 @@ public class JdbcMapperTest {
               return jdbcMapper.toOneMapperForList(
                   rs,
                   new SelectMapper<Order>(Order.class, "o_"),
+                  new SelectMapper<Customer>(Customer.class, "c_"),
                   "customer",
-                  new SelectMapper<Customer>(Customer.class, "c_"));
+                  "customerId");
             });
 
     assertEquals(0, orders.size());
