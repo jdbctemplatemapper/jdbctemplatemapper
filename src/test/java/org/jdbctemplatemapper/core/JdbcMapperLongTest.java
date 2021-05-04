@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 import org.jdbctemplatemapper.model.CustomerLong;
 import org.jdbctemplatemapper.model.OrderLineLong;
 import org.jdbctemplatemapper.model.OrderLong;
-import org.jdbctemplatemapper.model.Product;
 import org.jdbctemplatemapper.model.ProductLong;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

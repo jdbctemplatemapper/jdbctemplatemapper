@@ -19,6 +19,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import javax.sql.DataSource;
+
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.core.convert.support.DefaultConversionService;
@@ -92,17 +94,17 @@ public class JdbcMapper {
   private Map<String, String> camelToSnakeCache = new ConcurrentHashMap<>();
 
   // Constructor
-  public JdbcMapper(String schemaName, NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+  public JdbcMapper(DataSource dataSource, String schemaName) {
+    if (dataSource == null) {
+      throw new IllegalArgumentException("dataSource cannot be null");
+    }
     if (isEmpty(schemaName)) {
       throw new IllegalArgumentException("schemaName cannot be null");
     }
-    if (namedParameterJdbcTemplate == null) {
-      throw new IllegalArgumentException("namedParameterJdbcTemplate cannot be null");
-    }
-    
+
     this.schemaName = schemaName;
-    this.npJdbcTemplate = namedParameterJdbcTemplate;
-    this.jdbcTemplate = namedParameterJdbcTemplate.getJdbcTemplate();
+    this.npJdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
+    this.jdbcTemplate = npJdbcTemplate.getJdbcTemplate();
   }
 
   public JdbcMapper withRecordOperatorResolver(IRecordOperatorResolver recordOperatorResolver) {
@@ -133,6 +135,14 @@ public class JdbcMapper {
   public JdbcMapper withVersionPropertyName(String propName) {
     this.versionPropertyName = propName;
     return this;
+  }
+  
+  public JdbcTemplate getJdbcTemplate() {
+	  return this.jdbcTemplate;
+  }
+  
+  public NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {
+	  return this.npJdbcTemplate;
   }
 
   /**
