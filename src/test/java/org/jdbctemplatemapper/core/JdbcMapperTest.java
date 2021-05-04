@@ -668,8 +668,9 @@ public class JdbcMapperTest {
               return jdbcMapper.toManyMapperForObject(
                   rs,
                   new SelectMapper<Order>(Order.class, "o_"),
+                  new SelectMapper<OrderLine>(OrderLine.class, "ol_"),
                   "orderLines",
-                  new SelectMapper<OrderLine>(OrderLine.class, "ol_"));
+                  "orderId");
             });
 
     assertNotNull(order);
@@ -703,8 +704,9 @@ public class JdbcMapperTest {
               return jdbcMapper.toManyMapperForObject(
                   rs,
                   new SelectMapper<Order>(Order.class, "o_"),
+                  new SelectMapper<OrderLine>(OrderLine.class, "ol_"),
                   "orderLines",
-                  new SelectMapper<OrderLine>(OrderLine.class, "ol_"));
+                  "orderId");
             });
 
     assertNotNull(order);
@@ -735,8 +737,9 @@ public class JdbcMapperTest {
               return jdbcMapper.toManyMapperForObject(
                   rs,
                   new SelectMapper<Order>(Order.class, "o_"),
+                  new SelectMapper<OrderLine>(OrderLine.class, "ol_"),
                   "orderLines",
-                  new SelectMapper<OrderLine>(OrderLine.class, "ol_"));
+                  "orderId");
             });
 
     assertNull(order);
@@ -760,8 +763,9 @@ public class JdbcMapperTest {
               return jdbcMapper.toManyMapperForList(
                   rs,
                   new SelectMapper<Order>(Order.class, "o_"),
+                  new SelectMapper<OrderLine>(OrderLine.class, "ol_"),
                   "orderLines",
-                  new SelectMapper<OrderLine>(OrderLine.class, "ol_"));
+                  "orderId");
             });
 
     assertEquals(2, orders.get(0).getOrderLines().size());
@@ -790,8 +794,9 @@ public class JdbcMapperTest {
               return jdbcMapper.toManyMapperForList(
                   rs,
                   new SelectMapper<Order>(Order.class, "o_"),
+                  new SelectMapper<OrderLine>(OrderLine.class, "ol_"),
                   "orderLines",
-                  new SelectMapper<OrderLine>(OrderLine.class, "ol_"));
+                  "orderId");
             });
 
     assertEquals(0, orders.size());

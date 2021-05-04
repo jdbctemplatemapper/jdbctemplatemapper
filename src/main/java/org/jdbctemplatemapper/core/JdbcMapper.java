@@ -107,40 +107,100 @@ public class JdbcMapper {
     this.jdbcTemplate = npJdbcTemplate.getJdbcTemplate();
   }
 
+  /**
+   * The implementation of IRecordOperatorResolver is used to populate the createdBy and updatedBy
+   * fields. Assign this while initializing the jdbcMapper
+   * 
+   * @param recordOperatorResolver
+   * @return The jdbcMapper
+   */
   public JdbcMapper withRecordOperatorResolver(IRecordOperatorResolver recordOperatorResolver) {
     this.recordOperatorResolver = recordOperatorResolver;
     return this;
   }
 
+  /**
+   * Assign this to identify the property name of 'createdBy' field.
+   * The created by property will be assigned the value from recordOperatorResolver.getRecordOperator
+   * when the object is inserted into the database.
+   * Assign this while initializing the jdbcMapper
+   * 
+   * @param propName : the createdBy property name.
+   * @return The jdbcMapper
+   */
   public JdbcMapper withCreatedByPropertyName(String propName) {
     this.createdByPropertyName = propName;
     return this;
   }
 
+  /**
+   * Assign this to identify the property name of created on field.
+   * This property has to be of type LocalDateTime.
+   * When an object is inserted into the database the value of this field will be set to current.
+   * Assign this while initializing jdbcMapper.
+   * 
+   * @param propName : the createdBy property name.
+   * @return The jdbcMapper
+   */
   public JdbcMapper withCreatedOnPropertyName(String propName) {
     this.createdOnPropertyName = propName;
     return this;
   }
 
+  /**
+   * Assign this to identify the property name of updated by field.
+   * The updated by property will be assigned the value from recordOperatorResolver.getRecordOperator
+   * when the object is updated in the database.
+   * Assign this while initializing the jdbcMapper
+   * 
+   * @param propName : the update by property name.
+   * @return The jdbcMapper
+   */
   public JdbcMapper withUpdatedByPropertyName(String propName) {
     this.updatedByPropertyName = propName;
     return this;
   }
 
+  /**
+   * Assign this to identify the property name of updated on field.
+   * This property has to be of type LocalDateTime.
+   * When an object is updated in the database the value of this field will be set to current.
+   * Assign this while initializing jdbcMapper.
+   * 
+   * @param propName : the updated on property name.
+   * @return The jdbcMapper
+   */
   public JdbcMapper withUpdatedOnPropertyName(String propName) {
     this.updatedOnPropertyName = propName;
     return this;
   }
 
+  /**
+   * The property used for optimistic locking. If this is assigned and the object
+   * as the version property name on inserts it will be set to 1 and updates will increment it by 1.
+   * 
+   * @param propName
+   * @return The jdbcMapper
+   */
   public JdbcMapper withVersionPropertyName(String propName) {
     this.versionPropertyName = propName;
     return this;
   }
   
+  /**
+   * Gets the JdbcTemplate used by the jdbcMapper
+   * 
+   * @return the JdbcTemplate
+   */
   public JdbcTemplate getJdbcTemplate() {
 	  return this.jdbcTemplate;
   }
   
+  /**
+   * Gets the NamedParameterJdbcTemplate used by the jdbcMapper
+   * 
+   * @return the NamedParameterJdbcTemplate
+   */
   public NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {
 	  return this.npJdbcTemplate;
   }
@@ -771,17 +831,19 @@ public class JdbcMapper {
    *
    * @param rs - The jdbc ResultSet
    * @param mainObjMapper - The main object mapper.
-   * @param relationshipPropertyName - The toOne relationship name on mainObj
-   * @param relatedObjMapper - The related object mapper
+   * @param manySideObjMapper - The many side object mapper
+   * @param collectionPropertyName - the collectionPropertyName on the mainObj that needs to be populated
+   * @param joinPropertyName - the joing property name on the manySide
    * @return The main object with its toMany relationship assigned.
    */
   @SuppressWarnings("all")
   public <T, U> T toManyMapperForObject(
       ResultSet rs,
       SelectMapper<T> mainObjMapper,
+      SelectMapper<U> manySideObjMapper,
       String collectionPropertyName,
-      SelectMapper<U> relatedObjMapper) {
-    List<T> list = toManyMapperForList(rs, mainObjMapper, collectionPropertyName, relatedObjMapper);
+      String joinPropertyName) {
+    List<T> list = toManyMapperForList(rs, mainObjMapper, manySideObjMapper, collectionPropertyName, joinPropertyName);
     return isNotEmpty(list) ? list.get(0) : null;
   }
 
@@ -789,36 +851,42 @@ public class JdbcMapper {
    * Populates the main object list with their corresponding toMany relationship object from the
    * jdbc ResultSet using their respective SqlMappers.
    *
-   * <p>The jdbc ResultSet argument object should have the join property assigned so the code can
-   * tie the the main object and related object together.
-   *
-   * <p>The join property name on the main object is figured out from the mapper class of the
-   * related object.
+   * The jdbc ResultSet should have mainObj.id and relatedObj.joinPropertyName so that
+   * the mainObj.relationshipProperty can be assigned by matching mainObj.id to relatedObj.joinPropertyName.
    *
    * @param rs The jdbc ResultSet
-   * @param mainObjMapper
-   * @param relationshipPropertyName
-   * @param relatedObjMapper
-   * @return List of mainObj with its collectionPropertyName assigned
+   * @param mainObjMapper - The main object mapper
+   * @param manySideObjMapper - The many side object mapper
+   * @param collectionPropertyName - the collectionPropertyName on the mainObj that needs to be populated
+   * @param joinPropertyName - the join property name on the manySide
+   * @return List of mainObj with its collectionPropertyName populated
    */
   @SuppressWarnings("all")
   public <T, U> List<T> toManyMapperForList(
       ResultSet rs,
       SelectMapper<T> mainObjMapper,
+      SelectMapper<U> manySideObjMapper,
       String collectionPropertyName,
-      SelectMapper<U> manySideObjMapper) {
+      String joinPropertyName) {
 
     Map<String, List> resultMap = multipleModelMapper(rs, mainObjMapper, manySideObjMapper);
 
     List<T> mainObjList = resultMap.get(mainObjMapper.getSqlColumnPrefix());
     List<U> manySideObjList = resultMap.get(manySideObjMapper.getSqlColumnPrefix());
 
-    String joinPropertyName = toLowerCaseFirstChar(mainObjMapper.getClazz().getSimpleName()) + "Id";
-
     toManyMerge(mainObjList, manySideObjList, collectionPropertyName, joinPropertyName);
     return mainObjList;
   }
 
+  /**
+   * Populates each main objects collectionPropertyName with the corresponding manySide objects 
+   * by matching manySide.joinPropertyName to mainObj.id
+   *
+   * @param mainObjList - the main object list
+   * @param manySideList - the many side object list
+   * @param collectionPropertyName - the collection property name of the main object that needs to be populated.
+   * @param joinPropertyName - the join property name on the many side
+   */ 
   @SuppressWarnings("all")
   public <T, U> void toManyMerge(
       List<T> mainObjList,
@@ -1345,6 +1413,7 @@ public class JdbcMapper {
   }
 
   /**
+   * Code copied from apache common CaseUtils project.
    * Used by toCamelCase() method. Converts an array of delimiters to a hash set of code points.
    * Code point of space(32) is added as the default value. The generated hash set provides O(1)
    * lookup time.

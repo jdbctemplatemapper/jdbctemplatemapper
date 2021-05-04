@@ -12,10 +12,10 @@ import lombok.Data;
  * from order o, order_line ol
  * where o.id = ol.order_id
  * 
- * using new SelectMapper(Order.class, "o_") will map the resultset values of columns starting with
+ * using new SelectMapper(Order.class, "o_") will map the resultset values of select columns starting with
  *  'o_' to Order
  *  
- * using new SelectMapper(OrderLine.class, "ol_") will map the resultset values of columns starting with
+ * using new SelectMapper(OrderLine.class, "ol_") will map the resultset values of select columns starting with
  *  'ol_' to OrderLine
  *  
  * @author ajoseph

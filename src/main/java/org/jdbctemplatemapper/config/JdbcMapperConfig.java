@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 public class JdbcMapperConfig {
 
   @Bean(name = "sqlDataSource")
-  // get datasource properties from applications.properties
+  // get dataSource properties from application.properties
   @ConfigurationProperties(prefix = "spring.datasource")
   public DataSource sqlDataSource() {
     return DataSourceBuilder.create().build();

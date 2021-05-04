@@ -329,8 +329,9 @@ public class JdbcMapperLongTest {
               return jdbcMapper.toManyMapperForObject(
                   rs,
                   new SelectMapper<OrderLong>(OrderLong.class, "o_"),
+                  new SelectMapper<OrderLineLong>(OrderLineLong.class, "ol_"),
                   "orderLines",
-                  new SelectMapper<OrderLineLong>(OrderLineLong.class, "ol_"));
+                  "orderLongId");
             });
 
     assertNotNull(order);
@@ -359,8 +360,9 @@ public class JdbcMapperLongTest {
               return jdbcMapper.toManyMapperForList(
                   rs,
                   new SelectMapper<OrderLong>(OrderLong.class, "o_"),
+                  new SelectMapper<OrderLineLong>(OrderLineLong.class, "ol_"),
                   "orderLines",
-                  new SelectMapper<OrderLineLong>(OrderLineLong.class, "ol_"));
+                  "orderLongId");
             });
 
     assertEquals(2, orders.get(0).getOrderLines().size());
