@@ -28,8 +28,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
-public class JdbcMapperLongTest {
-  @Autowired private JdbcMapper jdbcMapper;
+public class JdbcTemplateMapperLongTest {
+  @Autowired private JdbcTemplateMapper jdbcTemplateMapper;
 
   private JdbcTemplate jdbcTemplate;
   private NamedParameterJdbcTemplate npJdbcTemplate;
@@ -39,8 +39,8 @@ public class JdbcMapperLongTest {
   @BeforeEach
   public void setup() {
     if (!flag) {
-      this.jdbcTemplate = jdbcMapper.getJdbcTemplate();
-      this.npJdbcTemplate = jdbcMapper.getNamedParameterJdbcTemplate();
+      this.jdbcTemplate = jdbcTemplateMapper.getJdbcTemplate();
+      this.npJdbcTemplate = jdbcTemplateMapper.getNamedParameterJdbcTemplate();
       flag = true;
     }
   }
@@ -51,7 +51,7 @@ public class JdbcMapperLongTest {
     order.setOrderDate(LocalDateTime.now());
     order.setCustomerLongId(2L);
 
-    jdbcMapper.insert(order);
+    jdbcTemplateMapper.insert(order);
 
     assertNotNull(order.getId());
     assertNotNull(order.getCreatedBy());
@@ -70,9 +70,9 @@ public class JdbcMapperLongTest {
     product.setName("hat");
     product.setCost(12.25);
 
-    jdbcMapper.insertWithId(product);
+    jdbcTemplateMapper.insertWithId(product);
 
-    product = jdbcMapper.findById(1000000000001L, ProductLong.class);
+    product = jdbcTemplateMapper.findById(1000000000001L, ProductLong.class);
     assertNotNull(product.getId());
     assertEquals("hat", product.getName());
     assertEquals(12.25, product.getCost());
@@ -87,14 +87,14 @@ public class JdbcMapperLongTest {
 
   @Test
   public void update_LongTest(){
-    OrderLong order = jdbcMapper.findById(1L, OrderLong.class);
+    OrderLong order = jdbcTemplateMapper.findById(1L, OrderLong.class);
     LocalDateTime prevUpdatedOn = order.getUpdatedOn();
 
     order.setStatus("IN PROCESS");
 
-    jdbcMapper.update(order);
+    jdbcTemplateMapper.update(order);
 
-    order = jdbcMapper.findById(1L, OrderLong.class); // requery
+    order = jdbcTemplateMapper.findById(1L, OrderLong.class); // requery
     assertEquals("IN PROCESS", order.getStatus());
     assertEquals(2, order.getVersion()); // version incremented
     assertTrue(order.getUpdatedOn().isAfter(prevUpdatedOn));
@@ -103,13 +103,13 @@ public class JdbcMapperLongTest {
 
   @Test
   public void update_LongPropertyTest(){
-    OrderLong order = jdbcMapper.findById(2L, OrderLong.class);
+    OrderLong order = jdbcTemplateMapper.findById(2L, OrderLong.class);
     LocalDateTime prevUpdatedOn = order.getUpdatedOn();
 
     order.setStatus("COMPLETE");
-    jdbcMapper.update(order, "status");
+    jdbcTemplateMapper.update(order, "status");
 
-    order = jdbcMapper.findById(2L, OrderLong.class); // requery
+    order = jdbcTemplateMapper.findById(2L, OrderLong.class); // requery
     assertEquals("COMPLETE", order.getStatus());
     assertEquals(2, order.getVersion()); // version incremented
     assertTrue(order.getUpdatedOn().isAfter(prevUpdatedOn));
@@ -118,7 +118,7 @@ public class JdbcMapperLongTest {
 
   @Test
   public void findById_LongTest(){
-    OrderLong order = jdbcMapper.findById(1L, OrderLong.class);
+    OrderLong order = jdbcTemplateMapper.findById(1L, OrderLong.class);
 
     assertNotNull(order.getId());
     assertNotNull(order.getOrderDate());
@@ -131,7 +131,7 @@ public class JdbcMapperLongTest {
 
   @Test
   public void findAll_LongTest(){
-    List<OrderLong> orders = jdbcMapper.findAll(OrderLong.class);
+    List<OrderLong> orders = jdbcTemplateMapper.findAll(OrderLong.class);
     assertTrue(orders.size() >= 2);
 
     for (int idx = 0; idx < orders.size(); idx++) {
@@ -147,7 +147,7 @@ public class JdbcMapperLongTest {
 
   @Test
   public void findAll_WithOrderByClauseLongTest(){
-    List<OrderLong> orders = jdbcMapper.findAll(OrderLong.class, "order by id");
+    List<OrderLong> orders = jdbcTemplateMapper.findAll(OrderLong.class, "order by id");
 
     assertTrue(orders.size() >= 2);
 
@@ -164,33 +164,33 @@ public class JdbcMapperLongTest {
 
   @Test
   public void deleteByObject_LongTest(){
-    ProductLong product = jdbcMapper.findById(4L, ProductLong.class);
+    ProductLong product = jdbcTemplateMapper.findById(4L, ProductLong.class);
 
-    int cnt = jdbcMapper.delete(product);
+    int cnt = jdbcTemplateMapper.delete(product);
 
     assertTrue(cnt == 1);
 
-    ProductLong product1 = jdbcMapper.findById(4L, ProductLong.class);
+    ProductLong product1 = jdbcTemplateMapper.findById(4L, ProductLong.class);
 
     assertNull(product1);
   }
 
   @Test
   public void deleteById_LongTest(){
-    int cnt = jdbcMapper.deleteById(5L, ProductLong.class);
+    int cnt = jdbcTemplateMapper.deleteById(5L, ProductLong.class);
 
     assertTrue(cnt == 1);
 
-    ProductLong product1 = jdbcMapper.findById(5L, ProductLong.class);
+    ProductLong product1 = jdbcTemplateMapper.findById(5L, ProductLong.class);
 
     assertNull(product1);
   }
 
   @Test
   public void toOneForObject_LongTest(){
-    OrderLong order = jdbcMapper.findById(1L, OrderLong.class);
+    OrderLong order = jdbcTemplateMapper.findById(1L, OrderLong.class);
     // this method issues a query behind the scenes to populate customer
-    jdbcMapper.toOneForObject(order, CustomerLong.class, "customer", "customerLongId");
+    jdbcTemplateMapper.toOneForObject(order, CustomerLong.class, "customer", "customerLongId");
 
     assertEquals("tony", order.getCustomer().getFirstName());
     assertEquals("joe", order.getCustomer().getLastName());
@@ -198,10 +198,10 @@ public class JdbcMapperLongTest {
   
   @Test
   public void toOneForList_LongTest(){
-    List<OrderLong> orders = jdbcMapper.findAll(OrderLong.class, "order by id");
+    List<OrderLong> orders = jdbcTemplateMapper.findAll(OrderLong.class, "order by id");
 
     // this method issues a query behind the scenes to populate customer
-    jdbcMapper.toOneForList(orders, CustomerLong.class, "customer", "customerLongId");
+    jdbcTemplateMapper.toOneForList(orders, CustomerLong.class, "customer", "customerLongId");
 
     assertTrue(orders.size() >= 2);
     assertEquals("tony", orders.get(0).getCustomer().getFirstName());
@@ -225,7 +225,7 @@ public class JdbcMapperLongTest {
             new Object[] {orderId}, // args
             new int[] {java.sql.Types.BIGINT}, // arg types
             rs -> {
-              return jdbcMapper.toOneMapperForObject(
+              return jdbcTemplateMapper.toOneMapperForObject(
                   rs,
                   new SelectMapper<OrderLong>(OrderLong.class, "o_"),    
                   new SelectMapper<CustomerLong>(CustomerLong.class, "c_"),
@@ -253,7 +253,7 @@ public class JdbcMapperLongTest {
         jdbcTemplate.query(
             sql,
             rs -> {
-              return jdbcMapper.toOneMapperForList(
+              return jdbcTemplateMapper.toOneMapperForList(
                   rs,
                   new SelectMapper<OrderLong>(OrderLong.class, "o_"),
                   new SelectMapper<CustomerLong>(CustomerLong.class, "c_"),
@@ -270,7 +270,7 @@ public class JdbcMapperLongTest {
   
   @Test
   public void toOneMerge_LongTest(){
-    List<OrderLong> orders = jdbcMapper.findAll(OrderLong.class, "order by id");
+    List<OrderLong> orders = jdbcTemplateMapper.findAll(OrderLong.class, "order by id");
 
     List<Long> customerIds =
         orders.stream().map(OrderLong::getCustomerLongId).collect(Collectors.toList());
@@ -281,7 +281,7 @@ public class JdbcMapperLongTest {
     MapSqlParameterSource params = new MapSqlParameterSource("customerIds", customerIds);
     List<CustomerLong> customers = npJdbcTemplate.query(sql, params, mapper);
 
-    jdbcMapper.toOneMerge(orders, customers, "customer", "customerLongId");
+    jdbcTemplateMapper.toOneMerge(orders, customers, "customer", "customerLongId");
 
     assertTrue(orders.size() >= 2);
     assertEquals("tony", orders.get(0).getCustomer().getFirstName());
@@ -290,10 +290,10 @@ public class JdbcMapperLongTest {
   
   @Test
   public void toManyForObject_LongTest(){
-    OrderLong order = jdbcMapper.findById(1L, OrderLong.class);
+    OrderLong order = jdbcTemplateMapper.findById(1L, OrderLong.class);
 
     // This issues a query to get the orderlines
-    jdbcMapper.toManyForObject(order,  OrderLineLong.class,"orderLines", "orderLongId", "order by id");
+    jdbcTemplateMapper.toManyForObject(order,  OrderLineLong.class,"orderLines", "orderLongId", "order by id");
 
     assertEquals(1, order.getOrderLines().get(0).getProductLongId());
     assertEquals(2, order.getOrderLines().get(1).getProductLongId());
@@ -303,10 +303,10 @@ public class JdbcMapperLongTest {
   
   @Test
   public void toManyForList_LongTest(){
-    List<OrderLong> orders = jdbcMapper.findAll(OrderLong.class, "order by id");
+    List<OrderLong> orders = jdbcTemplateMapper.findAll(OrderLong.class, "order by id");
 
     // This issues a query to get the orderlines
-    jdbcMapper.toManyForList(orders, OrderLineLong.class, "orderLines", "orderLongId", "order by id");
+    jdbcTemplateMapper.toManyForList(orders, OrderLineLong.class, "orderLines", "orderLongId", "order by id");
 
     assertTrue(orders.size() >= 2);
     assertEquals(2, orders.get(0).getOrderLines().size());
@@ -339,7 +339,7 @@ public class JdbcMapperLongTest {
             new Object[] {orderId}, // args
             new int[] {java.sql.Types.BIGINT}, // arg types
             rs -> {
-              return jdbcMapper.toManyMapperForObject(
+              return jdbcTemplateMapper.toManyMapperForObject(
                   rs,
                   new SelectMapper<OrderLong>(OrderLong.class, "o_"),
                   new SelectMapper<OrderLineLong>(OrderLineLong.class, "ol_"),
@@ -370,7 +370,7 @@ public class JdbcMapperLongTest {
         jdbcTemplate.query(
             sql,
             rs -> {
-              return jdbcMapper.toManyMapperForList(
+              return jdbcTemplateMapper.toManyMapperForList(
                   rs,
                   new SelectMapper<OrderLong>(OrderLong.class, "o_"),
                   new SelectMapper<OrderLineLong>(OrderLineLong.class, "ol_"),
@@ -389,7 +389,7 @@ public class JdbcMapperLongTest {
 
   @Test
   public void toManyMerge_LongTest(){
-    List<OrderLong> orders = jdbcMapper.findAll(OrderLong.class, "order by id");
+    List<OrderLong> orders = jdbcTemplateMapper.findAll(OrderLong.class, "order by id");
 
     List<Long> orderIds =
         orders.stream().map(OrderLong::getCustomerLongId).collect(Collectors.toList());
@@ -400,7 +400,7 @@ public class JdbcMapperLongTest {
     MapSqlParameterSource params = new MapSqlParameterSource("orderIds", orderIds);
     List<OrderLineLong> orderLines = npJdbcTemplate.query(sql, params, mapper);
 
-    jdbcMapper.toManyMerge(orders, orderLines, "orderLines", "orderLongId");
+    jdbcTemplateMapper.toManyMerge(orders, orderLines, "orderLines", "orderLongId");
 
     assertTrue(orders.size() >= 2);
     assertEquals(2, orders.get(0).getOrderLines().size());
@@ -425,10 +425,10 @@ public class JdbcMapperLongTest {
 
     String sql =
         "select "
-            + jdbcMapper.selectCols("order_long", "o")
-            + jdbcMapper.selectCols("order_line_long", "ol")
-            + jdbcMapper.selectCols("customer_long", "c")
-            + jdbcMapper.selectCols("product_long", "p", false)
+            + jdbcTemplateMapper.selectCols("order_long", "o")
+            + jdbcTemplateMapper.selectCols("order_line_long", "ol")
+            + jdbcTemplateMapper.selectCols("customer_long", "c")
+            + jdbcTemplateMapper.selectCols("product_long", "p", false)
             + " from jdbctemplatemapper.order_long o"
             + " left join order_line_long ol on o.id = ol.order_long_id"
             + " join customer_long c on o.customer_long_id = c.id"
@@ -441,7 +441,7 @@ public class JdbcMapperLongTest {
         jdbcTemplate.query(
             sql,
             rs -> {
-              return jdbcMapper.multipleModelMapper(
+              return jdbcTemplateMapper.multipleModelMapper(
                   rs,
                   new SelectMapper<OrderLong>(OrderLong.class, "o_"),
                   new SelectMapper<OrderLineLong>(OrderLineLong.class, "ol_"),
@@ -462,11 +462,11 @@ public class JdbcMapperLongTest {
     // Stitch together the objects to get a fully populated order object
 
     // tie orders to orderlines (toMany relationship)
-    jdbcMapper.toManyMerge(orders, orderLines, "orderLines", "orderLongId");
+    jdbcTemplateMapper.toManyMerge(orders, orderLines, "orderLines", "orderLongId");
     // tie orders to customer (toOne relationship)
-    jdbcMapper.toOneMerge(orders, customers, "customer", "customerLongId");
+    jdbcTemplateMapper.toOneMerge(orders, customers, "customer", "customerLongId");
     // tie orderLines to product (toOne relationship)
-    jdbcMapper.toOneMerge(orderLines, products, "product", "productLongId");
+    jdbcTemplateMapper.toOneMerge(orderLines, products, "product", "productLongId");
 
     assertEquals(2, orders.get(0).getOrderLines().size());
     assertEquals(1, orders.get(1).getOrderLines().size());

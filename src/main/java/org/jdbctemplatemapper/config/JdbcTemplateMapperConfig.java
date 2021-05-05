@@ -2,7 +2,7 @@ package org.jdbctemplatemapper.config;
 
 import javax.sql.DataSource;
 
-import org.jdbctemplatemapper.core.JdbcMapper;
+import org.jdbctemplatemapper.core.JdbcTemplateMapper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
 @Component
-public class JdbcMapperConfig {
+public class JdbcTemplateMapperConfig {
 
   @Bean(name = "sqlDataSource")
   // get dataSource properties from application.properties
@@ -19,10 +19,10 @@ public class JdbcMapperConfig {
     return DataSourceBuilder.create().build();
   }
 
-  @Bean(name = "jdbcMapper")
-  public JdbcMapper jdbcMapper(@Qualifier("sqlDataSource") DataSource dataSource) {
-    JdbcMapper jdbcMapper = new JdbcMapper(dataSource, "jdbctemplatemapper");
-    jdbcMapper
+  @Bean(name = "jdbcTemplateMapper")
+  public JdbcTemplateMapper jdbcTemplateMapper(@Qualifier("sqlDataSource") DataSource dataSource) {
+    JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(dataSource, "jdbctemplatemapper");
+    jdbcTemplateMapper
         .withRecordOperatorResolver(new RecordOperatorResolver())
         .withCreatedOnPropertyName("createdOn")
         .withCreatedByPropertyName("createdBy")
@@ -30,6 +30,6 @@ public class JdbcMapperConfig {
         .withUpdatedByPropertyName("updatedBy")
         .withVersionPropertyName("version");
 
-    return jdbcMapper;
+    return jdbcTemplateMapper;
   }
 }

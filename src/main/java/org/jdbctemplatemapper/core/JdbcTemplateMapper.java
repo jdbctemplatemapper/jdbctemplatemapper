@@ -44,7 +44,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  *
  * @author ajoseph
  */
-public class JdbcMapper {
+public class JdbcTemplateMapper {
   private JdbcTemplate jdbcTemplate;
   private NamedParameterJdbcTemplate npJdbcTemplate;
   private IRecordOperatorResolver recordOperatorResolver;
@@ -99,7 +99,7 @@ public class JdbcMapper {
    * @param dataSource - The dataSource for the mapper
    * @param schemaName - schema name to be used by mapper
    */
-  public JdbcMapper(DataSource dataSource, String schemaName) {
+  public JdbcTemplateMapper(DataSource dataSource, String schemaName) {
     if (dataSource == null) {
       throw new IllegalArgumentException("dataSource cannot be null");
     }
@@ -137,7 +137,7 @@ public class JdbcMapper {
    * @param recordOperatorResolver
    * @return The jdbcMapper
    */
-  public JdbcMapper withRecordOperatorResolver(IRecordOperatorResolver recordOperatorResolver) {
+  public JdbcTemplateMapper withRecordOperatorResolver(IRecordOperatorResolver recordOperatorResolver) {
     this.recordOperatorResolver = recordOperatorResolver;
     return this;
   }
@@ -150,7 +150,7 @@ public class JdbcMapper {
    * @param propName : the created by property name.
    * @return The jdbcMapper
    */
-  public JdbcMapper withCreatedByPropertyName(String propName) {
+  public JdbcTemplateMapper withCreatedByPropertyName(String propName) {
     this.createdByPropertyName = propName;
     return this;
   }
@@ -163,7 +163,7 @@ public class JdbcMapper {
    * @param propName : the created on property name.
    * @return The jdbcMapper
    */
-  public JdbcMapper withCreatedOnPropertyName(String propName) {
+  public JdbcTemplateMapper withCreatedOnPropertyName(String propName) {
     this.createdOnPropertyName = propName;
     return this;
   }
@@ -176,7 +176,7 @@ public class JdbcMapper {
    * @param propName : the update by property name.
    * @return The jdbcMapper
    */
-  public JdbcMapper withUpdatedByPropertyName(String propName) {
+  public JdbcTemplateMapper withUpdatedByPropertyName(String propName) {
     this.updatedByPropertyName = propName;
     return this;
   }
@@ -189,7 +189,7 @@ public class JdbcMapper {
    * @param propName : the updated on property name.
    * @return The jdbcMapper
    */
-  public JdbcMapper withUpdatedOnPropertyName(String propName) {
+  public JdbcTemplateMapper withUpdatedOnPropertyName(String propName) {
     this.updatedOnPropertyName = propName;
     return this;
   }
@@ -202,7 +202,7 @@ public class JdbcMapper {
    * @param propName - The version propertyName
    * @return The jdbcMapper
    */
-  public JdbcMapper withVersionPropertyName(String propName) {
+  public JdbcTemplateMapper withVersionPropertyName(String propName) {
     this.versionPropertyName = propName;
     return this;
   }
