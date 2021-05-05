@@ -64,7 +64,7 @@ public class JdbcMapper {
   // and multiple queries issued if needed.
   private static int IN_CLAUSE_CHUNK_SIZE = 100;
 
-  // Convert camel case to snake case regex pattern
+  // Convert camel case to snake case regex pattern. Pattern is thread safe
   private static Pattern TO_SNAKE_CASE_PATTERN = Pattern.compile("(.)(\\p{Upper})");
 
   // Inserts use SimpleJdbcInsert. Since SimpleJdbcInsert is thread safe, cache it
@@ -93,7 +93,12 @@ public class JdbcMapper {
   //     value - snake case string
   private Map<String, String> camelToSnakeCache = new ConcurrentHashMap<>();
 
-  // Constructor
+  /**
+   * The constructor.
+   * 
+   * @param dataSource - The dataSource for the mapper
+   * @param schemaName - schema name to be used by mapper
+   */
   public JdbcMapper(DataSource dataSource, String schemaName) {
     if (dataSource == null) {
       throw new IllegalArgumentException("dataSource cannot be null");
@@ -105,6 +110,24 @@ public class JdbcMapper {
     this.schemaName = schemaName;
     this.npJdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
     this.jdbcTemplate = npJdbcTemplate.getJdbcTemplate();
+  }
+  
+  /**
+   * Gets the JdbcTemplate used by the jdbcMapper
+   *
+   * @return the JdbcTemplate
+   */
+  public JdbcTemplate getJdbcTemplate() {
+    return this.jdbcTemplate;
+  }
+
+  /**
+   * Gets the NamedParameterJdbcTemplate used by the jdbcMapper
+   *
+   * @return the NamedParameterJdbcTemplate
+   */
+  public NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {
+    return this.npJdbcTemplate;
   }
 
   /**
@@ -182,24 +205,6 @@ public class JdbcMapper {
   public JdbcMapper withVersionPropertyName(String propName) {
     this.versionPropertyName = propName;
     return this;
-  }
-
-  /**
-   * Gets the JdbcTemplate used by the jdbcMapper
-   *
-   * @return the JdbcTemplate
-   */
-  public JdbcTemplate getJdbcTemplate() {
-    return this.jdbcTemplate;
-  }
-
-  /**
-   * Gets the NamedParameterJdbcTemplate used by the jdbcMapper
-   *
-   * @return the NamedParameterJdbcTemplate
-   */
-  public NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {
-    return this.npJdbcTemplate;
   }
 
   /**
