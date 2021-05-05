@@ -37,11 +37,10 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  *
  * <p>2) Methods to map relationships (toOne, toMany etc)
  *
- * <p>3) Uses an implementation or IRecordOperatorResolver to populate created by, update by
- * fields.
+ * <p>3) Uses an implementation or IRecordOperatorResolver to populate created by, update by fields.
  *
  * <p>Code written so there are no external dependencies other than spring framework
- * 
+ *
  * @author ajoseph
  */
 public class JdbcTemplateMapper {
@@ -95,7 +94,7 @@ public class JdbcTemplateMapper {
 
   /**
    * The constructor.
-   * 
+   *
    * @param dataSource - The dataSource for the mapper
    * @param schemaName - schema name to be used by mapper
    */
@@ -111,7 +110,7 @@ public class JdbcTemplateMapper {
     this.npJdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
     this.jdbcTemplate = npJdbcTemplate.getJdbcTemplate();
   }
-  
+
   /**
    * Gets the JdbcTemplate used by the jdbcMapper
    *
@@ -137,7 +136,8 @@ public class JdbcTemplateMapper {
    * @param recordOperatorResolver
    * @return The jdbcMapper
    */
-  public JdbcTemplateMapper withRecordOperatorResolver(IRecordOperatorResolver recordOperatorResolver) {
+  public JdbcTemplateMapper withRecordOperatorResolver(
+      IRecordOperatorResolver recordOperatorResolver) {
     this.recordOperatorResolver = recordOperatorResolver;
     return this;
   }
@@ -620,10 +620,12 @@ public class JdbcTemplateMapper {
     if (isNotEmpty(mainObjList)) {
       List<Number> allColumnIds = new ArrayList<>();
       for (T mainObj : mainObjList) {
-        BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
-        Number joinPropertyValue = (Number) bw.getPropertyValue(mainObjJoinPropertyName);
-        if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {
-          allColumnIds.add((Number) bw.getPropertyValue(mainObjJoinPropertyName));
+        if (mainObj != null) {
+          BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
+          Number joinPropertyValue = (Number) bw.getPropertyValue(mainObjJoinPropertyName);
+          if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {
+            allColumnIds.add((Number) bw.getPropertyValue(mainObjJoinPropertyName));
+          }
         }
       }
       List<U> relatedObjList = new ArrayList<>();
@@ -728,11 +730,13 @@ public class JdbcTemplateMapper {
               .collect(Collectors.toMap(e -> (Number) getSimpleProperty(e, "id"), obj -> obj));
 
       for (T mainObj : mainObjList) {
-        Number joinPropertyValue = (Number) getSimpleProperty(mainObj, mainObjJoinPropertyName);
-        if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {
-          BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
-          bw.setPropertyValue(
-              mainObjRelationshipPropertyName, idToObjectMap.get(joinPropertyValue));
+        if (mainObj != null) {
+          Number joinPropertyValue = (Number) getSimpleProperty(mainObj, mainObjJoinPropertyName);
+          if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {
+            BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
+            bw.setPropertyValue(
+                mainObjRelationshipPropertyName, idToObjectMap.get(joinPropertyValue));
+          }
         }
       }
     }
@@ -819,12 +823,14 @@ public class JdbcTemplateMapper {
     if (isNotEmpty(mainObjList)) {
       Set<Number> allIds = new LinkedHashSet<>();
       for (T mainObj : mainObjList) {
-        BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
-        Number idVal = (Number) bw.getPropertyValue("id");
-        if (idVal != null && idVal.longValue() > 0) {
-          allIds.add((idVal));
-        } else {
-          throw new RuntimeException("id property in mainObjList cannot be null");
+        if (mainObj != null) {
+          BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
+          Number idVal = (Number) bw.getPropertyValue("id");
+          if (idVal != null && idVal.longValue() > 0) {
+            allIds.add((idVal));
+          } else {
+            throw new RuntimeException("id property in mainObjList cannot be null");
+          }
         }
       }
       List<Number> uniqueIds = new ArrayList<>(allIds);
@@ -845,7 +851,7 @@ public class JdbcTemplateMapper {
                 + " in (:columnIds)";
         if (isNotEmpty(manySideOrderByClause)) {
           sql += " " + manySideOrderByClause;
-        } 
+        }
         MapSqlParameterSource params = new MapSqlParameterSource("columnIds", columnIds);
         RowMapper<U> mapper = BeanPropertyRowMapper.newInstance(manySideClazz);
         manySideList.addAll(npJdbcTemplate.query(sql, params, mapper));
@@ -945,17 +951,19 @@ public class JdbcTemplateMapper {
         Map<Number, List<U>> mapColumnIdToManySide =
             manySideList
                 .stream()
-                .filter( e -> e != null)
+                .filter(e -> e != null)
                 .collect(
                     Collectors.groupingBy(
                         e -> (Number) getSimpleProperty(e, manySideJoinPropertyName)));
 
         // assign the manyside list to the mainobj
         for (T mainObj : mainObjList) {
-          BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
-          Number idValue = (Number) bw.getPropertyValue("id");
-          List<U> relatedList = mapColumnIdToManySide.get(idValue);
-          bw.setPropertyValue(mainObjCollectionPropertyName, relatedList);
+          if (mainObj != null) {
+            BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
+            Number idValue = (Number) bw.getPropertyValue("id");
+            List<U> relatedList = mapColumnIdToManySide.get(idValue);
+            bw.setPropertyValue(mainObjCollectionPropertyName, relatedList);
+          }
         }
       }
     } catch (Exception e) {
