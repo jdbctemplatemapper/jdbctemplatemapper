@@ -1345,6 +1345,7 @@ public class JdbcTemplateMapper {
     AtomicInteger counter = new AtomicInteger();
     Collection<List<Number>> result =
         list.stream()
+            .filter(e -> e != null)
             .collect(Collectors.groupingBy(it -> counter.getAndIncrement() / chunkSize))
             .values();
     return result;
