@@ -33,7 +33,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 
 /**
- * 1) Simple CRUD one liners (which uses spring's JDBC template).
+ * 1) Simple CRUD one liners (which uses spring's JdbcTemplate).
  *
  * <p>2) Methods to map relationships (toOne, toMany etc)
  *
@@ -41,8 +41,6 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  * fields.
  *
  * <p>Code written so there are no external dependencies other than spring framework
- *
- * @author ajoseph
  */
 public class JdbcTemplateMapper {
   private JdbcTemplate jdbcTemplate;
@@ -762,14 +760,14 @@ public class JdbcTemplateMapper {
    * @param manySideClass - The many side class
    * @param mainObjCollectionPropertyName - The collection property name on main object
    * @param manySideJoinPropertyName - The join property name on the many side object
-   * @param orderByClause - The order by clause for the many side query
+   * @param manySideOrderByClause - The order by clause for the many side query
    */
   public <T, U> void toManyForObject(
       T mainObj,
       Class<U> manySideClazz,
       String mainObjCollectionPropertyName,
       String manySideJoinPropertyName,
-      String orderByClause) {
+      String manySideOrderByClause) {
     List<T> mainObjList = new ArrayList<>();
     mainObjList.add(mainObj);
     toManyForList(
@@ -777,7 +775,7 @@ public class JdbcTemplateMapper {
         manySideClazz,
         mainObjCollectionPropertyName,
         manySideJoinPropertyName,
-        orderByClause);
+        manySideOrderByClause);
   }
 
   /**
@@ -806,14 +804,14 @@ public class JdbcTemplateMapper {
    * @param manySideClass - The many side class
    * @param mainObjCollectionPropertyName - The collection property name on mainObj
    * @param manySideJoinPropertyName - the join property name on the many side object
-   * @param orderByClause - The order by clause for the many side query
+   * @param manySideOrderByClause - The order by clause for the many side query
    */
   public <T, U> void toManyForList(
       List<T> mainObjList,
       Class<U> manySideClazz,
       String mainObjCollectionPropertyName,
       String manySideJoinPropertyName,
-      String orderByClause) {
+      String manySideOrderByClause) {
     String tableName = convertCamelToSnakeCase(manySideClazz.getSimpleName());
     if (isNotEmpty(mainObjList)) {
       Set<Number> allIds = new LinkedHashSet<>();
@@ -842,8 +840,8 @@ public class JdbcTemplateMapper {
                 + " where "
                 + joinColumnName
                 + " in (:columnIds)";
-        if (isNotEmpty(orderByClause)) {
-          sql += " " + orderByClause;
+        if (isNotEmpty(manySideOrderByClause)) {
+          sql += " " + manySideOrderByClause;
         } 
         MapSqlParameterSource params = new MapSqlParameterSource("columnIds", columnIds);
         RowMapper<U> mapper = BeanPropertyRowMapper.newInstance(manySideClazz);
