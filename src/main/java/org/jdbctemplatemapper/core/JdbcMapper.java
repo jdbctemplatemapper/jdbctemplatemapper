@@ -844,9 +844,7 @@ public class JdbcMapper {
                 + " in (:columnIds)";
         if (isNotEmpty(orderByClause)) {
           sql += " " + orderByClause;
-        } else {
-          sql += " order by id";
-        }
+        } 
         MapSqlParameterSource params = new MapSqlParameterSource("columnIds", columnIds);
         RowMapper<U> mapper = BeanPropertyRowMapper.newInstance(manySideClazz);
         manySideList.addAll(npJdbcTemplate.query(sql, params, mapper));
