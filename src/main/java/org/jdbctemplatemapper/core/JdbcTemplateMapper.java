@@ -41,6 +41,8 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  * fields.
  *
  * <p>Code written so there are no external dependencies other than spring framework
+ * 
+ * @author ajoseph
  */
 public class JdbcTemplateMapper {
   private JdbcTemplate jdbcTemplate;
@@ -722,6 +724,7 @@ public class JdbcTemplateMapper {
       Map<Number, U> idToObjectMap =
           relatedObjList
               .stream()
+              .filter(e -> e != null)
               .collect(Collectors.toMap(e -> (Number) getSimpleProperty(e, "id"), obj -> obj));
 
       for (T mainObj : mainObjList) {
@@ -912,7 +915,6 @@ public class JdbcTemplateMapper {
       String manySideJoinPropertyName) {
 
     Map<String, List> resultMap = multipleModelMapper(rs, mainObjMapper, manySideObjMapper);
-
     List<T> mainObjList = resultMap.get(mainObjMapper.getSqlColumnPrefix());
     List<U> manySideObjList = resultMap.get(manySideObjMapper.getSqlColumnPrefix());
 
@@ -943,6 +945,7 @@ public class JdbcTemplateMapper {
         Map<Number, List<U>> mapColumnIdToManySide =
             manySideList
                 .stream()
+                .filter( e -> e != null)
                 .collect(
                     Collectors.groupingBy(
                         e -> (Number) getSimpleProperty(e, manySideJoinPropertyName)));
