@@ -15,6 +15,7 @@ import org.jdbctemplatemapper.model.Order;
 import org.jdbctemplatemapper.model.OrderLine;
 import org.jdbctemplatemapper.model.Product;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,9 +32,19 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 public class JdbcMapperTest {
   @Autowired private JdbcMapper jdbcMapper;
 
-  @Autowired private JdbcTemplate jdbcTemplate;
+  private JdbcTemplate jdbcTemplate;
+  private NamedParameterJdbcTemplate npJdbcTemplate;
 
-  @Autowired private NamedParameterJdbcTemplate npJdbcTemplate;
+  private boolean flag = false;
+
+  @BeforeEach
+  public void setup() {
+    if (!flag) {
+      this.jdbcTemplate = jdbcMapper.getJdbcTemplate();
+      this.npJdbcTemplate = jdbcMapper.getNamedParameterJdbcTemplate();
+      flag = true;
+    }
+  }
 
   @Test
   public void insert_Test() {
@@ -322,7 +333,7 @@ public class JdbcMapperTest {
   public void toOneForObject_Test() {
     Order order = jdbcMapper.findById(1, Order.class);
     // this method issues a query behind the scenes to populate customer
-    jdbcMapper.toOneForObject(order,  Customer.class, "customer", "customerId");
+    jdbcMapper.toOneForObject(order, Customer.class, "customer", "customerId");
 
     assertEquals("tony", order.getCustomer().getFirstName());
     assertEquals("joe", order.getCustomer().getLastName());
@@ -549,7 +560,7 @@ public class JdbcMapperTest {
     Order order = jdbcMapper.findById(1, Order.class);
 
     // This issues a query to get the orderlines
-    jdbcMapper.toManyForObject(order,  OrderLine.class, "orderLines", "orderId", "order by id");
+    jdbcMapper.toManyForObject(order, OrderLine.class, "orderLines", "orderId", "order by id");
 
     assertEquals(1, order.getOrderLines().get(0).getProductId());
     assertEquals(2, order.getOrderLines().get(1).getProductId());
@@ -563,7 +574,7 @@ public class JdbcMapperTest {
     // Order 3 has no orderLines
     Order order = jdbcMapper.findById(3, Order.class);
 
-    jdbcMapper.toManyForObject(order, OrderLine.class,"orderLines", "orderId", "order by id");
+    jdbcMapper.toManyForObject(order, OrderLine.class, "orderLines", "orderId", "order by id");
 
     assertNull(order.getOrderLines());
   }
@@ -573,7 +584,7 @@ public class JdbcMapperTest {
     List<Order> orders = jdbcMapper.findAll(Order.class, "order by id");
 
     // This issues a query to get the orderlines
-    jdbcMapper.toManyForList(orders,OrderLine.class, "orderLines", "orderId", "order by id");
+    jdbcMapper.toManyForList(orders, OrderLine.class, "orderLines", "orderId", "order by id");
 
     assertTrue(orders.size() >= 3);
     assertEquals(2, orders.get(0).getOrderLines().size());
@@ -594,7 +605,7 @@ public class JdbcMapperTest {
     List<Order> orders = null;
 
     // This issues a query to get the orderlines
-    jdbcMapper.toManyForList(orders, OrderLine.class,"orderLines", "orderId", "order by id");
+    jdbcMapper.toManyForList(orders, OrderLine.class, "orderLines", "orderId", "order by id");
 
     assertNull(orders);
   }

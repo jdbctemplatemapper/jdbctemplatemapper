@@ -640,10 +640,8 @@ public class JdbcMapper {
   /**
    * Populates a single main object and its toOne relationship object with the data from the
    * resultSet using their respective SqlMappers.
-   *
-   * <p>The jdbc ResultSet argument object should have the join property assigned so the code can
+   * The jdbc ResultSet argument object should have the join property assigned so the code can
    * tie the the main object and relationship object together.
-   *
    *
    * @param rs - The jdbc ResultSet
    * @param mainObjMapper - The main object mapper.
@@ -667,14 +665,14 @@ public class JdbcMapper {
   /**
    * Populates the main object list with their corresponding toOne relationship object from the jdbc
    * ResultSet using their respective SqlMappers.
-   * The jdbc ResultSet argument object should have the join property assigned so the code can
-   * tie the the main object and relationship object together.
+   * The jdbc ResultSet argument object should have the mainObj.mainObjRelationshipPropertyName assigned 
+   * so the code can match mainObj.mainObjJoinPropertyName = relatedObj.id
    *
    * @param rs The jdbc ResultSet
-   * @param mainObjMapper
-   * @param relatedObjMapper
-   * @param mainObjRelationshipPropertyName
-   * @param mainObjJoinPropertyName
+   * @param mainObjMapper - The main object mapper.
+   * @param relatedObjMapper - The related object mapper
+   * @param mainObjRelationshipPropertyName - The toOne relationship property name on main object
+   * @param mainObjJoinPropertyName - The join property name on the main object
    * @return List of mainObj with its toOne property assigned
    */
   @SuppressWarnings("all")
@@ -694,13 +692,13 @@ public class JdbcMapper {
   }
 
   /**
-   * Merges relatedObjecList to the mainObj list by assigning the relationshipPropertyName on
-   * mainObj using the join property name.
+   * Merges relatedObjecList to the mainObj list by assigning mainOjbj.mainObjRelationshipPropertyName
+   * with matching related objects ie mainObj.mainObjJoinPropertyName = relatedObj.id
    *
-   * @param mainObjList
-   * @param relatedObjList
-   * @param mainObjRelationshipPropertyName
-   * @param mainObjJoinPropertyName
+   * @param mainObjList - list of main objects
+   * @param relatedObjList - list of related objects
+   * @param mainObjRelationshipPropertyName - The toOne relationship property name on main object
+   * @param mainObjJoinPropertyName - The join property name on the main object
    */
   public <T, U> void toOneMerge(
       List<T> mainObjList,
@@ -727,8 +725,7 @@ public class JdbcMapper {
 
   /**
    * Populates the collectionPropertyName of the mainObj.
-   *
-   * <p>Executes a query with 'IN' clause to get the many side records
+   * Executes a query with 'IN' clause to get the many side records
    *
    * @param mainObjList - the main object list
    * @param manySideClass - The many side class

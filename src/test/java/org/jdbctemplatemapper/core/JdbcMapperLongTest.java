@@ -14,6 +14,7 @@ import org.jdbctemplatemapper.model.CustomerLong;
 import org.jdbctemplatemapper.model.OrderLineLong;
 import org.jdbctemplatemapper.model.OrderLong;
 import org.jdbctemplatemapper.model.ProductLong;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,10 +31,20 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 public class JdbcMapperLongTest {
   @Autowired private JdbcMapper jdbcMapper;
 
-  @Autowired private JdbcTemplate jdbcTemplate;
-
-  @Autowired private NamedParameterJdbcTemplate npJdbcTemplate;
-
+  private JdbcTemplate jdbcTemplate;
+  private NamedParameterJdbcTemplate npJdbcTemplate;
+  
+  private boolean flag;
+  
+  @BeforeEach
+  public void setup() {
+    if (!flag) {
+      this.jdbcTemplate = jdbcMapper.getJdbcTemplate();
+      this.npJdbcTemplate = jdbcMapper.getNamedParameterJdbcTemplate();
+      flag = true;
+    }
+  }
+  
   @Test
   public void insert_LongTest(){
     OrderLong order = new OrderLong();
