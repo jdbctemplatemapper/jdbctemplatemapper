@@ -45,8 +45,8 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  * @author ajoseph
  */
 public class JdbcMapper {
-  private NamedParameterJdbcTemplate npJdbcTemplate;
   private JdbcTemplate jdbcTemplate;
+  private NamedParameterJdbcTemplate npJdbcTemplate;
   private IRecordOperatorResolver recordOperatorResolver;
 
   private String createdByPropertyName;
@@ -108,7 +108,7 @@ public class JdbcMapper {
   }
 
   /**
-   * The implementation of IRecordOperatorResolver is used to populate the createdBy and updatedBy
+   * The implementation of IRecordOperatorResolver is used to populate the created by and updated by
    * fields. Assign this while initializing the jdbcMapper
    * 
    * @param recordOperatorResolver
@@ -120,12 +120,12 @@ public class JdbcMapper {
   }
 
   /**
-   * Assign this to identify the property name of 'createdBy' field.
-   * The created by property will be assigned the value from recordOperatorResolver.getRecordOperator
+   * Assign this to identify the property name of the created by field.
+   * The created by property will be assigned the value from recordOperatorResolver.getRecordOperator()
    * when the object is inserted into the database.
    * Assign this while initializing the jdbcMapper
    * 
-   * @param propName : the createdBy property name.
+   * @param propName : the created by property name.
    * @return The jdbcMapper
    */
   public JdbcMapper withCreatedByPropertyName(String propName) {
@@ -139,7 +139,7 @@ public class JdbcMapper {
    * When an object is inserted into the database the value of this field will be set to current.
    * Assign this while initializing jdbcMapper.
    * 
-   * @param propName : the createdBy property name.
+   * @param propName : the created on property name.
    * @return The jdbcMapper
    */
   public JdbcMapper withCreatedOnPropertyName(String propName) {
@@ -176,10 +176,12 @@ public class JdbcMapper {
   }
 
   /**
-   * The property used for optimistic locking. If this is assigned and the object
-   * as the version property name on inserts it will be set to 1 and updates will increment it by 1.
-   * 
-   * @param propName
+   * The property used for optimistic locking. The property has to be of type Integer.
+   * If the object has the version property name, on inserts it will be set to 1 
+   * and on updates it will incremented by 1.
+   * Assign this while initializing jdbcMapper.
+   *    
+   * @param propName - The version propertyName
    * @return The jdbcMapper
    */
   public JdbcMapper withVersionPropertyName(String propName) {
@@ -576,60 +578,47 @@ public class JdbcMapper {
   }
 
   /**
-   * Get the next sequence number for the sequence name
-   *
-   * @param sequenceName - The name of the sequence
-   * @return the next sequence number
-   */
-  public Integer getNextSequence(String sequenceName) {
-    String sql = "select nextval('" + sequenceName + "')";
-    return jdbcTemplate.queryForObject(sql, Integer.class);
-  }
-
-  /**
    * Populates the toOne relationship. Issues an sql query to get the relationship.
-   * The join property to tie the mainObj to the relatedObject is figured out from the
-   * relationshipClazz name For example if the relationShipClass is 'Project' the join property will
-   * be 'projectId' of the mainObj. Make sure the join property of the argument mainObj is assigned
-   * so it can be tied to its corresponding relationship object.
+   * Make sure the join property of the argument mainObj is assigned
+   * so when sql is issued the where condition would match mainObj.mainObjJoinPropertyName = relationshipObj.id
    *
    * @param mainObj - the main object
-   * @param relationshipPropertyName - The propertyName of the toOne relationship (on mainOjb)
    * @param relationShipClazz - The relationship class
+   * @param mainObjRelationshipPropertyName - The propertyName of the toOne relationship (on mainOjb)
+   *                                          that needs to be populated.
+   * @param mainObjJoinPropertyName - the join property on main object.
    */
   public <T, U> void toOneForObject(
-      T mainObj, Class<U> relationshipClazz, String relationshipPropertyName, String joinPropertyName) {
+      T mainObj, Class<U> relationshipClazz, String mainObjRelationshipPropertyName, String mainObjJoinPropertyName) {
     List<T> mainObjList = new ArrayList<>();
     if (mainObj != null) {
       mainObjList.add(mainObj);
-      toOneForList(mainObjList, relationshipClazz, relationshipPropertyName, joinPropertyName);
+      toOneForList(mainObjList, relationshipClazz, mainObjRelationshipPropertyName, mainObjJoinPropertyName);
     }
   }
 
   /**
    * Populates the toOne relationship for all the main objects in the argument list. Issues an sql
    * query using the 'IN' clause to get all the relationship objects corresponding to the main
-   * object list.
-   *
-   * <p>The join property to tie the mainObj to the relatedObject is figured out from the
-   * relationshipClazz name For example if the relationShipClass is 'Project' the join property will
-   * be 'projectId' of the mainObj. Make sure the join property of the argument mainObj is assigned
-   * so it can be tied to its corresponding relationship object.
+   * object list. Make sure the join property of the argument mainObj is assigned
+   * so it can be matched to its corresponding relationship object
+   * (mainObj.mainObjJoinPropertyName = relationshipObj.id)
    *
    * @param mainObjList - list of main objects
-   * @param relationshipPropertyName - The propertyName of the toOne relationship
    * @param relationShipClazz - The relationship class
+   * @param mainObjRelationshipPropertyName - The toOne relationship property name on main object
+   * @param mainObjJoinPropertyName - the join property name on the main object.
    */
   public <T, U> void toOneForList(
-      List<T> mainObjList, Class<U> relationshipClazz, String relationshipPropertyName, String joinPropertyName) {
+      List<T> mainObjList, Class<U> relationshipClazz, String mainObjRelationshipPropertyName, String mainObjJoinPropertyName) {
     String tableName = convertCamelToSnakeCase(relationshipClazz.getSimpleName());
     if (isNotEmpty(mainObjList)) {
       List<Number> allColumnIds = new ArrayList<>();
       for (T mainObj : mainObjList) {
         BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
-        Number joinPropertyValue = (Number) bw.getPropertyValue(joinPropertyName);
+        Number joinPropertyValue = (Number) bw.getPropertyValue(mainObjJoinPropertyName);
         if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {
-          allColumnIds.add((Number) bw.getPropertyValue(joinPropertyName));
+          allColumnIds.add((Number) bw.getPropertyValue(mainObjJoinPropertyName));
         }
       }
       List<U> relatedObjList = new ArrayList<>();
@@ -644,7 +633,7 @@ public class JdbcMapper {
         relatedObjList.addAll(npJdbcTemplate.query(sql, params, mapper));
       }
 
-      toOneMerge(mainObjList, relatedObjList, relationshipPropertyName, joinPropertyName);
+      toOneMerge(mainObjList, relatedObjList, mainObjRelationshipPropertyName, mainObjJoinPropertyName);
     }
   }
 
@@ -655,13 +644,12 @@ public class JdbcMapper {
    * <p>The jdbc ResultSet argument object should have the join property assigned so the code can
    * tie the the main object and relationship object together.
    *
-   * <p>The join property name on the main object is figured out from the mapper class of the
-   * related object.
    *
    * @param rs - The jdbc ResultSet
    * @param mainObjMapper - The main object mapper.
-   * @param relationshipPropertyName - The toOne relationship name on mainObj
    * @param relatedObjMapper - The related object mapper
+   * @param mainObjRelationshipPropertyName - The toOne relationship property name on main object
+   * @param mainObjJoinPropertyName - The join property name on the main object
    * @return The main object with its toOne relationship populated.
    */
   @SuppressWarnings("all")
@@ -669,27 +657,24 @@ public class JdbcMapper {
       ResultSet rs,
       SelectMapper<T> mainObjMapper,
       SelectMapper<U> relatedObjMapper,
-      String relationshipPropertyName,
-      String joinPropertyName) {
+      String mainObjRelationshipPropertyName,
+      String mainObjJoinPropertyName) {
     List<T> list =
-        toOneMapperForList(rs, mainObjMapper, relatedObjMapper, relationshipPropertyName, joinPropertyName);
+        toOneMapperForList(rs, mainObjMapper, relatedObjMapper, mainObjRelationshipPropertyName, mainObjJoinPropertyName);
     return isNotEmpty(list) ? list.get(0) : null;
   }
 
   /**
    * Populates the main object list with their corresponding toOne relationship object from the jdbc
    * ResultSet using their respective SqlMappers.
-   *
-   * <p>The jdbc ResultSet argument object should have the join property assigned so the code can
+   * The jdbc ResultSet argument object should have the join property assigned so the code can
    * tie the the main object and relationship object together.
-   *
-   * <p>The join property name on the main object is figured out from the mapper class of the
-   * related object.
    *
    * @param rs The jdbc ResultSet
    * @param mainObjMapper
-   * @param relationshipPropertyName
    * @param relatedObjMapper
+   * @param mainObjRelationshipPropertyName
+   * @param mainObjJoinPropertyName
    * @return List of mainObj with its toOne property assigned
    */
   @SuppressWarnings("all")
@@ -697,14 +682,14 @@ public class JdbcMapper {
       ResultSet rs,
       SelectMapper<T> mainObjMapper,
       SelectMapper<U> relatedObjMapper,
-      String relationshipPropertyName,
-      String joinPropertyName) {
+      String mainObjRelationshipPropertyName,
+      String mainObjJoinPropertyName) {
 	  
     Map<String, List> resultMap = multipleModelMapper(rs, mainObjMapper, relatedObjMapper);
     List<T> mainObjList = resultMap.get(mainObjMapper.getSqlColumnPrefix());
     List<U> relatedObjList = resultMap.get(relatedObjMapper.getSqlColumnPrefix());
     
-    toOneMerge(mainObjList, relatedObjList, relationshipPropertyName, joinPropertyName);
+    toOneMerge(mainObjList, relatedObjList, mainObjRelationshipPropertyName, mainObjJoinPropertyName);
     return mainObjList;
   }
 
@@ -714,26 +699,27 @@ public class JdbcMapper {
    *
    * @param mainObjList
    * @param relatedObjList
-   * @param relationshipPropertyName
-   * @param joinPropertyName
+   * @param mainObjRelationshipPropertyName
+   * @param mainObjJoinPropertyName
    */
   public <T, U> void toOneMerge(
       List<T> mainObjList,
       List<U> relatedObjList,
-      String relationshipPropertyName,
-      String joinPropertyName) {
+      String mainObjRelationshipPropertyName,
+      String mainObjJoinPropertyName) {
 
     if (isNotEmpty(mainObjList) && isNotEmpty(relatedObjList)) {
+      // Map key: related object id , value: the related object
       Map<Number, U> idToObjectMap =
           relatedObjList
               .stream()
               .collect(Collectors.toMap(e -> (Number) getSimpleProperty(e, "id"), obj -> obj));
 
       for (T mainObj : mainObjList) {
-        Number joinPropertyValue = (Number) getSimpleProperty(mainObj, joinPropertyName);
+        Number joinPropertyValue = (Number) getSimpleProperty(mainObj, mainObjJoinPropertyName);
         if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {
           BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
-          bw.setPropertyValue(relationshipPropertyName, idToObjectMap.get(joinPropertyValue));
+          bw.setPropertyValue(mainObjRelationshipPropertyName, idToObjectMap.get(joinPropertyValue));
         }
       }
     }
@@ -745,15 +731,16 @@ public class JdbcMapper {
    * <p>Executes a query with 'IN' clause to get the many side records
    *
    * @param mainObjList - the main object list
-   * @param collectionPropertyName - The collection property name on mainObj
    * @param manySideClass - The many side class
+   * @param mainObjCollectionPropertyName - The collection property name on main object
+   * @param manySideJoinPropertyName - The join property name on the many side object
    * @param orderByClause - The order by clause for the many side query
    */
   public <T, U> void toManyForObject(
-      T mainObj, String collectionPropertyName, Class<U> manySideClazz, String orderByClause) {
+      T mainObj, Class<U> manySideClazz, String mainObjCollectionPropertyName, String manySideJoinPropertyName, String orderByClause) {
     List<T> mainObjList = new ArrayList<>();
     mainObjList.add(mainObj);
-    toManyForList(mainObjList, collectionPropertyName, manySideClazz, orderByClause);
+    toManyForList(mainObjList,  manySideClazz, mainObjCollectionPropertyName,manySideJoinPropertyName, orderByClause);
   }
 
   /**
@@ -762,14 +749,16 @@ public class JdbcMapper {
    * <p>Executes a query with 'IN' clause to get the many side records
    *
    * @param mainObjList - the main object list
-   * @param collectionPropertyName - The collection property name on mainObj
    * @param manySideClass - The many side class
+   * @param mainObjCollectionPropertyName - The collection property name on mainObj
+   * @param manySideJoinPropertyName - the join property name on the many side object
    * @param orderByClause - The order by clause for the many side query
    */
   public <T, U> void toManyForList(
       List<T> mainObjList,
-      String collectionPropertyName,
       Class<U> manySideClazz,
+      String mainObjCollectionPropertyName,
+      String manySideJoinPropertyName,
       String orderByClause) {
     String tableName = convertCamelToSnakeCase(manySideClazz.getSimpleName());
     if (isNotEmpty(mainObjList)) {
@@ -784,8 +773,7 @@ public class JdbcMapper {
         }
       }
       List<Number> uniqueIds = new ArrayList<>(allIds);
-      String joinColumnName =
-          convertCamelToSnakeCase(mainObjList.get(0).getClass().getSimpleName()) + "_id";
+      String joinColumnName = convertCamelToSnakeCase(manySideJoinPropertyName);
       List<U> manySideList = new ArrayList<>();
       // to avoid query being issued with large number of
       // records for the 'IN (:columnIds) clause the list is chunked by IN_CLAUSE_CHUNK_SIZE
@@ -810,8 +798,7 @@ public class JdbcMapper {
         manySideList.addAll(npJdbcTemplate.query(sql, params, mapper));
       }
 
-      String joinPropertyName = convertSnakeToCamelCase(joinColumnName);
-      toManyMerge(mainObjList, manySideList, collectionPropertyName, joinPropertyName);
+      toManyMerge(mainObjList, manySideList, mainObjCollectionPropertyName, manySideJoinPropertyName);
     }
   }
   /**
@@ -827,8 +814,8 @@ public class JdbcMapper {
    * @param rs - The jdbc ResultSet
    * @param mainObjMapper - The main object mapper.
    * @param manySideObjMapper - The many side object mapper
-   * @param collectionPropertyName - the collectionPropertyName on the mainObj that needs to be populated
-   * @param joinPropertyName - the joing property name on the manySide
+   * @param mainObjCollectionPropertyName - the collectionPropertyName on the mainObj that needs to be populated
+   * @param manySideJoinPropertyName - the joing property name on the manySide
    * @return The main object with its toMany relationship assigned.
    */
   @SuppressWarnings("all")
@@ -836,9 +823,9 @@ public class JdbcMapper {
       ResultSet rs,
       SelectMapper<T> mainObjMapper,
       SelectMapper<U> manySideObjMapper,
-      String collectionPropertyName,
-      String joinPropertyName) {
-    List<T> list = toManyMapperForList(rs, mainObjMapper, manySideObjMapper, collectionPropertyName, joinPropertyName);
+      String mainObjCollectionPropertyName,
+      String manySideJoinPropertyName) {
+    List<T> list = toManyMapperForList(rs, mainObjMapper, manySideObjMapper, mainObjCollectionPropertyName, manySideJoinPropertyName);
     return isNotEmpty(list) ? list.get(0) : null;
   }
 
@@ -852,8 +839,8 @@ public class JdbcMapper {
    * @param rs The jdbc ResultSet
    * @param mainObjMapper - The main object mapper
    * @param manySideObjMapper - The many side object mapper
-   * @param collectionPropertyName - the collectionPropertyName on the mainObj that needs to be populated
-   * @param joinPropertyName - the join property name on the manySide
+   * @param mainObjCollectionPropertyName - the collectionPropertyName on the mainObj that needs to be populated
+   * @param manySideJoinPropertyName - the join property name on the manySide
    * @return List of mainObj with its collectionPropertyName populated
    */
   @SuppressWarnings("all")
@@ -861,15 +848,15 @@ public class JdbcMapper {
       ResultSet rs,
       SelectMapper<T> mainObjMapper,
       SelectMapper<U> manySideObjMapper,
-      String collectionPropertyName,
-      String joinPropertyName) {
+      String mainObjCollectionPropertyName,
+      String manySideJoinPropertyName) {
 
     Map<String, List> resultMap = multipleModelMapper(rs, mainObjMapper, manySideObjMapper);
 
     List<T> mainObjList = resultMap.get(mainObjMapper.getSqlColumnPrefix());
     List<U> manySideObjList = resultMap.get(manySideObjMapper.getSqlColumnPrefix());
 
-    toManyMerge(mainObjList, manySideObjList, collectionPropertyName, joinPropertyName);
+    toManyMerge(mainObjList, manySideObjList, mainObjCollectionPropertyName, manySideJoinPropertyName);
     return mainObjList;
   }
 
@@ -879,15 +866,15 @@ public class JdbcMapper {
    *
    * @param mainObjList - the main object list
    * @param manySideList - the many side object list
-   * @param collectionPropertyName - the collection property name of the main object that needs to be populated.
-   * @param joinPropertyName - the join property name on the many side
+   * @param mainObjCollectionPropertyName - the collection property name of the main object that needs to be populated.
+   * @param manySideJoinPropertyName - the join property name on the many side
    */ 
   @SuppressWarnings("all")
   public <T, U> void toManyMerge(
       List<T> mainObjList,
       List<U> manySideList,
-      String collectionPropertyName,
-      String joinPropertyName) {
+      String mainObjCollectionPropertyName,
+      String manySideJoinPropertyName) {
 
     try {
       if (isNotEmpty(manySideList)) {
@@ -895,14 +882,14 @@ public class JdbcMapper {
             manySideList
                 .stream()
                 .collect(
-                    Collectors.groupingBy(e -> (Number) getSimpleProperty(e, joinPropertyName)));
+                    Collectors.groupingBy(e -> (Number) getSimpleProperty(e, manySideJoinPropertyName)));
 
         // assign the manyside list to the mainobj
         for (T mainObj : mainObjList) {
           BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
           Number idValue = (Number) bw.getPropertyValue("id");
           List<U> relatedList = mapColumnIdToManySide.get(idValue);
-          bw.setPropertyValue(collectionPropertyName, relatedList);
+          bw.setPropertyValue(mainObjCollectionPropertyName, relatedList);
         }
       }
     } catch (Exception e) {

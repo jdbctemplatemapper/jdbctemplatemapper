@@ -549,7 +549,7 @@ public class JdbcMapperTest {
     Order order = jdbcMapper.findById(1, Order.class);
 
     // This issues a query to get the orderlines
-    jdbcMapper.toManyForObject(order, "orderLines", OrderLine.class, "order by id");
+    jdbcMapper.toManyForObject(order,  OrderLine.class, "orderLines", "orderId", "order by id");
 
     assertEquals(1, order.getOrderLines().get(0).getProductId());
     assertEquals(2, order.getOrderLines().get(1).getProductId());
@@ -563,7 +563,7 @@ public class JdbcMapperTest {
     // Order 3 has no orderLines
     Order order = jdbcMapper.findById(3, Order.class);
 
-    jdbcMapper.toManyForObject(order, "orderLines", OrderLine.class, "order by id");
+    jdbcMapper.toManyForObject(order, OrderLine.class,"orderLines", "orderId", "order by id");
 
     assertNull(order.getOrderLines());
   }
@@ -573,7 +573,7 @@ public class JdbcMapperTest {
     List<Order> orders = jdbcMapper.findAll(Order.class, "order by id");
 
     // This issues a query to get the orderlines
-    jdbcMapper.toManyForList(orders, "orderLines", OrderLine.class, "order by id");
+    jdbcMapper.toManyForList(orders,OrderLine.class, "orderLines", "orderId", "order by id");
 
     assertTrue(orders.size() >= 3);
     assertEquals(2, orders.get(0).getOrderLines().size());
@@ -594,7 +594,7 @@ public class JdbcMapperTest {
     List<Order> orders = null;
 
     // This issues a query to get the orderlines
-    jdbcMapper.toManyForList(orders, "orderLines", OrderLine.class, "order by id");
+    jdbcMapper.toManyForList(orders, OrderLine.class,"orderLines", "orderId", "order by id");
 
     assertNull(orders);
   }
