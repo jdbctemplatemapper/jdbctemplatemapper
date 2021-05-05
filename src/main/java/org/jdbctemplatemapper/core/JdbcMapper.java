@@ -33,11 +33,11 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 
 /**
- * 1) Simple CRUD one liners using spring's JDBC template.
+ * 1) Simple CRUD one liners (which uses spring's JDBC template).
  *
  * <p>2) Methods to map relationships (toOne, toMany etc)
  *
- * <p>3) Uses an implementation or IRecordOperatorResolver to populate createdBy, updateBy ..
+ * <p>3) Uses an implementation or IRecordOperatorResolver to populate created by, update by
  * fields.
  *
  * <p>Code written so there are no external dependencies other than spring framework
