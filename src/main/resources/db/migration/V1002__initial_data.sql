@@ -65,6 +65,9 @@ INSERT INTO jdbctemplatemapper.product
 VALUES(6, 'product 6 update test', 2.45,'2020-06-20 00:00:00.000', 'system', '2020-06-20 00:00:00.000', 'system', 1);
 
 
+INSERT INTO jdbctemplatemapper.person
+(id, first_name, last_name)
+VALUES(1, 'mike', 'smith');
 
 
 

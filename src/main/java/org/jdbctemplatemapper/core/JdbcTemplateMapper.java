@@ -37,9 +37,9 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  *
  * <p>2) Methods to map relationships (toOne, toMany etc)
  *
- * <p>3) Uses an implementation or IRecordOperatorResolver to populate created by, update by fields.
+ * <p>3) Uses an implementation of IRecordOperatorResolver to populate created by, update by fields.
  *
- * <p>Code written so there are no external dependencies other than spring framework
+ * <p>Code has no external dependencies other than spring framework
  *
  * @author ajoseph
  */

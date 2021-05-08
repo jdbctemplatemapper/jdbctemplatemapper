@@ -39,6 +39,21 @@ CREATE TABLE jdbctemplatemapper.product (
 );
 
 
+CREATE TABLE jdbctemplatemapper.person (
+	id serial NOT NULL,
+	first_name varchar(100) NOT NULL,
+	last_name varchar(100) NOT NULL,
+	created_on timestamp NULL,
+	created_by varchar(100) NULL,
+	updated_on timestamp NULL,
+	updated_by varchar(100) NULL,
+	version int4 NULL,
+	CONSTRAINT person_pk PRIMARY KEY (id)
+);
+
+
+
+
 
 
 
