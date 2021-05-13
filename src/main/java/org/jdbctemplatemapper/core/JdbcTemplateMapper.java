@@ -387,22 +387,29 @@ public class JdbcTemplateMapper {
       updateSql = buildUpdateSql(pojo);
     }
 
+    List<String> dbColumnNameList = getDbColumnNames(tableName);
+
     LocalDateTime now = LocalDateTime.now();
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
 
-    if (updatedOnPropertyName != null && bw.isReadableProperty(updatedOnPropertyName)) {
+    if (updatedOnPropertyName != null
+        && bw.isReadableProperty(updatedOnPropertyName)
+        && dbColumnNameList.contains(convertCamelToSnakeCase(updatedOnPropertyName))) {
       bw.setPropertyValue(updatedOnPropertyName, now);
     }
     if (updatedByPropertyName != null
         && recordOperatorResolver != null
-        && bw.isReadableProperty(updatedByPropertyName)) {
+        && bw.isReadableProperty(updatedByPropertyName)
+        && dbColumnNameList.contains(convertCamelToSnakeCase(updatedByPropertyName))) {
       bw.setPropertyValue(updatedByPropertyName, recordOperatorResolver.getRecordOperator());
     }
 
     Map<String, Object> attributes = convertObjectToMap(pojo);
     // if object has property version throw OptimisticLockingException
     // when update fails. The version gets incremented on update
-    if (versionPropertyName != null && bw.isReadableProperty(versionPropertyName)) {
+    if (versionPropertyName != null
+        && bw.isReadableProperty(versionPropertyName)
+        && dbColumnNameList.contains(convertCamelToSnakeCase(versionPropertyName))) {
       Integer versionVal = (Integer) bw.getPropertyValue(versionPropertyName);
       if (versionVal == null) {
         throw new RuntimeException(
@@ -444,7 +451,10 @@ public class JdbcTemplateMapper {
       throw new IllegalArgumentException("Object cannot be null");
     }
     String tableName = convertCamelToSnakeCase(pojo.getClass().getSimpleName());
+    List<String> dbColumnNameList = getDbColumnNames(tableName);
+    
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
+    
     // cachekey ex: className-propertyName1-propertyName2
     String cacheKey = tableName + "-" + String.join("-", propertyNames);
     String updateSql = updateSqlCache.get(cacheKey);
@@ -455,23 +465,26 @@ public class JdbcTemplateMapper {
       sqlBuilder.append(tableName);
       sqlBuilder.append(" set ");
 
-      List<String> dbColumnNameList = new ArrayList<>();
+      List<String> updateColumnNameList = new ArrayList<>();
       for (String propertyName : propertyNames) {
-        dbColumnNameList.add(convertCamelToSnakeCase(propertyName));
+        updateColumnNameList.add(convertCamelToSnakeCase(propertyName));
       }
 
       // add updated info to the column list
-      if (updatedOnPropertyName != null && bw.isReadableProperty(updatedOnPropertyName)) {
-        dbColumnNameList.add(convertCamelToSnakeCase(updatedOnPropertyName));
+      if (updatedOnPropertyName != null
+          && bw.isReadableProperty(updatedOnPropertyName)
+          && dbColumnNameList.contains(convertCamelToSnakeCase(updatedOnPropertyName))) {
+        updateColumnNameList.add(convertCamelToSnakeCase(updatedOnPropertyName));
       }
       if (updatedByPropertyName != null
           && recordOperatorResolver != null
-          && bw.isReadableProperty(updatedByPropertyName)) {
-        dbColumnNameList.add(convertCamelToSnakeCase(updatedByPropertyName));
+          && bw.isReadableProperty(updatedByPropertyName)
+          && dbColumnNameList.contains(convertCamelToSnakeCase(updatedByPropertyName))) {
+        updateColumnNameList.add(convertCamelToSnakeCase(updatedByPropertyName));
       }
 
       boolean first = true;
-      for (String columnName : dbColumnNameList) {
+      for (String columnName : updateColumnNameList) {
         if (!first) {
           sqlBuilder.append(", ");
         } else {
@@ -483,12 +496,16 @@ public class JdbcTemplateMapper {
         sqlBuilder.append(convertSnakeToCamelCase(columnName));
       }
       // the set assignment for the incremented version
-      if (versionPropertyName != null && bw.isReadableProperty(versionPropertyName)) {
+      if (versionPropertyName != null
+          && bw.isReadableProperty(versionPropertyName)
+          && dbColumnNameList.contains(convertCamelToSnakeCase(versionPropertyName))) {
         sqlBuilder.append(", ").append(versionPropertyName).append(" = :incrementedVersion");
       }
       // the where clause
       sqlBuilder.append(" where id = :id");
-      if (versionPropertyName != null && bw.isReadableProperty(versionPropertyName)) {
+      if (versionPropertyName != null
+          && bw.isReadableProperty(versionPropertyName)
+          && dbColumnNameList.contains(convertCamelToSnakeCase(versionPropertyName))) {
         sqlBuilder
             .append(" and ")
             .append(versionPropertyName)
@@ -501,19 +518,24 @@ public class JdbcTemplateMapper {
     }
 
     LocalDateTime now = LocalDateTime.now();
-    if (updatedOnPropertyName != null && bw.isReadableProperty(updatedOnPropertyName)) {
+    if (updatedOnPropertyName != null
+        && bw.isReadableProperty(updatedOnPropertyName)
+        && dbColumnNameList.contains(convertCamelToSnakeCase(updatedOnPropertyName))) {
       bw.setPropertyValue(updatedOnPropertyName, now);
     }
     if (updatedByPropertyName != null
         && recordOperatorResolver != null
-        && bw.isReadableProperty(updatedByPropertyName)) {
+        && bw.isReadableProperty(updatedByPropertyName)
+        && dbColumnNameList.contains(convertCamelToSnakeCase(updatedByPropertyName))) {
       bw.setPropertyValue(updatedByPropertyName, recordOperatorResolver.getRecordOperator());
     }
 
     Map<String, Object> attributes = convertObjectToMap(pojo);
     // if object has property version throw OptimisticLockingException
     // update fails. The version gets incremented
-    if (versionPropertyName != null && bw.isReadableProperty(versionPropertyName)) {
+    if (versionPropertyName != null
+        && bw.isReadableProperty(versionPropertyName)
+        && dbColumnNameList.contains(convertCamelToSnakeCase(versionPropertyName))) {
       Integer versionVal = (Integer) bw.getPropertyValue(versionPropertyName);
       if (versionVal == null) {
         throw new RuntimeException(
