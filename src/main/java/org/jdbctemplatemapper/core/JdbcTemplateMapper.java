@@ -314,6 +314,7 @@ public class JdbcTemplateMapper {
     Number idNumber = jdbcInsert.executeAndReturnKey(attributes);
     bw.setPropertyValue("id", idNumber); // set auto increment id value on object
   }
+  
   /**
    * Inserts an object whose id in database is NOT auto increment. In this case the object's 'id'
    * has to be assigned up front (using a sequence or some other way) and cannot be null.
