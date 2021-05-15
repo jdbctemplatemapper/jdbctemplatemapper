@@ -299,7 +299,7 @@ public class JdbcTemplateMapper {
       bw.setPropertyValue(versionPropertyName, 1);
     }
 
-    Map<String, Object> attributes = convertToDbColumnAttributes(pojo);
+    Map<String, Object> attributes = convertToSnakeCaseAttributes(pojo);
 
     SimpleJdbcInsert jdbcInsert = simpleJdbcInsertCache.get(tableName);
     if (jdbcInsert == null) {
@@ -314,7 +314,7 @@ public class JdbcTemplateMapper {
     Number idNumber = jdbcInsert.executeAndReturnKey(attributes);
     bw.setPropertyValue("id", idNumber); // set auto increment id value on object
   }
-  
+
   /**
    * Inserts an object whose id in database is NOT auto increment. In this case the object's 'id'
    * has to be assigned up front (using a sequence or some other way) and cannot be null.
@@ -366,14 +366,14 @@ public class JdbcTemplateMapper {
       simpleJdbcInsertCache.put(tableName, jdbcInsert);
     }
 
-    Map<String, Object> attributes = convertToDbColumnAttributes(pojo);
+    Map<String, Object> attributes = convertToSnakeCaseAttributes(pojo);
     jdbcInsert.execute(attributes);
   }
 
   /**
    * Updates object. Assigns updated by, updated on if these properties exist for the object and the
-   * jdbcTemplateMapper is configured for these fields. if 'version' property exists for object throws an
-   * OptimisticLockingException if object is stale
+   * jdbcTemplateMapper is configured for these fields. if 'version' property exists for object
+   * throws an OptimisticLockingException if object is stale
    *
    * @param pojo - object to be updated
    * @return number of records updated
@@ -441,7 +441,8 @@ public class JdbcTemplateMapper {
 
   /**
    * Updates the propertyNames (passed in as args) of the object. Assigns updated by, updated on if
-   * these properties exist for the object and the jdbcTemplateMapper is configured for these fields.
+   * these properties exist for the object and the jdbcTemplateMapper is configured for these
+   * fields.
    *
    * @param pojo - object to be updated
    * @param propertyNames - array of property names that should be updated
@@ -453,9 +454,9 @@ public class JdbcTemplateMapper {
     }
     String tableName = convertCamelToSnakeCase(pojo.getClass().getSimpleName());
     List<String> dbColumnNameList = getDbColumnNames(tableName);
-    
+
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
-    
+
     // cachekey ex: className-propertyName1-propertyName2
     String cacheKey = tableName + "-" + String.join("-", propertyNames);
     String updateSql = updateSqlCache.get(cacheKey);
@@ -625,9 +626,8 @@ public class JdbcTemplateMapper {
   /**
    * Populates the toOne relationship for all the main objects in the argument list. Issues an sql
    * query using the 'IN' clause to get all the relationship objects corresponding to the main
-   * object list. Make sure the join property of the argument mainObj is assigned so it can be
-   * matched to its corresponding relationship object (mainObj.mainObjJoinPropertyName =
-   * relationshipObj.id)
+   * object list. Make sure the join property of the mainObj is assigned so it can be matched to its
+   * corresponding relationship object (mainObj.mainObjJoinPropertyName = relationshipObj.id)
    *
    * @param mainObjList - list of main objects
    * @param relationShipClazz - The relationship class
@@ -670,9 +670,52 @@ public class JdbcTemplateMapper {
 
   /**
    * Populates a single main object and its toOne relationship object with the data from the
-   * resultSet using their respective SqlMappers. The jdbc ResultSet argument object should have the
-   * join property assigned so the code can tie the the main object and relationship object
-   * together.
+   * resultSet using their respective SqlMappers. The sql for the resultset object should have the
+   * join property in select statement so the code can tie the the main object and relationship
+   * object together (mainObj.mainObjJoinPropertyName = relatedObj.id)
+   *
+   * <pre>
+   * Main Object:
+   * Class Order{
+   *   Integer id;
+   *   LocalDateTime orderDate;
+   *   Integer customerId;
+   *   Customer customer; // the toOne relationship
+   * }
+   * toOne related Object:
+   * Class Customer{
+   *   Integer id;
+   *   String firstName;
+   *   String lastName;
+   *   String address;
+   * }
+   * The sql below. Note the column alias naming convention so that the SelectMapper can use the prefix 
+   * to populate the appropriated Objects from the selected columns. See {@link selectCols()} to make
+   * the select clause less verbose.
+   * 
+   * select o.id o_id, o.order_date o_order_date, o.customer_id o_customer_id
+   *        c.id c_id, c.first_name c_first_name, c.last_name c_last_name, c.address c_address
+   * from order o
+   * left join customer c on o.customer_id = c.id
+   * where o.id = ?
+   *
+   * Note that both the o.customer_id and the c.id have to be in select clause.
+   *
+   * Example call to get Order and its Customer (toOne relationship) populated from the sql above:
+   * Order order =
+   *     jdbcTemplate.query(
+   *         sql,
+   *         new Object[] {theOrderId}, // args
+   *         new int[] {java.sql.Types.INTEGER}, // arg types
+   *         rs -> {
+   *           return jdbcTemplateMapper.toOneMapperForObject(
+   *               rs,
+   *               new SelectMapper<Order>(Order.class, "o_"),
+   *               new SelectMapper<Customer>(Customer.class, "c_"),
+   *               "customer",
+   *               "customerId");
+   *         });
+   * </pre>
    *
    * @param rs - The jdbc ResultSet
    * @param mainObjMapper - The main object mapper.
@@ -700,9 +743,10 @@ public class JdbcTemplateMapper {
 
   /**
    * Populates the main object list with their corresponding toOne relationship object from the jdbc
-   * ResultSet using their respective SqlMappers. The jdbc ResultSet argument object should have the
-   * mainObj.mainObjRelationshipPropertyName assigned so the code can match
-   * mainObj.mainObjJoinPropertyName = relatedObj.id
+   * ResultSet using their respective SqlMappers.
+   *
+   * <p>The jdbc ResultSet argument object should have the mainObj.mainObjJoinProperty selected so
+   * the code can match mainObj.mainObjJoinPropertyName = relatedObj.id
    *
    * @param rs The jdbc ResultSet
    * @param mainObjMapper - The main object mapper.
@@ -1207,7 +1251,7 @@ public class JdbcTemplateMapper {
    * @return A map with keys that are in snake case to match database column names and values
    *     corresponding to the object property
    */
-  private Map<String, Object> convertToDbColumnAttributes(Object pojo) {
+  private Map<String, Object> convertToSnakeCaseAttributes(Object pojo) {
     Map<String, Object> camelCaseAttrs = convertObjectToMap(pojo);
     Map<String, Object> snakeCaseAttrs = new HashMap<>();
     for (String key : camelCaseAttrs.keySet()) {
@@ -1267,7 +1311,7 @@ public class JdbcTemplateMapper {
    * Gets the resultSet column names ie the column names in the 'select' statement of the sql
    *
    * @param rs - ResultSet
-   * @return List of strings with column name
+   * @return List of select column names
    */
   private List<String> getResultSetColumnNames(ResultSet rs) {
     List<String> rsColNames = new ArrayList<>();
@@ -1287,7 +1331,7 @@ public class JdbcTemplateMapper {
   /**
    * Get property names of an object. The property names are cached by the object class name
    *
-   * @param pojo
+   * @param pojo - the java object
    * @return List of property names.
    */
   private List<String> getPropertyNames(Object pojo) {
@@ -1313,8 +1357,8 @@ public class JdbcTemplateMapper {
   /**
    * Gets the property value of an object using Springs BeanWrapper
    *
-   * @param obj
-   * @param propertyName
+   * @param obj - the Object
+   * @param propertyName - the property name
    * @return The property value
    */
   private Object getSimpleProperty(Object obj, String propertyName) {
@@ -1350,8 +1394,10 @@ public class JdbcTemplateMapper {
   private String convertSnakeToCamelCase(String str) {
     String camelCase = snakeToCamelCache.get(str);
     if (camelCase == null) {
-      camelCase = toCamelCase(str, false, new char[] {'_'});
-      snakeToCamelCache.put(str, camelCase);
+      if (str != null) {
+        camelCase = toCamelCase(str, false, new char[] {'_'});
+        snakeToCamelCache.put(str, camelCase);
+      }
     }
     return camelCase;
   }

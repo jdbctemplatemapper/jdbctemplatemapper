@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 
 /**
- * Maps a class to the sql select columsn starting with a specific prefix.
+ * Maps a class to the sql select columns starting with a specific prefix.
  * 
  * select o.id o_id, o.order_date o_order_date
  *        ol.id ol_id, ol.propduct_id ol_product_id, ol.quandity ol_quantity
