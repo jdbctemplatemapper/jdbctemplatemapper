@@ -112,7 +112,7 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Gets the JdbcTemplate used by the jdbcMapper
+   * Gets the JdbcTemplate used by the jdbcTemplateMapper
    *
    * @return the JdbcTemplate
    */
@@ -121,7 +121,7 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Gets the NamedParameterJdbcTemplate used by the jdbcMapper
+   * Gets the NamedParameterJdbcTemplate used by the jdbcTemplateMapper
    *
    * @return the NamedParameterJdbcTemplate
    */
@@ -131,10 +131,10 @@ public class JdbcTemplateMapper {
 
   /**
    * The implementation of IRecordOperatorResolver is used to populate the created by and updated by
-   * fields. Assign this while initializing the jdbcMapper
+   * fields. Assign this while initializing the jdbcTemplateMapper
    *
    * @param recordOperatorResolver
-   * @return The jdbcMapper
+   * @return The jdbcTemplateMapper
    */
   public JdbcTemplateMapper withRecordOperatorResolver(
       IRecordOperatorResolver recordOperatorResolver) {
@@ -145,10 +145,10 @@ public class JdbcTemplateMapper {
   /**
    * Assign this to identify the property name of the created by field. The created by property will
    * be assigned the value from recordOperatorResolver.getRecordOperator() when the object is
-   * inserted into the database. Assign this while initializing the jdbcMapper
+   * inserted into the database. Assign this while initializing the jdbcTemplateMapper
    *
    * @param propName : the created by property name.
-   * @return The jdbcMapper
+   * @return The jdbcTemplateMapper
    */
   public JdbcTemplateMapper withCreatedByPropertyName(String propName) {
     this.createdByPropertyName = propName;
@@ -158,10 +158,10 @@ public class JdbcTemplateMapper {
   /**
    * Assign this to identify the property name of created on field. This property has to be of type
    * LocalDateTime. When an object is inserted into the database the value of this field will be set
-   * to current. Assign this while initializing jdbcMapper.
+   * to current. Assign this while initializing jdbcTemplateMapper.
    *
    * @param propName : the created on property name.
-   * @return The jdbcMapper
+   * @return The jdbcTemplateMapper
    */
   public JdbcTemplateMapper withCreatedOnPropertyName(String propName) {
     this.createdOnPropertyName = propName;
@@ -171,10 +171,10 @@ public class JdbcTemplateMapper {
   /**
    * Assign this to identify the property name of updated by field. The updated by property will be
    * assigned the value from recordOperatorResolver.getRecordOperator when the object is updated in
-   * the database. Assign this while initializing the jdbcMapper
+   * the database. Assign this while initializing the jdbcTemplateMapper
    *
    * @param propName : the update by property name.
-   * @return The jdbcMapper
+   * @return The jdbcTemplateMapper
    */
   public JdbcTemplateMapper withUpdatedByPropertyName(String propName) {
     this.updatedByPropertyName = propName;
@@ -184,10 +184,10 @@ public class JdbcTemplateMapper {
   /**
    * Assign this to identify the property name of updated on field. This property has to be of type
    * LocalDateTime. When an object is updated in the database the value of this field will be set to
-   * current. Assign this while initializing jdbcMapper.
+   * current. Assign this while initializing jdbcTemplateMapper.
    *
    * @param propName : the updated on property name.
-   * @return The jdbcMapper
+   * @return The jdbcTemplateMapper
    */
   public JdbcTemplateMapper withUpdatedOnPropertyName(String propName) {
     this.updatedOnPropertyName = propName;
@@ -197,10 +197,10 @@ public class JdbcTemplateMapper {
   /**
    * The property used for optimistic locking. The property has to be of type Integer. If the object
    * has the version property name, on inserts it will be set to 1 and on updates it will
-   * incremented by 1. Assign this while initializing jdbcMapper.
+   * incremented by 1. Assign this while initializing jdbcTemplateMapper.
    *
    * @param propName - The version propertyName
-   * @return The jdbcMapper
+   * @return The jdbcTemplateMapper
    */
   public JdbcTemplateMapper withVersionPropertyName(String propName) {
     this.versionPropertyName = propName;
@@ -320,7 +320,7 @@ public class JdbcTemplateMapper {
    * has to be assigned up front (using a sequence or some other way) and cannot be null.
    *
    * <p>Assigns created by, created on, updated by, updated on, version if these properties exist
-   * for the object and the jdbcMapper is configured for these fields.
+   * for the object and the jdbcTemplateMapper is configured for these fields.
    *
    * @param pojo - The object to be saved
    */
@@ -372,7 +372,7 @@ public class JdbcTemplateMapper {
 
   /**
    * Updates object. Assigns updated by, updated on if these properties exist for the object and the
-   * jdbcMapper is configured for these fields. if 'version' property exists for object throws an
+   * jdbcTemplateMapper is configured for these fields. if 'version' property exists for object throws an
    * OptimisticLockingException if object is stale
    *
    * @param pojo - object to be updated
@@ -441,7 +441,7 @@ public class JdbcTemplateMapper {
 
   /**
    * Updates the propertyNames (passed in as args) of the object. Assigns updated by, updated on if
-   * these properties exist for the object and the jdbcMapper is configured for these fields.
+   * these properties exist for the object and the jdbcTemplateMapper is configured for these fields.
    *
    * @param pojo - object to be updated
    * @param propertyNames - array of property names that should be updated
