@@ -33,13 +33,15 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 
 /**
- * 1) Simple CRUD one liners (which uses spring's JdbcTemplate).
+ * This class uses Springs JdbcTemplate for CRUD and relationship mappings.
  *
- * <p>2) Methods to map relationships (toOne, toMany etc)
+ * <pre>
+ * 1) Simple CRUD one liners
+ * 2) Methods to map relationships (toOne, toMany etc)
+ * 3) Uses an implementation of IRecordOperatorResolver to populate created by, update by fields.
  *
- * <p>3) Uses an implementation of IRecordOperatorResolver to populate created by, update by fields.
- *
- * <p>Code has no external dependencies other than spring framework
+ * Code has no external dependencies other than spring framework
+ * </pre>
  *
  * @author ajoseph
  */
@@ -601,8 +603,32 @@ public class JdbcTemplateMapper {
 
   /**
    * Populates the toOne relationship. Issues an sql query to get the relationship. Make sure the
-   * join property of the argument mainObj is assigned so when sql is issued the where condition
-   * would match mainObj.mainObjJoinPropertyName = relationshipObj.id
+   * join property of the argument mainObj is assigned so it can be matched to its corresponding
+   * relationship object (mainObj.mainObjJoinPropertyName = relationshipObj.id)
+   *
+   * <pre>
+   * Main Object:
+   * Class Order{
+   *   Integer id;
+   *   LocalDateTime orderDate;
+   *   Integer customerId;
+   *   Customer customer; // the toOne relationship
+   * }
+   * toOne related Object:
+   * Class Customer{
+   *   Integer id;
+   *   String firstName;
+   *   String lastName;
+   *   String address;
+   * }
+   *
+   * 1) Get an Order Object using a query for example:
+   * Order order = jdbcTemplateMapper.findById(orderId)
+   *
+   * 2) Populate the Order's toOne customer property. This will issue an sql and populate order.customer
+   * jdbcTemplateMapper.toOneForObject(order, Customer.class, "customer", "customerId");
+   *
+   * </pre>
    *
    * @param mainObj - the main object
    * @param relationShipClazz - The relationship class
@@ -628,6 +654,31 @@ public class JdbcTemplateMapper {
    * query using the 'IN' clause to get all the relationship objects corresponding to the main
    * object list. Make sure the join property of the mainObj is assigned so it can be matched to its
    * corresponding relationship object (mainObj.mainObjJoinPropertyName = relationshipObj.id)
+   *
+   * <pre>
+   * Main Object:
+   * Class Order{
+   *   Integer id;
+   *   LocalDateTime orderDate;
+   *   Integer customerId;
+   *   Customer customer; // the toOne relationship
+   * }
+   * toOne related Object:
+   * Class Customer{
+   *   Integer id;
+   *   String firstName;
+   *   String lastName;
+   *   String address;
+   * }
+   *
+   * 1) Get list of orders using a query for example:
+   * List<Order> orders = jdbcTemplateMapper.findAll(Order.class)
+   *
+   * 2) Populate each Order's toOne customer property. This will issue sql to get the corresponding
+   *    customers using an IN clause:
+   * jdbcTemplateMapper.toOneForList(orders, Customer.class, "customer", "customerId");
+   *
+   * </pre>
    *
    * @param mainObjList - list of main objects
    * @param relationShipClazz - The relationship class
@@ -671,8 +722,8 @@ public class JdbcTemplateMapper {
   /**
    * Populates a single main object and its toOne relationship object with the data from the
    * resultSet using their respective SqlMappers. The sql for the resultset object should have the
-   * join property in select statement so the code can tie the the main object and relationship
-   * object together (mainObj.mainObjJoinPropertyName = relatedObj.id)
+   * join properties in select statement so that the main object and related object can be tied
+   * together (mainObj.mainObjJoinPropertyName = relatedObj.id)
    *
    * <pre>
    * Main Object:
@@ -682,6 +733,7 @@ public class JdbcTemplateMapper {
    *   Integer customerId;
    *   Customer customer; // the toOne relationship
    * }
+   *
    * toOne related Object:
    * Class Customer{
    *   Integer id;
@@ -689,17 +741,18 @@ public class JdbcTemplateMapper {
    *   String lastName;
    *   String address;
    * }
-   * The sql below. Note the column alias naming convention so that the SelectMapper can use the prefix 
-   * to populate the appropriated Objects from the selected columns. See {@link selectCols()} to make
-   * the select clause less verbose.
-   * 
+   *
+   * The sql below. Uses a column alias naming convention so that the SelectMapper() can use the prefix
+   * to populate the appropriated Objects from the selected columns.
+   *
+   * Note that the join properties  o.customer_id and the c.id have to be in select clause.
+   * See {@link #selectCols()} to make the select clause less verbose.
+   *
    * select o.id o_id, o.order_date o_order_date, o.customer_id o_customer_id
    *        c.id c_id, c.first_name c_first_name, c.last_name c_last_name, c.address c_address
    * from order o
    * left join customer c on o.customer_id = c.id
    * where o.id = ?
-   *
-   * Note that both the o.customer_id and the c.id have to be in select clause.
    *
    * Example call to get Order and its Customer (toOne relationship) populated from the sql above:
    * Order order =
@@ -743,10 +796,51 @@ public class JdbcTemplateMapper {
 
   /**
    * Populates the main object list with their corresponding toOne relationship object from the jdbc
-   * ResultSet using their respective SqlMappers.
+   * ResultSet using their respective SqlMappers. The jdbc ResultSet argument object should have the
+   * mainObj.mainObjJoinProperty selected so the code can match mainObj.mainObjJoinPropertyName =
+   * relatedObj.id
    *
-   * <p>The jdbc ResultSet argument object should have the mainObj.mainObjJoinProperty selected so
-   * the code can match mainObj.mainObjJoinPropertyName = relatedObj.id
+   * <pre>
+   * Main Object:
+   * Class Order{
+   *   Integer id;
+   *   LocalDateTime orderDate;
+   *   Integer customerId;
+   *   Customer customer; // the toOne relationship
+   * }
+   *
+   * toOne related Object:
+   * Class Customer{
+   *   Integer id;
+   *   String firstName;
+   *   String lastName;
+   *   String address;
+   * }
+   *
+   * The sql below. Uses a column alias naming convention so that the SelectMapper() can use the prefix
+   * to populate the appropriated Objects from the selected columns.
+   *
+   * Note that the join properties  o.customer_id and the c.id have to be in select clause.
+   * See {@link #selectCols()} to make the select clause less verbose.
+   *
+   * select o.id o_id, o.order_date o_order_date, o.customer_id o_customer_id
+   *        c.id c_id, c.first_name c_first_name, c.last_name c_last_name, c.address c_address
+   * from order o
+   * left join customer c on o.customer_id = c.id
+   *
+   * Example call to get Orders and its Customer (toOne relationship) populated from the sql above:
+   * List<Order> orders =
+   *     jdbcTemplate.query(
+   *         sql,
+   *         rs -> {
+   *           return jdbcTemplateMapper.toOneMapperForList(
+   *               rs,
+   *               new SelectMapper<Order>(Order.class, "o_"),
+   *               new SelectMapper<Customer>(Customer.class, "c_"),
+   *               "customer",
+   *               "customerId");
+   *         });
+   * </pre>
    *
    * @param rs The jdbc ResultSet
    * @param mainObjMapper - The main object mapper.
@@ -810,8 +904,34 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Populates the collectionPropertyName of the mainObj. Executes a query with 'IN' clause to get
-   * the many side records
+   * Populates the toMany relationship. Issues an sql query to get the many side records. Make sure
+   * the id property of the argument mainObj is assigned so that it can be matched to its
+   * corresponding many side object (mainObj.id = manySideObj.manySideJoinPropertyName)
+   *
+   * <pre>
+   * Main Object:
+   * Class Order{
+   *   Integer id;
+   *   LocalDateTime orderDate;
+   *   Integer customerId;
+   *   list<OrderLine> orderLines; // toMany relationship
+   * }
+   * toMany related Object:
+   * Class OrderLine{
+   *   Integer id;
+   *   Integer orderId;
+   *   Integer productId;
+   *   Integer quantity;
+   *   Double price;
+   * }
+   *
+   * 1) Get an Order Object using some query for example:
+   * Order order = jdbcTemplateMapper.findById(orderId)
+   *
+   * 2) Populate each order's orderLines. This will issue an sql and populate order.orderLines
+   * jdbcTemplateMapper.toManyForObject(order, OrderLine.class, "orderLines", "orderId");
+   *
+   * </pre>
    *
    * @param mainObjList - the main object list
    * @param manySideClass - The many side class
@@ -827,8 +947,35 @@ public class JdbcTemplateMapper {
         mainObj, manySideClazz, mainObjCollectionPropertyName, manySideJoinPropertyName, null);
   }
   /**
-   * Populates the collectionPropertyName of the mainObj. Executes a query with 'IN' clause to get
-   * the many side records
+   * Populates the toMany relationship. Issues an sql query to get the many side records. The many
+   * side ordering can be customized using the last argument. Make sure the id property of the
+   * argument mainObj is assigned so that it can be matched to its corresponding many side object
+   * (mainObj.id = manySideObj.manySideJoinPropertyName)
+   *
+   * <pre>
+   * Main Object:
+   * Class Order{
+   *   Integer id;
+   *   LocalDateTime orderDate;
+   *   Integer customerId;
+   *   list<OrderLine> orderLines; // toMany relationship
+   * }
+   * toMany related Object:
+   * Class OrderLine{
+   *   Integer id;
+   *   Integer orderId;
+   *   Integer productId;
+   *   Integer quantity;
+   *   Double price;
+   * }
+   *
+   * 1) Get an Order Object using some query for example:
+   * Order order = jdbcTemplateMapper.findById(orderId)
+   *
+   * 2) Populate each order's orderLines. This will issue an sql with the ordering clause and populate order.orderLines
+   * jdbcTemplateMapper.toManyForObject(order, OrderLine.class, "orderLines", "orderId", "order by price");
+   *
+   * </pre>
    *
    * @param mainObjList - the main object list
    * @param manySideClass - The many side class
@@ -853,9 +1000,36 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * When provided a mainObj list populates its collectionPropertyName. Executes a query with 'IN'
-   * clause to get the many side records
+   * Populates the toMany relations of the list of main objects. Issues an sql query to get the many
+   * side records. The many side ordering can be customized using the last argument. Make sure the
+   * id property of the main objects are assigned so that they can be matched to their corresponding
+   * many side objects (mainObj.id = manySideObj.manySideJoinPropertyName)
    *
+   * <pre>
+   * Main Object:
+   * Class Order{
+   *   Integer id;
+   *   LocalDateTime orderDate;
+   *   Integer customerId;
+   *   list<OrderLine> orderLines; // toMany relationship
+   * }
+   * toMany related Object:
+   * Class OrderLine{
+   *   Integer id;
+   *   Integer orderId;
+   *   Integer productId;
+   *   Integer quantity;
+   *   Double price;
+   * }
+   *
+   * 1) Get a list of Order objects using some query for example:
+   * List<Order> order = jdbcTemplateMapper.findAll(Order.class);
+   *
+   * 2) Populate each order's orderlines . This will issue an sql and populate order.orderLines.
+   * jdbcTemplateMapper.toManyForList(orders, OrderLine.class, "orderLines", "orderId");
+   *
+   * </pre>
+   * 
    * @param mainObjList - the main object list
    * @param manySideClass - The many side class
    * @param mainObjCollectionPropertyName - The collection property name on mainObj
@@ -871,8 +1045,35 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * When provided a mainObj list populates its collectionPropertyName. Executes a query with 'IN'
-   * clause to get the many side records
+   * Populates the toMany relations of the list of main objects. Issues an sql query to get the many
+   * side records.Make sure the id property of the main objects are assigned so that they can be
+   * matched to their corresponding many side objects (mainObj.id =
+   * manySideObj.manySideJoinPropertyName)
+   *
+   * <pre>
+   * Main Object:
+   * Class Order{
+   *   Integer id;
+   *   LocalDateTime orderDate;
+   *   Integer customerId;
+   *   list<OrderLine> orderLines; // toMany relationship
+   * }
+   * toMany related Object:
+   * Class OrderLine{
+   *   Integer id;
+   *   Integer orderId;
+   *   Integer productId;
+   *   Integer quantity;
+   *   Double price;
+   * }
+   *
+   * 1) Get a list of Order objects using some query for example:
+   * List<Order> order = jdbcTemplateMapper.findAll(Order.class);
+   *
+   * 2) Populate each Order's orderLines . This will issue an sql with the ordering clause and populate order.orderLines.
+   * jdbcTemplateMapper.toManyForList(orders, OrderLine.class, "orderLines", "orderId", "order by price");
+   *
+   * </pre>
    *
    * @param mainObjList - the main object list
    * @param manySideClass - The many side class
