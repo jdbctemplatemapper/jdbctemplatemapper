@@ -11,7 +11,9 @@ import lombok.Data;
 public class SelectMapper<T> {
   private Class<T> clazz;
   private String sqlColumnPrefix;
+  
 /**
+ * Maps sql select columns starting with a specific prefix to an object.
  * <pre>
  * For query below:
  * select o.id o_id, o.order_date o_order_date ol.id 

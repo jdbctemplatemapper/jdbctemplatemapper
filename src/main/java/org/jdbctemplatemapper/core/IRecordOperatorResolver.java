@@ -2,7 +2,7 @@ package org.jdbctemplatemapper.core;
 
 /**
  * An implementation of this interface will return the value
- * used to populate created by, updated by fields by JdbcTemplateMapper
+ * used to populate created by, updated by fields when using JdbcTemplateMapper
  * 
  * @author ajoseph
  *

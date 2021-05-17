@@ -40,7 +40,24 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  * 1) Simple CRUD one liners
  * 2) Methods to map relationships (toOne, toMany etc)
  * 3) Uses an implementation of IRecordOperatorResolver to populate created by, update by fields.
+ *  
+ * Spring bean configuration will look something like below:
+ * 
+ *  &#64;Bean(name = "jdbcTemplateMapper")
+ *  public JdbcTemplateMapper jdbcTemplateMapper(DataSource dataSource) {
+ *    JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(dataSource, "yourSchemaName");
+ *    
+ *    // The below configurations are optional. 
+ *    jdbcTemplateMapper
+ *     .withRecordOperatorResolver(new RecordOperatorResolver())
+ *     .withCreatedOnPropertyName("createdOn")
+ *     .withCreatedByPropertyName("createdBy")
+ *     .withUpdatedOnPropertyName("updatedOn")
+ *     .withUpdatedByPropertyName("updatedBy")
+ *     .withVersionPropertyName("version");
  *
+ *    return jdbcTemplateMapper;
+ *  }
  * </pre>
  *
  * @author ajoseph
@@ -602,9 +619,10 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Populates the toOne relationship. Issues an sql query to get the relationship. Make sure the
-   * join property of the argument mainObj is assigned so it can be matched to its corresponding
-   * relationship object (mainObj.mainObjJoinPropertyName = relationshipObj.id)
+   * Populates the toOne relationship of the main object. Issues an sql query to get the
+   * relationship. Make sure the join property of the argument main object is assigned so it can be
+   * matched to its corresponding relationship object (mainObj.mainObjJoinPropertyName =
+   * relationshipObj.id)
    *
    * <pre>
    * Main Object:
@@ -652,8 +670,8 @@ public class JdbcTemplateMapper {
   /**
    * Populates the toOne relationship for all the main objects in the argument list. Issues an sql
    * query using the 'IN' clause to get all the relationship objects corresponding to the main
-   * object list. Make sure the join property of the mainObj is assigned so it can be matched to its
-   * corresponding relationship object (mainObj.mainObjJoinPropertyName = relationshipObj.id)
+   * object list. Make sure the join property of the main object is assigned so it can be matched to
+   * its corresponding relationship object (mainObj.mainObjJoinPropertyName = relationshipObj.id)
    *
    * <pre>
    * Main Object:
@@ -720,10 +738,10 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Populates a single main object and its toOne relationship object with the data from the
-   * resultSet using their respective SqlMappers. The sql for the resultset object should have the
-   * join properties in select statement so that the main object and related object can be tied
-   * together (mainObj.mainObjJoinPropertyName = relatedObj.id)
+   * Populates a single main object and its toOne related object with the data from the ResultSet
+   * using their respective SqlMappers. The sql for the Resultset object should have the join
+   * properties in select statement so that the main object and related object can be tied together
+   * (mainObj.mainObjJoinPropertyName = relatedObj.id)
    *
    * <pre>
    * Main Object:
@@ -746,8 +764,11 @@ public class JdbcTemplateMapper {
    * to populate the appropriated Objects from the selected columns.
    *
    * Note that the join properties  o.customer_id and the c.id have to be in select clause.
+   * </pre>
+   *
    * See {@link #selectCols()} to make the select clause less verbose.
    *
+   * <pre>
    * select o.id o_id, o.order_date o_order_date, o.customer_id o_customer_id
    *        c.id c_id, c.first_name c_first_name, c.last_name c_last_name, c.address c_address
    * from order o
@@ -795,10 +816,10 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Populates the main object list with their corresponding toOne relationship object from the jdbc
-   * ResultSet using their respective SqlMappers. The jdbc ResultSet argument object should have the
-   * mainObj.mainObjJoinProperty selected so the code can match mainObj.mainObjJoinPropertyName =
-   * relatedObj.id
+   * Populates the main object list with their corresponding toOne related object from the jdbc
+   * ResultSet using their respective SqlMappers. The sql for the Resultset object should have the
+   * join properties in select statement so that the main object and related object can be tied
+   * together (mainObj.mainObjJoinPropertyName = relatedObj.id)
    *
    * <pre>
    * Main Object:
@@ -949,8 +970,8 @@ public class JdbcTemplateMapper {
   /**
    * Populates the toMany relationship. Issues an sql query to get the many side records. The many
    * side ordering can be customized using the last argument. Make sure the id property of the
-   * argument main object is assigned so that it can be matched to its corresponding many side object
-   * (mainObj.id = manySideObj.manySideJoinPropertyName)
+   * argument main object is assigned so that it can be matched to its corresponding many side
+   * object (mainObj.id = manySideObj.manySideJoinPropertyName)
    *
    * <pre>
    * Main Object:
@@ -1129,23 +1150,21 @@ public class JdbcTemplateMapper {
           mainObjList, manySideList, mainObjCollectionPropertyName, manySideJoinPropertyName);
     }
   }
-  
+
   /**
-   * Populates a single main object and its collection PropertyName object with the data from the
-   * resultSet using their respective SqlMappers.
+   * Populates a single main object and its many side collection with the data from the ResultSet
+   * using their respective SqlMappers.
    *
-   * <p>The jdbc ResultSet argument object should have the join property assigned so the code can
-   * tie the the main objects and its related objects together.
-   *
-   * <p>The join property name on the main object is figured out from the mapper class of the
-   * related object.
+   * <p>The jdbc ResultSet should have mainObj.id and manySideObj.manySideJoinPropertyName so that
+   * the mainObj.mainObjCollectionProperty can be assigned by matching mainObj.id to
+   * manySideObj.manySideJoinPropertyName.
    *
    * @param rs - The jdbc ResultSet
    * @param mainObjMapper - The main object mapper.
    * @param manySideObjMapper - The many side object mapper
    * @param mainObjCollectionPropertyName - the collectionPropertyName on the mainObj that needs to
    *     be populated
-   * @param manySideJoinPropertyName - the joing property name on the manySide
+   * @param manySideJoinPropertyName - the join property name on the manySide
    * @return The main object with its toMany relationship assigned.
    */
   @SuppressWarnings("all")
@@ -1166,12 +1185,12 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Populates the main object list with their corresponding toMany relationship object from the
-   * jdbc ResultSet using their respective SqlMappers.
+   * Populates the main object list and their corresponding many side collections from the jdbc
+   * ResultSet using their respective SqlMappers.
    *
-   * <p>The jdbc ResultSet should have mainObj.id and relatedObj.joinPropertyName so that the
-   * mainObj.relationshipProperty can be assigned by matching mainObj.id to
-   * relatedObj.joinPropertyName.
+   * <p>The jdbc ResultSet should have mainObj.id and manySideObj.manySideJoinPropertyName so that
+   * the mainObj.mainObjCollectionProperty can be assigned by matching mainObj.id to
+   * manySideObj.manySideJoinPropertyName.
    *
    * @param rs The jdbc ResultSet
    * @param mainObjMapper - The main object mapper
