@@ -33,14 +33,14 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 
 /**
- * This class uses Springs JdbcTemplate for CRUD and relationship mappings.
+ * This class uses Spring's JdbcTemplate for CRUD and relationship mappings. Code has no external
+ * dependencies other than spring framework
  *
  * <pre>
  * 1) Simple CRUD one liners
  * 2) Methods to map relationships (toOne, toMany etc)
  * 3) Uses an implementation of IRecordOperatorResolver to populate created by, update by fields.
  *
- * Code has no external dependencies other than spring framework
  * </pre>
  *
  * @author ajoseph
@@ -245,7 +245,7 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Find all objects with the order by clause passed as argument
+   * Find all objects and order them using the order by clause passed as argument
    *
    * @param clazz - Type of object
    * @return List of objects
@@ -261,8 +261,8 @@ public class JdbcTemplateMapper {
    * Inserts an object whose id in database is auto increment. Note the 'id' has to be null for the
    * object to be inserted. Once inserted the object will have the id assigned.
    *
-   * <p>Also assigns createdBy, createdOn, updatedBy, updatedOn, version if these properties exist
-   * for the object
+   * <p>Also assigns created by, created on, updated by, updated on, version if these properties
+   * exist for the object and the JdbcTemplateMapper is configured for them.
    *
    * @param pojo - The object to be saved
    */
@@ -321,8 +321,8 @@ public class JdbcTemplateMapper {
    * Inserts an object whose id in database is NOT auto increment. In this case the object's 'id'
    * has to be assigned up front (using a sequence or some other way) and cannot be null.
    *
-   * <p>Assigns created by, created on, updated by, updated on, version if these properties exist
-   * for the object and the jdbcTemplateMapper is configured for these fields.
+   * <p>Also assigns created by, created on, updated by, updated on, version if these properties
+   * exist for the object and the JdbcTemplateMapper is configured for them.
    *
    * @param pojo - The object to be saved
    */
@@ -905,7 +905,7 @@ public class JdbcTemplateMapper {
 
   /**
    * Populates the toMany relationship. Issues an sql query to get the many side records. Make sure
-   * the id property of the argument mainObj is assigned so that it can be matched to its
+   * the id property of the argument main object is assigned so that it can be matched to its
    * corresponding many side object (mainObj.id = manySideObj.manySideJoinPropertyName)
    *
    * <pre>
@@ -914,7 +914,7 @@ public class JdbcTemplateMapper {
    *   Integer id;
    *   LocalDateTime orderDate;
    *   Integer customerId;
-   *   list<OrderLine> orderLines; // toMany relationship
+   *   List<OrderLine> orderLines; // toMany relationship
    * }
    * toMany related Object:
    * Class OrderLine{
@@ -928,7 +928,7 @@ public class JdbcTemplateMapper {
    * 1) Get an Order Object using some query for example:
    * Order order = jdbcTemplateMapper.findById(orderId)
    *
-   * 2) Populate each order's orderLines. This will issue an sql and populate order.orderLines
+   * 2) Populate the order's orderLines. This will issue an sql and populate order.orderLines
    * jdbcTemplateMapper.toManyForObject(order, OrderLine.class, "orderLines", "orderId");
    *
    * </pre>
@@ -949,7 +949,7 @@ public class JdbcTemplateMapper {
   /**
    * Populates the toMany relationship. Issues an sql query to get the many side records. The many
    * side ordering can be customized using the last argument. Make sure the id property of the
-   * argument mainObj is assigned so that it can be matched to its corresponding many side object
+   * argument main object is assigned so that it can be matched to its corresponding many side object
    * (mainObj.id = manySideObj.manySideJoinPropertyName)
    *
    * <pre>
@@ -958,7 +958,7 @@ public class JdbcTemplateMapper {
    *   Integer id;
    *   LocalDateTime orderDate;
    *   Integer customerId;
-   *   list<OrderLine> orderLines; // toMany relationship
+   *   List<OrderLine> orderLines; // toMany relationship
    * }
    * toMany related Object:
    * Class OrderLine{
@@ -972,9 +972,8 @@ public class JdbcTemplateMapper {
    * 1) Get an Order Object using some query for example:
    * Order order = jdbcTemplateMapper.findById(orderId)
    *
-   * 2) Populate each order's orderLines. This will issue an sql with the ordering clause and populate order.orderLines
+   * 2) Populate the order's orderLines. This will issue an sql with the ordering clause and populate order.orderLines
    * jdbcTemplateMapper.toManyForObject(order, OrderLine.class, "orderLines", "orderId", "order by price");
-   *
    * </pre>
    *
    * @param mainObjList - the main object list
@@ -1000,10 +999,10 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Populates the toMany relations of the list of main objects. Issues an sql query to get the many
-   * side records. The many side ordering can be customized using the last argument. Make sure the
-   * id property of the main objects are assigned so that they can be matched to their corresponding
-   * many side objects (mainObj.id = manySideObj.manySideJoinPropertyName)
+   * Populates the toMany relationship of each the main objects in the list. Issues an sql query to
+   * get the many side records. Make sure the id property of the main objects are assigned so that
+   * they can be matched to their corresponding many side objects (mainObj.id =
+   * manySideObj.manySideJoinPropertyName)
    *
    * <pre>
    * Main Object:
@@ -1011,7 +1010,7 @@ public class JdbcTemplateMapper {
    *   Integer id;
    *   LocalDateTime orderDate;
    *   Integer customerId;
-   *   list<OrderLine> orderLines; // toMany relationship
+   *   List<OrderLine> orderLines; // toMany relationship
    * }
    * toMany related Object:
    * Class OrderLine{
@@ -1023,13 +1022,14 @@ public class JdbcTemplateMapper {
    * }
    *
    * 1) Get a list of Order objects using some query for example:
-   * List<Order> order = jdbcTemplateMapper.findAll(Order.class);
+   * List<Order> orders = jdbcTemplateMapper.findAll(Order.class);
    *
-   * 2) Populate each order's orderlines . This will issue an sql and populate order.orderLines.
+   * 2) Populate each order's orderlines . This will issue an sql (with an IN clause) and
+   *    populate order.orderLines.
    * jdbcTemplateMapper.toManyForList(orders, OrderLine.class, "orderLines", "orderId");
    *
    * </pre>
-   * 
+   *
    * @param mainObjList - the main object list
    * @param manySideClass - The many side class
    * @param mainObjCollectionPropertyName - The collection property name on mainObj
@@ -1046,9 +1046,9 @@ public class JdbcTemplateMapper {
 
   /**
    * Populates the toMany relations of the list of main objects. Issues an sql query to get the many
-   * side records.Make sure the id property of the main objects are assigned so that they can be
-   * matched to their corresponding many side objects (mainObj.id =
-   * manySideObj.manySideJoinPropertyName)
+   * side records. The many side ordering can be customized using the last argument. Make sure the
+   * id property of the main objects are assigned so that they can be matched to their corresponding
+   * many side objects (mainObj.id = manySideObj.manySideJoinPropertyName)
    *
    * <pre>
    * Main Object:
@@ -1056,7 +1056,7 @@ public class JdbcTemplateMapper {
    *   Integer id;
    *   LocalDateTime orderDate;
    *   Integer customerId;
-   *   list<OrderLine> orderLines; // toMany relationship
+   *   List<OrderLine> orderLines; // toMany relationship
    * }
    * toMany related Object:
    * Class OrderLine{
@@ -1068,7 +1068,7 @@ public class JdbcTemplateMapper {
    * }
    *
    * 1) Get a list of Order objects using some query for example:
-   * List<Order> order = jdbcTemplateMapper.findAll(Order.class);
+   * List<Order> orders = jdbcTemplateMapper.findAll(Order.class);
    *
    * 2) Populate each Order's orderLines . This will issue an sql with the ordering clause and populate order.orderLines.
    * jdbcTemplateMapper.toManyForList(orders, OrderLine.class, "orderLines", "orderId", "order by price");
@@ -1129,6 +1129,7 @@ public class JdbcTemplateMapper {
           mainObjList, manySideList, mainObjCollectionPropertyName, manySideJoinPropertyName);
     }
   }
+  
   /**
    * Populates a single main object and its collection PropertyName object with the data from the
    * resultSet using their respective SqlMappers.
@@ -1288,11 +1289,12 @@ public class JdbcTemplateMapper {
    * Generates a string which can be used in a sql select statement with the all columns of the
    * table.
    *
-   * <p>Note: the string which contains all the columns of the table will have a comma as its last
-   * character.
+   * <pre>
+   * Note: the string will have a comma as its last character.
    *
-   * <p>Example: for method call selectCols("employee", "emp") where "emp" is the alias will return:
-   * "emp.id emp_id, emp.last_name emp_last_name, emp.first_name emp_first_name" .....,
+   * selectCols("employee", "emp") where "emp" is the alias will return something like:
+   * "emp.id emp_id, emp.last_name emp_last_name, emp.first_name emp_first_name,"
+   * </pre>
    *
    * @param tableName - the Table name
    * @param tableAlias - the alias being used in the sql statement for the table.
@@ -1306,13 +1308,15 @@ public class JdbcTemplateMapper {
    * Generates a string which can be used in a sql select statement with all the columns of the
    * table.
    *
-   * <p>Example: for method call selectCols("employee", "emp") where "emp" is the alias will return:
+   * <pre>
+   * selectCols("employee", "emp", false) where "emp" is the alias will return something like:
    * "emp.id emp_id, emp.last_name emp_last_name, emp.first_name emp_first_name"
+   * </pre>
    *
    * @param tableName - the Table name
    * @param tableAlias - the alias being used in the sql statement for the table.
-   * @param includeLastComma - if true a comma will be last character of string; if false there will
-   *     be no last comma at end of string
+   * @param includeLastComma - if true last character will be comma; if false the string will have
+   *     NO comma at end
    * @return comma separated select column string
    */
   public String selectCols(String tableName, String tableAlias, boolean includeLastComma) {
