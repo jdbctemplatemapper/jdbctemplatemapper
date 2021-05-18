@@ -34,36 +34,52 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 
 /**
  * An utility class which uses Spring's JdbcTemplate for CRUD and relationship mappings.
+ * Requires Java 8 and above.
  * Code has no external dependencies other than spring framework
  *
  * <pre>
  * 1) Simple CRUD one liners
  * 2) Methods to map relationships (toOne, toMany etc)
- * 3) Uses an implementation of IRecordOperatorResolver to populate created by, update by fields.
+ * 3) Can auto populate fields like created on, updated on if configured.
+ * 4) Can auto populate created by, updated by fields if configured using an 
+ *    implementation of IRecordOperatorResolver.
+ * 5) Can be configured to provide optimistic locking functionality for updates using a version property.
  *
  * JdbcTemplateMapper is  opinionated. It does not use any custom annotations.
- * 1) For models named 'Order' and 'OrderLine' the corresponding database
- *    table names must be 'order' and 'order_line' respectively.
- * 2) Properties of a model like firstName, lastName should have corresponding database columns 
- *    first_name and last_name in the table.
+ * 1) A model is mapped to its corresponding  table using a naming convention where the 
+ *    camel case model name is matched to a snake case table name.
+ *    For model named 'Order' the corresponding database table name will be 'order'.
+ *    For model named 'OrderLine' the corresponding database table name will be 'order_line'.
+ * 2) Properties of a model like firstName, lastName will be matched to corresponding database columns 
+ *    first_name and last_name in the table. Uses camel case to snake case mapping.
  * 3) All the models should have a property named 'id' which has to be of type Integer or Long.
- * 4) Models can have non database properties. 
+ * 4) For data/datetime fields the models should use java 8+ classes LocalDate, LocalDateTime
+ * 4) Models can have properties which do not have corresponding database columns or vice versa.
+ *    The framework ignores them during inserts/updates/find.. 
  * 
  * Examples of simple CRUD:
  * public class Product{
  *    private Integer id;
- *    private String productName;
+ *    private String name;
  *    private Double price;
- *    private String someNonDatabaseProperty;
+ *    private String someNonDatabaseProperty; // will not be part of insert/update/find
  *    // getters and setters ...
  * }
  * 
+ * Product product = new Product();
+ * product.setName("someName");
+ * product.setPrice(10.25);
  * jdbcTemplateMapper.insert(product);
- * jdbcTemplateMapper.update(product);
- * jdbcTemplateMapper.findById(1, Product.class);
- * jdbcTemplateMapper.findAll(Product.class);
  * 
- *
+ * product = jdbcTemplateMapper.findById(1, Product.class);
+ * product.setPrice(11.50);
+ * jdbcTemplateMapper.update(product);
+ * 
+ * List<Product> products = jdbcTemplateMapper.findAll(Product.class);
+ * 
+ * See the toOne..() and  toMany..() classes to retrieve classes and their relationships.
+ * 
+ * Installation:
  * Dependencies in pom.xml
  * If a spring boot application:
  * {@code
@@ -81,9 +97,6 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  *   <version>YourVersionOfSpringJdbc</version> 
  *  </dependency>
  * }
- * 
- * 
- * 
  * 
  * Spring bean configuration will look something like below (Assuming that the DataSource is already configured):
  *
