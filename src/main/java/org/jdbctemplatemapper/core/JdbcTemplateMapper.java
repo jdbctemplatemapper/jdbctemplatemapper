@@ -19,12 +19,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
@@ -42,10 +40,26 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  * 1) Simple CRUD one liners
  * 2) Methods to map relationships (toOne, toMany etc)
  * 3) Uses an implementation of IRecordOperatorResolver to populate created by, update by fields.
+ * </pre>
+ * Dependencies in pom.xml
+ * If a springboot application include following:
+ *   <dependency>
+ *     <groupId>org.springframework.boot</groupId>
+ *     <artifactId>spring-boot-starter-jdbc</artifactId>
+ *   </dependency>
+ *   
+ * If a regular spring application:
+ *   <dependency>
+ *     <groupId>org.springframework</groupId>
+ *     <artifactId>spring-jdbc</artifactId>
+ *     <version>YourVersionOfSpringJdbc</version>
+ *   </dependency>
+ *  
  *
+ * <pre>
  * Spring bean configuration will look something like below (Assuming that the DataSource is already configured):
  * 
- * &#64;Bean(name = "jdbcTemplateMapper")
+ * &#64;Bean
  * public JdbcTemplateMapper jdbcTemplateMapper(DataSource dataSource) {
  *   JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(dataSource, "yourSchemaName");
  *   // The below configurations are optional.
