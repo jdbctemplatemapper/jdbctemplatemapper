@@ -19,10 +19,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
@@ -40,15 +42,14 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  * 1) Simple CRUD one liners
  * 2) Methods to map relationships (toOne, toMany etc)
  * 3) Uses an implementation of IRecordOperatorResolver to populate created by, update by fields.
- *  
- * Spring bean configuration will look something like below:
+ *
+ * Spring bean configuration will look something like below (Assuming that the DataSource is already configured):
  * 
- *  &#64;Bean(name = "jdbcTemplateMapper")
- *  public JdbcTemplateMapper jdbcTemplateMapper(DataSource dataSource) {
- *    JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(dataSource, "yourSchemaName");
- *    
- *    // The below configurations are optional. 
- *    jdbcTemplateMapper
+ * &#64;Bean(name = "jdbcTemplateMapper")
+ * public JdbcTemplateMapper jdbcTemplateMapper(DataSource dataSource) {
+ *   JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(dataSource, "yourSchemaName");
+ *   // The below configurations are optional.
+ *   jdbcTemplateMapper
  *     .withRecordOperatorResolver(new RecordOperatorResolver())
  *     .withCreatedOnPropertyName("createdOn")
  *     .withCreatedByPropertyName("createdBy")
@@ -56,8 +57,22 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  *     .withUpdatedByPropertyName("updatedBy")
  *     .withVersionPropertyName("version");
  *
- *    return jdbcTemplateMapper;
- *  }
+ *   return jdbcTemplateMapper;
+ * }
+ * 
+ * A Base DAO will look something like below:
+ * 
+ * public class BaseDao {
+ *   &#64;Autowired protected JdbcTemplateMapper jdbcTemplateMapper;
+ *   protected JdbcTemplate jdbcTemplate;
+ *   protected NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+ *
+ *   &#64;PostConstruct
+ *   public void init() {
+ *     this.jdbcTemplate = jdbcTemplateMapper.getJdbcTemplate();
+ *     this.namedParameterJdbcTemplate = jdbcTemplateMapper.getNamedParameterJdbcTemplate();
+ *   }
+ * }
  * </pre>
  *
  * @author ajoseph
@@ -152,8 +167,8 @@ public class JdbcTemplateMapper {
    * The implementation of IRecordOperatorResolver is used to populate the created by and updated by
    * fields. Assign this while initializing the jdbcTemplateMapper
    *
-   * @param recordOperatorResolver
-   * @return The jdbcTemplateMapper
+   * @param recordOperatorResolver - The implement for interface IRecordOperatorResolver
+   * @return The jdbcTemplateMapper - The jdbcTemplateMapper
    */
   public JdbcTemplateMapper withRecordOperatorResolver(
       IRecordOperatorResolver recordOperatorResolver) {
@@ -229,9 +244,10 @@ public class JdbcTemplateMapper {
   /**
    * Returns the object by Id. Return null if not found
    *
-   * @param id - Id of object
-   * @param type - Class of object
-   * @return - The object of the specific type
+   * @param id Id of object
+   * @param clazz Class of object
+   * @param <T> the type of the object
+   * @return the object of the specific type
    */
   public <T> T findById(Object id, Class<T> clazz) {
     if (!(id instanceof Integer || id instanceof Long)) {
@@ -251,7 +267,8 @@ public class JdbcTemplateMapper {
   /**
    * Find all objects
    *
-   * @param clazz - Type of object
+   * @param clazz Type of object
+   * @param <T> the type of the objects
    * @return List of objects
    */
   public <T> List<T> findAll(Class<T> clazz) {
@@ -264,7 +281,9 @@ public class JdbcTemplateMapper {
   /**
    * Find all objects and order them using the order by clause passed as argument
    *
-   * @param clazz - Type of object
+   * @param clazz Type of object
+   * @param <T> the type of the objects
+   * @param orderByClause The order by sql
    * @return List of objects
    */
   public <T> List<T> findAll(Class<T> clazz, String orderByClause) {
