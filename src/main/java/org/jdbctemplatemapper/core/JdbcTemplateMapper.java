@@ -39,7 +39,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  *
  * <pre>
  * 1) Simple CRUD one liners
- * 2) Methods to map relationships (toOne, toMany etc)
+ * 2) Methods to retrieve relationships (toOne, toMany etc)
  * 3) Can auto populate fields like created on, updated on if configured.
  * 4) Can auto populate created by, updated by fields if configured using an 
  *    implementation of IRecordOperatorResolver.
@@ -53,9 +53,9 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  * 2) Properties of a model like firstName, lastName will be matched to corresponding database columns 
  *    first_name and last_name in the table. Uses camel case to snake case mapping.
  * 3) All the models should have a property named 'id' which has to be of type Integer or Long.
- * 4) For data/datetime fields the models should use java 8+ classes LocalDate, LocalDateTime
  * 4) Models can have properties which do not have corresponding database columns or vice versa.
  *    The framework ignores them during inserts/updates/find.. 
+ * 5) If using auto populated properties for created on, updated on; these properties must be of type LocalDateTime
  * 
  * Examples of simple CRUD:
  * public class Product{
