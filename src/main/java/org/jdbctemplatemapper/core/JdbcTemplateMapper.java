@@ -33,55 +33,73 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 
 /**
- * This class uses Spring's JdbcTemplate for CRUD and relationship mappings. Code has no external
- * dependencies other than spring framework
+ * An utility class which uses Spring's JdbcTemplate for CRUD and relationship mappings.
+ * Code has no external dependencies other than spring framework
  *
  * <pre>
  * 1) Simple CRUD one liners
  * 2) Methods to map relationships (toOne, toMany etc)
  * 3) Uses an implementation of IRecordOperatorResolver to populate created by, update by fields.
- * </pre>
- * Dependencies in pom.xml
- * If a springboot application include following:
- *   <dependency>
- *     <groupId>org.springframework.boot</groupId>
- *     <artifactId>spring-boot-starter-jdbc</artifactId>
- *   </dependency>
- *   
- * If a regular spring application:
- *   <dependency>
- *     <groupId>org.springframework</groupId>
- *     <artifactId>spring-jdbc</artifactId>
- *     <version>YourVersionOfSpringJdbc</version>
- *   </dependency>
- *  
  *
- * <pre>
- * Spring bean configuration will look something like below (Assuming that the DataSource is already configured):
+ * JdbcTemplateMapper is  opinionated. It does not use any custom annotations.
+ * 1) For models named 'Order' and 'OrderLine' the corresponding database
+ *    table names must be 'order' and 'order_line' respectively.
+ * 2) Properties of a model like firstName, lastName should have corresponding database columns 
+ *    first_name and last_name in the table.
+ * 3) All the models should have a property named 'id' which has to be of type Integer or Long.
+ * 4) Models can have non database properties. 
  * 
- * &#64;Bean
- * public JdbcTemplateMapper jdbcTemplateMapper(DataSource dataSource) {
- *   JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(dataSource, "yourSchemaName");
- *   // The below configurations are optional.
- *   jdbcTemplateMapper
- *     .withRecordOperatorResolver(new RecordOperatorResolver())
- *     .withCreatedOnPropertyName("createdOn")
- *     .withCreatedByPropertyName("createdBy")
- *     .withUpdatedOnPropertyName("updatedOn")
- *     .withUpdatedByPropertyName("updatedBy")
- *     .withVersionPropertyName("version");
- *
- *   return jdbcTemplateMapper;
+ * Examples of simple CRUD:
+ * public class Product{
+ *    private Integer id;
+ *    private String productName;
+ *    private Double price;
+ *    private String someNonDatabaseProperty;
+ *    // getters and setters ...
  * }
  * 
- * A Base DAO will look something like below:
+ * jdbcTemplateMapper.insert(product);
+ * jdbcTemplateMapper.update(product);
+ * jdbcTemplateMapper.findById(1, Product.class);
+ * jdbcTemplateMapper.findAll(Product.class);
  * 
+ *
+ * Dependencies in pom.xml
+ * If a spring boot application:
+ * {@code
+ *  <dependency>
+ *    <groupId>org.springframework.boot</groupId>
+ *    <artifactId>spring-boot-starter-jdbc</artifactId>
+ * </dependency>
+ * }
+ * 
+ * If a regular spring application: 
+ * {@code
+ *  <dependency> 
+ *   <groupId>org.springframework</groupId>
+ *   <artifactId>spring-jdbc</artifactId> 
+ *   <version>YourVersionOfSpringJdbc</version> 
+ *  </dependency>
+ * }
+ * 
+ * 
+ * 
+ * 
+ * Spring bean configuration will look something like below (Assuming that the DataSource is already configured):
+ *
+ * {@literal @}Bean
+ * public JdbcTemplateMapper jdbcTemplateMapper(DataSource dataSource) {
+ *   return new JdbcTemplateMapper(dataSource, "yourSchemaName");
+ * }
+ *
+ * A Base DAO will look something like below:
+ *
  * public class BaseDao {
- *   &#64;Autowired protected JdbcTemplateMapper jdbcTemplateMapper;
+ *   {@literal @}Autowired protected JdbcTemplateMapper jdbcTemplateMapper;
  *   protected JdbcTemplate jdbcTemplate;
  *   protected NamedParameterJdbcTemplate namedParameterJdbcTemplate;
  *
- *   &#64;PostConstruct
+ *   {@literal @}PostConstruct
  *   public void init() {
  *     this.jdbcTemplate = jdbcTemplateMapper.getJdbcTemplate();
  *     this.namedParameterJdbcTemplate = jdbcTemplateMapper.getNamedParameterJdbcTemplate();
