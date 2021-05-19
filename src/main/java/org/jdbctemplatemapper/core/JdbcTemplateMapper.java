@@ -33,29 +33,39 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 
 /**
- * An utility class which uses Spring's JdbcTemplate for CRUD and relationship mappings.
- * Requires Java 8 and above.
- * Code has no external dependencies other than spring framework
+ * 
+ * As soon as a project gets to a certain size and complexity (most enterprise applications) 
+ * an ORM's (Hibernate etc) magic ends up getting in the way. Maintenance of an ORM project
+ * is difficult (especially if a team inherits the project). The sql being generated is cryptic
+ * which makes troubleshooting challenging. ORM's mappings are complex with a lot of nuances and a large learning curve.
+ * ORM performance issues take a high level of expertise to resolve.
+ * 
+ * Spring's JdbcTemplate is an excellent solution for applications since it uses SQL/JDBC. 
+ * Unfortunately it is verbose. JdbcTemplateMapper tries to mitigate this. It is a utility class which uses 
+ * Spring's JdbcTemplate, allowing for single line CRUD and multiple ways to query relationships. 
  *
  * <pre>
  * 1) Simple CRUD one liners
- * 2) Methods to retrieve relationships (toOne, toMany etc)
- * 3) Can auto populate fields like created on, updated on if configured.
- * 4) Can auto populate created by, updated by fields if configured using an 
+ * 2) Methods to retrieve relationships (toOne..(), toMany..() etc)
+ * 3) Can be configured to auto assign properties created on, updated on.
+ * 4) Can be configured to auto assign properties created by, updated by using an
  *    implementation of IRecordOperatorResolver.
  * 5) Can be configured to provide optimistic locking functionality for updates using a version property.
+ * 6) Use Spring's JdbcTemplate/NamedPropertyJdbcTemplate or JdbcTemplateMapper(this class) as needed.
  *
- * JdbcTemplateMapper is  opinionated. It does not use any custom annotations.
- * 1) A model is mapped to its corresponding  table using a naming convention where the 
+ * JdbcTemplateMapper is  opinionated. To keep it simple it does not have any custom annotations.
+ * 1) A model is mapped to its corresponding table using a naming convention where the 
  *    camel case model name is matched to a snake case table name.
  *    For model named 'Order' the corresponding database table name will be 'order'.
  *    For model named 'OrderLine' the corresponding database table name will be 'order_line'.
  * 2) Properties of a model like firstName, lastName will be matched to corresponding database columns 
- *    first_name and last_name in the table. Uses camel case to snake case mapping.
+ *    first_name and last_name in the table. Maps camel case property names to snake case database column names.
  * 3) All the models should have a property named 'id' which has to be of type Integer or Long.
  * 4) Models can have properties which do not have corresponding database columns or vice versa.
  *    The framework ignores them during inserts/updates/find.. 
- * 5) If using auto populated properties for created on, updated on; these properties must be of type LocalDateTime
+ * 5) If configured for auto population of created on, updated on, these properties must be of type LocalDateTime.
+ * 6) Make sure 
+ *
  * 
  * Examples of simple CRUD:
  * public class Product{
@@ -77,11 +87,15 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  * 
  * List<Product> products = jdbcTemplateMapper.findAll(Product.class);
  * 
- * See the toOne..() and  toMany..() classes to retrieve classes and their relationships.
+ * jdbcTemplateMapper.delete(1, Product.class);
  * 
- * Installation:
- * Dependencies in pom.xml
- * If a spring boot application:
+ * See methods toOne..() and  toMany..() for relationship retrieval.
+ * 
+ * Installation: 
+ * Requires Java8 or above.
+ * 
+ * pom.xml dependencies:
+ * For a spring boot application:
  * {@code
  *  <dependency>
  *    <groupId>org.springframework.boot</groupId>
@@ -89,7 +103,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  * </dependency>
  * }
  * 
- * If a regular spring application: 
+ * For a regular spring application: 
  * {@code
  *  <dependency> 
  *   <groupId>org.springframework</groupId>
@@ -98,7 +112,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  *  </dependency>
  * }
  * 
- * Spring bean configuration will look something like below (Assuming that the DataSource is already configured):
+ * Spring bean configuration for JdbcTemplateMapper will look something like below (Assuming that the DataSource is already configured):
  *
  * {@literal @}Bean
  * public JdbcTemplateMapper jdbcTemplateMapper(DataSource dataSource) {
@@ -174,8 +188,8 @@ public class JdbcTemplateMapper {
   /**
    * The constructor.
    *
-   * @param dataSource - The dataSource for the mapper
-   * @param schemaName - schema name to be used by mapper
+   * @param dataSource The dataSource for the mapper
+   * @param schemaName schema name to be used by mapper
    */
   public JdbcTemplateMapper(DataSource dataSource, String schemaName) {
     if (dataSource == null) {
@@ -212,8 +226,8 @@ public class JdbcTemplateMapper {
    * The implementation of IRecordOperatorResolver is used to populate the created by and updated by
    * fields. Assign this while initializing the jdbcTemplateMapper
    *
-   * @param recordOperatorResolver - The implement for interface IRecordOperatorResolver
-   * @return The jdbcTemplateMapper - The jdbcTemplateMapper
+   * @param recordOperatorResolver The implement for interface IRecordOperatorResolver
+   * @return The jdbcTemplateMapper The jdbcTemplateMapper
    */
   public JdbcTemplateMapper withRecordOperatorResolver(
       IRecordOperatorResolver recordOperatorResolver) {
@@ -278,7 +292,7 @@ public class JdbcTemplateMapper {
    * has the version property name, on inserts it will be set to 1 and on updates it will
    * incremented by 1. Assign this while initializing jdbcTemplateMapper.
    *
-   * @param propName - The version propertyName
+   * @param propName The version propertyName
    * @return The jdbcTemplateMapper
    */
   public JdbcTemplateMapper withVersionPropertyName(String propName) {
@@ -345,7 +359,7 @@ public class JdbcTemplateMapper {
    * <p>Also assigns created by, created on, updated by, updated on, version if these properties
    * exist for the object and the JdbcTemplateMapper is configured for them.
    *
-   * @param pojo - The object to be saved
+   * @param pojo The object to be saved
    */
   public void insert(Object pojo) {
     if (pojo == null) {
@@ -405,7 +419,7 @@ public class JdbcTemplateMapper {
    * <p>Also assigns created by, created on, updated by, updated on, version if these properties
    * exist for the object and the JdbcTemplateMapper is configured for them.
    *
-   * @param pojo - The object to be saved
+   * @param pojo The object to be saved
    */
   public void insertWithId(Object pojo) {
     if (pojo == null) {
@@ -458,7 +472,7 @@ public class JdbcTemplateMapper {
    * jdbcTemplateMapper is configured for these fields. if 'version' property exists for object
    * throws an OptimisticLockingException if object is stale
    *
-   * @param pojo - object to be updated
+   * @param pojo object to be updated
    * @return number of records updated
    */
   public Integer update(Object pojo) {
@@ -527,8 +541,8 @@ public class JdbcTemplateMapper {
    * these properties exist for the object and the jdbcTemplateMapper is configured for these
    * fields.
    *
-   * @param pojo - object to be updated
-   * @param propertyNames - array of property names that should be updated
+   * @param pojo object to be updated
+   * @param propertyNames array of property names that should be updated
    * @return 0 if no records were updated
    */
   public Integer update(Object pojo, String... propertyNames) {
@@ -652,7 +666,7 @@ public class JdbcTemplateMapper {
   /**
    * Physically Deletes the object from the database
    *
-   * @param pojo - Object to be deleted
+   * @param pojo Object to be deleted
    * @return 0 if no records were deleted
    */
   public Integer delete(Object pojo) {
@@ -669,8 +683,8 @@ public class JdbcTemplateMapper {
   /**
    * Physically Deletes the object from the database by id
    *
-   * @param id - Id of object to be deleted
-   * @param clazz - Type of object to be deleted.
+   * @param id Id of object to be deleted
+   * @param clazz Type of object to be deleted.
    * @return 0 if no records were deleted
    */
   public <T> Integer deleteById(Object id, Class<T> clazz) {
@@ -712,11 +726,11 @@ public class JdbcTemplateMapper {
    *
    * </pre>
    *
-   * @param mainObj - the main object
-   * @param relationShipClazz - The relationship class
-   * @param mainObjRelationshipPropertyName - The propertyName of the toOne relationship (on
+   * @param mainObj the main object
+   * @param relationShipClazz The relationship class
+   * @param mainObjRelationshipPropertyName The propertyName of the toOne relationship (on
    *     mainOjb) that needs to be populated.
-   * @param mainObjJoinPropertyName - the join property on main object.
+   * @param mainObjJoinPropertyName the join property on main object.
    */
   public <T, U> void toOneForObject(
       T mainObj,
@@ -762,10 +776,10 @@ public class JdbcTemplateMapper {
    *
    * </pre>
    *
-   * @param mainObjList - list of main objects
-   * @param relationShipClazz - The relationship class
-   * @param mainObjRelationshipPropertyName - The toOne relationship property name on main object
-   * @param mainObjJoinPropertyName - the join property name on the main object.
+   * @param mainObjList list of main objects
+   * @param relationShipClazz The relationship class
+   * @param mainObjRelationshipPropertyName The toOne relationship property name on main object
+   * @param mainObjJoinPropertyName the join property name on the main object.
    */
   public <T, U> void toOneForList(
       List<T> mainObjList,
@@ -824,20 +838,18 @@ public class JdbcTemplateMapper {
    *   String address;
    * }
    *
-   * The sql below. Uses a column alias naming convention so that the SelectMapper() can use the prefix
+   * The sql below uses a column alias naming convention so that the SelectMapper() can use the column prefix
    * to populate the appropriated Objects from the selected columns.
    *
    * Note that the join properties  o.customer_id and the c.id have to be in select clause.
-   * </pre>
-   *
-   * See {@link #selectCols()} to make the select clause less verbose.
-   *
    * <pre>
    * select o.id o_id, o.order_date o_order_date, o.customer_id o_customer_id
    *        c.id c_id, c.first_name c_first_name, c.last_name c_last_name, c.address c_address
    * from order o
    * left join customer c on o.customer_id = c.id
    * where o.id = ?
+   * 
+   * See selectCols()} on how to make the select clause less verbose.
    *
    * Example call to get Order and its Customer (toOne relationship) populated from the sql above:
    * Order order =
@@ -848,18 +860,18 @@ public class JdbcTemplateMapper {
    *         rs -> {
    *           return jdbcTemplateMapper.toOneMapperForObject(
    *               rs,
-   *               new SelectMapper<Order>(Order.class, "o_"),
-   *               new SelectMapper<Customer>(Customer.class, "c_"),
+   *               new SelectMapper<Order>(Order.class, "o_"), // maps column names with prefix 'o_' to Order
+   *               new SelectMapper<Customer>(Customer.class, "c_"), // maps column names with prefix 'c_' to Customer
    *               "customer",
    *               "customerId");
    *         });
    * </pre>
    *
-   * @param rs - The jdbc ResultSet
-   * @param mainObjMapper - The main object mapper.
-   * @param relatedObjMapper - The related object mapper
-   * @param mainObjRelationshipPropertyName - The toOne relationship property name on main object
-   * @param mainObjJoinPropertyName - The join property name on the main object
+   * @param rs The jdbc ResultSet
+   * @param mainObjMapper The main object mapper.
+   * @param relatedObjMapper The related object mapper
+   * @param mainObjRelationshipPropertyName The toOne relationship property name on main object
+   * @param mainObjJoinPropertyName The join property name on the main object
    * @return The main object with its toOne relationship populated.
    */
   @SuppressWarnings("all")
@@ -902,17 +914,18 @@ public class JdbcTemplateMapper {
    *   String address;
    * }
    *
-   * The sql below. Uses a column alias naming convention so that the SelectMapper() can use the prefix
+   * The sql below uses a column alias naming convention so that the SelectMapper() can use the column prefix
    * to populate the appropriated Objects from the selected columns.
    *
    * Note that the join properties  o.customer_id and the c.id have to be in select clause.
-   * See {@link #selectCols()} to make the select clause less verbose.
    *
    * select o.id o_id, o.order_date o_order_date, o.customer_id o_customer_id
    *        c.id c_id, c.first_name c_first_name, c.last_name c_last_name, c.address c_address
    * from order o
    * left join customer c on o.customer_id = c.id
    *
+   * See selectCols() to make the select clause less verbose.
+   * 
    * Example call to get Orders and its Customer (toOne relationship) populated from the sql above:
    * List<Order> orders =
    *     jdbcTemplate.query(
@@ -920,18 +933,18 @@ public class JdbcTemplateMapper {
    *         rs -> {
    *           return jdbcTemplateMapper.toOneMapperForList(
    *               rs,
-   *               new SelectMapper<Order>(Order.class, "o_"),
-   *               new SelectMapper<Customer>(Customer.class, "c_"),
+   *               new SelectMapper<Order>(Order.class, "o_"), // maps column names with prefix 'o_' to Order
+   *               new SelectMapper<Customer>(Customer.class, "c_"), // maps column names with prefix 'c_' to Customer
    *               "customer",
    *               "customerId");
    *         });
    * </pre>
    *
    * @param rs The jdbc ResultSet
-   * @param mainObjMapper - The main object mapper.
-   * @param relatedObjMapper - The related object mapper
-   * @param mainObjRelationshipPropertyName - The toOne relationship property name on main object
-   * @param mainObjJoinPropertyName - The join property name on the main object
+   * @param mainObjMapper The main object mapper.
+   * @param relatedObjMapper The related object mapper
+   * @param mainObjRelationshipPropertyName The toOne relationship property name on main object
+   * @param mainObjJoinPropertyName The join property name on the main object
    * @return List of mainObj with its toOne property assigned
    */
   @SuppressWarnings("all")
@@ -956,10 +969,10 @@ public class JdbcTemplateMapper {
    * mainOjbj.mainObjRelationshipPropertyName with matching related objects ie
    * mainObj.mainObjJoinPropertyName = relatedObj.id
    *
-   * @param mainObjList - list of main objects
-   * @param relatedObjList - list of related objects
-   * @param mainObjRelationshipPropertyName - The toOne relationship property name on main object
-   * @param mainObjJoinPropertyName - The join property name on the main object
+   * @param mainObjList list of main objects
+   * @param relatedObjList list of related objects
+   * @param mainObjRelationshipPropertyName The toOne relationship property name on main object
+   * @param mainObjJoinPropertyName The join property name on the main object
    */
   public <T, U> void toOneMerge(
       List<T> mainObjList,
@@ -1018,10 +1031,10 @@ public class JdbcTemplateMapper {
    *
    * </pre>
    *
-   * @param mainObjList - the main object list
-   * @param manySideClass - The many side class
-   * @param mainObjCollectionPropertyName - The collection property name on main object
-   * @param manySideJoinPropertyName - The join property name on the many side object
+   * @param mainObjList the main object list
+   * @param manySideClass The many side class
+   * @param mainObjCollectionPropertyName The collection property name on main object
+   * @param manySideJoinPropertyName The join property name on the many side object
    */
   public <T, U> void toManyForObject(
       T mainObj,
@@ -1061,11 +1074,11 @@ public class JdbcTemplateMapper {
    * jdbcTemplateMapper.toManyForObject(order, OrderLine.class, "orderLines", "orderId", "order by price");
    * </pre>
    *
-   * @param mainObjList - the main object list
-   * @param manySideClass - The many side class
-   * @param mainObjCollectionPropertyName - The collection property name on main object
-   * @param manySideJoinPropertyName - The join property name on the many side object
-   * @param manySideOrderByClause - The order by clause for the many side query
+   * @param mainObjList the main object list
+   * @param manySideClass The many side class
+   * @param mainObjCollectionPropertyName The collection property name on main object
+   * @param manySideJoinPropertyName The join property name on the many side object
+   * @param manySideOrderByClause The order by clause for the many side query
    */
   public <T, U> void toManyForObject(
       T mainObj,
@@ -1115,10 +1128,10 @@ public class JdbcTemplateMapper {
    *
    * </pre>
    *
-   * @param mainObjList - the main object list
-   * @param manySideClass - The many side class
-   * @param mainObjCollectionPropertyName - The collection property name on mainObj
-   * @param manySideJoinPropertyName - the join property name on the many side object
+   * @param mainObjList the main object list
+   * @param manySideClass The many side class
+   * @param mainObjCollectionPropertyName The collection property name on mainObj
+   * @param manySideJoinPropertyName the join property name on the many side object
    */
   public <T, U> void toManyForList(
       List<T> mainObjList,
@@ -1160,11 +1173,11 @@ public class JdbcTemplateMapper {
    *
    * </pre>
    *
-   * @param mainObjList - the main object list
-   * @param manySideClass - The many side class
-   * @param mainObjCollectionPropertyName - The collection property name on mainObj
-   * @param manySideJoinPropertyName - the join property name on the many side object
-   * @param manySideOrderByClause - The order by clause for the many side query
+   * @param mainObjList the main object list
+   * @param manySideClass The many side class
+   * @param mainObjCollectionPropertyName The collection property name on mainObj
+   * @param manySideJoinPropertyName the join property name on the many side object
+   * @param manySideOrderByClause The order by clause for the many side query
    */
   public <T, U> void toManyForList(
       List<T> mainObjList,
@@ -1223,12 +1236,12 @@ public class JdbcTemplateMapper {
    * the mainObj.mainObjCollectionProperty can be assigned by matching mainObj.id to
    * manySideObj.manySideJoinPropertyName.
    *
-   * @param rs - The jdbc ResultSet
-   * @param mainObjMapper - The main object mapper.
-   * @param manySideObjMapper - The many side object mapper
-   * @param mainObjCollectionPropertyName - the collectionPropertyName on the mainObj that needs to
+   * @param rs The jdbc ResultSet
+   * @param mainObjMapper The main object mapper.
+   * @param manySideObjMapper The many side object mapper
+   * @param mainObjCollectionPropertyName the collectionPropertyName on the mainObj that needs to
    *     be populated
-   * @param manySideJoinPropertyName - the join property name on the manySide
+   * @param manySideJoinPropertyName the join property name on the manySide
    * @return The main object with its toMany relationship assigned.
    */
   @SuppressWarnings("all")
@@ -1257,11 +1270,11 @@ public class JdbcTemplateMapper {
    * manySideObj.manySideJoinPropertyName.
    *
    * @param rs The jdbc ResultSet
-   * @param mainObjMapper - The main object mapper
-   * @param manySideObjMapper - The many side object mapper
-   * @param mainObjCollectionPropertyName - the collectionPropertyName on the mainObj that needs to
+   * @param mainObjMapper The main object mapper
+   * @param manySideObjMapper The many side object mapper
+   * @param mainObjCollectionPropertyName the collectionPropertyName on the mainObj that needs to
    *     be populated
-   * @param manySideJoinPropertyName - the join property name on the manySide
+   * @param manySideJoinPropertyName the join property name on the manySide
    * @return List of mainObj with its collectionPropertyName populated
    */
   @SuppressWarnings("all")
@@ -1285,11 +1298,11 @@ public class JdbcTemplateMapper {
    * Populates each main objects collectionPropertyName with the corresponding manySide objects by
    * matching manySide.joinPropertyName to mainObj.id
    *
-   * @param mainObjList - the main object list
-   * @param manySideList - the many side object list
-   * @param mainObjCollectionPropertyName - the collection property name of the main object that
+   * @param mainObjList the main object list
+   * @param manySideList the many side object list
+   * @param mainObjCollectionPropertyName the collection property name of the main object that
    *     needs to be populated.
-   * @param manySideJoinPropertyName - the join property name on the many side
+   * @param manySideJoinPropertyName the join property name on the many side
    */
   @SuppressWarnings("all")
   public <T, U> void toManyMerge(
@@ -1329,9 +1342,9 @@ public class JdbcTemplateMapper {
    *
    * <p>Returns a map. The keys in the map are the SqlMapper column prefixes.
    *
-   * @param rs - The result set
-   * @param selectMappers - array of sql mappers.
-   * @return Map - key: 'sqlColumnPrefix' of each sqlMapper, value - unique list for each sqlMapper
+   * @param rs The jdbc result set
+   * @param selectMappers array of sql mappers.
+   * @return Map key: 'sqlColumnPrefix' of each sqlMapper, value: unique list for each sqlMapper
    */
   @SuppressWarnings("all")
   public Map<String, List> multipleModelMapper(ResultSet rs, SelectMapper... selectMappers) {
@@ -1379,8 +1392,8 @@ public class JdbcTemplateMapper {
    * "emp.id emp_id, emp.last_name emp_last_name, emp.first_name emp_first_name,"
    * </pre>
    *
-   * @param tableName - the Table name
-   * @param tableAlias - the alias being used in the sql statement for the table.
+   * @param tableName the Table name
+   * @param tableAlias the alias being used in the sql statement for the table.
    * @return comma separated select column string with a comma at the end of string
    */
   public String selectCols(String tableName, String tableAlias) {
@@ -1396,9 +1409,9 @@ public class JdbcTemplateMapper {
    * "emp.id emp_id, emp.last_name emp_last_name, emp.first_name emp_first_name"
    * </pre>
    *
-   * @param tableName - the Table name
-   * @param tableAlias - the alias being used in the sql statement for the table.
-   * @param includeLastComma - if true last character will be comma; if false the string will have
+   * @param tableName the Table name
+   * @param tableAlias the alias being used in the sql statement for the table.
+   * @param includeLastComma if true last character will be comma; if false the string will have
    *     NO comma at end
    * @return comma separated select column string
    */
@@ -1426,7 +1439,7 @@ public class JdbcTemplateMapper {
   /**
    * Builds sql update statement with named parameters for the object.
    *
-   * @param pojo - the object that needs to be update.
+   * @param pojo the object that needs to be update.
    * @return The sql update string
    */
   private String buildUpdateSql(Object pojo) {
@@ -1499,10 +1512,10 @@ public class JdbcTemplateMapper {
   /**
    * Used by mappers to instantiate object from the result set
    *
-   * @param clazz - Class of object to be instantiated
-   * @param rs - Sql result set
-   * @param prefix - The sql alias in the query (if any)
-   * @param resultSetColumnNames - the column names in the sql statement.
+   * @param clazz Class of object to be instantiated
+   * @param rs Sql result set
+   * @param prefix The sql alias in the query (if any)
+   * @param resultSetColumnNames the column names in the sql statement.
    * @return Object of type T populated from the data in the result set
    */
   private <T> T newInstance(
@@ -1535,7 +1548,7 @@ public class JdbcTemplateMapper {
    * 'userLastName' will get converted to map key 'user_last_name' and assigned the corresponding
    * object value.
    *
-   * @param pojo - The object to convert
+   * @param pojo The object to convert
    * @return A map with keys that are in snake case to match database column names and values
    *     corresponding to the object property
    */
@@ -1554,7 +1567,7 @@ public class JdbcTemplateMapper {
    * Converts an object to a Map. The map key will be object property name and value with
    * corresponding object property value.
    *
-   * @param pojo - The object to be converted.
+   * @param pojo The object to be converted.
    * @return Map with key: property name, value: object value
    */
   private Map<String, Object> convertObjectToMap(Object pojo) {
@@ -1571,7 +1584,7 @@ public class JdbcTemplateMapper {
   /**
    * Gets the table column names from Databases MetaData. The column names are cached
    *
-   * @param table - table name
+   * @param table table name
    * @return the list of columns of the table
    */
   private List<String> getDbColumnNames(String table) {
@@ -1598,7 +1611,7 @@ public class JdbcTemplateMapper {
   /**
    * Gets the resultSet column names ie the column names in the 'select' statement of the sql
    *
-   * @param rs - ResultSet
+   * @param rs The jdbc ResultSet
    * @return List of select column names
    */
   private List<String> getResultSetColumnNames(ResultSet rs) {
@@ -1619,7 +1632,7 @@ public class JdbcTemplateMapper {
   /**
    * Get property names of an object. The property names are cached by the object class name
    *
-   * @param pojo - the java object
+   * @param pojo the java object
    * @return List of property names.
    */
   private List<String> getPropertyNames(Object pojo) {
@@ -1645,8 +1658,8 @@ public class JdbcTemplateMapper {
   /**
    * Gets the property value of an object using Springs BeanWrapper
    *
-   * @param obj - the Object
-   * @param propertyName - the property name
+   * @param obj the java object
+   * @param propertyName the property name
    * @return The property value
    */
   private Object getSimpleProperty(Object obj, String propertyName) {
@@ -1658,7 +1671,7 @@ public class JdbcTemplateMapper {
    * Converts camel case to snake case. Ex: userLastName gets converted to user_last_name. The
    * conversion info is cached.
    *
-   * @param str - camel case String
+   * @param str camel case String
    * @return the snake case string
    */
   private String convertCamelToSnakeCase(String str) {
@@ -1676,7 +1689,7 @@ public class JdbcTemplateMapper {
    * Converts snake case to camel case. Ex: user_last_name gets converted to userLastName. The
    * conversion info is cached.
    *
-   * @param str - snake case string
+   * @param str snake case string
    * @return the camel case string
    */
   private String convertSnakeToCamelCase(String str) {
