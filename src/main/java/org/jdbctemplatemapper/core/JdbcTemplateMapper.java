@@ -33,46 +33,49 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 
 /**
- * As soon as a project gets to a certain size and complexity (most enterprise applications) an
- * ORM's (Hibernate etc) magic ends up getting in the way. Maintenance of an ORM project is
- * difficult (especially if a team inherits the project). The sql being generated is cryptic which
- * makes troubleshooting challenging. ORM's mappings are complex with a lot of nuances and a large
- * learning curve. ORM performance issues take a high level of expertise to resolve.
+ * ORMs (Hibernate etc) makes simple things simpler and hard things harder. As soon as a project
+ * gets to a certain size and complexity (most enterprise applications) an ORMs magic ends up
+ * getting in the way. They are complex with a lot of nuances and a large learning curve. The SQL it
+ * generates is cryptic which makes troubleshooting challenging. Performance issues take a certain
+ * level of expertise to resolve.
  *
- * <p>Spring's JdbcTemplate is an excellent solution for applications since it uses SQL/JDBC.
- * Unfortunately it is verbose. JdbcTemplateMapper tries to mitigate this. It is a utility class
- * which uses Spring's JdbcTemplate, allowing for single line CRUD and multiple ways to query
- * relationships.
+ * <p>Spring's JdbcTemplate removes a lot of the boiler plate code which is required by JDBC.
+ * Unfortunately it is still verbose. JdbcTemplateMapper tries to mitigate the verboseness. It is a
+ * utility class which uses JdbcTemplate, allowing for single line CRUD and less verbose ways to
+ * query relationships.
+ *
+ * <p>IMPORTANT!!! JdbcTemplateMapper is a helper utility for JdbcTemplate and NOT a replacement for
+ * it. Your code will generally be a mix of JdbcTemplate and JdbcTemplateMapper.
  *
  * <pre>
+ * Features:
  * 1) Simple CRUD one liners
  * 2) Methods to retrieve relationships (toOne..(), toMany..() etc)
  * 3) Can be configured to auto assign properties created on, updated on.
  * 4) Can be configured to auto assign properties created by, updated by using an
  *    implementation of IRecordOperatorResolver.
  * 5) Can be configured to provide optimistic locking functionality for updates using a version property.
- * 6) Use Spring's JdbcTemplate/NamedPropertyJdbcTemplate or JdbcTemplateMapper(this class) as needed.
  *
- * JdbcTemplateMapper is  opinionated. To keep it simple it does not have any custom annotations.
- * 1) A model is mapped to its corresponding table using a naming convention where the
- *    camel case model name is matched to a snake case table name.
- *    For model named 'Order' the corresponding database table name will be 'order'.
- *    For model named 'OrderLine' the corresponding database table name will be 'order_line'.
- * 2) Properties of a model like firstName, lastName will be matched to corresponding database columns
- *    first_name and last_name in the table. Maps camel case property names to snake case database column names.
- * 3) All the models should have a property named 'id' which has to be of type Integer or Long.
- * 4) Models can have properties which do not have corresponding database columns or vice versa.
- *    The framework ignores them during inserts/updates/find..
- * 5) If configured for auto population of created on, updated on, these properties must be of type LocalDateTime.
- * 6) Make sure
- *
+ * JdbcTemplateMapper is opinionated. Your project has to meet the following 2 criteria to use it:
+ * 1) Models should have a property named 'id' which has to be of type Integer or Long.
+ * 2) Model property to table column mapping:
+ *   Camel case property names are mapped to snake case database column names.
+ *   Properties of a model like 'firstName', 'lastName' will be mapped to corresponding database columns
+ *   'first_name' and 'last_name' in the database table.
+ *   (Model to table mapping does not have this restriction. By default a class maps to its snake case table name.
+ *   The default class to table mapping can be overridden using the @Table annotation)
  *
  * Examples of simple CRUD:
- * public class Product{
+ *
+ * public class Product{ // by default maps to table 'product'
  *    private Integer id;
  *    private String name;
  *    private Double price;
- *    private String someNonDatabaseProperty; // will not be part of insert/update/find
+ *
+ *    // jdbcTemplateMapper will ignore property below for insert/update/find.. since it does
+ *    // not have a corresponding snake case column in database
+ *    private String someNonDatabaseProperty;
+ *
  *    // getters and setters ...
  * }
  *
@@ -87,7 +90,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  *
  * List<Product> products = jdbcTemplateMapper.findAll(Product.class);
  *
- * jdbcTemplateMapper.delete(1, Product.class);
+ * jdbcTemplateMapper.delete(product);
  *
  * See methods toOne..() and  toMany..() for relationship retrieval.
  *
@@ -122,11 +125,13 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  * A Base DAO will look something like below:
  *
  * public class BaseDao {
- *   {@literal @}Autowired protected JdbcTemplateMapper jdbcTemplateMapper;
+ *   &#64;Autowired protected JdbcTemplateMapper jdbcTemplateMapper;
  *   protected JdbcTemplate jdbcTemplate;
  *   protected NamedParameterJdbcTemplate namedParameterJdbcTemplate;
  *
- *   {@literal @}PostConstruct
+ *   // Assign JdbcTemplate to a property so you don't have to use
+ *   // jdbcTemplateMapper.getJdbcTemplate() all over the code.
+ *   &#64;PostConstruct
  *   public void init() {
  *     this.jdbcTemplate = jdbcTemplateMapper.getJdbcTemplate();
  *     this.namedParameterJdbcTemplate = jdbcTemplateMapper.getNamedParameterJdbcTemplate();
@@ -1668,14 +1673,16 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Gets table name. If @Table annotation is used for the class uses that otherwise returns a snake case name
+   * Gets table name. If @Table annotation is used for the class uses that otherwise returns a snake
+   * case name
+   *
    * @param clazz The class
    * @return The table name
    */
   private String getTableName(Class<?> clazz) {
     if (clazz.isAnnotationPresent(Table.class)) {
       // @Table annotation is present. Get the table name
-      Table table = clazz.getAnnotation(Table.class);   
+      Table table = clazz.getAnnotation(Table.class);
       return table.name();
     } else {
       return convertCamelToSnakeCase(clazz.getSimpleName());
