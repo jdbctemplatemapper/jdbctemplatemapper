@@ -33,16 +33,16 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 
 /**
- * 
- * As soon as a project gets to a certain size and complexity (most enterprise applications) 
- * an ORM's (Hibernate etc) magic ends up getting in the way. Maintenance of an ORM project
- * is difficult (especially if a team inherits the project). The sql being generated is cryptic
- * which makes troubleshooting challenging. ORM's mappings are complex with a lot of nuances and a large learning curve.
- * ORM performance issues take a high level of expertise to resolve.
- * 
- * Spring's JdbcTemplate is an excellent solution for applications since it uses SQL/JDBC. 
- * Unfortunately it is verbose. JdbcTemplateMapper tries to mitigate this. It is a utility class which uses 
- * Spring's JdbcTemplate, allowing for single line CRUD and multiple ways to query relationships. 
+ * As soon as a project gets to a certain size and complexity (most enterprise applications) an
+ * ORM's (Hibernate etc) magic ends up getting in the way. Maintenance of an ORM project is
+ * difficult (especially if a team inherits the project). The sql being generated is cryptic which
+ * makes troubleshooting challenging. ORM's mappings are complex with a lot of nuances and a large
+ * learning curve. ORM performance issues take a high level of expertise to resolve.
+ *
+ * <p>Spring's JdbcTemplate is an excellent solution for applications since it uses SQL/JDBC.
+ * Unfortunately it is verbose. JdbcTemplateMapper tries to mitigate this. It is a utility class
+ * which uses Spring's JdbcTemplate, allowing for single line CRUD and multiple ways to query
+ * relationships.
  *
  * <pre>
  * 1) Simple CRUD one liners
@@ -54,19 +54,19 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  * 6) Use Spring's JdbcTemplate/NamedPropertyJdbcTemplate or JdbcTemplateMapper(this class) as needed.
  *
  * JdbcTemplateMapper is  opinionated. To keep it simple it does not have any custom annotations.
- * 1) A model is mapped to its corresponding table using a naming convention where the 
+ * 1) A model is mapped to its corresponding table using a naming convention where the
  *    camel case model name is matched to a snake case table name.
  *    For model named 'Order' the corresponding database table name will be 'order'.
  *    For model named 'OrderLine' the corresponding database table name will be 'order_line'.
- * 2) Properties of a model like firstName, lastName will be matched to corresponding database columns 
+ * 2) Properties of a model like firstName, lastName will be matched to corresponding database columns
  *    first_name and last_name in the table. Maps camel case property names to snake case database column names.
  * 3) All the models should have a property named 'id' which has to be of type Integer or Long.
  * 4) Models can have properties which do not have corresponding database columns or vice versa.
- *    The framework ignores them during inserts/updates/find.. 
+ *    The framework ignores them during inserts/updates/find..
  * 5) If configured for auto population of created on, updated on, these properties must be of type LocalDateTime.
- * 6) Make sure 
+ * 6) Make sure
  *
- * 
+ *
  * Examples of simple CRUD:
  * public class Product{
  *    private Integer id;
@@ -75,25 +75,25 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  *    private String someNonDatabaseProperty; // will not be part of insert/update/find
  *    // getters and setters ...
  * }
- * 
+ *
  * Product product = new Product();
  * product.setName("someName");
  * product.setPrice(10.25);
  * jdbcTemplateMapper.insert(product);
- * 
+ *
  * product = jdbcTemplateMapper.findById(1, Product.class);
  * product.setPrice(11.50);
  * jdbcTemplateMapper.update(product);
- * 
+ *
  * List<Product> products = jdbcTemplateMapper.findAll(Product.class);
- * 
+ *
  * jdbcTemplateMapper.delete(1, Product.class);
- * 
+ *
  * See methods toOne..() and  toMany..() for relationship retrieval.
- * 
- * Installation: 
+ *
+ * Installation:
  * Requires Java8 or above.
- * 
+ *
  * pom.xml dependencies:
  * For a spring boot application:
  * {@code
@@ -102,16 +102,16 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  *    <artifactId>spring-boot-starter-jdbc</artifactId>
  * </dependency>
  * }
- * 
- * For a regular spring application: 
+ *
+ * For a regular spring application:
  * {@code
- *  <dependency> 
+ *  <dependency>
  *   <groupId>org.springframework</groupId>
- *   <artifactId>spring-jdbc</artifactId> 
- *   <version>YourVersionOfSpringJdbc</version> 
+ *   <artifactId>spring-jdbc</artifactId>
+ *   <version>YourVersionOfSpringJdbc</version>
  *  </dependency>
  * }
- * 
+ *
  * Spring bean configuration for JdbcTemplateMapper will look something like below (Assuming that the DataSource is already configured):
  *
  * {@literal @}Bean
@@ -141,11 +141,11 @@ public class JdbcTemplateMapper {
   private NamedParameterJdbcTemplate npJdbcTemplate;
   private IRecordOperatorResolver recordOperatorResolver;
 
+  private String schemaName;
   private String createdByPropertyName;
   private String createdOnPropertyName;
   private String updatedByPropertyName;
   private String updatedOnPropertyName;
-  private String schemaName;
   private String versionPropertyName;
 
   // Need this for type conversions like java.sql.Timestamp to java.time.LocalDateTime etc
@@ -312,7 +312,7 @@ public class JdbcTemplateMapper {
     if (!(id instanceof Integer || id instanceof Long)) {
       throw new IllegalArgumentException("id has to be type of Integer or Long");
     }
-    String tableName = convertCamelToSnakeCase(clazz.getSimpleName());
+    String tableName = getTableName(clazz);
     String sql = "select * from " + schemaName + "." + tableName + " where id = ?";
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
     try {
@@ -331,7 +331,7 @@ public class JdbcTemplateMapper {
    * @return List of objects
    */
   public <T> List<T> findAll(Class<T> clazz) {
-    String tableName = convertCamelToSnakeCase(clazz.getSimpleName());
+    String tableName = getTableName(clazz);
     String sql = "select * from " + schemaName + "." + tableName;
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
     return jdbcTemplate.query(sql, mapper);
@@ -346,7 +346,7 @@ public class JdbcTemplateMapper {
    * @return List of objects
    */
   public <T> List<T> findAll(Class<T> clazz, String orderByClause) {
-    String tableName = convertCamelToSnakeCase(clazz.getSimpleName());
+    String tableName = getTableName(clazz);
     String sql = "select * from " + schemaName + "." + tableName + " " + orderByClause;
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
     return jdbcTemplate.query(sql, mapper);
@@ -372,7 +372,7 @@ public class JdbcTemplateMapper {
           "For method insert() the objects 'id' property has to be null since this insert is for an object whose id is autoincrement in database.");
     }
 
-    String tableName = convertCamelToSnakeCase(pojo.getClass().getSimpleName());
+    String tableName = getTableName(pojo.getClass());
     LocalDateTime now = LocalDateTime.now();
 
     if (createdOnPropertyName != null && bw.isReadableProperty(createdOnPropertyName)) {
@@ -432,7 +432,7 @@ public class JdbcTemplateMapper {
           "For method insertById() the objects 'id' property cannot be null.");
     }
 
-    String tableName = convertCamelToSnakeCase(pojo.getClass().getSimpleName());
+    String tableName = getTableName(pojo.getClass());
     LocalDateTime now = LocalDateTime.now();
 
     if (createdOnPropertyName != null && bw.isReadableProperty(createdOnPropertyName)) {
@@ -479,7 +479,7 @@ public class JdbcTemplateMapper {
     if (pojo == null) {
       throw new IllegalArgumentException("Object cannot be null");
     }
-    String tableName = convertCamelToSnakeCase(pojo.getClass().getSimpleName());
+    String tableName = getTableName(pojo.getClass());
     String updateSql = updateSqlCache.get(tableName);
     if (updateSql == null) {
       updateSql = buildUpdateSql(pojo);
@@ -549,7 +549,7 @@ public class JdbcTemplateMapper {
     if (pojo == null) {
       throw new IllegalArgumentException("Object cannot be null");
     }
-    String tableName = convertCamelToSnakeCase(pojo.getClass().getSimpleName());
+    String tableName = getTableName(pojo.getClass());
     List<String> dbColumnNameList = getDbColumnNames(tableName);
 
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
@@ -673,7 +673,7 @@ public class JdbcTemplateMapper {
     if (pojo == null) {
       throw new IllegalArgumentException("Object cannot be null");
     }
-    String tableName = convertCamelToSnakeCase(pojo.getClass().getSimpleName());
+    String tableName = getTableName(pojo.getClass());
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
     String sql = "delete from " + schemaName + "." + tableName + " where id = ?";
     Object id = bw.getPropertyValue("id");
@@ -691,7 +691,7 @@ public class JdbcTemplateMapper {
     if (!(id instanceof Integer || id instanceof Long)) {
       throw new IllegalArgumentException("id has to be type of Integer or Long");
     }
-    String tableName = convertCamelToSnakeCase(clazz.getSimpleName());
+    String tableName = getTableName(clazz);
     String sql = "delete from " + schemaName + "." + tableName + " where id = ?";
     return jdbcTemplate.update(sql, id);
   }
@@ -728,8 +728,8 @@ public class JdbcTemplateMapper {
    *
    * @param mainObj the main object
    * @param relationShipClazz The relationship class
-   * @param mainObjRelationshipPropertyName The propertyName of the toOne relationship (on
-   *     mainOjb) that needs to be populated.
+   * @param mainObjRelationshipPropertyName The propertyName of the toOne relationship (on mainOjb)
+   *     that needs to be populated.
    * @param mainObjJoinPropertyName the join property on main object.
    */
   public <T, U> void toOneForObject(
@@ -786,7 +786,7 @@ public class JdbcTemplateMapper {
       Class<U> relationshipClazz,
       String mainObjRelationshipPropertyName,
       String mainObjJoinPropertyName) {
-    String tableName = convertCamelToSnakeCase(relationshipClazz.getSimpleName());
+    String tableName = getTableName(relationshipClazz);
     if (isNotEmpty(mainObjList)) {
       List<Number> allColumnIds = new ArrayList<>();
       for (T mainObj : mainObjList) {
@@ -848,7 +848,7 @@ public class JdbcTemplateMapper {
    * from order o
    * left join customer c on o.customer_id = c.id
    * where o.id = ?
-   * 
+   *
    * See selectCols()} on how to make the select clause less verbose.
    *
    * Example call to get Order and its Customer (toOne relationship) populated from the sql above:
@@ -925,7 +925,7 @@ public class JdbcTemplateMapper {
    * left join customer c on o.customer_id = c.id
    *
    * See selectCols() to make the select clause less verbose.
-   * 
+   *
    * Example call to get Orders and its Customer (toOne relationship) populated from the sql above:
    * List<Order> orders =
    *     jdbcTemplate.query(
@@ -1185,7 +1185,7 @@ public class JdbcTemplateMapper {
       String mainObjCollectionPropertyName,
       String manySideJoinPropertyName,
       String manySideOrderByClause) {
-    String tableName = convertCamelToSnakeCase(manySideClazz.getSimpleName());
+    String tableName = getTableName(manySideClazz);
     if (isNotEmpty(mainObjList)) {
       Set<Number> allIds = new LinkedHashSet<>();
       for (T mainObj : mainObjList) {
@@ -1239,8 +1239,8 @@ public class JdbcTemplateMapper {
    * @param rs The jdbc ResultSet
    * @param mainObjMapper The main object mapper.
    * @param manySideObjMapper The many side object mapper
-   * @param mainObjCollectionPropertyName the collectionPropertyName on the mainObj that needs to
-   *     be populated
+   * @param mainObjCollectionPropertyName the collectionPropertyName on the mainObj that needs to be
+   *     populated
    * @param manySideJoinPropertyName the join property name on the manySide
    * @return The main object with its toMany relationship assigned.
    */
@@ -1272,8 +1272,8 @@ public class JdbcTemplateMapper {
    * @param rs The jdbc ResultSet
    * @param mainObjMapper The main object mapper
    * @param manySideObjMapper The many side object mapper
-   * @param mainObjCollectionPropertyName the collectionPropertyName on the mainObj that needs to
-   *     be populated
+   * @param mainObjCollectionPropertyName the collectionPropertyName on the mainObj that needs to be
+   *     populated
    * @param manySideJoinPropertyName the join property name on the manySide
    * @return List of mainObj with its collectionPropertyName populated
    */
@@ -1300,8 +1300,8 @@ public class JdbcTemplateMapper {
    *
    * @param mainObjList the main object list
    * @param manySideList the many side object list
-   * @param mainObjCollectionPropertyName the collection property name of the main object that
-   *     needs to be populated.
+   * @param mainObjCollectionPropertyName the collection property name of the main object that needs
+   *     to be populated.
    * @param manySideJoinPropertyName the join property name on the many side
    */
   @SuppressWarnings("all")
@@ -1411,8 +1411,8 @@ public class JdbcTemplateMapper {
    *
    * @param tableName the Table name
    * @param tableAlias the alias being used in the sql statement for the table.
-   * @param includeLastComma if true last character will be comma; if false the string will have
-   *     NO comma at end
+   * @param includeLastComma if true last character will be comma; if false the string will have NO
+   *     comma at end
    * @return comma separated select column string
    */
   public String selectCols(String tableName, String tableAlias, boolean includeLastComma) {
@@ -1443,7 +1443,7 @@ public class JdbcTemplateMapper {
    * @return The sql update string
    */
   private String buildUpdateSql(Object pojo) {
-    String tableName = convertCamelToSnakeCase(pojo.getClass().getSimpleName());
+    String tableName = getTableName(pojo.getClass());
 
     // database columns for the tables
     List<String> dbColumnNameList = getDbColumnNames(tableName);
@@ -1665,6 +1665,21 @@ public class JdbcTemplateMapper {
   private Object getSimpleProperty(Object obj, String propertyName) {
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
     return bw.getPropertyValue(propertyName);
+  }
+
+  /**
+   * Gets table name. If @Table annotation is used for the class uses that otherwise returns a snake case name
+   * @param clazz The class
+   * @return The table name
+   */
+  private String getTableName(Class<?> clazz) {
+    if (clazz.isAnnotationPresent(Table.class)) {
+      // @Table annotation is present. Get the table name
+      Table table = clazz.getAnnotation(Table.class);   
+      return table.name();
+    } else {
+      return convertCamelToSnakeCase(clazz.getSimpleName());
+    }
   }
 
   /**
