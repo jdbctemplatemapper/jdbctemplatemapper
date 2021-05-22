@@ -3,9 +3,6 @@ package org.jdbctemplatemapper.core;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import java.time.LocalDateTime;
-
-import org.jdbctemplatemapper.model.Order;
 import org.jdbctemplatemapper.model.Person;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -13,7 +10,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.postgresql.ds.PGSimpleDataSource;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @SpringBootTest
@@ -23,8 +19,8 @@ public class JdbcTemplateMapperWithNoAutoAssignmentTest {
   private static JdbcTemplateMapper jdbcTemplateMapper;
 
   private static JdbcTemplate jdbcTemplate;
-  private static NamedParameterJdbcTemplate npJdbcTemplate;
 
+  @SuppressWarnings("all")
   @BeforeAll
   public static void setup() {
     PGSimpleDataSource source = new PGSimpleDataSource();
@@ -34,12 +30,9 @@ public class JdbcTemplateMapperWithNoAutoAssignmentTest {
     source.setPassword("pass123");
     source.setCurrentSchema("jdbctemplatemapper");
 
+    jdbcTemplate = new JdbcTemplate(source);
     // configuration without any createdOn, createdBy, version etc
-    JdbcTemplateMapper jtm = new JdbcTemplateMapper(source, "jdbctemplatemapper");
-
-    jdbcTemplateMapper = jtm;
-    jdbcTemplate = jtm.getJdbcTemplate();
-    npJdbcTemplate = jtm.getNamedParameterJdbcTemplate();
+    jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate, "jdbctemplatemapper");
   }
 
   @Test

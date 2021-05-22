@@ -19,8 +19,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import javax.sql.DataSource;
-
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.core.convert.support.DefaultConversionService;
@@ -33,11 +31,11 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 
 /**
- * ORMs (like Hibernate etc) make simple things simpler and hard things harder. For projects of
- * non trivial size and complexity (most enterprise applications) an ORMs magic ends up
- * getting in the way. They are complex with a lot of nuances and a large learning curve. The SQL
- * they generate are cryptic which makes troubleshooting challenging. Performance issues take a
- * certain level of expertise to resolve.
+ * On projects which use ORMs initially they are beneficial and productive. As the project grows to
+ * a non trivial size and complexity (most enterprise applications do) their magic ends up getting
+ * in the way. Before you know it you are fighting it and their complexity and nuances start bubbling up. 
+ * The SQL they generate are cryptic which makes troubleshooting challenging. Performance
+ * issues take a certain level of expertise to resolve.
  *
  * <p>Spring's JdbcTemplate gives full control of data access using SQL. It removes a lot of the
  * boiler plate code which is required by JDBC. Unfortunately it is still very verbose.
@@ -64,6 +62,13 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  *   'first_name' and 'last_name' in the database table.
  *   (Model to table mapping does not have this restriction. By default a class maps to its snake case table name.
  *   The default class to table mapping can be overridden using the @Table annotation)
+ *
+ *
+ * * <p>The underlying org.springframework.jdbc.core.JdbcTemplate and org.springframework.jdbc.core.NamedParameterJdbcTemplate
+ * exposed to allow for access to all their methods.
+ *
+ * <p><b>NOTE: An instance of this class is thread-safe once configured.</b>
+ *
  *
  * Examples of simple CRUD:
  *
@@ -115,28 +120,14 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  *  </dependency>
  * }
  *
- * Spring bean configuration for JdbcTemplateMapper will look something like below (Assuming that the DataSource is already configured):
+ * Spring bean configuration for JdbcTemplateMapper will look something like below:
+ * (Assuming that jdbcTemplate is configured as per Spring boot instructions)
  *
  * &#64;Bean
- * public JdbcTemplateMapper jdbcTemplateMapper(DataSource dataSource) {
- *   return new JdbcTemplateMapper(dataSource, "yourSchemaName");
+ * public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
+ *   return new JdbcTemplateMapper(jdbcTemplate, "yourSchemaName");
  * }
  *
- * A Base DAO will look something like below:
- *
- * public class BaseDao {
- *   &#64;Autowired protected JdbcTemplateMapper jdbcTemplateMapper;
- *   protected JdbcTemplate jdbcTemplate;
- *   protected NamedParameterJdbcTemplate namedParameterJdbcTemplate;
- *
- *   // Assign JdbcTemplate to a property so you don't have to use
- *   // jdbcTemplateMapper.getJdbcTemplate() all over the code.
- *   &#64;PostConstruct
- *   public void init() {
- *     this.jdbcTemplate = jdbcTemplateMapper.getJdbcTemplate();
- *     this.namedParameterJdbcTemplate = jdbcTemplateMapper.getNamedParameterJdbcTemplate();
- *   }
- * }
  * </pre>
  *
  * @author ajoseph
@@ -196,17 +187,17 @@ public class JdbcTemplateMapper {
    * @param dataSource The dataSource for the mapper
    * @param schemaName schema name to be used by mapper
    */
-  public JdbcTemplateMapper(DataSource dataSource, String schemaName) {
-    if (dataSource == null) {
+  public JdbcTemplateMapper(JdbcTemplate jdbcTemplate, String schemaName) {
+    if (jdbcTemplate == null) {
       throw new IllegalArgumentException("dataSource cannot be null");
     }
     if (isEmpty(schemaName)) {
       throw new IllegalArgumentException("schemaName cannot be null");
     }
 
+    this.jdbcTemplate = jdbcTemplate;
     this.schemaName = schemaName;
-    this.npJdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
-    this.jdbcTemplate = npJdbcTemplate.getJdbcTemplate();
+    this.npJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
   }
 
   /**
