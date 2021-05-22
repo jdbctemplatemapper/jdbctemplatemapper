@@ -33,16 +33,16 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 
 /**
- * ORMs (Hibernate etc) makes simple things simpler and hard things harder. As soon as a project
- * gets to a certain size and complexity (most enterprise applications) an ORMs magic ends up
- * getting in the way. They are complex with a lot of nuances and a large learning curve. The SQL it
- * generates is cryptic which makes troubleshooting challenging. Performance issues take a certain
- * level of expertise to resolve.
+ * ORMs (like Hibernate etc) make simple things simpler and hard things harder. For projects of
+ * non trivial size and complexity (most enterprise applications) an ORMs magic ends up
+ * getting in the way. They are complex with a lot of nuances and a large learning curve. The SQL
+ * they generate are cryptic which makes troubleshooting challenging. Performance issues take a
+ * certain level of expertise to resolve.
  *
- * <p>Spring's JdbcTemplate removes a lot of the boiler plate code which is required by JDBC.
- * Unfortunately it is still verbose. JdbcTemplateMapper tries to mitigate the verboseness. It is a
- * utility class which uses JdbcTemplate, allowing for single line CRUD and less verbose ways to
- * query relationships.
+ * <p>Spring's JdbcTemplate gives full control of data access using SQL. It removes a lot of the
+ * boiler plate code which is required by JDBC. Unfortunately it is still very verbose.
+ * JdbcTemplateMapper tries to mitigate the verboseness. It is a utility class which uses
+ * JdbcTemplate, allowing for single line CRUD and less verbose ways to query relationships.
  *
  * <p>IMPORTANT!!! JdbcTemplateMapper is a helper utility for JdbcTemplate and NOT a replacement for
  * it. Your code will generally be a mix of JdbcTemplate and JdbcTemplateMapper.
@@ -80,7 +80,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  * }
  *
  * Product product = new Product();
- * product.setName("someName");
+ * product.setName("some product name");
  * product.setPrice(10.25);
  * jdbcTemplateMapper.insert(product);
  *
@@ -117,7 +117,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  *
  * Spring bean configuration for JdbcTemplateMapper will look something like below (Assuming that the DataSource is already configured):
  *
- * {@literal @}Bean
+ * &#64;Bean
  * public JdbcTemplateMapper jdbcTemplateMapper(DataSource dataSource) {
  *   return new JdbcTemplateMapper(dataSource, "yourSchemaName");
  * }
@@ -709,14 +709,14 @@ public class JdbcTemplateMapper {
    *
    * <pre>
    * Main Object:
-   * Class Order{
+   * public class Order{
    *   Integer id;
    *   LocalDateTime orderDate;
    *   Integer customerId;
    *   Customer customer; // the toOne relationship
    * }
    * toOne related Object:
-   * Class Customer{
+   * public class Customer{
    *   Integer id;
    *   String firstName;
    *   String lastName;
@@ -724,7 +724,7 @@ public class JdbcTemplateMapper {
    * }
    *
    * 1) Get an Order Object using a query for example:
-   * Order order = jdbcTemplateMapper.findById(orderId)
+   * Order order = jdbcTemplateMapper.findById(orderId, Order.class);
    *
    * 2) Populate the Order's toOne customer property. This will issue an sql and populate order.customer
    * jdbcTemplateMapper.toOneForObject(order, Customer.class, "customer", "customerId");
@@ -758,25 +758,25 @@ public class JdbcTemplateMapper {
    *
    * <pre>
    * Main Object:
-   * Class Order{
+   * public class Order{
    *   Integer id;
    *   LocalDateTime orderDate;
    *   Integer customerId;
    *   Customer customer; // the toOne relationship
    * }
    * toOne related Object:
-   * Class Customer{
+   * public class Customer{
    *   Integer id;
    *   String firstName;
    *   String lastName;
    *   String address;
    * }
    *
-   * 1) Get list of orders using a query for example:
+   * 1) Get list of orders using a query like below or a complex query using jdbcTemplate.
    * List<Order> orders = jdbcTemplateMapper.findAll(Order.class)
    *
-   * 2) Populate each Order's toOne customer property. This will issue sql to get the corresponding
-   *    customers using an IN clause:
+   * 2) Populate each Order's toOne customer property. This will issue an sql to get the corresponding
+   *    customers using an IN clause.
    * jdbcTemplateMapper.toOneForList(orders, Customer.class, "customer", "customerId");
    *
    * </pre>
@@ -821,14 +821,14 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Populates a single main object and its toOne related object with the data from the ResultSet
+   * Populates a single main object and its toOne related object with the data from the query ResultSet
    * using their respective SqlMappers. The sql for the Resultset object should have the join
    * properties in select statement so that the main object and related object can be tied together
    * (mainObj.mainObjJoinPropertyName = relatedObj.id)
    *
    * <pre>
    * Main Object:
-   * Class Order{
+   * public class Order{
    *   Integer id;
    *   LocalDateTime orderDate;
    *   Integer customerId;
@@ -836,7 +836,7 @@ public class JdbcTemplateMapper {
    * }
    *
    * toOne related Object:
-   * Class Customer{
+   * public class Customer{
    *   Integer id;
    *   String firstName;
    *   String lastName;
@@ -904,7 +904,7 @@ public class JdbcTemplateMapper {
    *
    * <pre>
    * Main Object:
-   * Class Order{
+   * public class Order{
    *   Integer id;
    *   LocalDateTime orderDate;
    *   Integer customerId;
@@ -912,7 +912,7 @@ public class JdbcTemplateMapper {
    * }
    *
    * toOne related Object:
-   * Class Customer{
+   * public class Customer{
    *   Integer id;
    *   String firstName;
    *   String lastName;
@@ -1013,14 +1013,14 @@ public class JdbcTemplateMapper {
    *
    * <pre>
    * Main Object:
-   * Class Order{
+   * public class Order{
    *   Integer id;
    *   LocalDateTime orderDate;
    *   Integer customerId;
    *   List<OrderLine> orderLines; // toMany relationship
    * }
    * toMany related Object:
-   * Class OrderLine{
+   * public class OrderLine{
    *   Integer id;
    *   Integer orderId;
    *   Integer productId;
@@ -1057,14 +1057,14 @@ public class JdbcTemplateMapper {
    *
    * <pre>
    * Main Object:
-   * Class Order{
+   * public class Order{
    *   Integer id;
    *   LocalDateTime orderDate;
    *   Integer customerId;
    *   List<OrderLine> orderLines; // toMany relationship
    * }
    * toMany related Object:
-   * Class OrderLine{
+   * public class OrderLine{
    *   Integer id;
    *   Integer orderId;
    *   Integer productId;
@@ -1109,14 +1109,14 @@ public class JdbcTemplateMapper {
    *
    * <pre>
    * Main Object:
-   * Class Order{
+   * public class Order{
    *   Integer id;
    *   LocalDateTime orderDate;
    *   Integer customerId;
    *   List<OrderLine> orderLines; // toMany relationship
    * }
    * toMany related Object:
-   * Class OrderLine{
+   * public class OrderLine{
    *   Integer id;
    *   Integer orderId;
    *   Integer productId;
@@ -1155,14 +1155,14 @@ public class JdbcTemplateMapper {
    *
    * <pre>
    * Main Object:
-   * Class Order{
+   * public class Order{
    *   Integer id;
    *   LocalDateTime orderDate;
    *   Integer customerId;
    *   List<OrderLine> orderLines; // toMany relationship
    * }
    * toMany related Object:
-   * Class OrderLine{
+   * public class OrderLine{
    *   Integer id;
    *   Integer orderId;
    *   Integer productId;
