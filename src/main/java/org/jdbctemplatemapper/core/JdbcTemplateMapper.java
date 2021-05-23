@@ -31,11 +31,11 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 
 /**
- * On projects which use ORMs initially they are beneficial and productive. As the project grows to
- * a non trivial size and complexity (most enterprise applications do) their magic ends up getting
- * in the way. Before you know it you are fighting it and their complexity and nuances start bubbling up. 
- * The SQL they generate are cryptic which makes troubleshooting challenging. Performance
- * issues take a certain level of expertise to resolve.
+ * When using ORMs in a project, during the early phases they seem beneficial and productive. As the
+ * project grows to a non trivial size and complexity (most enterprise applications do) their magic
+ * ends up getting in the way. As time goes on you are fighting it and their complexity and nuances
+ * start bubbling up. The SQL they generate are cryptic which makes troubleshooting challenging.
+ * Performance issues take a certain level of expertise to resolve.
  *
  * <p>Spring's JdbcTemplate gives full control of data access using SQL. It removes a lot of the
  * boiler plate code which is required by JDBC. Unfortunately it is still very verbose.
@@ -43,7 +43,9 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  * JdbcTemplate, allowing for single line CRUD and less verbose ways to query relationships.
  *
  * <p>IMPORTANT!!! JdbcTemplateMapper is a helper utility for JdbcTemplate and NOT a replacement for
- * it. Your code will generally be a mix of JdbcTemplate and JdbcTemplateMapper.
+ * it. Project code will generally be a mix of JdbcTemplate and JdbcTemplateMapper.
+ *
+ * <p><b>NOTE: An instance of this class is thread-safe once configured.</b>
  *
  * <pre>
  * Features:
@@ -54,7 +56,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  *    implementation of IRecordOperatorResolver.
  * 5) Can be configured to provide optimistic locking functionality for updates using a version property.
  *
- * JdbcTemplateMapper is opinionated. Your project has to meet the following 2 criteria to use it:
+ * JdbcTemplateMapper is opinionated. Projects have to meet the following 2 criteria to use it:
  * 1) Models should have a property named 'id' which has to be of type Integer or Long.
  * 2) Model property to table column mapping:
  *   Camel case property names are mapped to snake case database column names.
@@ -63,18 +65,11 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  *   (Model to table mapping does not have this restriction. By default a class maps to its snake case table name.
  *   The default class to table mapping can be overridden using the @Table annotation)
  *
- *
- * * <p>The underlying org.springframework.jdbc.core.JdbcTemplate and org.springframework.jdbc.core.NamedParameterJdbcTemplate
- * exposed to allow for access to all their methods.
- *
- * <p><b>NOTE: An instance of this class is thread-safe once configured.</b>
- *
- *
  * Examples of simple CRUD:
  *
  * public class Product{ // by default maps to table 'product'
  *    private Integer id;
- *    private String name;
+ *    private String productName;
  *    private Double price;
  *
  *    // jdbcTemplateMapper will ignore property below for insert/update/find.. since it does
@@ -85,7 +80,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  * }
  *
  * Product product = new Product();
- * product.setName("some product name");
+ * product.setProductName("some product name");
  * product.setPrice(10.25);
  * jdbcTemplateMapper.insert(product);
  *
@@ -102,7 +97,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  * Installation:
  * Requires Java8 or above.
  *
- * pom.xml dependencies:
+ * pom.xml dependencies (Same dependencies as needed for Spring's org.springframework.jdbc.core.JdbcTemplate)
  * For a spring boot application:
  * {@code
  *  <dependency>
@@ -121,7 +116,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  * }
  *
  * Spring bean configuration for JdbcTemplateMapper will look something like below:
- * (Assuming that jdbcTemplate is configured as per Spring boot instructions)
+ * (Assuming that org.springframework.jdbc.core.JdbcTemplate.JdbcTemplate is configured as per Spring instructions)
  *
  * &#64;Bean
  * public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
@@ -1664,8 +1659,8 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Gets table name. If @Table annotation is used for the class uses that otherwise returns a snake
-   * case name
+   * Gets the corresponding table name for the class. If @Table annotation is used for the class use
+   * its 'name' attribute otherwise returns a snake case name.
    *
    * @param clazz The class
    * @return The table name

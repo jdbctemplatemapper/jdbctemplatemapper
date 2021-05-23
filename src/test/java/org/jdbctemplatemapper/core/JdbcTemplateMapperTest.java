@@ -53,6 +53,8 @@ public class JdbcTemplateMapperTest {
     order.setCustomerId(2);
 
     jdbcTemplateMapper.insert(order);
+    
+    order = jdbcTemplateMapper.findById(order.getId(), Order.class);
 
     assertNotNull(order.getId());
     assertNotNull(order.getCreatedBy());
