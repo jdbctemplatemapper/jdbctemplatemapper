@@ -31,11 +31,11 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 
 /**
- * When using ORMs in a project, during the early phases they seem beneficial and productive. As the
- * project grows to a non trivial size and complexity (most enterprise applications do) their magic
- * ends up getting in the way. As time goes on you are fighting it and their complexity and nuances
- * start bubbling up. The SQL they generate are cryptic which makes troubleshooting challenging.
- * Performance issues take a certain level of expertise to resolve.
+ * When using ORMs (like Hibernate etc) in a project, during the early phases they seem beneficial
+ * and productive. As the project grows to a non trivial size and complexity (most enterprise
+ * applications do) their magic ends up getting in the way. As time goes on you are fighting it and
+ * their complexity and nuances start bubbling up. The SQL they generate are cryptic which makes
+ * troubleshooting challenging. Performance issues take a certain level of expertise to resolve.
  *
  * <p>Spring's JdbcTemplate gives full control of data access using SQL. It removes a lot of the
  * boiler plate code which is required by JDBC. Unfortunately it is still very verbose.
@@ -97,7 +97,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  * Installation:
  * Requires Java8 or above.
  *
- * pom.xml dependencies (Same dependencies as needed for Spring's org.springframework.jdbc.core.JdbcTemplate)
+ * pom.xml dependencies
  * For a spring boot application:
  * {@code
  *  <dependency>
@@ -213,6 +213,21 @@ public class JdbcTemplateMapper {
     return this.npJdbcTemplate;
   }
 
+
+
+  /**
+   * Assign this to identify the property name of created on field. This property has to be of type
+   * LocalDateTime. When an object is inserted into the database the value of this field will be set
+   * to current. Assign this while initializing jdbcTemplateMapper.
+   *
+   * @param propName : the created on property name.
+   * @return The jdbcTemplateMapper
+   */
+  public JdbcTemplateMapper withCreatedOnPropertyName(String propName) {
+    this.createdOnPropertyName = propName;
+    return this;
+  }
+  
   /**
    * The implementation of IRecordOperatorResolver is used to populate the created by and updated by
    * fields. Assign this while initializing the jdbcTemplateMapper
@@ -240,18 +255,18 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Assign this to identify the property name of created on field. This property has to be of type
-   * LocalDateTime. When an object is inserted into the database the value of this field will be set
-   * to current. Assign this while initializing jdbcTemplateMapper.
+   * Assign this to identify the property name of updated on field. This property has to be of type
+   * LocalDateTime. When an object is updated in the database the value of this field will be set to
+   * current. Assign this while initializing jdbcTemplateMapper.
    *
-   * @param propName : the created on property name.
+   * @param propName : the updated on property name.
    * @return The jdbcTemplateMapper
    */
-  public JdbcTemplateMapper withCreatedOnPropertyName(String propName) {
-    this.createdOnPropertyName = propName;
+  public JdbcTemplateMapper withUpdatedOnPropertyName(String propName) {
+    this.updatedOnPropertyName = propName;
     return this;
   }
-
+  
   /**
    * Assign this to identify the property name of updated by field. The updated by property will be
    * assigned the value from recordOperatorResolver.getRecordOperator when the object is updated in
@@ -262,19 +277,6 @@ public class JdbcTemplateMapper {
    */
   public JdbcTemplateMapper withUpdatedByPropertyName(String propName) {
     this.updatedByPropertyName = propName;
-    return this;
-  }
-
-  /**
-   * Assign this to identify the property name of updated on field. This property has to be of type
-   * LocalDateTime. When an object is updated in the database the value of this field will be set to
-   * current. Assign this while initializing jdbcTemplateMapper.
-   *
-   * @param propName : the updated on property name.
-   * @return The jdbcTemplateMapper
-   */
-  public JdbcTemplateMapper withUpdatedOnPropertyName(String propName) {
-    this.updatedOnPropertyName = propName;
     return this;
   }
 
