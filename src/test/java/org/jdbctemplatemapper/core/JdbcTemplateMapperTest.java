@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.jdbctemplatemapper.model.Customer;
+import org.jdbctemplatemapper.model.NoIdObject;
 import org.jdbctemplatemapper.model.Order;
 import org.jdbctemplatemapper.model.OrderLine;
 import org.jdbctemplatemapper.model.Product;
@@ -30,7 +31,9 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
 public class JdbcTemplateMapperTest {
-  @Autowired private JdbcTemplateMapper jdbcTemplateMapper;
+	
+  @Autowired 
+  private JdbcTemplateMapper jdbcTemplateMapper;
 
   private JdbcTemplate jdbcTemplate;
   private NamedParameterJdbcTemplate npJdbcTemplate;
@@ -105,6 +108,17 @@ public class JdbcTemplateMapperTest {
           jdbcTemplateMapper.insert(null);
         });
   }
+  
+  @Test
+  public void insert_noIdObjectFailureTest() {
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          NoIdObject pojo = new NoIdObject();
+          pojo.setSomething("abc");
+          jdbcTemplateMapper.insert(pojo);
+        });
+  }
 
   @Test
   public void insertWithId_Test() {
@@ -146,6 +160,17 @@ public class JdbcTemplateMapperTest {
         IllegalArgumentException.class,
         () -> {
           jdbcTemplateMapper.insertWithId(null);
+        });
+  }
+  
+  @Test
+  public void insertWithId_noIdObjectFailureTest() {
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          NoIdObject pojo = new NoIdObject();
+          pojo.setSomething("abc");
+          jdbcTemplateMapper.insertWithId(pojo);
         });
   }
 
@@ -194,6 +219,18 @@ public class JdbcTemplateMapperTest {
           jdbcTemplateMapper.update(null);
         });
   }
+  
+  @Test
+  public void update_noIdObjectFailureTest() {
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          NoIdObject pojo = new NoIdObject();
+          pojo.setSomething("abc");
+          jdbcTemplateMapper.update(pojo);
+        });
+  }
+
 
   @Test
   public void update_byPropertyTest() {
@@ -240,6 +277,17 @@ public class JdbcTemplateMapperTest {
         IllegalArgumentException.class,
         () -> {
           jdbcTemplateMapper.update(null, "abc");
+        });
+  }
+  
+  @Test
+  public void update_byPropertyNoIdObjectFailureTest() {
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          NoIdObject pojo = new NoIdObject();
+          pojo.setSomething("abc");
+          jdbcTemplateMapper.update(pojo, "something");
         });
   }
 
@@ -310,6 +358,18 @@ public class JdbcTemplateMapperTest {
           jdbcTemplateMapper.delete(null);
         });
   }
+  
+  @Test
+  public void delete_noIdObjectFailureTest() {
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          NoIdObject pojo = new NoIdObject();
+          pojo.setSomething("abc");
+          jdbcTemplateMapper.delete(pojo);
+        });
+  }
+  
 
   @Test
   public void deleteById_Test() {

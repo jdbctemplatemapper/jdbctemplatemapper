@@ -31,16 +31,16 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 
 /**
- * When using ORMs (like Hibernate etc) in a project, during the early phases they seem beneficial
- * and productive. As the project grows to a non trivial size and complexity (most enterprise
- * applications do) their magic ends up getting in the way. As time goes on you are fighting it and
- * their complexity and nuances start bubbling up. The SQL they generate are cryptic which makes
- * troubleshooting challenging. Performance issues take a certain level of expertise to resolve.
+ * When using ORMs (like Hibernate etc) in a project, during the early stages they seem beneficial.
+ * As the project grows to a non trivial size and complexity (most enterprise applications do) their
+ * magic ends up getting in the way. As time goes on you start fighting it and their complexity and
+ * nuances start bubbling up. The SQL they generate are cryptic which makes troubleshooting
+ * challenging. Performance issues take a certain level of expertise to resolve.
  *
  * <p>Spring's JdbcTemplate gives full control of data access using SQL. It removes a lot of the
- * boiler plate code which is required by JDBC. Unfortunately it is still very verbose.
- * JdbcTemplateMapper tries to mitigate the verboseness. It is a utility class which uses
- * JdbcTemplate, allowing for single line CRUD and less verbose ways to query relationships.
+ * boiler plate code which is required by JDBC. Unfortunately it is verbose. JdbcTemplateMapper
+ * tries to mitigate the verboseness. It is a utility class which uses JdbcTemplate, allowing for
+ * single line CRUD and less verbose ways to query relationships.
  *
  * <p>IMPORTANT!!! JdbcTemplateMapper is a helper utility for JdbcTemplate and NOT a replacement for
  * it. Project code will generally be a mix of JdbcTemplate and JdbcTemplateMapper.
@@ -72,8 +72,8 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  *    private String productName;
  *    private Double price;
  *
- *    // jdbcTemplateMapper will ignore property below for insert/update/find.. since it does
- *    // not have a corresponding snake case column in database
+ *    // for insert/update/find.. jdbcTemplateMapper will ignore properties which do not
+ *    // have a corresponding snake case columns in database table
  *    private String someNonDatabaseProperty;
  *
  *    // getters and setters ...
@@ -187,9 +187,8 @@ public class JdbcTemplateMapper {
       throw new IllegalArgumentException("dataSource cannot be null");
     }
     if (isEmpty(schemaName)) {
-      throw new IllegalArgumentException("schemaName cannot be null");
+      throw new IllegalArgumentException("schemaName cannot be empty");
     }
-
     this.jdbcTemplate = jdbcTemplate;
     this.schemaName = schemaName;
     this.npJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
@@ -213,8 +212,6 @@ public class JdbcTemplateMapper {
     return this.npJdbcTemplate;
   }
 
-
-
   /**
    * Assign this to identify the property name of created on field. This property has to be of type
    * LocalDateTime. When an object is inserted into the database the value of this field will be set
@@ -227,7 +224,7 @@ public class JdbcTemplateMapper {
     this.createdOnPropertyName = propName;
     return this;
   }
-  
+
   /**
    * The implementation of IRecordOperatorResolver is used to populate the created by and updated by
    * fields. Assign this while initializing the jdbcTemplateMapper
@@ -266,7 +263,7 @@ public class JdbcTemplateMapper {
     this.updatedOnPropertyName = propName;
     return this;
   }
-  
+
   /**
    * Assign this to identify the property name of updated by field. The updated by property will be
    * assigned the value from recordOperatorResolver.getRecordOperator when the object is updated in
@@ -358,7 +355,13 @@ public class JdbcTemplateMapper {
     if (pojo == null) {
       throw new IllegalArgumentException("Object cannot be null");
     }
+
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
+    if (!bw.isReadableProperty("id")) {
+      throw new IllegalArgumentException(
+          "Object " + pojo.getClass().getSimpleName() + " has to have a property named 'id'.");
+    }
+
     Object idValue = bw.getPropertyValue("id");
     if (idValue != null) {
       throw new RuntimeException(
@@ -418,7 +421,13 @@ public class JdbcTemplateMapper {
     if (pojo == null) {
       throw new IllegalArgumentException("Object cannot be null");
     }
+    
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
+    if (!bw.isReadableProperty("id")) {
+        throw new IllegalArgumentException(
+            "Object " + pojo.getClass().getSimpleName() + " has to have a property named 'id'.");
+    }
+    
     Object idValue = bw.getPropertyValue("id");
     if (idValue == null) {
       throw new RuntimeException(
@@ -472,6 +481,13 @@ public class JdbcTemplateMapper {
     if (pojo == null) {
       throw new IllegalArgumentException("Object cannot be null");
     }
+    
+    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
+    if (!bw.isReadableProperty("id")) {
+        throw new IllegalArgumentException(
+            "Object " + pojo.getClass().getSimpleName() + " has to have a property named 'id'.");
+    }
+    
     String tableName = getTableName(pojo.getClass());
     String updateSql = updateSqlCache.get(tableName);
     if (updateSql == null) {
@@ -479,9 +495,7 @@ public class JdbcTemplateMapper {
     }
 
     List<String> dbColumnNameList = getDbColumnNames(tableName);
-
     LocalDateTime now = LocalDateTime.now();
-    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
 
     if (updatedOnPropertyName != null
         && bw.isReadableProperty(updatedOnPropertyName)
@@ -542,10 +556,15 @@ public class JdbcTemplateMapper {
     if (pojo == null) {
       throw new IllegalArgumentException("Object cannot be null");
     }
+    
+    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
+    if (!bw.isReadableProperty("id")) {
+        throw new IllegalArgumentException(
+            "Object " + pojo.getClass().getSimpleName() + " has to have a property named 'id'.");
+    }
+    
     String tableName = getTableName(pojo.getClass());
     List<String> dbColumnNameList = getDbColumnNames(tableName);
-
-    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
 
     // cachekey ex: className-propertyName1-propertyName2
     String cacheKey = tableName + "-" + String.join("-", propertyNames);
@@ -666,8 +685,14 @@ public class JdbcTemplateMapper {
     if (pojo == null) {
       throw new IllegalArgumentException("Object cannot be null");
     }
-    String tableName = getTableName(pojo.getClass());
+    
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
+    if (!bw.isReadableProperty("id")) {
+        throw new IllegalArgumentException(
+            "Object " + pojo.getClass().getSimpleName() + " has to have a property named 'id'.");
+    }
+    
+    String tableName = getTableName(pojo.getClass());
     String sql = "delete from " + schemaName + "." + tableName + " where id = ?";
     Object id = bw.getPropertyValue("id");
     return jdbcTemplate.update(sql, id);
@@ -684,6 +709,7 @@ public class JdbcTemplateMapper {
     if (!(id instanceof Integer || id instanceof Long)) {
       throw new IllegalArgumentException("id has to be type of Integer or Long");
     }
+    
     String tableName = getTableName(clazz);
     String sql = "delete from " + schemaName + "." + tableName + " where id = ?";
     return jdbcTemplate.update(sql, id);
