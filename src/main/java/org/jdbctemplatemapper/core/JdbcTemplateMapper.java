@@ -1617,6 +1617,7 @@ public class JdbcTemplateMapper {
         while (resultSet.next()) {
           columns.add(resultSet.getString("COLUMN_NAME"));
         }
+        resultSet.close();
         if (isEmpty(columns)) {
           throw new RuntimeException("Invalid table name: " + table);
         }
