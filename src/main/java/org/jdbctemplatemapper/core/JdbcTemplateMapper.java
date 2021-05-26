@@ -1611,26 +1611,19 @@ public class JdbcTemplateMapper {
     List<String> columns = tableColumnNamesCache.get(table);
     if (isEmpty(columns)) {
       columns = new ArrayList<>();
-      ResultSet resultSet = null;
       try (Connection connection = jdbcTemplate.getDataSource().getConnection()) {
         DatabaseMetaData metadata = connection.getMetaData();
-        resultSet = metadata.getColumns(null, schemaName, table, null);
+        ResultSet resultSet = metadata.getColumns(null, schemaName, table, null);
         while (resultSet.next()) {
           columns.add(resultSet.getString("COLUMN_NAME"));
         }
+        resultSet.close();
         if (isEmpty(columns)) {
           throw new RuntimeException("Invalid table name: " + table);
         }
         tableColumnNamesCache.put(table, columns);
       } catch (Exception e) {
         throw new RuntimeException(e);
-      } finally {
-        if (resultSet != null) {
-          try {
-            resultSet.close();
-          } catch (Exception e) {
-          }
-        }
       }
     }
     return columns;
