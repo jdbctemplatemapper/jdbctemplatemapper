@@ -1,4 +1,4 @@
-CREATE TABLE jdbctemplatemapper.order (
+CREATE TABLE jdbctemplatemapper.orders (
 	id serial NOT NULL,
 	order_date timestamp NULL,
 	customer_id int4 NULL,
