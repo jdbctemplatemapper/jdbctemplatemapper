@@ -1,6 +1,7 @@
 package org.jdbctemplatemapper.core;
 
 import java.beans.PropertyDescriptor;
+import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -1610,8 +1611,8 @@ public class JdbcTemplateMapper {
     List<String> columns = tableColumnNamesCache.get(table);
     if (isEmpty(columns)) {
       columns = new ArrayList<>();
-      try {
-        DatabaseMetaData metadata = jdbcTemplate.getDataSource().getConnection().getMetaData();
+      try(Connection connection = jdbcTemplate.getDataSource().getConnection()) {
+        DatabaseMetaData metadata = connection.getMetaData();
         ResultSet resultSet = metadata.getColumns(null, schemaName, table, null);
         while (resultSet.next()) {
           columns.add(resultSet.getString("COLUMN_NAME"));

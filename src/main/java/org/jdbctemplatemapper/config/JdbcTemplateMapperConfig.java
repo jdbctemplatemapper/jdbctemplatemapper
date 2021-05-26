@@ -3,9 +3,11 @@ package org.jdbctemplatemapper.config;
 import javax.sql.DataSource;
 
 import org.jdbctemplatemapper.core.JdbcTemplateMapper;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -19,6 +21,7 @@ public class JdbcTemplateMapperConfig {
   }
 
   @Bean
+  @Primary
   public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
     JdbcTemplateMapper jdbcTemplateMapper =
         new JdbcTemplateMapper(jdbcTemplate, "jdbctemplatemapper");
@@ -30,6 +33,14 @@ public class JdbcTemplateMapperConfig {
         .withUpdatedByPropertyName("updatedBy")
         .withVersionPropertyName("version");
 
+    return jdbcTemplateMapper;
+  }
+  
+  @Bean
+  @Qualifier("noConfigJdbcTemplateMapper")
+  public JdbcTemplateMapper noConfigJdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
+    JdbcTemplateMapper jdbcTemplateMapper =
+        new JdbcTemplateMapper(jdbcTemplate, "jdbctemplatemapper");
     return jdbcTemplateMapper;
   }
   
