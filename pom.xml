@@ -23,25 +23,25 @@
   </properties>
 
   <dependencies>
-      
+
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
       <optional>true</optional>
     </dependency>
-    
+
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-jdbc</artifactId>
       <optional>true</optional>
     </dependency>
-    
+
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-configuration-processor</artifactId>
       <optional>true</optional>
     </dependency>
-      
+
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
@@ -61,6 +61,13 @@
     </dependency>
 
     <dependency>
+      <groupId>com.microsoft.sqlserver</groupId>
+      <artifactId>mssql-jdbc</artifactId>
+      <version>7.4.0.jre8</version>
+      <optional>true</optional>
+    </dependency>
+
+    <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-core</artifactId>
       <optional>true</optional>
@@ -74,19 +81,22 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
         <configuration>
-          <!--  Need the the prevent plugin to from erroring out on 'No main class found' on repackging -->
+          <!-- Need the the prevent plugin to from erroring out on 'No main 
+            class found' on repackging -->
           <skip>true</skip>
           <classifier>exec</classifier>
         </configuration>
       </plugin>
       <plugin>
-        <!--  the libary jar file which other applications can use. Only includes the java classes in org.jdbctemplatemapper.core  -->
+        <!-- the libary jar file which other applications can use. Only includes 
+          the java classes in org.jdbctemplatemapper.core -->
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <configuration>
-          <!-- need this to prevent plugin to NOT create the unwanted /maven dir in META-INF -->
-         <archive>
-          <addMavenDescriptor>false</addMavenDescriptor>
+          <!-- need this to prevent plugin to NOT create the unwanted /maven 
+            dir in META-INF -->
+          <archive>
+            <addMavenDescriptor>false</addMavenDescriptor>
           </archive>
           <includes>
             <include>**/core/*</include>

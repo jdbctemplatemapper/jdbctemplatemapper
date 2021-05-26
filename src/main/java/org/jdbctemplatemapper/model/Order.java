@@ -3,8 +3,11 @@ package org.jdbctemplatemapper.model;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.jdbctemplatemapper.core.Table;
+
 import lombok.Data;
 @Data
+@Table(name = "orders")
 public class Order {
     private Integer id;
     private LocalDateTime orderDate;

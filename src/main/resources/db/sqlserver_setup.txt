@@ -1,0 +1,24 @@
+*) copy all scripts in db/sqlserver to db/migration.
+
+*) Change the application properties like below:
+spring.datasource.jdbc-url=jdbc:sqlserver://localhost:1433;databaseName=JdbcTemplateMapper
+#spring.datasource.username=sa
+#spring.datasource.password=Dockersql123
+spring.datasource.username=jtm
+spring.datasource.password=Jtm123456
+spring.datasource.driver-class-name=com.microsoft.sqlserver.jdbc.SQLServerDriver
+
+*) Make sure the the following objects have been created in sqlserver.
+
+create database JdbcTemplateMapper;
+
+create schema jdbctemplatemapper;
+create LOGIN jtm WITH PASSWORD = 'Jtm123456'; 
+
+CREATE USER Jtm FOR LOGIN Jtm;
+
+ALTER USER Jtm WITH DEFAULT_SCHEMA = jdbctemplatemapper;
+
+GRANT SELECT, INSERT, UPDATE, DELETE, ALTER ON SCHEMA::jdbctemplatemapper TO Jtm;
+
+EXEC sp_addrolemember 'db_ddladmin', N'Jtm'

@@ -447,8 +447,8 @@ public class JdbcTemplateMapperTest {
     String sql =
         "select o.id o_id, o.order_date o_order_date, o.customer_id o_customer_id,"
             + " c.id c_id, c.first_name c_first_name, c.last_name c_last_name"
-            + " from jdbctemplatemapper.order o"
-            + " join customer c on o.customer_id = c.id"
+            + " from jdbctemplatemapper.orders o"
+            + " join jdbctemplatemapper.customer c on o.customer_id = c.id"
             + " where o.id = ?";
 
     Integer orderId = 1;
@@ -478,8 +478,8 @@ public class JdbcTemplateMapperTest {
     String sql =
         "select o.id o_id, o.order_date o_order_date, o.customer_id o_customer_id,"
             + " c.id c_id, c.first_name c_first_name, c.last_name c_last_name"
-            + " from jdbctemplatemapper.order o"
-            + " left join customer c on o.customer_id = c.id"
+            + " from jdbctemplatemapper.orders o"
+            + " left join jdbctemplatemapper.customer c on o.customer_id = c.id"
             + " where o.id = ?";
 
     // order 3 has null customer
@@ -509,8 +509,8 @@ public class JdbcTemplateMapperTest {
     String sql =
         "select o.id o_id, o.order_date o_order_date, o.customer_id o_customer_id,"
             + " c.id c_id, c.first_name c_first_name, c.last_name c_last_name"
-            + " from jdbctemplatemapper.order o"
-            + " left join customer c on o.customer_id = c.id"
+            + " from jdbctemplatemapper.orders o"
+            + " left join jdbctemplatemapper.customer c on o.customer_id = c.id"
             + " where o.id = ?";
 
     // order 999 does not exist
@@ -538,8 +538,8 @@ public class JdbcTemplateMapperTest {
     String sql =
         "select o.id o_id, o.order_date o_order_date, o.customer_id o_customer_id,"
             + " c.id c_id, c.first_name c_first_name, c.last_name c_last_name"
-            + " from jdbctemplatemapper.order o"
-            + " left join customer c on o.customer_id = c.id"
+            + " from jdbctemplatemapper.orders o"
+            + " left join jdbctemplatemapper.customer c on o.customer_id = c.id"
             + " order by o.id";
 
     List<Order> orders =
@@ -567,7 +567,7 @@ public class JdbcTemplateMapperTest {
     String sql =
         "select o.id o_id, o.order_date o_order_date, o.customer_id o_customer_id,"
             + " c.id c_id, c.first_name c_first_name, c.last_name c_last_name"
-            + " from jdbctemplatemapper.order o"
+            + " from jdbctemplatemapper.orders o"
             + " left join customer c on o.customer_id = c.id"
             + " where o.id in (998, 999)"
             + " order by o.id";
@@ -594,7 +594,7 @@ public class JdbcTemplateMapperTest {
     List<Integer> customerIds =
         orders.stream().map(Order::getCustomerId).collect(Collectors.toList());
 
-    String sql = "select * from customer where id in (:customerIds)";
+    String sql = "select * from jdbctemplatemapper.customer where id in (:customerIds)";
 
     RowMapper<Customer> mapper = BeanPropertyRowMapper.newInstance(Customer.class);
     MapSqlParameterSource params = new MapSqlParameterSource("customerIds", customerIds);
@@ -678,7 +678,7 @@ public class JdbcTemplateMapperTest {
 
     List<Integer> orderIds = orders.stream().map(Order::getCustomerId).collect(Collectors.toList());
 
-    String sql = "select * from order_line where order_id in (:orderIds)";
+    String sql = "select * from jdbctemplatemapper.order_line where order_id in (:orderIds)";
 
     RowMapper<OrderLine> mapper = BeanPropertyRowMapper.newInstance(OrderLine.class);
     MapSqlParameterSource params = new MapSqlParameterSource("orderIds", orderIds);
@@ -730,8 +730,8 @@ public class JdbcTemplateMapperTest {
     String sql =
         "select o.id o_id, o.order_date o_order_date,"
             + " ol.id ol_id, ol.order_id ol_order_id, ol.product_id ol_product_id, ol.num_of_units ol_num_of_units"
-            + " from jdbctemplatemapper.order o"
-            + " join order_line ol on o.id = ol.order_id"
+            + " from jdbctemplatemapper.orders o"
+            + " join jdbctemplatemapper.order_line ol on o.id = ol.order_id"
             + " where o.id = ?"
             + " order by ol.id";
 
@@ -765,8 +765,8 @@ public class JdbcTemplateMapperTest {
     String sql =
         "select o.id o_id, o.order_date o_order_date,"
             + " ol.id ol_id, ol.order_id ol_order_id, ol.product_id ol_product_id, ol.num_of_units ol_num_of_units"
-            + " from jdbctemplatemapper.order o"
-            + " left join order_line ol on o.id = ol.order_id"
+            + " from jdbctemplatemapper.orders o"
+            + " left join jdbctemplatemapper.order_line ol on o.id = ol.order_id"
             + " where o.id = ?"
             + " order by ol.id";
 
@@ -798,8 +798,8 @@ public class JdbcTemplateMapperTest {
     String sql =
         "select o.id o_id, o.order_date o_order_date,"
             + " ol.id ol_id, ol.order_id ol_order_id, ol.product_id ol_product_id, ol.num_of_units ol_num_of_units"
-            + " from jdbctemplatemapper.order o"
-            + " left join order_line ol on o.id = ol.order_id"
+            + " from jdbctemplatemapper.orders o"
+            + " left join jdbctemplatemapper.order_line ol on o.id = ol.order_id"
             + " where o.id = ?"
             + " order by ol.id";
 
@@ -830,8 +830,8 @@ public class JdbcTemplateMapperTest {
     String sql =
         "select o.id o_id, o.order_date o_order_date,"
             + " ol.id ol_id, ol.order_id ol_order_id, ol.product_id ol_product_id, ol.num_of_units ol_num_of_units"
-            + " from jdbctemplatemapper.order o"
-            + " join order_line ol on o.id = ol.order_id"
+            + " from jdbctemplatemapper.orders o"
+            + " join jdbctemplatemapper.order_line ol on o.id = ol.order_id"
             + " order by ol.id";
 
     List<Order> orders =
@@ -860,8 +860,8 @@ public class JdbcTemplateMapperTest {
     String sql =
         "select o.id o_id, o.order_date o_order_date,"
             + " ol.id ol_id, ol.order_id ol_order_id, ol.product_id ol_product_id, ol.num_of_units ol_num_of_units"
-            + " from jdbctemplatemapper.order o"
-            + " join order_line ol on o.id = ol.order_id"
+            + " from jdbctemplatemapper.orders o"
+            + " join jdbctemplatemapper.order_line ol on o.id = ol.order_id"
             + " where o.id in (998, 999)"
             + " order by ol.id";
 
@@ -893,14 +893,14 @@ public class JdbcTemplateMapperTest {
      */
     String sql =
         "select "
-            + jdbcTemplateMapper.selectCols("order", "o")
+            + jdbcTemplateMapper.selectCols("orders", "o")
             + jdbcTemplateMapper.selectCols("order_line", "ol")
             + jdbcTemplateMapper.selectCols("customer", "c")
             + jdbcTemplateMapper.selectCols("product", "p", false)
-            + " from jdbctemplatemapper.order o"
-            + " left join order_line ol on o.id = ol.order_id"
-            + " left join customer c on o.customer_id = c.id"
-            + " left join product p on ol.product_id = p.id"
+            + " from jdbctemplatemapper.orders o"
+            + " left join jdbctemplatemapper.order_line ol on o.id = ol.order_id"
+            + " left join jdbctemplatemapper.customer c on o.customer_id = c.id"
+            + " left join jdbctemplatemapper.product p on ol.product_id = p.id"
             + " where o.id in (1, 2, 3)"
             + " order by o.id, ol.id";
 
@@ -958,14 +958,14 @@ public class JdbcTemplateMapperTest {
     // query returns no records
     String sql =
         "select "
-            + jdbcTemplateMapper.selectCols("order", "o")
+            + jdbcTemplateMapper.selectCols("orders", "o")
             + jdbcTemplateMapper.selectCols("order_line", "ol")
             + jdbcTemplateMapper.selectCols("customer", "c")
             + jdbcTemplateMapper.selectCols("product", "p", false)
-            + " from jdbctemplatemapper.order o"
-            + " left join order_line ol on o.id = ol.order_id"
-            + " left join customer c on o.customer_id = c.id"
-            + " left join product p on ol.product_id = p.id"
+            + " from jdbctemplatemapper.orders o"
+            + " left join jdbctemplatemapper.order_line ol on o.id = ol.order_id"
+            + " left join jdbctemplatemapper.customer c on o.customer_id = c.id"
+            + " left join jdbctemplatemapper.product p on ol.product_id = p.id"
             + " where o.id in (998,999)";
 
     Map<String, List> resultMap =
