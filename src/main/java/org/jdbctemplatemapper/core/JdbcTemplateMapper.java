@@ -177,6 +177,10 @@ public class JdbcTemplateMapper {
   //     value - snake case string
   private Map<String, String> camelToSnakeCache = new ConcurrentHashMap<>();
 
+  // Map key - tableName-tableAlias
+  //     value - the selectCols string
+  private Map<String, String> selectColsCache = new ConcurrentHashMap<>();
+
   /**
    * The constructor.
    *
@@ -1436,19 +1440,24 @@ public class JdbcTemplateMapper {
    * @return comma separated select column string
    */
   public String selectCols(String tableName, String tableAlias, boolean includeLastComma) {
-    List<String> dbColumnNames = getDbColumnNames(tableName);
-    StringBuilder sb = new StringBuilder(" ");
-    for (String colName : dbColumnNames) {
-      sb.append(tableAlias)
-          .append(".")
-          .append(colName)
-          .append(" ")
-          .append(tableAlias)
-          .append("_")
-          .append(colName)
-          .append(",");
+    String str = selectColsCache.get(tableName + "-" + tableAlias);
+    if (str == null) {
+      List<String> dbColumnNames = getDbColumnNames(tableName);
+      StringBuilder sb = new StringBuilder(" ");
+      for (String colName : dbColumnNames) {
+        sb.append(tableAlias)
+            .append(".")
+            .append(colName)
+            .append(" ")
+            .append(tableAlias)
+            .append("_")
+            .append(colName)
+            .append(",");
+      }
+      str = sb.toString();
+      selectColsCache.put(tableName + "-" + tableAlias, str);
     }
-    String str = sb.toString();
+
     if (!includeLastComma) {
       // remove the last comma.
       str = str.substring(0, str.length() - 1) + " ";
