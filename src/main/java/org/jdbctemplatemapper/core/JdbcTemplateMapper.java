@@ -422,13 +422,13 @@ public class JdbcTemplateMapper {
     if (pojo == null) {
       throw new IllegalArgumentException("Object cannot be null");
     }
-    
+
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
     if (!bw.isReadableProperty("id")) {
-        throw new IllegalArgumentException(
-            "Object " + pojo.getClass().getSimpleName() + " has to have a property named 'id'.");
+      throw new IllegalArgumentException(
+          "Object " + pojo.getClass().getSimpleName() + " has to have a property named 'id'.");
     }
-    
+
     Object idValue = bw.getPropertyValue("id");
     if (idValue == null) {
       throw new RuntimeException(
@@ -482,13 +482,13 @@ public class JdbcTemplateMapper {
     if (pojo == null) {
       throw new IllegalArgumentException("Object cannot be null");
     }
-    
+
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
     if (!bw.isReadableProperty("id")) {
-        throw new IllegalArgumentException(
-            "Object " + pojo.getClass().getSimpleName() + " has to have a property named 'id'.");
+      throw new IllegalArgumentException(
+          "Object " + pojo.getClass().getSimpleName() + " has to have a property named 'id'.");
     }
-    
+
     String tableName = getTableName(pojo.getClass());
     String updateSql = updateSqlCache.get(tableName);
     if (updateSql == null) {
@@ -557,13 +557,13 @@ public class JdbcTemplateMapper {
     if (pojo == null) {
       throw new IllegalArgumentException("Object cannot be null");
     }
-    
+
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
     if (!bw.isReadableProperty("id")) {
-        throw new IllegalArgumentException(
-            "Object " + pojo.getClass().getSimpleName() + " has to have a property named 'id'.");
+      throw new IllegalArgumentException(
+          "Object " + pojo.getClass().getSimpleName() + " has to have a property named 'id'.");
     }
-    
+
     String tableName = getTableName(pojo.getClass());
     List<String> dbColumnNameList = getDbColumnNames(tableName);
 
@@ -686,13 +686,13 @@ public class JdbcTemplateMapper {
     if (pojo == null) {
       throw new IllegalArgumentException("Object cannot be null");
     }
-    
+
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
     if (!bw.isReadableProperty("id")) {
-        throw new IllegalArgumentException(
-            "Object " + pojo.getClass().getSimpleName() + " has to have a property named 'id'.");
+      throw new IllegalArgumentException(
+          "Object " + pojo.getClass().getSimpleName() + " has to have a property named 'id'.");
     }
-    
+
     String tableName = getTableName(pojo.getClass());
     String sql = "delete from " + schemaName + "." + tableName + " where id = ?";
     Object id = bw.getPropertyValue("id");
@@ -710,7 +710,7 @@ public class JdbcTemplateMapper {
     if (!(id instanceof Integer || id instanceof Long)) {
       throw new IllegalArgumentException("id has to be type of Integer or Long");
     }
-    
+
     String tableName = getTableName(clazz);
     String sql = "delete from " + schemaName + "." + tableName + " where id = ?";
     return jdbcTemplate.update(sql, id);
@@ -1611,19 +1611,26 @@ public class JdbcTemplateMapper {
     List<String> columns = tableColumnNamesCache.get(table);
     if (isEmpty(columns)) {
       columns = new ArrayList<>();
-      try(Connection connection = jdbcTemplate.getDataSource().getConnection()) {
+      ResultSet resultSet = null;
+      try (Connection connection = jdbcTemplate.getDataSource().getConnection()) {
         DatabaseMetaData metadata = connection.getMetaData();
-        ResultSet resultSet = metadata.getColumns(null, schemaName, table, null);
+        resultSet = metadata.getColumns(null, schemaName, table, null);
         while (resultSet.next()) {
           columns.add(resultSet.getString("COLUMN_NAME"));
         }
-        resultSet.close();
         if (isEmpty(columns)) {
           throw new RuntimeException("Invalid table name: " + table);
         }
         tableColumnNamesCache.put(table, columns);
       } catch (Exception e) {
         throw new RuntimeException(e);
+      } finally {
+        if (resultSet != null) {
+          try {
+            resultSet.close();
+          } catch (Exception e) {
+          }
+        }
       }
     }
     return columns;
