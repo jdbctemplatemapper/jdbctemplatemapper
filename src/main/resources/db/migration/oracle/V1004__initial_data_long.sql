@@ -5,7 +5,7 @@ VALUES( to_timestamp('2020-06-20 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 1, to_time
 
 INSERT INTO jdbctemplatemapper.order_long
 ( order_date, customer_long_id, created_on, created_by, updated_on, updated_by,  version)
-VALUES( '2020-06-2` 00:00:00', 2, to_timestamp('2020-06-20 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'system', to_timestamp('2020-06-20 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'system', 1);
+VALUES( to_timestamp('2020-06-20 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 2, to_timestamp('2020-06-20 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'system', to_timestamp('2020-06-20 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'system', 1);
 
 INSERT INTO jdbctemplatemapper.order_line_long
 ( order_long_id, product_long_id, num_of_units)

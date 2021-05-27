@@ -33,7 +33,7 @@ public class JdbcTemplateMapperConfig {
         .withUpdatedOnPropertyName("updatedOn")
         .withUpdatedByPropertyName("updatedBy")
         .withVersionPropertyName("version");
-
+    
     return jdbcTemplateMapper;
   }
   

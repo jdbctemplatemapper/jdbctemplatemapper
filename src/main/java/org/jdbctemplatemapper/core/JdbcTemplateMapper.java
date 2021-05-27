@@ -30,6 +30,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
+import org.springframework.jdbc.support.JdbcUtils;
 
 /**
  * When using ORMs (like Hibernate etc) in a project, during the early stages they seem beneficial.
@@ -147,10 +148,11 @@ public class JdbcTemplateMapper {
   private String updatedByPropertyName;
   private String updatedOnPropertyName;
   private String versionPropertyName;
-  
-  // Some old drivers use non compliant JDBC resultSet behavior where resultSetMetaData.getColumnName()
+
+  // Some old drivers use non compliant JDBC resultSet behavior where
+  // resultSetMetaData.getColumnName()
   // retrieves the alias instead of resultSetMetaData.getColumnLabel()
-  private boolean useOldAliasMetadataBehavior=false;
+  private boolean useOldAliasMetadataBehavior = false;
 
   // Need this for type conversions like java.sql.Timestamp to java.time.LocalDateTime etc
   private DefaultConversionService defaultConversionService = new DefaultConversionService();
@@ -303,9 +305,18 @@ public class JdbcTemplateMapper {
     this.versionPropertyName = propName;
     return this;
   }
-  
-  public void useOldAliasMetadataBehavior(boolean booleanVal) {
-	  this.useOldAliasMetadataBehavior = booleanVal;
+
+  /**
+   * Some old drivers use non compliant JDBC resultSet behavior where
+   * resultSetMetaData.getColumnName() retrieves the alias instead of
+   * resultSetMetaData.getColumnLabel()
+   *
+   * <p>For old drivers set this to true.
+   *
+   * @param val The value
+   */
+  public void useOldAliasMetadataBehavior(boolean val) {
+    this.useOldAliasMetadataBehavior = val;
   }
 
   /**
@@ -1359,6 +1370,7 @@ public class JdbcTemplateMapper {
         for (T mainObj : mainObjList) {
           if (mainObj != null) {
             BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
+            bw.setConversionService(defaultConversionService);
             Number idValue = (Number) bw.getPropertyValue("id");
             List<U> relatedList = mapColumnIdToManySide.get(idValue);
             bw.setPropertyValue(mainObjCollectionPropertyName, relatedList);
@@ -1569,10 +1581,13 @@ public class JdbcTemplateMapper {
         if (isNotEmpty(prefix)) {
           columnName = prefix + columnName;
         }
-        if (resultSetColumnNames.contains(columnName)) {
-          Object columnVal = rs.getObject(columnName);
-          bw.setPropertyValue(propName, columnVal);
+        int index = resultSetColumnNames.indexOf(columnName);
+        Object columnVal = null;
+        if (index != -1) {
+          // using Springs JdbcUtils to handle oracle.sql.Timestamp ...
+          columnVal = JdbcUtils.getResultSetValue(rs, index + 1);
         }
+        bw.setPropertyValue(propName, columnVal);
       }
       return clazz.cast(obj);
     } catch (Exception e) {
@@ -1637,7 +1652,21 @@ public class JdbcTemplateMapper {
         }
         resultSet.close();
         if (isEmpty(columns)) {
-          throw new RuntimeException("Invalid table name: " + table);
+          // some databases schema and table name in call to metadata.getColumns(null, schemaName,
+          // table, null) are case sensitive so try again with uppercase values
+          String schemaNameLocal = schemaName;
+          if (schemaNameLocal != null) {
+            schemaNameLocal = schemaNameLocal.toUpperCase();
+          }
+          resultSet = metadata.getColumns(null, schemaNameLocal, table.toUpperCase(), null);
+          while (resultSet.next()) {
+            columns.add(resultSet.getString("COLUMN_NAME").toLowerCase());
+          }
+          resultSet.close();
+        }
+
+        if (isEmpty(columns)) {
+          throw new RuntimeException("Failed to get any columns for table " + table);
         }
         tableColumnNamesCache.put(table, columns);
       } catch (Exception e) {
@@ -1660,12 +1689,11 @@ public class JdbcTemplateMapper {
       int numberOfColumns = rsmd.getColumnCount();
       // jdbc indexes start at 1
       for (int i = 1; i <= numberOfColumns; i++) {
-    	if(useOldAliasMetadataBehavior) {
-          rsColNames.add(rsmd.getColumnName(i));
-    	}
-    	else {
-          rsColNames.add(rsmd.getColumnLabel(i));
-    	}
+        if (useOldAliasMetadataBehavior) {
+          rsColNames.add(rsmd.getColumnName(i).toLowerCase());
+        } else {
+          rsColNames.add(rsmd.getColumnLabel(i).toLowerCase());
+        }
       }
     } catch (Exception e) {
       throw new RuntimeException(e);
