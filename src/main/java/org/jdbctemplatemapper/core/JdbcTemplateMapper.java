@@ -1581,7 +1581,7 @@ public class JdbcTemplateMapper {
         if (isNotEmpty(prefix)) {
           columnName = prefix + columnName;
         }
-        int index = resultSetColumnNames.indexOf(columnName);
+        int index = resultSetColumnNames.indexOf(columnName.toLowerCase());
         Object columnVal = null;
         if (index != -1) {
           // using Springs JdbcUtils to handle oracle.sql.Timestamp ...
@@ -1651,9 +1651,19 @@ public class JdbcTemplateMapper {
           columns.add(resultSet.getString("COLUMN_NAME"));
         }
         resultSet.close();
+        
+        // 2nd try. Some databases schema and table name in call to metadata.getColumns(null, schemaName,
+        // table, null) are case sensitive so try again with uppercase table
         if (isEmpty(columns)) {
-          // some databases schema and table name in call to metadata.getColumns(null, schemaName,
-          // table, null) are case sensitive so try again with uppercase values
+            resultSet = metadata.getColumns(null, schemaName, table.toUpperCase(), null);
+            while (resultSet.next()) {
+              columns.add(resultSet.getString("COLUMN_NAME").toLowerCase());
+            }
+            resultSet.close();
+        }
+      
+        // 3rd try. this time with uppercase schema and uppercase table name
+        if (isEmpty(columns)) {
           String schemaNameLocal = schemaName;
           if (schemaNameLocal != null) {
             schemaNameLocal = schemaNameLocal.toUpperCase();
@@ -1668,6 +1678,7 @@ public class JdbcTemplateMapper {
         if (isEmpty(columns)) {
           throw new RuntimeException("Failed to get any columns for table " + table);
         }
+        
         tableColumnNamesCache.put(table, columns);
       } catch (Exception e) {
         throw new RuntimeException(e);
@@ -1677,10 +1688,10 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Gets the resultSet column names ie the column names in the 'select' statement of the sql
+   * Gets the resultSet lower case column names ie the column names in the 'select' statement of the sql
    *
    * @param rs The jdbc ResultSet
-   * @return List of select column names
+   * @return List of select column names in lower case
    */
   private List<String> getResultSetColumnNames(ResultSet rs) {
     List<String> rsColNames = new ArrayList<>();
