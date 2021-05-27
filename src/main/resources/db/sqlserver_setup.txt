@@ -1,5 +1,3 @@
-*) copy all scripts in db/sqlserver to db/migration.
-
 *) Change the application properties like below:
 spring.datasource.jdbc-url=jdbc:sqlserver://localhost:1433;databaseName=JdbcTemplateMapper
 #spring.datasource.username=sa
@@ -9,16 +7,15 @@ spring.datasource.password=Jtm123456
 spring.datasource.driver-class-name=com.microsoft.sqlserver.jdbc.SQLServerDriver
 
 *) Make sure the the following objects have been created in sqlserver.
-
-create database JdbcTemplateMapper;
+use master;
 
 create schema jdbctemplatemapper;
-create LOGIN jtm WITH PASSWORD = 'Jtm123456'; 
+create LOGIN mssql WITH PASSWORD = 'Mssql123'; 
 
-CREATE USER Jtm FOR LOGIN Jtm;
+CREATE USER mssql FOR LOGIN mssql;
 
-ALTER USER Jtm WITH DEFAULT_SCHEMA = jdbctemplatemapper;
+ALTER USER mssql WITH DEFAULT_SCHEMA = jdbctemplatemapper;
 
-GRANT SELECT, INSERT, UPDATE, DELETE, ALTER ON SCHEMA::jdbctemplatemapper TO Jtm;
+GRANT SELECT, INSERT, UPDATE, DELETE, ALTER ON SCHEMA::jdbctemplatemapper TO mssql;
 
-EXEC sp_addrolemember 'db_ddladmin', N'Jtm'
+EXEC sp_addrolemember 'db_ddladmin', N'mssql'
