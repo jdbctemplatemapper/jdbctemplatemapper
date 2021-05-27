@@ -2,8 +2,8 @@
 spring.datasource.jdbc-url=jdbc:sqlserver://localhost:1433;databaseName=JdbcTemplateMapper
 #spring.datasource.username=sa
 #spring.datasource.password=Dockersql123
-spring.datasource.username=jtm
-spring.datasource.password=Jtm123456
+spring.datasource.username=mssql
+spring.datasource.password=Mssql123
 spring.datasource.driver-class-name=com.microsoft.sqlserver.jdbc.SQLServerDriver
 
 *) Make sure the the following objects have been created in sqlserver.
