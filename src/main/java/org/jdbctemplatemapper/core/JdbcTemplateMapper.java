@@ -147,6 +147,10 @@ public class JdbcTemplateMapper {
   private String updatedByPropertyName;
   private String updatedOnPropertyName;
   private String versionPropertyName;
+  
+  // Some old drivers use non compliant JDBC resultSet behavior where resultSetMetaData.getColumnName()
+  // retrieves the alias instead of resultSetMetaData.getColumnLabel()
+  private boolean useOldAliasMetadataBehavior=false;
 
   // Need this for type conversions like java.sql.Timestamp to java.time.LocalDateTime etc
   private DefaultConversionService defaultConversionService = new DefaultConversionService();
@@ -198,9 +202,6 @@ public class JdbcTemplateMapper {
   public JdbcTemplateMapper(JdbcTemplate jdbcTemplate, String schemaName) {
     if (jdbcTemplate == null) {
       throw new IllegalArgumentException("dataSource cannot be null");
-    }
-    if (isEmpty(schemaName)) {
-      throw new IllegalArgumentException("schemaName cannot be empty");
     }
     this.jdbcTemplate = jdbcTemplate;
     this.schemaName = schemaName;
@@ -302,6 +303,10 @@ public class JdbcTemplateMapper {
     this.versionPropertyName = propName;
     return this;
   }
+  
+  public void useOldAliasMetadataBehavior(boolean booleanVal) {
+	  this.useOldAliasMetadataBehavior = booleanVal;
+  }
 
   /**
    * Returns the object by Id. Return null if not found
@@ -316,7 +321,7 @@ public class JdbcTemplateMapper {
       throw new IllegalArgumentException("id has to be type of Integer or Long");
     }
     String tableName = getTableName(clazz);
-    String sql = "select * from " + schemaName + "." + tableName + " where id = ?";
+    String sql = "select * from " + fullyQualifiedTableName(tableName) + " where id = ?";
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
     try {
       Object obj = jdbcTemplate.queryForObject(sql, mapper, id);
@@ -335,7 +340,7 @@ public class JdbcTemplateMapper {
    */
   public <T> List<T> findAll(Class<T> clazz) {
     String tableName = getTableName(clazz);
-    String sql = "select * from " + schemaName + "." + tableName;
+    String sql = "select * from " + fullyQualifiedTableName(tableName);
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
     return jdbcTemplate.query(sql, mapper);
   }
@@ -350,7 +355,7 @@ public class JdbcTemplateMapper {
    */
   public <T> List<T> findAll(Class<T> clazz, String orderByClause) {
     String tableName = getTableName(clazz);
-    String sql = "select * from " + schemaName + "." + tableName + " " + orderByClause;
+    String sql = "select * from " + fullyQualifiedTableName(tableName) + " " + orderByClause;
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
     return jdbcTemplate.query(sql, mapper);
   }
@@ -584,9 +589,7 @@ public class JdbcTemplateMapper {
     String updateSql = updateSqlCache.get(cacheKey);
     if (updateSql == null) {
       StringBuilder sqlBuilder = new StringBuilder("update ");
-      sqlBuilder.append(schemaName);
-      sqlBuilder.append(".");
-      sqlBuilder.append(tableName);
+      sqlBuilder.append(fullyQualifiedTableName(tableName));
       sqlBuilder.append(" set ");
 
       List<String> updateColumnNameList = new ArrayList<>();
@@ -706,7 +709,7 @@ public class JdbcTemplateMapper {
     }
 
     String tableName = getTableName(pojo.getClass());
-    String sql = "delete from " + schemaName + "." + tableName + " where id = ?";
+    String sql = "delete from " + fullyQualifiedTableName(tableName) + " where id = ?";
     Object id = bw.getPropertyValue("id");
     return jdbcTemplate.update(sql, id);
   }
@@ -724,7 +727,7 @@ public class JdbcTemplateMapper {
     }
 
     String tableName = getTableName(clazz);
-    String sql = "delete from " + schemaName + "." + tableName + " where id = ?";
+    String sql = "delete from " + fullyQualifiedTableName(tableName) + " where id = ?";
     return jdbcTemplate.update(sql, id);
   }
 
@@ -836,7 +839,8 @@ public class JdbcTemplateMapper {
       // and multiple queries issued if needed.
       Collection<List<Number>> chunkedColumnIds = chunkList(allColumnIds, IN_CLAUSE_CHUNK_SIZE);
       for (List<Number> columnIds : chunkedColumnIds) {
-        String sql = "select * from " + schemaName + "." + tableName + " where id in (:columnIds)";
+        String sql =
+            "select * from " + fullyQualifiedTableName(tableName) + " where id in (:columnIds)";
         MapSqlParameterSource params = new MapSqlParameterSource("columnIds", columnIds);
         RowMapper<U> mapper = BeanPropertyRowMapper.newInstance(relationshipClazz);
         relatedObjList.addAll(npJdbcTemplate.query(sql, params, mapper));
@@ -1241,9 +1245,7 @@ public class JdbcTemplateMapper {
       for (List<Number> columnIds : chunkedColumnIds) {
         String sql =
             "select * from "
-                + schemaName
-                + "."
-                + tableName
+                + fullyQualifiedTableName(tableName)
                 + " where "
                 + joinColumnName
                 + " in (:columnIds)";
@@ -1507,9 +1509,8 @@ public class JdbcTemplateMapper {
     }
 
     StringBuilder sqlBuilder = new StringBuilder("update ");
-    sqlBuilder.append(schemaName);
-    sqlBuilder.append(".");
-    sqlBuilder.append(tableName);
+
+    sqlBuilder.append(fullyQualifiedTableName(tableName));
     sqlBuilder.append(" set ");
     boolean first = true;
     // the dbColumnNameList is the driver because we want the update statement column order to
@@ -1551,7 +1552,7 @@ public class JdbcTemplateMapper {
    *
    * @param clazz Class of object to be instantiated
    * @param rs Sql result set
-   * @param prefix The sql alias in the query (if any)
+   * @param prefix The sql alias in the query
    * @param resultSetColumnNames the column names in the sql statement.
    * @return Object of type T populated from the data in the result set
    */
@@ -1659,7 +1660,12 @@ public class JdbcTemplateMapper {
       int numberOfColumns = rsmd.getColumnCount();
       // jdbc indexes start at 1
       for (int i = 1; i <= numberOfColumns; i++) {
-        rsColNames.add(rsmd.getColumnName(i));
+    	if(useOldAliasMetadataBehavior) {
+          rsColNames.add(rsmd.getColumnName(i));
+    	}
+    	else {
+          rsColNames.add(rsmd.getColumnLabel(i));
+    	}
       }
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -1774,6 +1780,13 @@ public class JdbcTemplateMapper {
             .collect(Collectors.groupingBy(it -> counter.getAndIncrement() / chunkSize))
             .values();
     return result;
+  }
+
+  private String fullyQualifiedTableName(String tableName) {
+    if (isNotEmpty(schemaName)) {
+      return schemaName + "." + tableName;
+    }
+    return tableName;
   }
 
   /**

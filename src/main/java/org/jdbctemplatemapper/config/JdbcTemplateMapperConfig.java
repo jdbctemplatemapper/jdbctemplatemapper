@@ -25,6 +25,7 @@ public class JdbcTemplateMapperConfig {
   public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
     JdbcTemplateMapper jdbcTemplateMapper =
         new JdbcTemplateMapper(jdbcTemplate, "jdbctemplatemapper");
+        //new JdbcTemplateMapper(jdbcTemplate, null);
     jdbcTemplateMapper
         .withRecordOperatorResolver(new RecordOperatorResolver())
         .withCreatedOnPropertyName("createdOn")
@@ -41,6 +42,7 @@ public class JdbcTemplateMapperConfig {
   public JdbcTemplateMapper noConfigJdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
     JdbcTemplateMapper jdbcTemplateMapper =
         new JdbcTemplateMapper(jdbcTemplate, "jdbctemplatemapper");
+        //new JdbcTemplateMapper(jdbcTemplate, null);
     return jdbcTemplateMapper;
   }
   
