@@ -36,7 +36,13 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  * As the project grows to a non trivial size and complexity (most enterprise applications do) their
  * magic ends up getting in the way. As time goes on you start fighting it and their complexity and
  * nuances start bubbling up. The SQL they generate are cryptic which makes troubleshooting
- * challenging. Performance issues take a certain level of expertise to resolve.
+ * challenging. Writing dynamic queries using the non intuitive JPA Criteria API is complex and
+ * verbose so projects resort to using some other tools like QueryDSL, which has its own issues.
+ * Tools like QueryDSL have their own learning curve and are generally code generates where the
+ * generated code needs to be checked in, which is just Project smell. Now you have gone down a
+ * rabbit hole which is difficult to back out off. All for the reason because someone alergic to SQL
+ * and is religious about the Object/Relational abstraction. I have not talked about the performance
+ * issues of ORM and the level of expertise to resolve them.
  *
  * <p>Spring's JdbcTemplate gives full control of data access using SQL. It removes a lot of the
  * boiler plate code which is required by JDBC. Unfortunately it is verbose. JdbcTemplateMapper
@@ -72,6 +78,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  *    private Integer id;
  *    private String productName;
  *    private Double price;
+ *    private LocalDateTime availableDate;
  *
  *    // for insert/update/find.. jdbcTemplateMapper will ignore properties which do not
  *    // have a corresponding snake case columns in database table
@@ -83,6 +90,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
  * Product product = new Product();
  * product.setProductName("some product name");
  * product.setPrice(10.25);
+ * product.setAvailableDate(LocalDateTime.now());
  * jdbcTemplateMapper.insert(product);
  *
  * product = jdbcTemplateMapper.findById(1, Product.class);

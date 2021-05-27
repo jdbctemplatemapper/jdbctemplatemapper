@@ -84,7 +84,7 @@
           <!-- Need the the prevent plugin to from erroring out on 'No main 
             class found' on repackging -->
           <skip>true</skip>
-          <classifier>exec</classifier>
+          <classifier>test</classifier>
         </configuration>
       </plugin>
       <plugin>
