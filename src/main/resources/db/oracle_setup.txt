@@ -1,0 +1,13 @@
+*) get list of docker containers
+docker container ls
+
+*) Access the oracle docker container shell
+docker exec -it oracle_docker_container_id  bash
+
+*) On shell prompt type in:
+sqlplus sys/oracle@//localhost:1521/xe as sysdba
+
+*) On sql prompt type the following:
+create user jdbctemplatemapper identified by app;
+grant connect, resource, dba to app;
+ grant all privileges to app;
