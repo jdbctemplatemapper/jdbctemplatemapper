@@ -879,11 +879,11 @@ public class JdbcTemplateMapper {
       Collection<List<Number>> chunkedColumnIds = chunkList(allColumnIds, IN_CLAUSE_CHUNK_SIZE);
       for (List<Number> columnIds : chunkedColumnIds) {
         String sql =
-            "select * from "
+            "SELECT * FROM "
                 + fullyQualifiedTableName(tableName)
-                + " where "
+                + " WHERE "
                 + idColumnName
-                + " in (:columnIds)";
+                + " IN (:columnIds)";
         MapSqlParameterSource params = new MapSqlParameterSource("columnIds", columnIds);
         RowMapper<U> mapper = BeanPropertyRowMapper.newInstance(relationshipClazz);
         relatedObjList.addAll(npJdbcTemplate.query(sql, params, mapper));
@@ -1288,11 +1288,11 @@ public class JdbcTemplateMapper {
       Collection<List<Number>> chunkedColumnIds = chunkList(uniqueIds, IN_CLAUSE_CHUNK_SIZE);
       for (List<Number> columnIds : chunkedColumnIds) {
         String sql =
-            "select * from "
+            "SELECT * FROM "
                 + fullyQualifiedTableName(tableName)
-                + " where "
+                + " WHERE "
                 + joinColumnName
-                + " in (:columnIds)";
+                + " IN (:columnIds)";
         if (isNotEmpty(manySideOrderByClause)) {
           sql += " " + manySideOrderByClause;
         }
