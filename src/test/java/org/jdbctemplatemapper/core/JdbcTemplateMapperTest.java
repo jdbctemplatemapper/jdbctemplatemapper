@@ -176,7 +176,7 @@ public class JdbcTemplateMapperTest {
   @Test
   public void update_Test() {
     Order order = jdbcTemplateMapper.findById(1, Order.class);
-    LocalDateTime prevUpdatedOn = order.getUpdatedOn();
+    LocalDateTime prevUpdatedOn = order.getUpdatedOn().minusSeconds(1);
 
     order.setStatus("IN PROCESS");
 
@@ -236,12 +236,13 @@ public class JdbcTemplateMapperTest {
     
     Integer prevVersion = order.getVersion();
     
-    LocalDateTime prevUpdatedOn = order.getUpdatedOn();
-
+    LocalDateTime prevUpdatedOn = order.getUpdatedOn().minusSeconds(1);
     order.setStatus("COMPLETE");
+    
     jdbcTemplateMapper.update(order, "status");
 
     order = jdbcTemplateMapper.findById(2, Order.class); // requery
+    
     assertEquals("COMPLETE", order.getStatus());
     assertTrue(order.getVersion() > prevVersion); // version incremented
     assertTrue(order.getUpdatedOn().isAfter(prevUpdatedOn));
