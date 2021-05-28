@@ -75,7 +75,6 @@ import com.microsoft.sqlserver.jdbc.StringUtils;
  *   'first_name' and 'last_name' in the database table.
  *   (Model to table mapping does not have this restriction. By default a class maps to its snake case table name.
  *   The default class to table mapping can be overridden using the @Table annotation)
- * 3) Does not support case sensitive mixed case column names.
  *
  * Examples of simple CRUD:
  *
