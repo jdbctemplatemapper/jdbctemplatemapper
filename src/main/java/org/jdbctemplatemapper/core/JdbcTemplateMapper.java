@@ -72,7 +72,8 @@ import com.microsoft.sqlserver.jdbc.StringUtils;
  * 2) Model property to table column mapping:
  *   Camel case property names are mapped to snake case database column names.
  *   Properties of a model like 'firstName', 'lastName' will be mapped to corresponding database columns
- *   'first_name' and 'last_name' in the database table.
+ *   first_name/FIRST_NAME and last_name/LAST_NAME in the database table. If you are using a
+ *   case sensitive database setup and have mixed case column names like 'Order_Date' the tool wont work.
  *   (Model to table mapping does not have this restriction. By default a class maps to its snake case table name.
  *   The default class to table mapping can be overridden using the @Table annotation)
  *
