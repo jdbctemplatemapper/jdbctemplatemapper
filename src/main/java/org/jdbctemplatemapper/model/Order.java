@@ -7,7 +7,7 @@ import org.jdbctemplatemapper.core.Table;
 
 import lombok.Data;
 @Data
-@Table(name = "orders")
+@Table(name = "ORDERS")
 public class Order {
     private Integer id;
     private LocalDateTime orderDate;

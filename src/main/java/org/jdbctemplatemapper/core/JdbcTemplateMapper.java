@@ -31,6 +31,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.JdbcUtils;
+import org.springframework.util.ObjectUtils;
 
 /**
  * When using ORMs (like Hibernate etc) in a project, during the early stages they seem beneficial.
@@ -173,7 +174,7 @@ public class JdbcTemplateMapper {
   // update sql cache
   // Map key   - table name or sometimes tableName-updatePropertyName1-updatePropertyName2...
   //     value - the update sql
-  private Map<String, String> updateSqlCache = new ConcurrentHashMap<>();
+  private Map<String, SqlPair> updateSqlCache = new ConcurrentHashMap<>();
 
   // Map key - table name,
   //     value - the list of database column names
@@ -194,6 +195,10 @@ public class JdbcTemplateMapper {
   // Map key - tableName-tableAlias
   //     value - the selectCols string
   private Map<String, String> selectColsCache = new ConcurrentHashMap<>();
+
+  // Map key - object class name
+  //     value - the table name
+  private Map<String, String> objectToTableCache = new ConcurrentHashMap<>();
 
   /**
    * The constructor.
@@ -518,32 +523,22 @@ public class JdbcTemplateMapper {
     }
 
     String tableName = getTableName(pojo.getClass());
-    String updateSql = updateSqlCache.get(tableName);
-    if (updateSql == null) {
-      updateSql = buildUpdateSql(pojo);
+    SqlPair sqlPair = updateSqlCache.get(tableName);
+    if (sqlPair == null) {
+      sqlPair = buildUpdateSql(pojo);
     }
 
-    List<String> dbColumnNameList = getDbColumnNames(tableName);
-    LocalDateTime now = LocalDateTime.now();
-
-    if (updatedOnPropertyName != null
-        && bw.isReadableProperty(updatedOnPropertyName)
-        && dbColumnNameList.contains(convertCamelToSnakeCase(updatedOnPropertyName))) {
-      bw.setPropertyValue(updatedOnPropertyName, now);
+    Set<String> parameters = sqlPair.getParams();
+    if (parameters.contains(updatedOnPropertyName)) {
+    	bw.setPropertyValue(updatedOnPropertyName, LocalDateTime.now());
+    }   
+    if (parameters.contains(updatedByPropertyName)) {
+        bw.setPropertyValue(updatedByPropertyName, recordOperatorResolver.getRecordOperator());
     }
-    if (updatedByPropertyName != null
-        && recordOperatorResolver != null
-        && bw.isReadableProperty(updatedByPropertyName)
-        && dbColumnNameList.contains(convertCamelToSnakeCase(updatedByPropertyName))) {
-      bw.setPropertyValue(updatedByPropertyName, recordOperatorResolver.getRecordOperator());
-    }
-
     Map<String, Object> attributes = convertObjectToMap(pojo);
     // if object has property version throw OptimisticLockingException
     // when update fails. The version gets incremented on update
-    if (versionPropertyName != null
-        && bw.isReadableProperty(versionPropertyName)
-        && dbColumnNameList.contains(convertCamelToSnakeCase(versionPropertyName))) {
+    if (parameters.contains(versionPropertyName)) {
       Integer versionVal = (Integer) bw.getPropertyValue(versionPropertyName);
       if (versionVal == null) {
         throw new RuntimeException(
@@ -551,10 +546,10 @@ public class JdbcTemplateMapper {
                 + " cannot be null when updating "
                 + pojo.getClass().getSimpleName());
       } else {
-        attributes.put("incrementedVersion", ++versionVal);
-        bw.setPropertyValue(versionPropertyName, versionVal);
+        attributes.put("incrementedVersion", versionVal+1);
       }
-      int cnt = npJdbcTemplate.update(updateSql, attributes);
+
+      int cnt = npJdbcTemplate.update(sqlPair.getSql(), attributes);
       if (cnt == 0) {
         throw new OptimisticLockingException(
             "Update failed for "
@@ -568,7 +563,7 @@ public class JdbcTemplateMapper {
       }
       return cnt;
     } else {
-      return npJdbcTemplate.update(updateSql, attributes);
+      return npJdbcTemplate.update(sqlPair.getSql(), attributes);
     }
   }
 
@@ -582,8 +577,8 @@ public class JdbcTemplateMapper {
    * @return 0 if no records were updated
    */
   public Integer update(Object pojo, String... propertyNames) {
-    if (pojo == null) {
-      throw new IllegalArgumentException("Object cannot be null");
+    if (pojo == null || ObjectUtils.isEmpty(propertyNames)) {
+      throw new IllegalArgumentException("pojo and propertyNames cannot be null");
     }
 
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
@@ -597,32 +592,58 @@ public class JdbcTemplateMapper {
 
     // cachekey ex: className-propertyName1-propertyName2
     String cacheKey = tableName + "-" + String.join("-", propertyNames);
-    String updateSql = updateSqlCache.get(cacheKey);
-    if (updateSql == null) {
+    SqlPair sqlPair = updateSqlCache.get(cacheKey);
+    if (sqlPair == null) {
+      Set<String> params = new HashSet<>();
       StringBuilder sqlBuilder = new StringBuilder("update ");
       sqlBuilder.append(fullyQualifiedTableName(tableName));
       sqlBuilder.append(" set ");
 
-      List<String> updateColumnNameList = new ArrayList<>();
+      Set<String> updateColumnNames = new LinkedHashSet<>();
       for (String propertyName : propertyNames) {
-        updateColumnNameList.add(convertCamelToSnakeCase(propertyName));
+        String tableColumnName = getMatchingCaseSensitiveColumnName(dbColumnNameList, propertyName);
+        if (tableColumnName == null) {
+          throw new RuntimeException(
+              "Property "
+                  + propertyName
+                  + " does not have a coresponding column in the table "
+                  + tableName);
+        } else {
+          updateColumnNames.add(tableColumnName);
+        }
       }
 
       // add updated info to the column list
-      if (updatedOnPropertyName != null
-          && bw.isReadableProperty(updatedOnPropertyName)
-          && dbColumnNameList.contains(convertCamelToSnakeCase(updatedOnPropertyName))) {
-        updateColumnNameList.add(convertCamelToSnakeCase(updatedOnPropertyName));
+      String updatedOnColumnName = null;
+      if (updatedOnPropertyName != null && bw.isReadableProperty(updatedOnPropertyName)) {
+        updatedOnColumnName =
+            getMatchingCaseSensitiveColumnName(dbColumnNameList, updatedOnPropertyName);
+        if (updatedOnColumnName != null) {
+          updateColumnNames.add(updatedOnColumnName);
+        }
       }
+      String updatedByColumnName = null;
       if (updatedByPropertyName != null
           && recordOperatorResolver != null
-          && bw.isReadableProperty(updatedByPropertyName)
-          && dbColumnNameList.contains(convertCamelToSnakeCase(updatedByPropertyName))) {
-        updateColumnNameList.add(convertCamelToSnakeCase(updatedByPropertyName));
+          && bw.isReadableProperty(updatedByPropertyName)) {
+        updatedByColumnName =
+            getMatchingCaseSensitiveColumnName(dbColumnNameList, updatedByPropertyName);
+        if (updatedByColumnName != null) {
+          updateColumnNames.add(updatedByColumnName);
+        }
+      }
+
+      String versionColumnName = null;
+      if (versionPropertyName != null && bw.isReadableProperty(versionPropertyName)) {
+        versionColumnName =
+            getMatchingCaseSensitiveColumnName(dbColumnNameList, versionPropertyName);
+        if (versionColumnName != null) {
+          updateColumnNames.add(versionColumnName);
+        }
       }
 
       boolean first = true;
-      for (String columnName : updateColumnNameList) {
+      for (String columnName : updateColumnNames) {
         if (!first) {
           sqlBuilder.append(", ");
         } else {
@@ -631,49 +652,44 @@ public class JdbcTemplateMapper {
         sqlBuilder.append(columnName);
         sqlBuilder.append(" = :");
 
-        sqlBuilder.append(convertSnakeToCamelCase(columnName));
-      }
-      // the set assignment for the incremented version
-      if (versionPropertyName != null
-          && bw.isReadableProperty(versionPropertyName)
-          && dbColumnNameList.contains(convertCamelToSnakeCase(versionPropertyName))) {
-        sqlBuilder.append(", ").append(versionPropertyName).append(" = :incrementedVersion");
-      }
-      // the where clause
-      sqlBuilder.append(" where id = :id");
-      if (versionPropertyName != null
-          && bw.isReadableProperty(versionPropertyName)
-          && dbColumnNameList.contains(convertCamelToSnakeCase(versionPropertyName))) {
-        sqlBuilder
-            .append(" and ")
-            .append(versionPropertyName)
-            .append(" = :")
-            .append(versionPropertyName);
+        if (columnName.equals(versionColumnName)) {
+          sqlBuilder.append("incrementedVersion");
+          params.add("incrementedVersion");
+        } else {
+          String propertyName = convertSnakeToCamelCase(columnName);
+          sqlBuilder.append(propertyName);
+          params.add(propertyName);
+        }
       }
 
-      updateSql = sqlBuilder.toString();
-      updateSqlCache.put(cacheKey, updateSql);
+      // the where clause
+      sqlBuilder.append(" where id = :id");
+      if (versionColumnName != null) {
+        sqlBuilder
+            .append(" and ")
+            .append(versionColumnName)
+            .append(" = :")
+            .append(versionPropertyName);
+        params.add(versionPropertyName);
+      }
+
+      sqlPair = new SqlPair(sqlBuilder.toString(), params);
+
+      updateSqlCache.put(cacheKey, sqlPair);
     }
 
     LocalDateTime now = LocalDateTime.now();
-    if (updatedOnPropertyName != null
-        && bw.isReadableProperty(updatedOnPropertyName)
-        && dbColumnNameList.contains(convertCamelToSnakeCase(updatedOnPropertyName))) {
+    if (sqlPair.getParams().contains(updatedOnPropertyName)) {
       bw.setPropertyValue(updatedOnPropertyName, now);
     }
-    if (updatedByPropertyName != null
-        && recordOperatorResolver != null
-        && bw.isReadableProperty(updatedByPropertyName)
-        && dbColumnNameList.contains(convertCamelToSnakeCase(updatedByPropertyName))) {
+    if (sqlPair.getParams().contains(updatedByPropertyName)) {
       bw.setPropertyValue(updatedByPropertyName, recordOperatorResolver.getRecordOperator());
     }
 
     Map<String, Object> attributes = convertObjectToMap(pojo);
     // if object has property version throw OptimisticLockingException
     // update fails. The version gets incremented
-    if (versionPropertyName != null
-        && bw.isReadableProperty(versionPropertyName)
-        && dbColumnNameList.contains(convertCamelToSnakeCase(versionPropertyName))) {
+    if (sqlPair.getParams().contains(versionPropertyName)) {
       Integer versionVal = (Integer) bw.getPropertyValue(versionPropertyName);
       if (versionVal == null) {
         throw new RuntimeException(
@@ -682,9 +698,11 @@ public class JdbcTemplateMapper {
                 + pojo.getClass().getSimpleName());
       } else {
         attributes.put("incrementedVersion", ++versionVal);
-        bw.setPropertyValue(versionPropertyName, versionVal);
+        bw.setPropertyValue(
+            versionPropertyName, versionVal); // set value incremented value on object
       }
-      int cnt = npJdbcTemplate.update(updateSql, attributes);
+
+      int cnt = npJdbcTemplate.update(sqlPair.getSql(), attributes);
       if (cnt == 0) {
         throw new OptimisticLockingException(
             "Update failed for "
@@ -698,7 +716,7 @@ public class JdbcTemplateMapper {
       }
       return cnt;
     } else {
-      return npJdbcTemplate.update(updateSql, attributes);
+      return npJdbcTemplate.update(sqlPair.getSql(), attributes);
     }
   }
 
@@ -1465,6 +1483,13 @@ public class JdbcTemplateMapper {
     String str = selectColsCache.get(tableName + "-" + tableAlias);
     if (str == null) {
       List<String> dbColumnNames = getDbColumnNames(tableName);
+      if (isEmpty(dbColumnNames)) {
+        // try with uppercase table name
+        dbColumnNames = getDbColumnNames(tableName.toUpperCase());
+        if (isEmpty(dbColumnNames)) {
+          throw new RuntimeException("No table named " + tableName);
+        }
+      }
       StringBuilder sb = new StringBuilder(" ");
       for (String colName : dbColumnNames) {
         sb.append(tableAlias)
@@ -1493,9 +1518,10 @@ public class JdbcTemplateMapper {
    * @param pojo the object that needs to be update.
    * @return The sql update string
    */
-  private String buildUpdateSql(Object pojo) {
+  private SqlPair buildUpdateSql(Object pojo) {
     String tableName = getTableName(pojo.getClass());
 
+    Set<String> params = new HashSet<>();
     // database columns for the tables
     List<String> dbColumnNameList = getDbColumnNames(tableName);
 
@@ -1513,50 +1539,58 @@ public class JdbcTemplateMapper {
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
     PropertyDescriptor[] propertyDescriptors = bw.getPropertyDescriptors();
     for (PropertyDescriptor pd : propertyDescriptors) {
-      String columnName = convertCamelToSnakeCase(pd.getName());
       // skips non db columns and ignore fields like 'id' etc for SET
-      if (!ignoreAttrs.contains(pd.getName()) && dbColumnNameList.contains(columnName)) {
-        updateColumnNameList.add(columnName);
+      if (!ignoreAttrs.contains(pd.getName())) {
+        String tableColumnName = getMatchingCaseSensitiveColumnName(dbColumnNameList, pd.getName());
+        if (tableColumnName != null) {
+          updateColumnNameList.add(tableColumnName);
+        }
       }
     }
 
     StringBuilder sqlBuilder = new StringBuilder("update ");
-
     sqlBuilder.append(fullyQualifiedTableName(tableName));
+    // build set clause
     sqlBuilder.append(" set ");
     boolean first = true;
-    // the dbColumnNameList is the driver because we want the update statement column order to
-    // reflect the table column order in database.
-    for (String columnName : dbColumnNameList) {
-      if (updateColumnNameList.contains(columnName)) {
-        if (!first) {
-          sqlBuilder.append(", ");
-        } else {
-          first = false;
-        }
-        sqlBuilder.append(columnName);
-        sqlBuilder.append(" = :");
+    String versionColumnName = null;
+    if (versionPropertyName != null) {
+      versionColumnName = getMatchingCaseSensitiveColumnName(dbColumnNameList, versionPropertyName);
+    }
+    for (String columnName : updateColumnNameList) {
+      if (!first) {
+        sqlBuilder.append(", ");
+      } else {
+        first = false;
+      }
+      sqlBuilder.append(columnName);
+      sqlBuilder.append(" = :");
 
-        if (versionPropertyName != null && versionPropertyName.equals(columnName)) {
-          sqlBuilder.append("incrementedVersion");
-        } else {
-          sqlBuilder.append(convertSnakeToCamelCase(columnName));
-        }
+      if (columnName.equals(versionColumnName)) {
+        sqlBuilder.append("incrementedVersion");
+        params.add("incrementedVersion");
+      } else {
+        String propertyName = convertSnakeToCamelCase(columnName);
+        sqlBuilder.append(propertyName);
+        params.add(propertyName);
       }
     }
     // build where clause
     sqlBuilder.append(" where id = :id");
-    if (versionPropertyName != null && updateColumnNameList.contains(versionPropertyName)) {
+    if (versionColumnName != null) {
       sqlBuilder
           .append(" and ")
-          .append(versionPropertyName)
+          .append(versionColumnName)
           .append(" = :")
           .append(versionPropertyName);
+      params.add(versionPropertyName);
     }
 
     String updateSql = sqlBuilder.toString();
-    updateSqlCache.put(tableName, updateSql);
-    return updateSql;
+    SqlPair sqlPair = new SqlPair(updateSql, params);
+    updateSqlCache.put(tableName, sqlPair);
+
+    return sqlPair;
   }
 
   /**
@@ -1637,49 +1671,23 @@ public class JdbcTemplateMapper {
   /**
    * Gets the table column names from Databases MetaData. The column names are cached
    *
-   * @param table table name
+   * @param tableName table name
    * @return the list of columns of the table
    */
-  private List<String> getDbColumnNames(String table) {
-    List<String> columns = tableColumnNamesCache.get(table);
+  private List<String> getDbColumnNames(String tableName) {
+    List<String> columns = tableColumnNamesCache.get(tableName);
     if (isEmpty(columns)) {
       columns = new ArrayList<>();
       try (Connection connection = jdbcTemplate.getDataSource().getConnection()) {
         DatabaseMetaData metadata = connection.getMetaData();
-        ResultSet resultSet = metadata.getColumns(null, schemaName, table, null);
+        ResultSet resultSet = metadata.getColumns(null, schemaName, tableName, null);
         while (resultSet.next()) {
           columns.add(resultSet.getString("COLUMN_NAME"));
         }
         resultSet.close();
-        
-        // 2nd try. Some databases schema and table name in call to metadata.getColumns(null, schemaName,
-        // table, null) are case sensitive so try again with uppercase table
-        if (isEmpty(columns)) {
-            resultSet = metadata.getColumns(null, schemaName, table.toUpperCase(), null);
-            while (resultSet.next()) {
-              columns.add(resultSet.getString("COLUMN_NAME").toLowerCase());
-            }
-            resultSet.close();
+        if (isNotEmpty(columns)) {
+          tableColumnNamesCache.put(tableName, columns);
         }
-      
-        // 3rd try. this time with uppercase schema and uppercase table name
-        if (isEmpty(columns)) {
-          String schemaNameLocal = schemaName;
-          if (schemaNameLocal != null) {
-            schemaNameLocal = schemaNameLocal.toUpperCase();
-          }
-          resultSet = metadata.getColumns(null, schemaNameLocal, table.toUpperCase(), null);
-          while (resultSet.next()) {
-            columns.add(resultSet.getString("COLUMN_NAME").toLowerCase());
-          }
-          resultSet.close();
-        }
-
-        if (isEmpty(columns)) {
-          throw new RuntimeException("Failed to get any columns for table " + table);
-        }
-        
-        tableColumnNamesCache.put(table, columns);
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -1688,7 +1696,8 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Gets the resultSet lower case column names ie the column names in the 'select' statement of the sql
+   * Gets the resultSet lower case column names ie the column names in the 'select' statement of the
+   * sql
    *
    * @param rs The jdbc ResultSet
    * @return List of select column names in lower case
@@ -1758,13 +1767,65 @@ public class JdbcTemplateMapper {
    * @return The table name
    */
   private String getTableName(Class<?> clazz) {
-    if (clazz.isAnnotationPresent(Table.class)) {
-      // @Table annotation is present. Get the table name
-      Table table = clazz.getAnnotation(Table.class);
-      return table.name();
-    } else {
-      return convertCamelToSnakeCase(clazz.getSimpleName());
+    String tableName = objectToTableCache.get(clazz.getName());
+    if (tableName == null) {
+      if (clazz.isAnnotationPresent(Table.class)) {
+        // @Table annotation is present. Get the table name
+        Table table = clazz.getAnnotation(Table.class);
+        tableName = table.name();
+      } else {
+        Connection connection = null;
+        try {
+          connection = jdbcTemplate.getDataSource().getConnection();
+          boolean found = false;
+          tableName = convertCamelToSnakeCase(clazz.getSimpleName());
+          DatabaseMetaData metadata = connection.getMetaData();
+          ResultSet resultSet = metadata.getColumns(null, schemaName, tableName, null);
+          if (resultSet.next()) {
+            found = true;
+          }
+          JdbcUtils.closeResultSet(resultSet);
+          if (!found) {
+            // try again with upper case tablename
+            tableName = tableName.toUpperCase();
+            resultSet = metadata.getColumns(null, schemaName, tableName, null);
+            if (resultSet.next()) {
+              found = true;
+            }
+          }
+          JdbcUtils.closeResultSet(resultSet);
+
+          if (!found) {
+            throw new RuntimeException(
+                "Could not find corresponding table for object " + clazz.getSimpleName());
+          }
+          objectToTableCache.put(clazz.getName(), tableName);
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        } finally {
+          JdbcUtils.closeConnection(connection);
+        }
+      }
     }
+    return tableName;
+  }
+
+  private String getMatchingCaseSensitiveColumnName(
+      List<String> dbColumnNameList, String propertyName) {
+    String val = null;
+    if (isNotEmpty(dbColumnNameList) && isNotEmpty(propertyName)) {
+      String columnName = convertCamelToSnakeCase(propertyName);
+      if (dbColumnNameList.contains(columnName)) {
+        val = columnName;
+      } else {
+        // try with uppercase
+        String ucName = columnName.toUpperCase();
+        if (dbColumnNameList.contains(ucName)) {
+          val = ucName;
+        }
+      }
+    }
+    return val;
   }
 
   /**
@@ -1796,7 +1857,7 @@ public class JdbcTemplateMapper {
     String camelCase = snakeToCamelCache.get(str);
     if (camelCase == null) {
       if (str != null) {
-        camelCase = toCamelCase(str, false, new char[] {'_'});
+        camelCase = JdbcUtils.convertUnderscoreNameToPropertyName(str);
         snakeToCamelCache.put(str, camelCase);
       }
     }
@@ -1866,95 +1927,5 @@ public class JdbcTemplateMapper {
   @SuppressWarnings("all")
   private boolean isNotEmpty(Collection coll) {
     return !isEmpty(coll);
-  }
-
-  /**
-   * Code copied from apache common CaseUtils project. Converts all the delimiter separated words in
-   * a String into camelCase, that is each word is made up of a titlecase character and then a
-   * series of lowercase characters.
-   *
-   * <p>The delimiters represent a set of characters understood to separate words. The first
-   * non-delimiter character after a delimiter will be capitalized. The first String character may
-   * or may not be capitalized and it's determined by the user input for capitalizeFirstLetter
-   * variable.
-   *
-   * <p>A <code>null</code> input String returns <code>null</code>. Capitalization uses the Unicode
-   * title case, normally equivalent to upper case and cannot perform locale-sensitive mappings.
-   *
-   * <pre>
-   * CaseUtils.toCamelCase(null, false)                                 = null
-   * CaseUtils.toCamelCase("", false, *)                                = ""
-   * CaseUtils.toCamelCase(*, false, null)                              = *
-   * CaseUtils.toCamelCase(*, true, new char[0])                        = *
-   * CaseUtils.toCamelCase("To.Camel.Case", false, new char[]{'.'})     = "toCamelCase"
-   * CaseUtils.toCamelCase(" to @ Camel case", true, new char[]{'@'})   = "ToCamelCase"
-   * CaseUtils.toCamelCase(" @to @ Camel case", false, new char[]{'@'}) = "toCamelCase"
-   * </pre>
-   *
-   * @param str the String to be converted to camelCase, may be null
-   * @param capitalizeFirstLetter boolean that determines if the first character of first word
-   *     should be title case.
-   * @param delimiters set of characters to determine capitalization, null and/or empty array means
-   *     whitespace
-   * @return camelCase of String, <code>null</code> if null String input
-   */
-  private String toCamelCase(
-      String str, final boolean capitalizeFirstLetter, final char... delimiters) {
-    if (isEmpty(str)) {
-      return str;
-    }
-    str = str.toLowerCase();
-    final int strLen = str.length();
-    final int[] newCodePoints = new int[strLen];
-    int outOffset = 0;
-    final Set<Integer> delimiterSet = generateDelimiterSet(delimiters);
-    boolean capitalizeNext = false;
-    if (capitalizeFirstLetter) {
-      capitalizeNext = true;
-    }
-    for (int index = 0; index < strLen; ) {
-      final int codePoint = str.codePointAt(index);
-
-      if (delimiterSet.contains(codePoint)) {
-        capitalizeNext = true;
-        if (outOffset == 0) {
-          capitalizeNext = false;
-        }
-        index += Character.charCount(codePoint);
-      } else if (capitalizeNext || outOffset == 0 && capitalizeFirstLetter) {
-        final int titleCaseCodePoint = Character.toTitleCase(codePoint);
-        newCodePoints[outOffset++] = titleCaseCodePoint;
-        index += Character.charCount(titleCaseCodePoint);
-        capitalizeNext = false;
-      } else {
-        newCodePoints[outOffset++] = codePoint;
-        index += Character.charCount(codePoint);
-      }
-    }
-    if (outOffset != 0) {
-      return new String(newCodePoints, 0, outOffset);
-    }
-    return str;
-  }
-
-  /**
-   * Code copied from apache common CaseUtils project. Used by toCamelCase() method. Converts an
-   * array of delimiters to a hash set of code points. Code point of space(32) is added as the
-   * default value. The generated hash set provides O(1) lookup time.
-   *
-   * @param delimiters set of characters to determine capitalization, null means whitespace
-   * @return Set<Integer>
-   */
-  private Set<Integer> generateDelimiterSet(final char[] delimiters) {
-    final Set<Integer> delimiterHashSet = new HashSet<>();
-    delimiterHashSet.add(Character.codePointAt(new char[] {' '}, 0));
-    if (delimiters == null || delimiters.length == 0) {
-      return delimiterHashSet;
-    }
-
-    for (int index = 0; index < delimiters.length; index++) {
-      delimiterHashSet.add(Character.codePointAt(delimiters, index));
-    }
-    return delimiterHashSet;
   }
 }

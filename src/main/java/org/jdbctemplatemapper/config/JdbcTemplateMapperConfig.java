@@ -4,6 +4,7 @@ import javax.sql.DataSource;
 
 import org.jdbctemplatemapper.core.JdbcTemplateMapper;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
@@ -13,7 +14,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class JdbcTemplateMapperConfig {
-	
+
+  @Value("${spring.datasource.driver-class-name}")
+  private String jdbcDriver;
+
   @Bean
   @ConfigurationProperties(prefix = "spring.datasource")
   public DataSource sqlDataSource() {
@@ -23,9 +27,8 @@ public class JdbcTemplateMapperConfig {
   @Bean
   @Primary
   public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
-    JdbcTemplateMapper jdbcTemplateMapper =
-        new JdbcTemplateMapper(jdbcTemplate, "jdbctemplatemapper");
-        //new JdbcTemplateMapper(jdbcTemplate, null);
+    String schemaName = getSchemaName();
+    JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate, schemaName);
     jdbcTemplateMapper
         .withRecordOperatorResolver(new RecordOperatorResolver())
         .withCreatedOnPropertyName("createdOn")
@@ -33,17 +36,25 @@ public class JdbcTemplateMapperConfig {
         .withUpdatedOnPropertyName("updatedOn")
         .withUpdatedByPropertyName("updatedBy")
         .withVersionPropertyName("version");
-    
+
     return jdbcTemplateMapper;
   }
-  
+
   @Bean
   @Qualifier("noConfigJdbcTemplateMapper")
   public JdbcTemplateMapper noConfigJdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
-    JdbcTemplateMapper jdbcTemplateMapper =
-        new JdbcTemplateMapper(jdbcTemplate, "jdbctemplatemapper");
-        //new JdbcTemplateMapper(jdbcTemplate, null);
+    String schemaName = getSchemaName();
+    JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate, schemaName);
     return jdbcTemplateMapper;
   }
-  
+
+  private String getSchemaName() {
+    String schemaName = "jdbctemplatemapper"; // default
+    if (jdbcDriver.contains("mysql")) {
+      schemaName = null; // mysql does not have schema.
+    } else if (jdbcDriver.contains("oracle")) {
+      schemaName = "JDBCTEMPLATEMAPPER"; // oracle has upper case
+    }
+    return schemaName;
+  }
 }

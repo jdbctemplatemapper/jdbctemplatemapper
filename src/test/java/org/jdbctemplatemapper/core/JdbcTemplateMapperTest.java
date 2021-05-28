@@ -31,9 +31,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
 public class JdbcTemplateMapperTest {
-	
-  @Autowired 
-  private JdbcTemplateMapper jdbcTemplateMapper;
+
+  @Autowired private JdbcTemplateMapper jdbcTemplateMapper;
 
   private JdbcTemplate jdbcTemplate;
   private NamedParameterJdbcTemplate npJdbcTemplate;
@@ -56,7 +55,7 @@ public class JdbcTemplateMapperTest {
     order.setCustomerId(2);
 
     jdbcTemplateMapper.insert(order);
-    
+
     order = jdbcTemplateMapper.findById(order.getId(), Order.class);
 
     assertNotNull(order.getId());
@@ -108,7 +107,7 @@ public class JdbcTemplateMapperTest {
           jdbcTemplateMapper.insert(null);
         });
   }
-  
+
   @Test
   public void insert_noIdObjectFailureTest() {
     Assertions.assertThrows(
@@ -162,7 +161,7 @@ public class JdbcTemplateMapperTest {
           jdbcTemplateMapper.insertWithId(null);
         });
   }
-  
+
   @Test
   public void insertWithId_noIdObjectFailureTest() {
     Assertions.assertThrows(
@@ -219,7 +218,7 @@ public class JdbcTemplateMapperTest {
           jdbcTemplateMapper.update(null);
         });
   }
-  
+
   @Test
   public void update_noIdObjectFailureTest() {
     Assertions.assertThrows(
@@ -231,10 +230,12 @@ public class JdbcTemplateMapperTest {
         });
   }
 
-
   @Test
   public void update_byPropertyTest() {
     Order order = jdbcTemplateMapper.findById(2, Order.class);
+    
+    Integer prevVersion = order.getVersion();
+    
     LocalDateTime prevUpdatedOn = order.getUpdatedOn();
 
     order.setStatus("COMPLETE");
@@ -242,7 +243,7 @@ public class JdbcTemplateMapperTest {
 
     order = jdbcTemplateMapper.findById(2, Order.class); // requery
     assertEquals("COMPLETE", order.getStatus());
-    assertEquals(2, order.getVersion()); // version incremented
+    assertTrue(order.getVersion() > prevVersion); // version incremented
     assertTrue(order.getUpdatedOn().isAfter(prevUpdatedOn));
     assertEquals("tester", order.getUpdatedBy());
   }
@@ -267,6 +268,7 @@ public class JdbcTemplateMapperTest {
         () -> {
           Order order = jdbcTemplateMapper.findById(2, Order.class);
           order.setVersion(order.getVersion() - 1);
+          order.setStatus("COMPLETE");
           jdbcTemplateMapper.update(order, "status"); // just update status
         });
   }
@@ -279,7 +281,7 @@ public class JdbcTemplateMapperTest {
           jdbcTemplateMapper.update(null, "abc");
         });
   }
-  
+
   @Test
   public void update_byPropertyNoIdObjectFailureTest() {
     Assertions.assertThrows(
@@ -289,6 +291,17 @@ public class JdbcTemplateMapperTest {
           pojo.setSomething("abc");
           jdbcTemplateMapper.update(pojo, "something");
         });
+  }
+
+  @Test
+  public void update_byPropertyAutoAssignFieldsTest() {
+    Order order = jdbcTemplateMapper.findById(2, Order.class);
+    LocalDateTime prevUpdatedOn = order.getUpdatedOn();
+    order.setStatus("CLOSED");
+    order.setUpdatedOn(LocalDateTime.now().minusDays(30));
+    // make sure the updateOn is assigned the now() and not the value passed in
+    jdbcTemplateMapper.update(order, "status", "updatedOn");
+    assertTrue(order.getUpdatedOn().isAfter(prevUpdatedOn));
   }
 
   @Test
@@ -358,7 +371,7 @@ public class JdbcTemplateMapperTest {
           jdbcTemplateMapper.delete(null);
         });
   }
-  
+
   @Test
   public void delete_noIdObjectFailureTest() {
     Assertions.assertThrows(
@@ -369,7 +382,6 @@ public class JdbcTemplateMapperTest {
           jdbcTemplateMapper.delete(pojo);
         });
   }
-  
 
   @Test
   public void deleteById_Test() {
@@ -622,7 +634,8 @@ public class JdbcTemplateMapperTest {
     Order order = jdbcTemplateMapper.findById(1, Order.class);
 
     // This issues a query to get the orderlines
-    jdbcTemplateMapper.toManyForObject(order, OrderLine.class, "orderLines", "orderId", "order by id");
+    jdbcTemplateMapper.toManyForObject(
+        order, OrderLine.class, "orderLines", "orderId", "order by id");
 
     assertEquals(1, order.getOrderLines().get(0).getProductId());
     assertEquals(2, order.getOrderLines().get(1).getProductId());
@@ -636,7 +649,8 @@ public class JdbcTemplateMapperTest {
     // Order 3 has no orderLines
     Order order = jdbcTemplateMapper.findById(3, Order.class);
 
-    jdbcTemplateMapper.toManyForObject(order, OrderLine.class, "orderLines", "orderId", "order by id");
+    jdbcTemplateMapper.toManyForObject(
+        order, OrderLine.class, "orderLines", "orderId", "order by id");
 
     assertNull(order.getOrderLines());
   }
@@ -646,7 +660,8 @@ public class JdbcTemplateMapperTest {
     List<Order> orders = jdbcTemplateMapper.findAll(Order.class, "order by id");
 
     // This issues a query to get the orderlines
-    jdbcTemplateMapper.toManyForList(orders, OrderLine.class, "orderLines", "orderId", "order by id");
+    jdbcTemplateMapper.toManyForList(
+        orders, OrderLine.class, "orderLines", "orderId", "order by id");
 
     assertTrue(orders.size() >= 3);
     assertEquals(2, orders.get(0).getOrderLines().size());
@@ -667,7 +682,8 @@ public class JdbcTemplateMapperTest {
     List<Order> orders = null;
 
     // This issues a query to get the orderlines
-    jdbcTemplateMapper.toManyForList(orders, OrderLine.class, "orderLines", "orderId", "order by id");
+    jdbcTemplateMapper.toManyForList(
+        orders, OrderLine.class, "orderLines", "orderId", "order by id");
 
     assertNull(orders);
   }
@@ -883,14 +899,11 @@ public class JdbcTemplateMapperTest {
   @Test
   @SuppressWarnings("all")
   public void multipleModelMapper_Test() {
+    // query gets:
+    // 1) order toMany orderLines
+    // 2) order toOne customer
+    // 3) orderline toOne product
 
-    /*
-     * query gets:
-     * 1) order toMany orderLines
-     * 2) order toOne customer
-     * 3) orderline toOne product
-     *
-     */
     String sql =
         "select "
             + jdbcTemplateMapper.selectCols("orders", "o")
