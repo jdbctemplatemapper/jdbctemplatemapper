@@ -33,6 +33,8 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.util.ObjectUtils;
 
+import com.microsoft.sqlserver.jdbc.StringUtils;
+
 /**
  * When using ORMs (like Hibernate etc) in a project, during the early stages they seem beneficial.
  * As the project grows to a non trivial size and complexity (most enterprise applications do) their
@@ -200,6 +202,10 @@ public class JdbcTemplateMapper {
   //     value - the table name
   private Map<String, String> objectToTableCache = new ConcurrentHashMap<>();
 
+  // Map key - object class name
+  //     value - the table name
+  private Map<String, String> tableToCaseSensitiveIdName = new ConcurrentHashMap<>();
+
   /**
    * The constructor.
    *
@@ -337,7 +343,9 @@ public class JdbcTemplateMapper {
       throw new IllegalArgumentException("id has to be type of Integer or Long");
     }
     String tableName = getTableName(clazz);
-    String sql = "select * from " + fullyQualifiedTableName(tableName) + " where id = ?";
+    String idColumnName = getTableIdColumnName(tableName);
+    String sql =
+        "SELECT * FROM " + fullyQualifiedTableName(tableName) + " WHERE " + idColumnName + " = ?";
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
     try {
       Object obj = jdbcTemplate.queryForObject(sql, mapper, id);
@@ -356,7 +364,7 @@ public class JdbcTemplateMapper {
    */
   public <T> List<T> findAll(Class<T> clazz) {
     String tableName = getTableName(clazz);
-    String sql = "select * from " + fullyQualifiedTableName(tableName);
+    String sql = "SELECT * FROM " + fullyQualifiedTableName(tableName);
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
     return jdbcTemplate.query(sql, mapper);
   }
@@ -371,7 +379,7 @@ public class JdbcTemplateMapper {
    */
   public <T> List<T> findAll(Class<T> clazz, String orderByClause) {
     String tableName = getTableName(clazz);
-    String sql = "select * from " + fullyQualifiedTableName(tableName) + " " + orderByClause;
+    String sql = "SELECT * FROM " + fullyQualifiedTableName(tableName) + " " + orderByClause;
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
     return jdbcTemplate.query(sql, mapper);
   }
@@ -530,10 +538,10 @@ public class JdbcTemplateMapper {
 
     Set<String> parameters = sqlPair.getParams();
     if (parameters.contains(updatedOnPropertyName)) {
-    	bw.setPropertyValue(updatedOnPropertyName, LocalDateTime.now());
-    }   
+      bw.setPropertyValue(updatedOnPropertyName, LocalDateTime.now());
+    }
     if (parameters.contains(updatedByPropertyName)) {
-        bw.setPropertyValue(updatedByPropertyName, recordOperatorResolver.getRecordOperator());
+      bw.setPropertyValue(updatedByPropertyName, recordOperatorResolver.getRecordOperator());
     }
     Map<String, Object> attributes = convertObjectToMap(pojo);
     // if object has property version throw OptimisticLockingException
@@ -546,7 +554,7 @@ public class JdbcTemplateMapper {
                 + " cannot be null when updating "
                 + pojo.getClass().getSimpleName());
       } else {
-        attributes.put("incrementedVersion", versionVal+1);
+        attributes.put("incrementedVersion", versionVal + 1);
       }
 
       int cnt = npJdbcTemplate.update(sqlPair.getSql(), attributes);
@@ -588,6 +596,7 @@ public class JdbcTemplateMapper {
     }
 
     String tableName = getTableName(pojo.getClass());
+    String idColumnName = getTableIdColumnName(tableName);
     List<String> dbColumnNameList = getDbColumnNames(tableName);
 
     // cachekey ex: className-propertyName1-propertyName2
@@ -595,9 +604,9 @@ public class JdbcTemplateMapper {
     SqlPair sqlPair = updateSqlCache.get(cacheKey);
     if (sqlPair == null) {
       Set<String> params = new HashSet<>();
-      StringBuilder sqlBuilder = new StringBuilder("update ");
+      StringBuilder sqlBuilder = new StringBuilder("UPDATE ");
       sqlBuilder.append(fullyQualifiedTableName(tableName));
-      sqlBuilder.append(" set ");
+      sqlBuilder.append(" SET ");
 
       Set<String> updateColumnNames = new LinkedHashSet<>();
       for (String propertyName : propertyNames) {
@@ -663,10 +672,10 @@ public class JdbcTemplateMapper {
       }
 
       // the where clause
-      sqlBuilder.append(" where id = :id");
+      sqlBuilder.append(" WHERE " + idColumnName + " = :id");
       if (versionColumnName != null) {
         sqlBuilder
-            .append(" and ")
+            .append(" AND ")
             .append(versionColumnName)
             .append(" = :")
             .append(versionPropertyName);
@@ -863,13 +872,18 @@ public class JdbcTemplateMapper {
         }
       }
       List<U> relatedObjList = new ArrayList<>();
+      String idColumnName = getTableIdColumnName(tableName);
       // to avoid query being issued with large number of ids
       // for the 'IN (:columnIds) clause the list is chunked by IN_CLAUSE_CHUNK_SIZE
       // and multiple queries issued if needed.
       Collection<List<Number>> chunkedColumnIds = chunkList(allColumnIds, IN_CLAUSE_CHUNK_SIZE);
       for (List<Number> columnIds : chunkedColumnIds) {
         String sql =
-            "select * from " + fullyQualifiedTableName(tableName) + " where id in (:columnIds)";
+            "select * from "
+                + fullyQualifiedTableName(tableName)
+                + " where "
+                + idColumnName
+                + " in (:columnIds)";
         MapSqlParameterSource params = new MapSqlParameterSource("columnIds", columnIds);
         RowMapper<U> mapper = BeanPropertyRowMapper.newInstance(relationshipClazz);
         relatedObjList.addAll(npJdbcTemplate.query(sql, params, mapper));
@@ -1251,6 +1265,7 @@ public class JdbcTemplateMapper {
       String manySideJoinPropertyName,
       String manySideOrderByClause) {
     String tableName = getTableName(manySideClazz);
+
     if (isNotEmpty(mainObjList)) {
       Set<Number> allIds = new LinkedHashSet<>();
       for (T mainObj : mainObjList) {
@@ -1265,7 +1280,7 @@ public class JdbcTemplateMapper {
         }
       }
       List<Number> uniqueIds = new ArrayList<>(allIds);
-      String joinColumnName = convertCamelToSnakeCase(manySideJoinPropertyName);
+      String joinColumnName = getJoinColumnName(tableName, manySideJoinPropertyName);
       List<U> manySideList = new ArrayList<>();
       // to avoid query being issued with large number of
       // records for the 'IN (:columnIds) clause the list is chunked by IN_CLAUSE_CHUNK_SIZE
@@ -1520,6 +1535,7 @@ public class JdbcTemplateMapper {
    */
   private SqlPair buildUpdateSql(Object pojo) {
     String tableName = getTableName(pojo.getClass());
+    String idColumnName = getTableIdColumnName(tableName);
 
     Set<String> params = new HashSet<>();
     // database columns for the tables
@@ -1548,10 +1564,10 @@ public class JdbcTemplateMapper {
       }
     }
 
-    StringBuilder sqlBuilder = new StringBuilder("update ");
+    StringBuilder sqlBuilder = new StringBuilder("UPDATE ");
     sqlBuilder.append(fullyQualifiedTableName(tableName));
     // build set clause
-    sqlBuilder.append(" set ");
+    sqlBuilder.append(" SET ");
     boolean first = true;
     String versionColumnName = null;
     if (versionPropertyName != null) {
@@ -1576,10 +1592,10 @@ public class JdbcTemplateMapper {
       }
     }
     // build where clause
-    sqlBuilder.append(" where id = :id");
+    sqlBuilder.append(" WHERE " + idColumnName + " = :id");
     if (versionColumnName != null) {
       sqlBuilder
-          .append(" and ")
+          .append(" AND ")
           .append(versionColumnName)
           .append(" = :")
           .append(versionPropertyName);
@@ -1774,40 +1790,78 @@ public class JdbcTemplateMapper {
         Table table = clazz.getAnnotation(Table.class);
         tableName = table.name();
       } else {
-        Connection connection = null;
-        try {
-          connection = jdbcTemplate.getDataSource().getConnection();
-          boolean found = false;
-          tableName = convertCamelToSnakeCase(clazz.getSimpleName());
-          DatabaseMetaData metadata = connection.getMetaData();
-          ResultSet resultSet = metadata.getColumns(null, schemaName, tableName, null);
-          if (resultSet.next()) {
-            found = true;
+        tableName = convertCamelToSnakeCase(clazz.getSimpleName());
+        List<String> columnNames = getDbColumnNames(tableName);
+        if (ObjectUtils.isEmpty(columnNames)) {
+          // try with uppercase
+          tableName = tableName.toUpperCase();
+          columnNames = getDbColumnNames(tableName);
+          if (ObjectUtils.isEmpty(columnNames)) {
+            throw new RuntimeException(
+                "Could not find corresponding table for class " + clazz.getName());
           }
-          JdbcUtils.closeResultSet(resultSet);
-          if (!found) {
-            // try again with upper case tablename
-            tableName = tableName.toUpperCase();
-            resultSet = metadata.getColumns(null, schemaName, tableName, null);
-            if (resultSet.next()) {
-              found = true;
+        }
+        // while we are at it, we get the case sensitive id name
+        if (!ObjectUtils.isEmpty(columnNames)) {
+          for (String columnName : columnNames) {
+            if (columnName.equals("id") || columnName.equals("ID")) {
+              tableToCaseSensitiveIdName.put(tableName, columnName);
+              break;
             }
           }
-          JdbcUtils.closeResultSet(resultSet);
-
-          if (!found) {
-            throw new RuntimeException(
-                "Could not find corresponding table for object " + clazz.getSimpleName());
-          }
-          objectToTableCache.put(clazz.getName(), tableName);
-        } catch (Exception e) {
-          throw new RuntimeException(e);
-        } finally {
-          JdbcUtils.closeConnection(connection);
         }
       }
     }
+    objectToTableCache.put(clazz.getName(), tableName);
     return tableName;
+  }
+
+  private String getTableIdColumnName(String tableName) {
+    String idName = tableToCaseSensitiveIdName.get(tableName);
+    if (StringUtils.isEmpty(idName)) {
+      List<String> columnNames = getDbColumnNames(tableName);
+      if (ObjectUtils.isEmpty(columnNames)) {
+        // try again with uppercase table name.
+        columnNames = getDbColumnNames(tableName.toUpperCase());
+        if (ObjectUtils.isEmpty(columnNames)) {
+          throw new RuntimeException("Could not find table " + tableName);
+        }
+      }
+      if (!ObjectUtils.isEmpty(columnNames)) {
+        for (String columnName : columnNames) {
+          if (columnName.equals("id") || columnName.equals("ID")) {
+            idName = columnName;
+            tableToCaseSensitiveIdName.put(tableName, idName);
+            break;
+          }
+        }
+      }
+    }
+    if (StringUtils.isEmpty(idName)) {
+      throw new RuntimeException("Could not find id column for table " + tableName);
+    }
+    return idName;
+  }
+
+  private String getJoinColumnName(String tableName, String joinPropertyName) {
+    if (tableName == null || joinPropertyName == null) {
+      throw new IllegalArgumentException("tableName and joinPropertyName cannot be null");
+    }
+    List<String> columnNames = getDbColumnNames(tableName);
+
+    String joinColumnName = convertCamelToSnakeCase(joinPropertyName);
+    String ucJoinColumnName = joinColumnName.toUpperCase();
+    for (String columnName : columnNames) {
+      if (columnName.equals(joinColumnName) || columnName.equals(ucJoinColumnName)) {
+        return columnName;
+      }
+    }
+    // if code reached here throw exception
+    throw new RuntimeException(
+        "Could not find corresponding column in table "
+            + tableName
+            + " for joinPropertyName "
+            + joinPropertyName);
   }
 
   private String getMatchingCaseSensitiveColumnName(
