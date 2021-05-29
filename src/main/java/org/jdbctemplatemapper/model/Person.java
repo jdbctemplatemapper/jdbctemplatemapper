@@ -7,4 +7,6 @@ public class Person {
 	private Integer id;
 	private String lastName;
 	private String firstName;
+	
+    private String someNonDatabaseProperty;
 }

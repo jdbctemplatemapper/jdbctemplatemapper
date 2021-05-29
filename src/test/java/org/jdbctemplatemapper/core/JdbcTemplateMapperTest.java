@@ -15,6 +15,7 @@ import org.jdbctemplatemapper.model.NoIdObject;
 import org.jdbctemplatemapper.model.NoTableObject;
 import org.jdbctemplatemapper.model.Order;
 import org.jdbctemplatemapper.model.OrderLine;
+import org.jdbctemplatemapper.model.Person;
 import org.jdbctemplatemapper.model.Product;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -234,6 +235,19 @@ public class JdbcTemplateMapperTest {
   }
 
   @Test
+  public void update_nonDatabasePropertyTest() {
+    Person person = jdbcTemplateMapper.findById(1, Person.class);
+
+    person.setSomeNonDatabaseProperty("xyz");
+    jdbcTemplateMapper.update(person);
+
+    // requery
+    person = jdbcTemplateMapper.findById(1, Person.class);
+
+    assertNull(person.getSomeNonDatabaseProperty());
+  }
+
+  @Test
   public void update_byPropertyTest() throws Exception {
     Order order = jdbcTemplateMapper.findById(2, Order.class);
 
@@ -306,6 +320,17 @@ public class JdbcTemplateMapperTest {
           Order order = jdbcTemplateMapper.findById(2, Order.class);
           order.setStatus("CLOSED");
           jdbcTemplateMapper.update(order, "status", "updatedOn");
+        });
+  }
+
+  @Test
+  public void update_nonDatabasePropertyFailureTest() {
+    Assertions.assertThrows(
+        RuntimeException.class,
+        () -> {
+          Person person = jdbcTemplateMapper.findById(1, Person.class);
+          person.setSomeNonDatabaseProperty("xyz");
+          jdbcTemplateMapper.update(person, "someNonDatabaseProperty");
         });
   }
 

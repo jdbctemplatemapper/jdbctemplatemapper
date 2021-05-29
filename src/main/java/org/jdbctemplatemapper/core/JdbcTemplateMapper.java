@@ -34,8 +34,6 @@ import org.springframework.jdbc.support.DatabaseMetaDataCallback;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.jdbc.support.MetaDataAccessException;
 
-
-
 /**
  * <p>Spring's JdbcTemplate gives full control of data access using SQL. It removes a lot of the
  * boiler plate code which is required by JDBC. Unfortunately it is still verbose. JdbcTemplateMapper
@@ -62,13 +60,13 @@ import org.springframework.jdbc.support.MetaDataAccessException;
  *   Camel case property names are mapped to snake case database column names.
  *   Properties of a model like 'firstName', 'lastName' will be mapped to corresponding database columns
  *   first_name/FIRST_NAME and last_name/LAST_NAME in the database table. If you are using a
- *   case sensitive database setup and have mixed case column names like 'Order_Date' the tool wont work.
+ *   case sensitive database setup and have mixed case column names like 'Order_Date' the tool won't work.
  *   (Model to table mapping does not have this restriction. By default a class maps to its snake case table name.
  *   The default class to table mapping can be overridden using the @Table annotation)
  *
  * Examples of simple CRUD:
  *
- * public class Product{ // by default maps to table 'product'
+ * public class Product{ // by default maps to table 'product'.
  *    private Integer id;
  *    private String productName;
  *    private Double price;
