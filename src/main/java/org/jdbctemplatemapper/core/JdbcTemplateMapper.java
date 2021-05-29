@@ -35,10 +35,10 @@ import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.jdbc.support.MetaDataAccessException;
 
 /**
- * <p>Spring's JdbcTemplate gives full control of data access using SQL. It removes a lot of the
- * boiler plate code which is required by JDBC. Unfortunately it is still verbose. JdbcTemplateMapper
- * tries to mitigate the verboseness. It is a utility class which uses JdbcTemplate, allowing for
- * single line CRUD and less verbose ways to query relationships.
+ * Spring's JdbcTemplate gives full control of data access using SQL. It removes a lot of the boiler
+ * plate code which is required by JDBC. Unfortunately it is still verbose. JdbcTemplateMapper tries
+ * to mitigate the verboseness. It is a utility class which uses JdbcTemplate, allowing for single
+ * line CRUD and less verbose ways to query relationships.
  *
  * <p>IMPORTANT!!! JdbcTemplateMapper is a helper utility for JdbcTemplate and NOT a replacement for
  * it. Project code will generally be a mix of JdbcTemplate and JdbcTemplateMapper.
@@ -620,104 +620,6 @@ public class JdbcTemplateMapper {
       updateSqlCache.put(cacheKey, sqlAndParams);
     }
     return issueUpdate(sqlAndParams, pojo);
-  }
-
-  private SqlAndParams buildUpdateSql(TableMapping tableMapping, Set<String> propertyNames) {
-    String idColumnName = tableMapping.getIdName();
-    if (idColumnName == null) {
-      throw new RuntimeException(
-          "could not find id column for table " + tableMapping.getTableName());
-    }
-    Set<String> params = new HashSet<>();
-    StringBuilder sqlBuilder = new StringBuilder("UPDATE ");
-    sqlBuilder.append(fullyQualifiedTableName(tableMapping.getTableName()));
-    sqlBuilder.append(" SET ");
-
-    String versionColumnName = tableMapping.getColumnName(versionPropertyName);
-    boolean first = true;
-    for (String propertyName : propertyNames) {
-      String columnName = tableMapping.getColumnName(propertyName);
-      if (columnName != null) {
-        if (!first) {
-          sqlBuilder.append(", ");
-        } else {
-          first = false;
-        }
-        sqlBuilder.append(columnName);
-        sqlBuilder.append(" = :");
-
-        if (versionPropertyName != null && columnName.equals(versionColumnName)) {
-          sqlBuilder.append("incrementedVersion");
-          params.add("incrementedVersion");
-        } else {
-          sqlBuilder.append(propertyName);
-          params.add(propertyName);
-        }
-      }
-    }
-
-    // the where clause
-    sqlBuilder.append(" WHERE " + idColumnName + " = :id");
-    if (versionPropertyName != null && versionColumnName != null) {
-      sqlBuilder
-          .append(" AND ")
-          .append(versionColumnName)
-          .append(" = :")
-          .append(versionPropertyName);
-      params.add(versionPropertyName);
-    }
-
-    String updateSql = sqlBuilder.toString();
-    SqlAndParams sqlAndParams = new SqlAndParams(updateSql, params);
-
-    return sqlAndParams;
-  }
-
-  private Integer issueUpdate(SqlAndParams sqlAndParams, Object pojo) {
-    if (pojo == null) {
-      throw new RuntimeException("argument cannot be null");
-    }
-    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
-    Set<String> parameters = sqlAndParams.getParams();
-    if (updatedOnPropertyName != null && parameters.contains(updatedOnPropertyName)) {
-      bw.setPropertyValue(updatedOnPropertyName, LocalDateTime.now());
-    }
-    if (updatedByPropertyName != null
-        && recordOperatorResolver != null
-        && parameters.contains(updatedByPropertyName)) {
-      bw.setPropertyValue(updatedByPropertyName, recordOperatorResolver.getRecordOperator());
-    }
-
-    Map<String, Object> attributes = convertObjectToMap(pojo);
-    // if object has property version throw OptimisticLockingException
-    // when update fails. The version gets incremented on update
-    if (sqlAndParams.getParams().contains("incrementedVersion")) {
-      Integer versionVal = (Integer) bw.getPropertyValue(versionPropertyName);
-      if (versionVal == null) {
-        throw new RuntimeException(
-            versionPropertyName
-                + " cannot be null when updating "
-                + pojo.getClass().getSimpleName());
-      } else {
-        attributes.put("incrementedVersion", versionVal + 1);
-      }
-
-      int cnt = npJdbcTemplate.update(sqlAndParams.getSql(), attributes);
-      if (cnt == 0) {
-        throw new OptimisticLockingException(
-            "Update failed for "
-                + pojo.getClass().getSimpleName()
-                + " for id:"
-                + attributes.get("id")
-                + " and "
-                + versionPropertyName
-                + ":"
-                + attributes.get(versionPropertyName));
-      }
-      return cnt;
-    } else {
-      return npJdbcTemplate.update(sqlAndParams.getSql(), attributes);
-    }
   }
 
   /**
@@ -1520,6 +1422,104 @@ public class JdbcTemplateMapper {
     return str;
   }
 
+  private SqlAndParams buildUpdateSql(TableMapping tableMapping, Set<String> propertyNames) {
+    String idColumnName = tableMapping.getIdName();
+    if (idColumnName == null) {
+      throw new RuntimeException(
+          "could not find id column for table " + tableMapping.getTableName());
+    }
+    Set<String> params = new HashSet<>();
+    StringBuilder sqlBuilder = new StringBuilder("UPDATE ");
+    sqlBuilder.append(fullyQualifiedTableName(tableMapping.getTableName()));
+    sqlBuilder.append(" SET ");
+
+    String versionColumnName = tableMapping.getColumnName(versionPropertyName);
+    boolean first = true;
+    for (String propertyName : propertyNames) {
+      String columnName = tableMapping.getColumnName(propertyName);
+      if (columnName != null) {
+        if (!first) {
+          sqlBuilder.append(", ");
+        } else {
+          first = false;
+        }
+        sqlBuilder.append(columnName);
+        sqlBuilder.append(" = :");
+
+        if (versionPropertyName != null && columnName.equals(versionColumnName)) {
+          sqlBuilder.append("incrementedVersion");
+          params.add("incrementedVersion");
+        } else {
+          sqlBuilder.append(propertyName);
+          params.add(propertyName);
+        }
+      }
+    }
+
+    // the where clause
+    sqlBuilder.append(" WHERE " + idColumnName + " = :id");
+    if (versionPropertyName != null && versionColumnName != null) {
+      sqlBuilder
+          .append(" AND ")
+          .append(versionColumnName)
+          .append(" = :")
+          .append(versionPropertyName);
+      params.add(versionPropertyName);
+    }
+
+    String updateSql = sqlBuilder.toString();
+    SqlAndParams sqlAndParams = new SqlAndParams(updateSql, params);
+
+    return sqlAndParams;
+  }
+
+  private Integer issueUpdate(SqlAndParams sqlAndParams, Object pojo) {
+    if (pojo == null) {
+      throw new RuntimeException("argument cannot be null");
+    }
+    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
+    Set<String> parameters = sqlAndParams.getParams();
+    if (updatedOnPropertyName != null && parameters.contains(updatedOnPropertyName)) {
+      bw.setPropertyValue(updatedOnPropertyName, LocalDateTime.now());
+    }
+    if (updatedByPropertyName != null
+        && recordOperatorResolver != null
+        && parameters.contains(updatedByPropertyName)) {
+      bw.setPropertyValue(updatedByPropertyName, recordOperatorResolver.getRecordOperator());
+    }
+
+    Map<String, Object> attributes = convertObjectToMap(pojo);
+    // if object has property version throw OptimisticLockingException
+    // when update fails. The version gets incremented on update
+    if (sqlAndParams.getParams().contains("incrementedVersion")) {
+      Integer versionVal = (Integer) bw.getPropertyValue(versionPropertyName);
+      if (versionVal == null) {
+        throw new RuntimeException(
+            versionPropertyName
+                + " cannot be null when updating "
+                + pojo.getClass().getSimpleName());
+      } else {
+        attributes.put("incrementedVersion", versionVal + 1);
+      }
+
+      int cnt = npJdbcTemplate.update(sqlAndParams.getSql(), attributes);
+      if (cnt == 0) {
+        throw new OptimisticLockingException(
+            "Update failed for "
+                + pojo.getClass().getSimpleName()
+                + " for id:"
+                + attributes.get("id")
+                + " and "
+                + versionPropertyName
+                + ":"
+                + attributes.get(versionPropertyName));
+      }
+      return cnt;
+    } else {
+      return npJdbcTemplate.update(sqlAndParams.getSql(), attributes);
+    }
+  }
+
   /**
    * Used by mappers to instantiate object from the result set
    *
@@ -1599,7 +1599,8 @@ public class JdbcTemplateMapper {
     try {
       List<String> columnNames = tableColumnNamesCache.get(tableName);
       if (isEmpty(columnNames)) {
-        // Using Spring JdbcUtils.extractDatabaseMetaData() since it has some robust processing for metadata access
+        // Using Spring JdbcUtils.extractDatabaseMetaData() since it has some robust processing for
+        // metadata access
         columnNames =
             JdbcUtils.extractDatabaseMetaData(
                 jdbcTemplate.getDataSource(),
@@ -1615,8 +1616,8 @@ public class JdbcTemplateMapper {
                       }
                       resultSet.close();
                       if (isNotEmpty(columns)) {
-                          tableColumnNamesCache.put(tableName, columns);
-                      }                     
+                        tableColumnNamesCache.put(tableName, columns);
+                      }
                       return columns;
                     } finally {
                       JdbcUtils.closeResultSet(resultSet);
@@ -1857,22 +1858,22 @@ public class JdbcTemplateMapper {
       return list;
     }
   }
-  
+
   private boolean isEmpty(String str) {
-	    return str == null || str.length() == 0;
-	  }
+    return str == null || str.length() == 0;
+  }
 
-	  private boolean isNotEmpty(String str) {
-	    return !isEmpty(str);
-	  }
+  private boolean isNotEmpty(String str) {
+    return !isEmpty(str);
+  }
 
-	  @SuppressWarnings("all")
-	  private boolean isEmpty(Collection coll) {
-	    return (coll == null || coll.isEmpty());
-	  }
+  @SuppressWarnings("all")
+  private boolean isEmpty(Collection coll) {
+    return (coll == null || coll.isEmpty());
+  }
 
-	  @SuppressWarnings("all")
-	  private boolean isNotEmpty(Collection coll) {
-	    return !isEmpty(coll);
-	  }
+  @SuppressWarnings("all")
+  private boolean isNotEmpty(Collection coll) {
+    return !isEmpty(coll);
+  }
 }
