@@ -33,25 +33,12 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.DatabaseMetaDataCallback;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.jdbc.support.MetaDataAccessException;
-import org.springframework.util.ObjectUtils;
 
-import com.microsoft.sqlserver.jdbc.StringUtils;
+
 
 /**
- * When using ORMs (like Hibernate etc) in a project, during the early stages they seem beneficial.
- * As the project grows to a non trivial size and complexity (most enterprise applications do) their
- * magic ends up getting in the way. As time goes on you start fighting it and their complexity and
- * nuances start bubbling up. The SQL they generate are cryptic which makes troubleshooting
- * challenging. Writing dynamic queries using the non intuitive JPA Criteria API is complex and
- * verbose so projects resort to using some other tools like QueryDSL, which has its own issues.
- * Tools like QueryDSL have their own learning curve and are generally code generates where the
- * generated code needs to be checked in, which is just Project smell. Now you have gone down a
- * rabbit hole which is difficult to back out off. All for the reason because someone alergic to SQL
- * and is religious about the Object/Relational abstraction. I have not talked about the performance
- * issues of ORM and the level of expertise to resolve them.
- *
  * <p>Spring's JdbcTemplate gives full control of data access using SQL. It removes a lot of the
- * boiler plate code which is required by JDBC. Unfortunately it is verbose. JdbcTemplateMapper
+ * boiler plate code which is required by JDBC. Unfortunately it is still verbose. JdbcTemplateMapper
  * tries to mitigate the verboseness. It is a utility class which uses JdbcTemplate, allowing for
  * single line CRUD and less verbose ways to query relationships.
  *
@@ -564,7 +551,7 @@ public class JdbcTemplateMapper {
    * @return 0 if no records were updated
    */
   public Integer update(Object pojo, String... propertyNames) {
-    if (pojo == null || ObjectUtils.isEmpty(propertyNames)) {
+    if (pojo == null || propertyNames == null) {
       throw new RuntimeException("pojo and propertyNames cannot be null");
     }
     TableMapping tableMapping = getTableMapping(pojo.getClass());
@@ -868,7 +855,7 @@ public class JdbcTemplateMapper {
     TableMapping tableMapping = getTableMapping(relationshipClazz);
     String tableName = tableMapping.getTableName();
     String idColumnName = getTableIdColumnName(tableMapping);
-    if (!ObjectUtils.isEmpty(mainObjList)) {
+    if (isNotEmpty(mainObjList)) {
       List<Number> allColumnIds = new ArrayList<>();
       for (T mainObj : mainObjList) {
         if (mainObj != null) {
@@ -974,7 +961,7 @@ public class JdbcTemplateMapper {
             relatedObjMapper,
             mainObjRelationshipPropertyName,
             mainObjJoinPropertyName);
-    return !ObjectUtils.isEmpty(list) ? list.get(0) : null;
+    return isNotEmpty(list) ? list.get(0) : null;
   }
 
   /**
@@ -1066,7 +1053,7 @@ public class JdbcTemplateMapper {
       String mainObjRelationshipPropertyName,
       String mainObjJoinPropertyName) {
 
-    if (!ObjectUtils.isEmpty(mainObjList) && !ObjectUtils.isEmpty(relatedObjList)) {
+    if (isNotEmpty(mainObjList) && isNotEmpty(relatedObjList)) {
       // Map key: related object id , value: the related object
       Map<Number, U> idToObjectMap =
           relatedObjList
@@ -1273,7 +1260,7 @@ public class JdbcTemplateMapper {
       String manySideOrderByClause) {
 
     String tableName = getTableMapping(manySideClazz).getTableName();
-    if (!ObjectUtils.isEmpty(mainObjList)) {
+    if (isNotEmpty(mainObjList)) {
       Set<Number> allIds = new LinkedHashSet<>();
       for (T mainObj : mainObjList) {
         if (mainObj != null) {
@@ -1300,7 +1287,7 @@ public class JdbcTemplateMapper {
                 + " WHERE "
                 + joinColumnName
                 + " IN (:columnIds)";
-        if (!ObjectUtils.isEmpty(manySideOrderByClause)) {
+        if (isNotEmpty(manySideOrderByClause)) {
           sql += " " + manySideOrderByClause;
         }
         MapSqlParameterSource params = new MapSqlParameterSource("columnIds", columnIds);
@@ -1343,7 +1330,7 @@ public class JdbcTemplateMapper {
             manySideObjMapper,
             mainObjCollectionPropertyName,
             manySideJoinPropertyName);
-    return !ObjectUtils.isEmpty(list) ? list.get(0) : null;
+    return isNotEmpty(list) ? list.get(0) : null;
   }
 
   /**
@@ -1397,7 +1384,7 @@ public class JdbcTemplateMapper {
       String manySideJoinPropertyName) {
 
     try {
-      if (!ObjectUtils.isEmpty(manySideList)) {
+      if (isNotEmpty(manySideList)) {
         Map<Number, List<U>> mapColumnIdToManySide =
             manySideList
                 .stream()
@@ -1506,10 +1493,10 @@ public class JdbcTemplateMapper {
 
     if (str == null) {
       List<String> dbColumnNames = getTableColumnNames(tableName);
-      if (ObjectUtils.isEmpty(dbColumnNames)) {
+      if (isEmpty(dbColumnNames)) {
         // try with uppercase table name
         dbColumnNames = getTableColumnNames(tableName.toUpperCase());
-        if (ObjectUtils.isEmpty(dbColumnNames)) {
+        if (isEmpty(dbColumnNames)) {
           throw new RuntimeException("No table named " + tableName);
         }
       }
@@ -1554,7 +1541,7 @@ public class JdbcTemplateMapper {
       List<String> propertyNames = getObjectPropertyNames(obj);
       for (String propName : propertyNames) {
         String columnName = convertCamelToSnakeCase(propName);
-        if (!ObjectUtils.isEmpty(prefix)) {
+        if (isNotEmpty(prefix)) {
           columnName = prefix + columnName;
         }
         int index = resultSetColumnNames.indexOf(columnName.toLowerCase());
@@ -1613,7 +1600,7 @@ public class JdbcTemplateMapper {
   private List<String> getTableColumnNames(String tableName) {
     try {
       List<String> columnNames = tableColumnNamesCache.get(tableName);
-      if (ObjectUtils.isEmpty(columnNames)) {
+      if (isEmpty(columnNames)) {
         // Using Spring JdbcUtils.extractDatabaseMetaData() since it has some robust processing for metadata access
         columnNames =
             JdbcUtils.extractDatabaseMetaData(
@@ -1629,7 +1616,7 @@ public class JdbcTemplateMapper {
                         columns.add(resultSet.getString("COLUMN_NAME"));
                       }
                       resultSet.close();
-                      if (!ObjectUtils.isEmpty(columns)) {
+                      if (isNotEmpty(columns)) {
                           tableColumnNamesCache.put(tableName, columns);
                       }                     
                       return columns;
@@ -1726,11 +1713,11 @@ public class JdbcTemplateMapper {
       }
 
       List<String> columnNames = getTableColumnNames(tableName);
-      if (ObjectUtils.isEmpty(columnNames)) {
+      if (isEmpty(columnNames)) {
         // try with uppercase
         tableName = tableName.toUpperCase();
         columnNames = getTableColumnNames(tableName);
-        if (ObjectUtils.isEmpty(columnNames)) {
+        if (isEmpty(columnNames)) {
           throw new RuntimeException(
               "Could not find corresponding table for class " + clazz.getSimpleName());
         }
@@ -1769,7 +1756,7 @@ public class JdbcTemplateMapper {
 
   private String getTableIdColumnName(TableMapping tableMapping) {
     String idName = tableMapping.getIdName();
-    if (StringUtils.isEmpty(idName)) {
+    if (isEmpty(idName)) {
       throw new RuntimeException(
           "Could not find id column for table" + tableMapping.getTableName());
     }
@@ -1845,7 +1832,7 @@ public class JdbcTemplateMapper {
   }
 
   private String fullyQualifiedTableName(String tableName) {
-    if (!ObjectUtils.isEmpty(schemaName)) {
+    if (isNotEmpty(schemaName)) {
       return schemaName + "." + tableName;
     }
     return tableName;
@@ -1858,7 +1845,7 @@ public class JdbcTemplateMapper {
    * @return List of unique objects by id
    */
   private List<Object> uniqueByIdList(List<Object> list) {
-    if (!ObjectUtils.isEmpty(list)) {
+    if (isNotEmpty(list)) {
       Map<Number, Object> idToObjectMap = new LinkedHashMap<>();
       for (Object obj : list) {
         BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
@@ -1872,4 +1859,22 @@ public class JdbcTemplateMapper {
       return list;
     }
   }
+  
+  private boolean isEmpty(String str) {
+	    return str == null || str.length() == 0;
+	  }
+
+	  private boolean isNotEmpty(String str) {
+	    return !isEmpty(str);
+	  }
+
+	  @SuppressWarnings("all")
+	  private boolean isEmpty(Collection coll) {
+	    return (coll == null || coll.isEmpty());
+	  }
+
+	  @SuppressWarnings("all")
+	  private boolean isNotEmpty(Collection coll) {
+	    return !isEmpty(coll);
+	  }
 }
