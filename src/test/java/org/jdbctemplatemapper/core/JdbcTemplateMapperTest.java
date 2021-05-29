@@ -174,9 +174,11 @@ public class JdbcTemplateMapperTest {
   }
 
   @Test
-  public void update_Test() {
+  public void update_Test() throws Exception{
     Order order = jdbcTemplateMapper.findById(1, Order.class);
-    LocalDateTime prevUpdatedOn = order.getUpdatedOn().minusSeconds(1);
+    LocalDateTime prevUpdatedOn = order.getUpdatedOn();
+    
+    Thread.sleep(1000); //avoid timing issue.
 
     order.setStatus("IN PROCESS");
 
@@ -231,14 +233,15 @@ public class JdbcTemplateMapperTest {
   }
 
   @Test
-  public void update_byPropertyTest() {
+  public void update_byPropertyTest() throws Exception {
     Order order = jdbcTemplateMapper.findById(2, Order.class);
     
     Integer prevVersion = order.getVersion();
     
-    LocalDateTime prevUpdatedOn = order.getUpdatedOn().minusSeconds(1);
+    LocalDateTime prevUpdatedOn = order.getUpdatedOn();
     order.setStatus("COMPLETE");
     
+    Thread.sleep(1000); //avoid timing issue.
     jdbcTemplateMapper.update(order, "status");
 
     order = jdbcTemplateMapper.findById(2, Order.class); // requery
