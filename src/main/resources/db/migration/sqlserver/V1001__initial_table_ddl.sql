@@ -52,6 +52,10 @@ CREATE TABLE jdbctemplatemapper.person (
 	CONSTRAINT person_pk PRIMARY KEY (id)
 );
 
+CREATE TABLE jdbctemplatemapper.no_id_object (
+	something varchar(100)
+);
+
 
 
 

@@ -187,10 +187,6 @@ public class JdbcTemplateMapper {
   //     value - list of property names
   private Map<String, List<String>> objectPropertyNamesCache = new ConcurrentHashMap<>();
 
-  // Map key - snake case string,
-  //     value - camel case string
-  private Map<String, String> snakeToCamelCache = new ConcurrentHashMap<>();
-
   // Map key - camel case string,
   //     value - snake case string
   private Map<String, String> camelToSnakeCache = new ConcurrentHashMap<>();
@@ -553,7 +549,6 @@ public class JdbcTemplateMapper {
       sqlPair = buildUpdateSql(tableMapping, updatePropertyNames);
       updateSqlCache.put(pojo.getClass().getName(), sqlPair);
     }
-
     return issueUpdate(sqlPair, pojo);
   }
 
@@ -570,14 +565,11 @@ public class JdbcTemplateMapper {
     if (pojo == null || ObjectUtils.isEmpty(propertyNames)) {
       throw new RuntimeException("pojo and propertyNames cannot be null");
     }
-
     TableMapping tableMapping = getTableMapping(pojo.getClass());
     String tableName = tableMapping.getTableName();
-
     // cachekey ex: className-propertyName1-propertyName2
     String cacheKey = pojo.getClass().getName() + "-" + String.join("-", propertyNames);
     SqlPair sqlPair = updateSqlCache.get(cacheKey);
-
     if (sqlPair == null) {
       // check properties have a corresponding table column
       for (String propertyName : propertyNames) {
@@ -874,7 +866,7 @@ public class JdbcTemplateMapper {
     TableMapping tableMapping = getTableMapping(relationshipClazz);
     String tableName = tableMapping.getTableName();
     String idColumnName = getTableIdColumnName(tableMapping);
-    if (isNotEmpty(mainObjList)) {
+    if (!ObjectUtils.isEmpty(mainObjList)) {
       List<Number> allColumnIds = new ArrayList<>();
       for (T mainObj : mainObjList) {
         if (mainObj != null) {
@@ -980,7 +972,7 @@ public class JdbcTemplateMapper {
             relatedObjMapper,
             mainObjRelationshipPropertyName,
             mainObjJoinPropertyName);
-    return isNotEmpty(list) ? list.get(0) : null;
+    return  !ObjectUtils.isEmpty(list) ? list.get(0) : null;
   }
 
   /**
@@ -1072,7 +1064,7 @@ public class JdbcTemplateMapper {
       String mainObjRelationshipPropertyName,
       String mainObjJoinPropertyName) {
 
-    if (isNotEmpty(mainObjList) && isNotEmpty(relatedObjList)) {
+    if (!ObjectUtils.isEmpty(mainObjList) && !ObjectUtils.isEmpty(relatedObjList)) {
       // Map key: related object id , value: the related object
       Map<Number, U> idToObjectMap =
           relatedObjList
@@ -1279,7 +1271,7 @@ public class JdbcTemplateMapper {
       String manySideOrderByClause) {
 
     String tableName = getTableMapping(manySideClazz).getTableName();
-    if (isNotEmpty(mainObjList)) {
+    if (!ObjectUtils.isEmpty(mainObjList)) {
       Set<Number> allIds = new LinkedHashSet<>();
       for (T mainObj : mainObjList) {
         if (mainObj != null) {
@@ -1306,7 +1298,7 @@ public class JdbcTemplateMapper {
                 + " WHERE "
                 + joinColumnName
                 + " IN (:columnIds)";
-        if (isNotEmpty(manySideOrderByClause)) {
+        if (!ObjectUtils.isEmpty(manySideOrderByClause)) {
           sql += " " + manySideOrderByClause;
         }
         MapSqlParameterSource params = new MapSqlParameterSource("columnIds", columnIds);
@@ -1349,7 +1341,7 @@ public class JdbcTemplateMapper {
             manySideObjMapper,
             mainObjCollectionPropertyName,
             manySideJoinPropertyName);
-    return isNotEmpty(list) ? list.get(0) : null;
+    return !ObjectUtils.isEmpty(list) ? list.get(0) : null;
   }
 
   /**
@@ -1403,7 +1395,7 @@ public class JdbcTemplateMapper {
       String manySideJoinPropertyName) {
 
     try {
-      if (isNotEmpty(manySideList)) {
+      if (!ObjectUtils.isEmpty(manySideList)) {
         Map<Number, List<U>> mapColumnIdToManySide =
             manySideList
                 .stream()
@@ -1511,10 +1503,10 @@ public class JdbcTemplateMapper {
     String str = selectColsCache.get(tableName + "-" + tableAlias);
     if (str == null) {
       List<String> dbColumnNames = getTableColumnNames(tableName);
-      if (isEmpty(dbColumnNames)) {
+      if (ObjectUtils.isEmpty(dbColumnNames)) {
         // try with uppercase table name
         dbColumnNames = getTableColumnNames(tableName.toUpperCase());
-        if (isEmpty(dbColumnNames)) {
+        if (ObjectUtils.isEmpty(dbColumnNames)) {
           throw new RuntimeException("No table named " + tableName);
         }
       }
@@ -1559,7 +1551,7 @@ public class JdbcTemplateMapper {
       List<String> propertyNames = getPropertyNames(obj);
       for (String propName : propertyNames) {
         String columnName = convertCamelToSnakeCase(propName);
-        if (isNotEmpty(prefix)) {
+        if (!ObjectUtils.isEmpty(prefix)) {
           columnName = prefix + columnName;
         }
         int index = resultSetColumnNames.indexOf(columnName.toLowerCase());
@@ -1623,7 +1615,7 @@ public class JdbcTemplateMapper {
    */
   private List<String> getTableColumnNames(String tableName) {
     List<String> columns = tableColumnNamesCache.get(tableName);
-    if (isEmpty(columns)) {
+    if (ObjectUtils.isEmpty(columns)) {
       columns = new ArrayList<>();
       try (Connection connection = jdbcTemplate.getDataSource().getConnection()) {
         DatabaseMetaData metadata = connection.getMetaData();
@@ -1632,7 +1624,7 @@ public class JdbcTemplateMapper {
           columns.add(resultSet.getString("COLUMN_NAME"));
         }
         resultSet.close();
-        if (isNotEmpty(columns)) {
+        if (!ObjectUtils.isEmpty(columns)) {
           tableColumnNamesCache.put(tableName, columns);
         }
       } catch (Exception e) {
@@ -1706,27 +1698,30 @@ public class JdbcTemplateMapper {
     return bw.getPropertyValue(propertyName);
   }
 
-  private TableMapping getTableMapping(Class<?> clazz) {
+  private TableMapping getTableMapping(Class<?> clazz) { 
+	if(clazz == null) {
+		throw new RuntimeException("arg clazz cannot be null");
+	}
     TableMapping tableMapping = objectToTableMappingCache.get(clazz.getName());
 
     if (tableMapping == null) {
-      String tName = null;
+      String tableName = null;
       if (clazz.isAnnotationPresent(Table.class)) {
         // @Table annotation is present. Get the table name
         Table table = clazz.getAnnotation(Table.class);
-        tName = table.name();
+        tableName = table.name();
       } else {
-        tName = convertCamelToSnakeCase(clazz.getSimpleName());
+        tableName = convertCamelToSnakeCase(clazz.getSimpleName());
       }
 
-      List<String> columnNames = getTableColumnNames(tName);
+      List<String> columnNames = getTableColumnNames(tableName);
       if (ObjectUtils.isEmpty(columnNames)) {
         // try with uppercase
-        tName = tName.toUpperCase();
-        columnNames = getTableColumnNames(tName);
+        tableName = tableName.toUpperCase();
+        columnNames = getTableColumnNames(tableName);
         if (ObjectUtils.isEmpty(columnNames)) {
           throw new RuntimeException(
-              "Could not find corresponding table for class " + clazz.getName());
+              "Could not find corresponding table for class " + clazz.getSimpleName());
         }
       }
 
@@ -1743,7 +1738,7 @@ public class JdbcTemplateMapper {
         }
 
         tableMapping = new TableMapping();
-        tableMapping.setTableName(tName);
+        tableMapping.setTableName(tableName);
         tableMapping.setPropertyColumnMappings(propertyColumnMappings);
 
         // get the case sensitive id name
@@ -1796,7 +1791,7 @@ public class JdbcTemplateMapper {
    * conversion info is cached.
    *
    * @param str camel case String
-   * @return the snake case string
+   * @return the snake case string to lower case.
    */
   private String convertCamelToSnakeCase(String str) {
     String snakeCase = camelToSnakeCache.get(str);
@@ -1817,14 +1812,7 @@ public class JdbcTemplateMapper {
    * @return the camel case string
    */
   private String convertSnakeToCamelCase(String str) {
-    String camelCase = snakeToCamelCache.get(str);
-    if (camelCase == null) {
-      if (str != null) {
-        camelCase = JdbcUtils.convertUnderscoreNameToPropertyName(str);
-        snakeToCamelCache.put(str, camelCase);
-      }
-    }
-    return camelCase;
+    return JdbcUtils.convertUnderscoreNameToPropertyName(str);
   }
 
   /**
@@ -1846,7 +1834,7 @@ public class JdbcTemplateMapper {
   }
 
   private String fullyQualifiedTableName(String tableName) {
-    if (isNotEmpty(schemaName)) {
+    if (!ObjectUtils.isEmpty(schemaName)) {
       return schemaName + "." + tableName;
     }
     return tableName;
@@ -1859,7 +1847,7 @@ public class JdbcTemplateMapper {
    * @return List of unique objects by id
    */
   private List<Object> uniqueByIdList(List<Object> list) {
-    if (isNotEmpty(list)) {
+    if (!ObjectUtils.isEmpty(list)) {
       Map<Number, Object> idToObjectMap = new LinkedHashMap<>();
       for (Object obj : list) {
         BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
@@ -1874,21 +1862,4 @@ public class JdbcTemplateMapper {
     }
   }
 
-  private boolean isEmpty(String str) {
-    return str == null || str.length() == 0;
-  }
-
-  private boolean isNotEmpty(String str) {
-    return !isEmpty(str);
-  }
-
-  @SuppressWarnings("all")
-  private boolean isEmpty(Collection coll) {
-    return (coll == null || coll.isEmpty());
-  }
-
-  @SuppressWarnings("all")
-  private boolean isNotEmpty(Collection coll) {
-    return !isEmpty(coll);
-  }
 }
