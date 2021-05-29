@@ -25,17 +25,4 @@ public class TableMapping {
     }
     return val;
   }
-
-  public String getPropertyName(String columnName) {
-    String val = null;
-    if (columnName != null) {
-      for (PropertyColumnMapping mapping : propertyColumnMappings) {
-        if (mapping.getColumnName().equals(columnName)) {
-          val = mapping.getPropertyName();
-          break;
-        }
-      }
-    }
-    return val;
-  }
 }
