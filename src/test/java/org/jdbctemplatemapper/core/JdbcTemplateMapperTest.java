@@ -103,7 +103,7 @@ public class JdbcTemplateMapperTest {
   @Test
   public void insert_nullObjectFailureTest() {
     Assertions.assertThrows(
-        IllegalArgumentException.class,
+        RuntimeException.class,
         () -> {
           jdbcTemplateMapper.insert(null);
         });
@@ -112,7 +112,7 @@ public class JdbcTemplateMapperTest {
   @Test
   public void insert_noIdObjectFailureTest() {
     Assertions.assertThrows(
-        IllegalArgumentException.class,
+        RuntimeException.class,
         () -> {
           NoIdObject pojo = new NoIdObject();
           pojo.setSomething("abc");
@@ -157,7 +157,7 @@ public class JdbcTemplateMapperTest {
   @Test
   public void insertWithId_nullObjectFailureTest() {
     Assertions.assertThrows(
-        IllegalArgumentException.class,
+        RuntimeException.class,
         () -> {
           jdbcTemplateMapper.insertWithId(null);
         });
@@ -166,7 +166,7 @@ public class JdbcTemplateMapperTest {
   @Test
   public void insertWithId_noIdObjectFailureTest() {
     Assertions.assertThrows(
-        IllegalArgumentException.class,
+        RuntimeException.class,
         () -> {
           NoIdObject pojo = new NoIdObject();
           pojo.setSomething("abc");
@@ -216,7 +216,7 @@ public class JdbcTemplateMapperTest {
   @Test
   public void update_nullObjectFailureTest() {
     Assertions.assertThrows(
-        IllegalArgumentException.class,
+        RuntimeException.class,
         () -> {
           jdbcTemplateMapper.update(null);
         });
@@ -281,7 +281,7 @@ public class JdbcTemplateMapperTest {
   @Test
   public void update_byPropertyNullObjectFailureTest() {
     Assertions.assertThrows(
-        IllegalArgumentException.class,
+        RuntimeException.class,
         () -> {
           jdbcTemplateMapper.update(null, "abc");
         });
@@ -371,7 +371,7 @@ public class JdbcTemplateMapperTest {
   @Test
   public void delete_nullObjectFailureTest() {
     Assertions.assertThrows(
-        IllegalArgumentException.class,
+        RuntimeException.class,
         () -> {
           jdbcTemplateMapper.delete(null);
         });
@@ -380,7 +380,7 @@ public class JdbcTemplateMapperTest {
   @Test
   public void delete_noIdObjectFailureTest() {
     Assertions.assertThrows(
-        IllegalArgumentException.class,
+        RuntimeException.class,
         () -> {
           NoIdObject pojo = new NoIdObject();
           pojo.setSomething("abc");
@@ -402,7 +402,7 @@ public class JdbcTemplateMapperTest {
   @Test
   public void deleteById_nullObjectFailureTest() {
     Assertions.assertThrows(
-        IllegalArgumentException.class,
+        RuntimeException.class,
         () -> {
           jdbcTemplateMapper.deleteById(null, Product.class);
         });

@@ -211,7 +211,7 @@ public class JdbcTemplateMapper {
    */
   public JdbcTemplateMapper(JdbcTemplate jdbcTemplate, String schemaName) {
     if (jdbcTemplate == null) {
-      throw new IllegalArgumentException("dataSource cannot be null");
+      throw new RuntimeException("dataSource cannot be null");
     }
     this.jdbcTemplate = jdbcTemplate;
     this.schemaName = schemaName;
@@ -337,7 +337,7 @@ public class JdbcTemplateMapper {
    */
   public <T> T findById(Object id, Class<T> clazz) {
     if (!(id instanceof Integer || id instanceof Long)) {
-      throw new IllegalArgumentException("id has to be type of Integer or Long");
+      throw new RuntimeException("id has to be type of Integer or Long");
     }
     TableMapping tableMapping = getTableMapping(clazz);
     String idColumnName = getTableIdColumnName(tableMapping);
@@ -396,12 +396,12 @@ public class JdbcTemplateMapper {
    */
   public void insert(Object pojo) {
     if (pojo == null) {
-      throw new IllegalArgumentException("Object cannot be null");
+      throw new RuntimeException("Object cannot be null");
     }
 
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
     if (!bw.isReadableProperty("id")) {
-      throw new IllegalArgumentException(
+      throw new RuntimeException(
           "Object " + pojo.getClass().getSimpleName() + " has to have a property named 'id'.");
     }
 
@@ -462,12 +462,12 @@ public class JdbcTemplateMapper {
    */
   public void insertWithId(Object pojo) {
     if (pojo == null) {
-      throw new IllegalArgumentException("Object cannot be null");
+      throw new RuntimeException("Object cannot be null");
     }
 
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
     if (!bw.isReadableProperty("id")) {
-      throw new IllegalArgumentException(
+      throw new RuntimeException(
           "Object " + pojo.getClass().getSimpleName() + " has to have a property named 'id'.");
     }
 
@@ -522,11 +522,11 @@ public class JdbcTemplateMapper {
    */
   public Integer update(Object pojo) {
     if (pojo == null) {
-      throw new IllegalArgumentException("Object cannot be null");
+      throw new RuntimeException("Object cannot be null");
     }
     TableMapping tableMapping = getTableMapping(pojo.getClass());
     if (tableMapping.getIdName() == null) {
-      throw new IllegalArgumentException(
+      throw new RuntimeException(
           "Object " + pojo.getClass().getSimpleName() + " has to have a property named 'id'.");
     }
     SqlPair sqlPair = updateSqlCache.get(pojo.getClass().getName());
@@ -568,7 +568,7 @@ public class JdbcTemplateMapper {
    */
   public Integer update(Object pojo, String... propertyNames) {
     if (pojo == null || ObjectUtils.isEmpty(propertyNames)) {
-      throw new IllegalArgumentException("pojo and propertyNames cannot be null");
+      throw new RuntimeException("pojo and propertyNames cannot be null");
     }
 
     TableMapping tableMapping = getTableMapping(pojo.getClass());
@@ -582,7 +582,7 @@ public class JdbcTemplateMapper {
       // check properties have a corresponding table column
       for (String propertyName : propertyNames) {
         if (tableMapping.getColumnName(propertyName) == null) {
-          throw new IllegalArgumentException(
+          throw new RuntimeException(
               "property "
                   + propertyName
                   + " is not a property of object "
@@ -610,7 +610,7 @@ public class JdbcTemplateMapper {
 
       for (String propertyName : propertyNames) {
         if (ignoreAttrs.contains(propertyName)) {
-          throw new IllegalArgumentException(
+          throw new RuntimeException(
               "property "
                   + propertyName
                   + " is an auto assigned property which cannot be manually set in update statement");
@@ -749,12 +749,12 @@ public class JdbcTemplateMapper {
    */
   public Integer delete(Object pojo) {
     if (pojo == null) {
-      throw new IllegalArgumentException("Object cannot be null");
+      throw new RuntimeException("Object cannot be null");
     }
 
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
     if (!bw.isReadableProperty("id")) {
-      throw new IllegalArgumentException(
+      throw new RuntimeException(
           "Object " + pojo.getClass().getSimpleName() + " has to have a property named 'id'.");
     }
 
@@ -774,7 +774,7 @@ public class JdbcTemplateMapper {
    */
   public <T> Integer deleteById(Object id, Class<T> clazz) {
     if (!(id instanceof Integer || id instanceof Long)) {
-      throw new IllegalArgumentException("id has to be type of Integer or Long");
+      throw new RuntimeException("id has to be type of Integer or Long");
     }
     String tableName = getTableMapping(clazz).getTableName();
     String sql = "delete from " + fullyQualifiedTableName(tableName) + " where id = ?";
@@ -1772,7 +1772,7 @@ public class JdbcTemplateMapper {
 
   private String getJoinColumnName(String tableName, String joinPropertyName) {
     if (tableName == null || joinPropertyName == null) {
-      throw new IllegalArgumentException("tableName and joinPropertyName cannot be null");
+      throw new RuntimeException("tableName and joinPropertyName cannot be null");
     }
     List<String> columnNames = getTableColumnNames(tableName);
 
