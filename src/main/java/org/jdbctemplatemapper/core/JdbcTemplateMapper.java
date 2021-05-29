@@ -201,11 +201,7 @@ public class JdbcTemplateMapper {
 
   // Map key - object class name
   //     value - the table name
-  private Map<String, String> objectToTableCache = new ConcurrentHashMap<>();
-
-  // Map key - object class name
-  //     value - the table name
-  private Map<String, String> tableToCaseSensitiveIdName = new ConcurrentHashMap<>();
+  private Map<String, TableMapping> objectToTableMappingCache = new ConcurrentHashMap<>();
 
   /**
    * The constructor.
@@ -343,10 +339,14 @@ public class JdbcTemplateMapper {
     if (!(id instanceof Integer || id instanceof Long)) {
       throw new IllegalArgumentException("id has to be type of Integer or Long");
     }
-    String tableName = getTableName(clazz);
-    String idColumnName = getTableIdColumnName(tableName);
+    TableMapping tableMapping = getTableMapping(clazz);
+    String idColumnName = getTableIdColumnName(tableMapping);
     String sql =
-        "SELECT * FROM " + fullyQualifiedTableName(tableName) + " WHERE " + idColumnName + " = ?";
+        "SELECT * FROM "
+            + fullyQualifiedTableName(tableMapping.getTableName())
+            + " WHERE "
+            + idColumnName
+            + " = ?";
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
     try {
       Object obj = jdbcTemplate.queryForObject(sql, mapper, id);
@@ -364,7 +364,7 @@ public class JdbcTemplateMapper {
    * @return List of objects
    */
   public <T> List<T> findAll(Class<T> clazz) {
-    String tableName = getTableName(clazz);
+    String tableName = getTableMapping(clazz).getTableName();
     String sql = "SELECT * FROM " + fullyQualifiedTableName(tableName);
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
     return jdbcTemplate.query(sql, mapper);
@@ -379,7 +379,7 @@ public class JdbcTemplateMapper {
    * @return List of objects
    */
   public <T> List<T> findAll(Class<T> clazz, String orderByClause) {
-    String tableName = getTableName(clazz);
+    String tableName = getTableMapping(clazz).getTableName();
     String sql = "SELECT * FROM " + fullyQualifiedTableName(tableName) + " " + orderByClause;
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
     return jdbcTemplate.query(sql, mapper);
@@ -411,7 +411,7 @@ public class JdbcTemplateMapper {
           "For method insert() the objects 'id' property has to be null since this insert is for an object whose id is autoincrement in database.");
     }
 
-    String tableName = getTableName(pojo.getClass());
+    String tableName = getTableMapping(pojo.getClass()).getTableName();
     LocalDateTime now = LocalDateTime.now();
 
     if (createdOnPropertyName != null && bw.isReadableProperty(createdOnPropertyName)) {
@@ -477,7 +477,7 @@ public class JdbcTemplateMapper {
           "For method insertById() the objects 'id' property cannot be null.");
     }
 
-    String tableName = getTableName(pojo.getClass());
+    String tableName = getTableMapping(pojo.getClass()).getTableName();
     LocalDateTime now = LocalDateTime.now();
 
     if (createdOnPropertyName != null && bw.isReadableProperty(createdOnPropertyName)) {
@@ -524,30 +524,195 @@ public class JdbcTemplateMapper {
     if (pojo == null) {
       throw new IllegalArgumentException("Object cannot be null");
     }
-
-    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
-    if (!bw.isReadableProperty("id")) {
+    TableMapping tableMapping = getTableMapping(pojo.getClass());
+    if (tableMapping.getIdName() == null) {
       throw new IllegalArgumentException(
           "Object " + pojo.getClass().getSimpleName() + " has to have a property named 'id'.");
     }
+    SqlPair sqlPair = updateSqlCache.get(pojo.getClass().getName());
 
-    String tableName = getTableName(pojo.getClass());
-    SqlPair sqlPair = updateSqlCache.get(tableName);
     if (sqlPair == null) {
-      sqlPair = buildUpdateSql(pojo);
+      // ignore these attributes when generating the sql 'SET' command
+      List<String> ignoreAttrs = new ArrayList<>();
+      ignoreAttrs.add("id");
+      if (createdByPropertyName != null) {
+        ignoreAttrs.add(createdByPropertyName);
+      }
+      if (createdOnPropertyName != null) {
+        ignoreAttrs.add(createdOnPropertyName);
+      }
+
+      Set<String> updatePropertyNames = new LinkedHashSet<>();
+
+      for (String propertyName : getPropertyNames(pojo)) {
+        if (!ignoreAttrs.contains(propertyName)
+            && tableMapping.getColumnName(propertyName) != null) {
+          updatePropertyNames.add(propertyName);
+        }
+      }
+      sqlPair = buildUpdateSql(tableMapping, updatePropertyNames);
+      updateSqlCache.put(pojo.getClass().getName(), sqlPair);
     }
 
+    return issueUpdate(sqlPair, pojo);
+  }
+
+  /**
+   * Updates the propertyNames (passed in as args) of the object. Assigns updated by, updated on if
+   * these properties exist for the object and the jdbcTemplateMapper is configured for these
+   * fields.
+   *
+   * @param pojo object to be updated
+   * @param propertyNames array of property names that should be updated
+   * @return 0 if no records were updated
+   */
+  public Integer update(Object pojo, String... propertyNames) {
+    if (pojo == null || ObjectUtils.isEmpty(propertyNames)) {
+      throw new IllegalArgumentException("pojo and propertyNames cannot be null");
+    }
+
+    TableMapping tableMapping = getTableMapping(pojo.getClass());
+    String tableName = tableMapping.getTableName();
+
+    // cachekey ex: className-propertyName1-propertyName2
+    String cacheKey = pojo.getClass().getName() + "-" + String.join("-", propertyNames);
+    SqlPair sqlPair = updateSqlCache.get(cacheKey);
+
+    if (sqlPair == null) {
+      // check properties have a corresponding table column
+      for (String propertyName : propertyNames) {
+        if (tableMapping.getColumnName(propertyName) == null) {
+          throw new IllegalArgumentException(
+              "property "
+                  + propertyName
+                  + " is not a property of object "
+                  + pojo.getClass().getName()
+                  + " or does not have a corresponding column in table "
+                  + tableName);
+        }
+      }
+
+      // auto assigned properties cannot be updated by user.
+      List<String> ignoreAttrs = new ArrayList<>();
+      ignoreAttrs.add("id");
+      if (versionPropertyName != null && tableMapping.getColumnName(versionPropertyName) != null) {
+        ignoreAttrs.add(versionPropertyName);
+      }
+      if (updatedOnPropertyName != null
+          && tableMapping.getColumnName(updatedOnPropertyName) != null) {
+        ignoreAttrs.add(updatedOnPropertyName);
+      }
+      if (updatedByPropertyName != null
+          && recordOperatorResolver != null
+          && tableMapping.getColumnName(updatedByPropertyName) != null) {
+        ignoreAttrs.add(updatedByPropertyName);
+      }
+
+      for (String propertyName : propertyNames) {
+        if (ignoreAttrs.contains(propertyName)) {
+          throw new IllegalArgumentException(
+              "property "
+                  + propertyName
+                  + " is an auto assigned property which cannot be manually set in update statement");
+        }
+      }
+
+      // add input properties to the update property list
+      Set<String> updatePropertyNames = new LinkedHashSet<>();
+      for (String propertyName : propertyNames) {
+        updatePropertyNames.add(propertyName);
+      }
+
+      // add the auto assigned properties if configured and have table column mapping
+      if (versionPropertyName != null && tableMapping.getColumnName(versionPropertyName) != null) {
+        updatePropertyNames.add(versionPropertyName);
+      }
+      if (updatedOnPropertyName != null
+          && tableMapping.getColumnName(updatedOnPropertyName) != null) {
+        updatePropertyNames.add(updatedOnPropertyName);
+      }
+      if (updatedByPropertyName != null
+          && recordOperatorResolver != null
+          && tableMapping.getColumnName(updatedByPropertyName) != null) {
+        updatePropertyNames.add(updatedByPropertyName);
+      }
+
+      sqlPair = buildUpdateSql(tableMapping, updatePropertyNames);
+      updateSqlCache.put(cacheKey, sqlPair);
+    }
+    return issueUpdate(sqlPair, pojo);
+  }
+
+  private SqlPair buildUpdateSql(TableMapping tableMapping, Set<String> propertyNames) {
+    String idColumnName = tableMapping.getIdName();
+    if (idColumnName == null) {
+      throw new RuntimeException(
+          "could not find id column for table " + tableMapping.getTableName());
+    }
+    Set<String> params = new HashSet<>();
+    StringBuilder sqlBuilder = new StringBuilder("UPDATE ");
+    sqlBuilder.append(fullyQualifiedTableName(tableMapping.getTableName()));
+    sqlBuilder.append(" SET ");
+
+    String versionColumnName = tableMapping.getColumnName(versionPropertyName);
+    boolean first = true;
+    for (String propertyName : propertyNames) {
+      String columnName = tableMapping.getColumnName(propertyName);
+      if (columnName != null) {
+        if (!first) {
+          sqlBuilder.append(", ");
+        } else {
+          first = false;
+        }
+        sqlBuilder.append(columnName);
+        sqlBuilder.append(" = :");
+
+        if (versionPropertyName != null && columnName.equals(versionColumnName)) {
+          sqlBuilder.append("incrementedVersion");
+          params.add("incrementedVersion");
+        } else {
+          sqlBuilder.append(propertyName);
+          params.add(propertyName);
+        }
+      }
+    }
+
+    // the where clause
+    sqlBuilder.append(" WHERE " + idColumnName + " = :id");
+    if (versionPropertyName != null && versionColumnName != null) {
+      sqlBuilder
+          .append(" AND ")
+          .append(versionColumnName)
+          .append(" = :")
+          .append(versionPropertyName);
+      params.add(versionPropertyName);
+    }
+
+    String updateSql = sqlBuilder.toString();
+    SqlPair sqlPair = new SqlPair(updateSql, params);
+
+    return sqlPair;
+  }
+
+  private Integer issueUpdate(SqlPair sqlPair, Object pojo) {
+    if (pojo == null) {
+      throw new RuntimeException("argument cannot be null");
+    }
+    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
     Set<String> parameters = sqlPair.getParams();
-    if (parameters.contains(updatedOnPropertyName)) {
+    if (updatedOnPropertyName != null && parameters.contains(updatedOnPropertyName)) {
       bw.setPropertyValue(updatedOnPropertyName, LocalDateTime.now());
     }
-    if (parameters.contains(updatedByPropertyName)) {
+    if (updatedByPropertyName != null
+        && recordOperatorResolver != null
+        && parameters.contains(updatedByPropertyName)) {
       bw.setPropertyValue(updatedByPropertyName, recordOperatorResolver.getRecordOperator());
     }
+
     Map<String, Object> attributes = convertObjectToMap(pojo);
     // if object has property version throw OptimisticLockingException
     // when update fails. The version gets incremented on update
-    if (parameters.contains(versionPropertyName)) {
+    if (sqlPair.getParams().contains("incrementedVersion")) {
       Integer versionVal = (Integer) bw.getPropertyValue(versionPropertyName);
       if (versionVal == null) {
         throw new RuntimeException(
@@ -577,160 +742,6 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Updates the propertyNames (passed in as args) of the object. Assigns updated by, updated on if
-   * these properties exist for the object and the jdbcTemplateMapper is configured for these
-   * fields.
-   *
-   * @param pojo object to be updated
-   * @param propertyNames array of property names that should be updated
-   * @return 0 if no records were updated
-   */
-  public Integer update(Object pojo, String... propertyNames) {
-    if (pojo == null || ObjectUtils.isEmpty(propertyNames)) {
-      throw new IllegalArgumentException("pojo and propertyNames cannot be null");
-    }
-
-    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
-    if (!bw.isReadableProperty("id")) {
-      throw new IllegalArgumentException(
-          "Object " + pojo.getClass().getSimpleName() + " has to have a property named 'id'.");
-    }
-
-    String tableName = getTableName(pojo.getClass());
-    String idColumnName = getTableIdColumnName(tableName);
-    List<String> dbColumnNameList = getDbColumnNames(tableName);
-
-    // cachekey ex: className-propertyName1-propertyName2
-    String cacheKey = tableName + "-" + String.join("-", propertyNames);
-    SqlPair sqlPair = updateSqlCache.get(cacheKey);
-    if (sqlPair == null) {
-      Set<String> params = new HashSet<>();
-      StringBuilder sqlBuilder = new StringBuilder("UPDATE ");
-      sqlBuilder.append(fullyQualifiedTableName(tableName));
-      sqlBuilder.append(" SET ");
-
-      Set<String> updateColumnNames = new LinkedHashSet<>();
-      for (String propertyName : propertyNames) {
-        String tableColumnName = getMatchingCaseSensitiveColumnName(dbColumnNameList, propertyName);
-        if (tableColumnName == null) {
-          throw new RuntimeException(
-              "Property "
-                  + propertyName
-                  + " does not have a coresponding column in the table "
-                  + tableName);
-        } else {
-          updateColumnNames.add(tableColumnName);
-        }
-      }
-
-      // add updated info to the column list
-      String updatedOnColumnName = null;
-      if (updatedOnPropertyName != null && bw.isReadableProperty(updatedOnPropertyName)) {
-        updatedOnColumnName =
-            getMatchingCaseSensitiveColumnName(dbColumnNameList, updatedOnPropertyName);
-        if (updatedOnColumnName != null) {
-          updateColumnNames.add(updatedOnColumnName);
-        }
-      }
-      String updatedByColumnName = null;
-      if (updatedByPropertyName != null
-          && recordOperatorResolver != null
-          && bw.isReadableProperty(updatedByPropertyName)) {
-        updatedByColumnName =
-            getMatchingCaseSensitiveColumnName(dbColumnNameList, updatedByPropertyName);
-        if (updatedByColumnName != null) {
-          updateColumnNames.add(updatedByColumnName);
-        }
-      }
-
-      String versionColumnName = null;
-      if (versionPropertyName != null && bw.isReadableProperty(versionPropertyName)) {
-        versionColumnName =
-            getMatchingCaseSensitiveColumnName(dbColumnNameList, versionPropertyName);
-        if (versionColumnName != null) {
-          updateColumnNames.add(versionColumnName);
-        }
-      }
-
-      boolean first = true;
-      for (String columnName : updateColumnNames) {
-        if (!first) {
-          sqlBuilder.append(", ");
-        } else {
-          first = false;
-        }
-        sqlBuilder.append(columnName);
-        sqlBuilder.append(" = :");
-
-        if (columnName.equals(versionColumnName)) {
-          sqlBuilder.append("incrementedVersion");
-          params.add("incrementedVersion");
-        } else {
-          String propertyName = convertSnakeToCamelCase(columnName);
-          sqlBuilder.append(propertyName);
-          params.add(propertyName);
-        }
-      }
-
-      // the where clause
-      sqlBuilder.append(" WHERE " + idColumnName + " = :id");
-      if (versionColumnName != null) {
-        sqlBuilder
-            .append(" AND ")
-            .append(versionColumnName)
-            .append(" = :")
-            .append(versionPropertyName);
-        params.add(versionPropertyName);
-      }
-
-      sqlPair = new SqlPair(sqlBuilder.toString(), params);
-
-      updateSqlCache.put(cacheKey, sqlPair);
-    }
-
-    LocalDateTime now = LocalDateTime.now();
-    if (sqlPair.getParams().contains(updatedOnPropertyName)) {
-      bw.setPropertyValue(updatedOnPropertyName, now);
-    }
-    if (sqlPair.getParams().contains(updatedByPropertyName)) {
-      bw.setPropertyValue(updatedByPropertyName, recordOperatorResolver.getRecordOperator());
-    }
-
-    Map<String, Object> attributes = convertObjectToMap(pojo);
-    // if object has property version throw OptimisticLockingException
-    // update fails. The version gets incremented
-    if (sqlPair.getParams().contains(versionPropertyName)) {
-      Integer versionVal = (Integer) bw.getPropertyValue(versionPropertyName);
-      if (versionVal == null) {
-        throw new RuntimeException(
-            versionPropertyName
-                + " cannot be null when updating "
-                + pojo.getClass().getSimpleName());
-      } else {
-        attributes.put("incrementedVersion", ++versionVal);
-        bw.setPropertyValue(
-            versionPropertyName, versionVal); // set value incremented value on object
-      }
-
-      int cnt = npJdbcTemplate.update(sqlPair.getSql(), attributes);
-      if (cnt == 0) {
-        throw new OptimisticLockingException(
-            "Update failed for "
-                + pojo.getClass().getSimpleName()
-                + " id:"
-                + attributes.get("id")
-                + " "
-                + versionPropertyName
-                + ":"
-                + attributes.get("version"));
-      }
-      return cnt;
-    } else {
-      return npJdbcTemplate.update(sqlPair.getSql(), attributes);
-    }
-  }
-
-  /**
    * Physically Deletes the object from the database
    *
    * @param pojo Object to be deleted
@@ -747,7 +758,8 @@ public class JdbcTemplateMapper {
           "Object " + pojo.getClass().getSimpleName() + " has to have a property named 'id'.");
     }
 
-    String tableName = getTableName(pojo.getClass());
+    String tableName = getTableMapping(pojo.getClass()).getTableName();
+
     String sql = "delete from " + fullyQualifiedTableName(tableName) + " where id = ?";
     Object id = bw.getPropertyValue("id");
     return jdbcTemplate.update(sql, id);
@@ -764,8 +776,7 @@ public class JdbcTemplateMapper {
     if (!(id instanceof Integer || id instanceof Long)) {
       throw new IllegalArgumentException("id has to be type of Integer or Long");
     }
-
-    String tableName = getTableName(clazz);
+    String tableName = getTableMapping(clazz).getTableName();
     String sql = "delete from " + fullyQualifiedTableName(tableName) + " where id = ?";
     return jdbcTemplate.update(sql, id);
   }
@@ -860,7 +871,9 @@ public class JdbcTemplateMapper {
       Class<U> relationshipClazz,
       String mainObjRelationshipPropertyName,
       String mainObjJoinPropertyName) {
-    String tableName = getTableName(relationshipClazz);
+    TableMapping tableMapping = getTableMapping(relationshipClazz);
+    String tableName = tableMapping.getTableName();
+    String idColumnName = getTableIdColumnName(tableMapping);
     if (isNotEmpty(mainObjList)) {
       List<Number> allColumnIds = new ArrayList<>();
       for (T mainObj : mainObjList) {
@@ -873,7 +886,6 @@ public class JdbcTemplateMapper {
         }
       }
       List<U> relatedObjList = new ArrayList<>();
-      String idColumnName = getTableIdColumnName(tableName);
       // to avoid query being issued with large number of ids
       // for the 'IN (:columnIds) clause the list is chunked by IN_CLAUSE_CHUNK_SIZE
       // and multiple queries issued if needed.
@@ -1265,8 +1277,8 @@ public class JdbcTemplateMapper {
       String mainObjCollectionPropertyName,
       String manySideJoinPropertyName,
       String manySideOrderByClause) {
-    String tableName = getTableName(manySideClazz);
 
+    String tableName = getTableMapping(manySideClazz).getTableName();
     if (isNotEmpty(mainObjList)) {
       Set<Number> allIds = new LinkedHashSet<>();
       for (T mainObj : mainObjList) {
@@ -1498,10 +1510,10 @@ public class JdbcTemplateMapper {
   public String selectCols(String tableName, String tableAlias, boolean includeLastComma) {
     String str = selectColsCache.get(tableName + "-" + tableAlias);
     if (str == null) {
-      List<String> dbColumnNames = getDbColumnNames(tableName);
+      List<String> dbColumnNames = getTableColumnNames(tableName);
       if (isEmpty(dbColumnNames)) {
         // try with uppercase table name
-        dbColumnNames = getDbColumnNames(tableName.toUpperCase());
+        dbColumnNames = getTableColumnNames(tableName.toUpperCase());
         if (isEmpty(dbColumnNames)) {
           throw new RuntimeException("No table named " + tableName);
         }
@@ -1526,88 +1538,6 @@ public class JdbcTemplateMapper {
       str = str.substring(0, str.length() - 1) + " ";
     }
     return str;
-  }
-
-  /**
-   * Builds sql update statement with named parameters for the object.
-   *
-   * @param pojo the object that needs to be update.
-   * @return The sql update string
-   */
-  private SqlPair buildUpdateSql(Object pojo) {
-    String tableName = getTableName(pojo.getClass());
-    String idColumnName = getTableIdColumnName(tableName);
-
-    Set<String> params = new HashSet<>();
-    // database columns for the tables
-    List<String> dbColumnNameList = getDbColumnNames(tableName);
-
-    // ignore these attributes when generating the sql 'SET' command
-    List<String> ignoreAttrs = new ArrayList<>();
-    ignoreAttrs.add("id");
-    if (createdByPropertyName != null) {
-      ignoreAttrs.add(createdByPropertyName);
-    }
-    if (createdOnPropertyName != null) {
-      ignoreAttrs.add(createdOnPropertyName);
-    }
-
-    List<String> updateColumnNameList = new ArrayList<>();
-    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
-    PropertyDescriptor[] propertyDescriptors = bw.getPropertyDescriptors();
-    for (PropertyDescriptor pd : propertyDescriptors) {
-      // skips non db columns and ignore fields like 'id' etc for SET
-      if (!ignoreAttrs.contains(pd.getName())) {
-        String tableColumnName = getMatchingCaseSensitiveColumnName(dbColumnNameList, pd.getName());
-        if (tableColumnName != null) {
-          updateColumnNameList.add(tableColumnName);
-        }
-      }
-    }
-
-    StringBuilder sqlBuilder = new StringBuilder("UPDATE ");
-    sqlBuilder.append(fullyQualifiedTableName(tableName));
-    // build set clause
-    sqlBuilder.append(" SET ");
-    boolean first = true;
-    String versionColumnName = null;
-    if (versionPropertyName != null) {
-      versionColumnName = getMatchingCaseSensitiveColumnName(dbColumnNameList, versionPropertyName);
-    }
-    for (String columnName : updateColumnNameList) {
-      if (!first) {
-        sqlBuilder.append(", ");
-      } else {
-        first = false;
-      }
-      sqlBuilder.append(columnName);
-      sqlBuilder.append(" = :");
-
-      if (columnName.equals(versionColumnName)) {
-        sqlBuilder.append("incrementedVersion");
-        params.add("incrementedVersion");
-      } else {
-        String propertyName = convertSnakeToCamelCase(columnName);
-        sqlBuilder.append(propertyName);
-        params.add(propertyName);
-      }
-    }
-    // build where clause
-    sqlBuilder.append(" WHERE " + idColumnName + " = :id");
-    if (versionColumnName != null) {
-      sqlBuilder
-          .append(" AND ")
-          .append(versionColumnName)
-          .append(" = :")
-          .append(versionPropertyName);
-      params.add(versionPropertyName);
-    }
-
-    String updateSql = sqlBuilder.toString();
-    SqlPair sqlPair = new SqlPair(updateSql, params);
-    updateSqlCache.put(tableName, sqlPair);
-
-    return sqlPair;
   }
 
   /**
@@ -1691,7 +1621,7 @@ public class JdbcTemplateMapper {
    * @param tableName table name
    * @return the list of columns of the table
    */
-  private List<String> getDbColumnNames(String tableName) {
+  private List<String> getTableColumnNames(String tableName) {
     List<String> columns = tableColumnNamesCache.get(tableName);
     if (isEmpty(columns)) {
       columns = new ArrayList<>();
@@ -1776,70 +1706,66 @@ public class JdbcTemplateMapper {
     return bw.getPropertyValue(propertyName);
   }
 
-  /**
-   * Gets the corresponding table name for the class. If @Table annotation is used for the class use
-   * its 'name' attribute otherwise returns a snake case name.
-   *
-   * @param clazz The class
-   * @return The table name
-   */
-  private String getTableName(Class<?> clazz) {
-    String tableName = objectToTableCache.get(clazz.getName());
-    if (tableName == null) {
+  private TableMapping getTableMapping(Class<?> clazz) {
+    TableMapping tableMapping = objectToTableMappingCache.get(clazz.getName());
+
+    if (tableMapping == null) {
+      String tName = null;
       if (clazz.isAnnotationPresent(Table.class)) {
         // @Table annotation is present. Get the table name
         Table table = clazz.getAnnotation(Table.class);
-        tableName = table.name();
+        tName = table.name();
       } else {
-        tableName = convertCamelToSnakeCase(clazz.getSimpleName());
-        List<String> columnNames = getDbColumnNames(tableName);
-        if (ObjectUtils.isEmpty(columnNames)) {
-          // try with uppercase
-          tableName = tableName.toUpperCase();
-          columnNames = getDbColumnNames(tableName);
-          if (ObjectUtils.isEmpty(columnNames)) {
-            throw new RuntimeException(
-                "Could not find corresponding table for class " + clazz.getName());
-          }
-        }
-        // while we are at it, we get the case sensitive id name
-        if (!ObjectUtils.isEmpty(columnNames)) {
-          for (String columnName : columnNames) {
-            if (columnName.equals("id") || columnName.equals("ID")) {
-              tableToCaseSensitiveIdName.put(tableName, columnName);
-              break;
-            }
-          }
-        }
+        tName = convertCamelToSnakeCase(clazz.getSimpleName());
       }
-    }
-    objectToTableCache.put(clazz.getName(), tableName);
-    return tableName;
-  }
 
-  private String getTableIdColumnName(String tableName) {
-    String idName = tableToCaseSensitiveIdName.get(tableName);
-    if (StringUtils.isEmpty(idName)) {
-      List<String> columnNames = getDbColumnNames(tableName);
+      List<String> columnNames = getTableColumnNames(tName);
       if (ObjectUtils.isEmpty(columnNames)) {
-        // try again with uppercase table name.
-        columnNames = getDbColumnNames(tableName.toUpperCase());
+        // try with uppercase
+        tName = tName.toUpperCase();
+        columnNames = getTableColumnNames(tName);
         if (ObjectUtils.isEmpty(columnNames)) {
-          throw new RuntimeException("Could not find table " + tableName);
+          throw new RuntimeException(
+              "Could not find corresponding table for class " + clazz.getName());
         }
       }
-      if (!ObjectUtils.isEmpty(columnNames)) {
+
+      // if code reaches here table exists
+      try {
+        List<String> objPropertyNames = getPropertyNames(clazz.newInstance());
+
+        List<PropertyColumnMapping> propertyColumnMappings = new ArrayList<>();
+        for (String columnName : columnNames) {
+          String propertyName = convertSnakeToCamelCase(columnName);
+          if (objPropertyNames.contains(propertyName)) {
+            propertyColumnMappings.add(new PropertyColumnMapping(propertyName, columnName));
+          }
+        }
+
+        tableMapping = new TableMapping();
+        tableMapping.setTableName(tName);
+        tableMapping.setPropertyColumnMappings(propertyColumnMappings);
+
+        // get the case sensitive id name
         for (String columnName : columnNames) {
           if (columnName.equals("id") || columnName.equals("ID")) {
-            idName = columnName;
-            tableToCaseSensitiveIdName.put(tableName, idName);
+            tableMapping.setIdName(columnName);
             break;
           }
         }
+      } catch (Exception e) {
+        throw new RuntimeException(e);
       }
     }
+    objectToTableMappingCache.put(clazz.getName(), tableMapping);
+    return tableMapping;
+  }
+
+  private String getTableIdColumnName(TableMapping tableMapping) {
+    String idName = tableMapping.getIdName();
     if (StringUtils.isEmpty(idName)) {
-      throw new RuntimeException("Could not find id column for table " + tableName);
+      throw new RuntimeException(
+          "Could not find id column for table" + tableMapping.getTableName());
     }
     return idName;
   }
@@ -1848,7 +1774,7 @@ public class JdbcTemplateMapper {
     if (tableName == null || joinPropertyName == null) {
       throw new IllegalArgumentException("tableName and joinPropertyName cannot be null");
     }
-    List<String> columnNames = getDbColumnNames(tableName);
+    List<String> columnNames = getTableColumnNames(tableName);
 
     String joinColumnName = convertCamelToSnakeCase(joinPropertyName);
     String ucJoinColumnName = joinColumnName.toUpperCase();
@@ -1863,24 +1789,6 @@ public class JdbcTemplateMapper {
             + tableName
             + " for joinPropertyName "
             + joinPropertyName);
-  }
-
-  private String getMatchingCaseSensitiveColumnName(
-      List<String> dbColumnNameList, String propertyName) {
-    String val = null;
-    if (isNotEmpty(dbColumnNameList) && isNotEmpty(propertyName)) {
-      String columnName = convertCamelToSnakeCase(propertyName);
-      if (dbColumnNameList.contains(columnName)) {
-        val = columnName;
-      } else {
-        // try with uppercase
-        String ucName = columnName.toUpperCase();
-        if (dbColumnNameList.contains(ucName)) {
-          val = ucName;
-        }
-      }
-    }
-    return val;
   }
 
   /**

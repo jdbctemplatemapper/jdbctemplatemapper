@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import org.jdbctemplatemapper.model.Customer;
 import org.jdbctemplatemapper.model.NoIdObject;
+import org.jdbctemplatemapper.model.NoTableObject;
 import org.jdbctemplatemapper.model.Order;
 import org.jdbctemplatemapper.model.OrderLine;
 import org.jdbctemplatemapper.model.Product;
@@ -174,11 +175,11 @@ public class JdbcTemplateMapperTest {
   }
 
   @Test
-  public void update_Test() throws Exception{
+  public void update_Test() throws Exception {
     Order order = jdbcTemplateMapper.findById(1, Order.class);
     LocalDateTime prevUpdatedOn = order.getUpdatedOn();
-    
-    Thread.sleep(1000); //avoid timing issue.
+
+    Thread.sleep(1000); // avoid timing issue.
 
     order.setStatus("IN PROCESS");
 
@@ -222,11 +223,11 @@ public class JdbcTemplateMapperTest {
   }
 
   @Test
-  public void update_noIdObjectFailureTest() {
+  public void update_noTableObjectFailureTest() {
     Assertions.assertThrows(
-        IllegalArgumentException.class,
+        RuntimeException.class,
         () -> {
-          NoIdObject pojo = new NoIdObject();
+          NoTableObject pojo = new NoTableObject();
           pojo.setSomething("abc");
           jdbcTemplateMapper.update(pojo);
         });
@@ -235,17 +236,17 @@ public class JdbcTemplateMapperTest {
   @Test
   public void update_byPropertyTest() throws Exception {
     Order order = jdbcTemplateMapper.findById(2, Order.class);
-    
+
     Integer prevVersion = order.getVersion();
-    
+
     LocalDateTime prevUpdatedOn = order.getUpdatedOn();
     order.setStatus("COMPLETE");
-    
-    Thread.sleep(1000); //avoid timing issue.
+
+    Thread.sleep(1000); // avoid timing issue.
     jdbcTemplateMapper.update(order, "status");
 
     order = jdbcTemplateMapper.findById(2, Order.class); // requery
-    
+
     assertEquals("COMPLETE", order.getStatus());
     assertTrue(order.getVersion() > prevVersion); // version incremented
     assertTrue(order.getUpdatedOn().isAfter(prevUpdatedOn));
@@ -289,7 +290,7 @@ public class JdbcTemplateMapperTest {
   @Test
   public void update_byPropertyNoIdObjectFailureTest() {
     Assertions.assertThrows(
-        IllegalArgumentException.class,
+        RuntimeException.class,
         () -> {
           NoIdObject pojo = new NoIdObject();
           pojo.setSomething("abc");
@@ -298,14 +299,14 @@ public class JdbcTemplateMapperTest {
   }
 
   @Test
-  public void update_byPropertyAutoAssignFieldsTest() {
-    Order order = jdbcTemplateMapper.findById(2, Order.class);
-    LocalDateTime prevUpdatedOn = order.getUpdatedOn();
-    order.setStatus("CLOSED");
-    order.setUpdatedOn(LocalDateTime.now().minusDays(30));
-    // make sure the updateOn is assigned the now() and not the value passed in
-    jdbcTemplateMapper.update(order, "status", "updatedOn");
-    assertTrue(order.getUpdatedOn().isAfter(prevUpdatedOn));
+  public void update_byPropertyAutoAssignFieldFailureTest() {
+    Assertions.assertThrows(
+        RuntimeException.class,
+        () -> {
+          Order order = jdbcTemplateMapper.findById(2, Order.class);
+          order.setStatus("CLOSED");
+          jdbcTemplateMapper.update(order, "status", "updatedOn");
+        });
   }
 
   @Test
