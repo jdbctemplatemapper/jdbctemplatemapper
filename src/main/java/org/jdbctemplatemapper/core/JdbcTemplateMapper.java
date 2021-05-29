@@ -1,10 +1,10 @@
 package org.jdbctemplatemapper.core;
 
 import java.beans.PropertyDescriptor;
-import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,7 +30,9 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
+import org.springframework.jdbc.support.DatabaseMetaDataCallback;
 import org.springframework.jdbc.support.JdbcUtils;
+import org.springframework.jdbc.support.MetaDataAccessException;
 import org.springframework.util.ObjectUtils;
 
 import com.microsoft.sqlserver.jdbc.StringUtils;
@@ -540,7 +542,7 @@ public class JdbcTemplateMapper {
 
       Set<String> updatePropertyNames = new LinkedHashSet<>();
 
-      for (String propertyName : getPropertyNames(pojo)) {
+      for (String propertyName : getObjectPropertyNames(pojo)) {
         if (!ignoreAttrs.contains(propertyName)
             && tableMapping.getColumnName(propertyName) != null) {
           updatePropertyNames.add(propertyName);
@@ -972,7 +974,7 @@ public class JdbcTemplateMapper {
             relatedObjMapper,
             mainObjRelationshipPropertyName,
             mainObjJoinPropertyName);
-    return  !ObjectUtils.isEmpty(list) ? list.get(0) : null;
+    return !ObjectUtils.isEmpty(list) ? list.get(0) : null;
   }
 
   /**
@@ -1501,6 +1503,7 @@ public class JdbcTemplateMapper {
    */
   public String selectCols(String tableName, String tableAlias, boolean includeLastComma) {
     String str = selectColsCache.get(tableName + "-" + tableAlias);
+
     if (str == null) {
       List<String> dbColumnNames = getTableColumnNames(tableName);
       if (ObjectUtils.isEmpty(dbColumnNames)) {
@@ -1548,7 +1551,7 @@ public class JdbcTemplateMapper {
       BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
       // need below for java.sql.Timestamp to java.time.LocalDateTime conversion etc
       bw.setConversionService(defaultConversionService);
-      List<String> propertyNames = getPropertyNames(obj);
+      List<String> propertyNames = getObjectPropertyNames(obj);
       for (String propName : propertyNames) {
         String columnName = convertCamelToSnakeCase(propName);
         if (!ObjectUtils.isEmpty(prefix)) {
@@ -1557,7 +1560,7 @@ public class JdbcTemplateMapper {
         int index = resultSetColumnNames.indexOf(columnName.toLowerCase());
         Object columnVal = null;
         if (index != -1) {
-          // using Springs JdbcUtils to handle oracle.sql.Timestamp ...
+          // JDBC index starts at 1. using Springs JdbcUtils to handle oracle.sql.Timestamp ....
           columnVal = JdbcUtils.getResultSetValue(rs, index + 1);
         }
         bw.setPropertyValue(propName, columnVal);
@@ -1598,7 +1601,7 @@ public class JdbcTemplateMapper {
    */
   private Map<String, Object> convertObjectToMap(Object pojo) {
     Map<String, Object> camelCaseAttrs = new HashMap<>();
-    List<String> propertyNames = getPropertyNames(pojo);
+    List<String> propertyNames = getObjectPropertyNames(pojo);
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
     for (String propName : propertyNames) {
       Object propValue = bw.getPropertyValue(propName);
@@ -1607,31 +1610,39 @@ public class JdbcTemplateMapper {
     return camelCaseAttrs;
   }
 
-  /**
-   * Gets the table column names from Databases MetaData. The column names are cached
-   *
-   * @param tableName table name
-   * @return the list of columns of the table
-   */
   private List<String> getTableColumnNames(String tableName) {
-    List<String> columns = tableColumnNamesCache.get(tableName);
-    if (ObjectUtils.isEmpty(columns)) {
-      columns = new ArrayList<>();
-      try (Connection connection = jdbcTemplate.getDataSource().getConnection()) {
-        DatabaseMetaData metadata = connection.getMetaData();
-        ResultSet resultSet = metadata.getColumns(null, schemaName, tableName, null);
-        while (resultSet.next()) {
-          columns.add(resultSet.getString("COLUMN_NAME"));
-        }
-        resultSet.close();
-        if (!ObjectUtils.isEmpty(columns)) {
-          tableColumnNamesCache.put(tableName, columns);
-        }
-      } catch (Exception e) {
-        throw new RuntimeException(e);
+    try {
+      List<String> columnNames = tableColumnNamesCache.get(tableName);
+      if (ObjectUtils.isEmpty(columnNames)) {
+        // Using Spring JdbcUtils.extractDatabaseMetaData() since it has some robust processing for metadata access
+        columnNames =
+            JdbcUtils.extractDatabaseMetaData(
+                jdbcTemplate.getDataSource(),
+                new DatabaseMetaDataCallback<List<String>>() {
+                  public List<String> processMetaData(DatabaseMetaData metadata)
+                      throws SQLException, MetaDataAccessException {
+                    ResultSet resultSet = null;
+                    try {
+                      List<String> columns = new ArrayList<>();
+                      resultSet = metadata.getColumns(null, schemaName, tableName, null);
+                      while (resultSet.next()) {
+                        columns.add(resultSet.getString("COLUMN_NAME"));
+                      }
+                      resultSet.close();
+                      if (!ObjectUtils.isEmpty(columns)) {
+                          tableColumnNamesCache.put(tableName, columns);
+                      }                     
+                      return columns;
+                    } finally {
+                      JdbcUtils.closeResultSet(resultSet);
+                    }
+                  }
+                });
       }
+      return columnNames;
+    } catch (Exception e) {
+      throw new RuntimeException();
     }
-    return columns;
   }
 
   /**
@@ -1666,7 +1677,7 @@ public class JdbcTemplateMapper {
    * @param pojo the java object
    * @return List of property names.
    */
-  private List<String> getPropertyNames(Object pojo) {
+  private List<String> getObjectPropertyNames(Object pojo) {
     List<String> list = objectPropertyNamesCache.get(pojo.getClass().getSimpleName());
     if (list == null) {
       BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
@@ -1698,10 +1709,10 @@ public class JdbcTemplateMapper {
     return bw.getPropertyValue(propertyName);
   }
 
-  private TableMapping getTableMapping(Class<?> clazz) { 
-	if(clazz == null) {
-		throw new RuntimeException("arg clazz cannot be null");
-	}
+  private TableMapping getTableMapping(Class<?> clazz) {
+    if (clazz == null) {
+      throw new RuntimeException("arg clazz cannot be null");
+    }
     TableMapping tableMapping = objectToTableMappingCache.get(clazz.getName());
 
     if (tableMapping == null) {
@@ -1727,7 +1738,7 @@ public class JdbcTemplateMapper {
 
       // if code reaches here table exists
       try {
-        List<String> objPropertyNames = getPropertyNames(clazz.newInstance());
+        List<String> objPropertyNames = getObjectPropertyNames(clazz.newInstance());
 
         List<PropertyColumnMapping> propertyColumnMappings = new ArrayList<>();
         for (String columnName : columnNames) {
@@ -1861,5 +1872,4 @@ public class JdbcTemplateMapper {
       return list;
     }
   }
-
 }
