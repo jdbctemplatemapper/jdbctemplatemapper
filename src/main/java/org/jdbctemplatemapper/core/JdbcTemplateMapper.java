@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -1321,38 +1320,43 @@ public class JdbcTemplateMapper {
    */
   @SuppressWarnings("all")
   public Map<String, List> multipleModelMapper(ResultSet rs, SelectMapper... selectMappers) {
-    try {
-      Map<String, List> resultMap = new HashMap();
-      Map<String, List> tempMap = new HashMap<>();
-      for (SelectMapper selectMapper : selectMappers) {
-        tempMap.put(selectMapper.getSqlColumnPrefix(), new ArrayList());
-      }
-      List<String> resultSetColumnNames = getResultSetColumnNames(rs);
-      while (rs.next()) {
-        for (SelectMapper selectMapper : selectMappers) {
-          Number id = (Number) rs.getObject(selectMapper.getSqlColumnPrefix() + "id");
-          if (id != null && id.longValue() > 0) {
-            Object obj =
-                newInstance(
-                    selectMapper.getClazz(),
-                    rs,
-                    selectMapper.getSqlColumnPrefix(),
-                    resultSetColumnNames);
-            tempMap.get(selectMapper.getSqlColumnPrefix()).add(obj);
-          }
-        }
-      }
-
-      // each list should only have elements unique by 'id'
-      for (String key : tempMap.keySet()) {
-        List<Object> list = tempMap.get(key);
-        resultMap.put(key, uniqueByIdList(list));
-      }
-      return resultMap;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
+	    try {
+	      Map<String, List> resultMap = new HashMap();
+	      for (SelectMapper selectMapper : selectMappers) {
+	        resultMap.put(selectMapper.getSqlColumnPrefix(), new ArrayList());
+	      }
+	      List<String> resultSetColumnNames = getResultSetColumnNames(rs);
+	      while (rs.next()) {
+	        for (SelectMapper selectMapper : selectMappers) {
+	          // Objects should have an id field value to instantiate
+	          Number id = (Number) rs.getObject(selectMapper.getSqlColumnPrefix() + "id");
+	          if (id != null && id.longValue() > 0) {
+	            Object obj =
+	                newInstance(
+	                    selectMapper.getClazz(),
+	                    rs,
+	                    selectMapper.getSqlColumnPrefix(),
+	                    resultSetColumnNames);
+	            
+	            // add only unique objects to list.
+	            boolean exists = false;
+	            for (Object entry : resultMap.get(selectMapper.getSqlColumnPrefix())) {
+	                Number entryId = (Number) getSimpleProperty(entry, "id");
+	                if (entryId != null && entryId.longValue() == id.longValue()) {
+	                	exists = true;
+	                }
+	              }
+	            if(!exists) {
+	            	resultMap.get(selectMapper.getSqlColumnPrefix()).add(obj);
+	            }
+	          }
+	        }
+	      }
+	      return resultMap;
+	    } catch (Exception e) {
+	      throw new RuntimeException(e);
+	    }
+	  }
 
   /**
    * Generates a string which can be used in a sql select statement with the all columns of the
@@ -1525,7 +1529,7 @@ public class JdbcTemplateMapper {
    *
    * @param clazz Class of object to be instantiated
    * @param rs Sql result set
-   * @param prefix The sql alias in the query
+   * @param prefix The sql column alias prefix in the query
    * @param resultSetColumnNames the column names in the sql statement.
    * @return Object of type T populated from the data in the result set
    */
@@ -1543,19 +1547,17 @@ public class JdbcTemplateMapper {
           columnName = prefix + columnName;
         }
         int index = resultSetColumnNames.indexOf(columnName.toLowerCase());
-        Object columnVal = null;
         if (index != -1) {
           // JDBC index starts at 1. using Springs JdbcUtils to handle oracle.sql.Timestamp ....
-          columnVal = JdbcUtils.getResultSetValue(rs, index + 1);
+          bw.setPropertyValue(propName, JdbcUtils.getResultSetValue(rs, index+1));
         }
-        bw.setPropertyValue(propName, columnVal);
       }
       return clazz.cast(obj);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
-
+ 
   /**
    * Converts an object to a map with key as database column names and assigned corresponding object
    * value. Camel case property names are converted to snake case. For example property name
@@ -1663,10 +1665,10 @@ public class JdbcTemplateMapper {
    * @return List of property names.
    */
   private List<String> getObjectPropertyNames(Object obj) {
-    List<String> list = objectPropertyNamesCache.get(obj.getClass().getSimpleName());
-    if (list == null) {
+    List<String> propertyNames = objectPropertyNamesCache.get(obj.getClass().getName());
+    if (propertyNames == null) {
       BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
-      list = new ArrayList<>();
+      propertyNames = new ArrayList<>();
       PropertyDescriptor[] propertyDescriptors = bw.getPropertyDescriptors();
       for (PropertyDescriptor pd : propertyDescriptors) {
         String propName = pd.getName();
@@ -1674,12 +1676,12 @@ public class JdbcTemplateMapper {
         if ("class".equals(propName)) {
           continue;
         } else {
-          list.add(propName);
+          propertyNames.add(propName);
         }
       }
-      objectPropertyNamesCache.put(obj.getClass().getSimpleName(), list);
+      objectPropertyNamesCache.put(obj.getClass().getName(), propertyNames);
     }
-    return list;
+    return propertyNames;
   }
 
   /**
@@ -1762,7 +1764,7 @@ public class JdbcTemplateMapper {
   }
 
   private String getJoinColumnName(String tableName, String joinPropertyName) {
-    if (tableName == null || joinPropertyName == null) {
+    if (isEmpty(tableName) || isEmpty(joinPropertyName)) {
       throw new RuntimeException("tableName and joinPropertyName cannot be null");
     }
     List<String> columnNames = getTableColumnNames(tableName);
@@ -1834,28 +1836,6 @@ public class JdbcTemplateMapper {
       return schemaName + "." + tableName;
     }
     return tableName;
-  }
-
-  /**
-   * Get list with unique objects by object.id
-   *
-   * @param list
-   * @return List of unique objects by id
-   */
-  private List<Object> uniqueByIdList(List<Object> list) {
-    if (isNotEmpty(list)) {
-      Map<Number, Object> idToObjectMap = new LinkedHashMap<>();
-      for (Object obj : list) {
-        BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
-        Number id = (Number) bw.getPropertyValue("id");
-        if (!idToObjectMap.containsKey(id)) {
-          idToObjectMap.put(id, obj);
-        }
-      }
-      return new ArrayList<Object>(idToObjectMap.values());
-    } else {
-      return list;
-    }
   }
 
   private boolean isEmpty(String str) {

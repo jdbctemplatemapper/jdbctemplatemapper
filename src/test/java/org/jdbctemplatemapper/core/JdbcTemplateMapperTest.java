@@ -965,6 +965,7 @@ public class JdbcTemplateMapperTest {
     List<Customer> customers = resultMap.get("c_");
     List<Product> products = resultMap.get("p_");
 
+    System.out.println(orders);
     assertEquals(3, orders.size());
     assertEquals(3, orderLines.size());
     assertEquals(2, customers.size());
