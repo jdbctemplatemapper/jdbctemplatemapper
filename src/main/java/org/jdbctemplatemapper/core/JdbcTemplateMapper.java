@@ -1,6 +1,7 @@
 package org.jdbctemplatemapper.core;
 
 import java.beans.PropertyDescriptor;
+import java.lang.reflect.Method;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -32,6 +33,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.DatabaseMetaDataCallback;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.jdbc.support.MetaDataAccessException;
+import org.springframework.util.ReflectionUtils;
 
 /**
  * Spring's JdbcTemplate gives full control of data access using SQL. It removes a lot of the boiler
@@ -184,6 +186,10 @@ public class JdbcTemplateMapper {
   // Map key - object class name
   //     value - the table name
   private Map<String, TableMapping> objectToTableMappingCache = new ConcurrentHashMap<>();
+  
+  // Map key - object class name
+  //     value - Method for id
+  private Map<String, Method> objectToIdMethodCache = new ConcurrentHashMap<>();
 
   /**
    * The constructor.
@@ -958,13 +964,13 @@ public class JdbcTemplateMapper {
           relatedObjList
               .stream()
               .filter(e -> e != null)
-              .collect(Collectors.toMap(e -> (Number) getSimpleProperty(e, "id"), obj -> obj));
+              .collect(Collectors.toMap(e -> (Number) getIdProperty(e), obj -> obj));
 
       for (T mainObj : mainObjList) {
         if (mainObj != null) {
-          Number joinPropertyValue = (Number) getSimpleProperty(mainObj, mainObjJoinPropertyName);
-          if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {
-            BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
+          BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
+          Number joinPropertyValue = (Number) bw.getPropertyValue(mainObjJoinPropertyName);
+          if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {         
             bw.setPropertyValue(
                 mainObjRelationshipPropertyName, idToObjectMap.get(joinPropertyValue));
           }
@@ -1296,7 +1302,7 @@ public class JdbcTemplateMapper {
         for (T mainObj : mainObjList) {
           if (mainObj != null) {
             BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
-            bw.setConversionService(defaultConversionService);
+            //bw.setConversionService(defaultConversionService);
             Number idValue = (Number) bw.getPropertyValue("id");
             List<U> relatedList = mapColumnIdToManySide.get(idValue);
             bw.setPropertyValue(mainObjCollectionPropertyName, relatedList);
@@ -1341,7 +1347,7 @@ public class JdbcTemplateMapper {
 	            // add only unique objects to list.
 	            boolean exists = false;
 	            for (Object entry : resultMap.get(selectMapper.getSqlColumnPrefix())) {
-	                Number entryId = (Number) getSimpleProperty(entry, "id");
+	                Number entryId = (Number) getIdProperty(entry);
 	                if (entryId != null && entryId.longValue() == id.longValue()) {
 	                	exists = true;
 	                }
@@ -1694,6 +1700,18 @@ public class JdbcTemplateMapper {
   private Object getSimpleProperty(Object obj, String propertyName) {
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
     return bw.getPropertyValue(propertyName);
+  }
+  
+  private Object getIdProperty(Object obj) { 
+	Method method = objectToIdMethodCache.get(obj.getClass().getName());
+	if (method == null) {
+	   method = ReflectionUtils.findMethod(obj.getClass(), "getId");
+	   if(method == null) {
+		 throw new RuntimeException("method getId() not found in object " + obj.getClass().getName());
+	   }
+	   objectToIdMethodCache.put(obj.getClass().getName(), method);
+	}
+	return ReflectionUtils.invokeMethod(method, obj);
   }
 
   private TableMapping getTableMapping(Class<?> clazz) {
