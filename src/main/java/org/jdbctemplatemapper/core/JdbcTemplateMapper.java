@@ -34,6 +34,7 @@ import org.springframework.jdbc.support.DatabaseMetaDataCallback;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.jdbc.support.MetaDataAccessException;
 import org.springframework.util.ReflectionUtils;
+import org.springframework.util.StringUtils;
 
 /**
  * Spring's JdbcTemplate gives full control of data access using SQL. It removes a lot of the boiler
@@ -186,7 +187,7 @@ public class JdbcTemplateMapper {
   // Map key - object class name
   //     value - the table name
   private Map<String, TableMapping> objectToTableMappingCache = new ConcurrentHashMap<>();
-  
+
   // Map key - object class name
   //     value - Method for id
   private Map<String, Method> objectToIdMethodCache = new ConcurrentHashMap<>();
@@ -764,10 +765,9 @@ public class JdbcTemplateMapper {
       List<Number> allColumnIds = new ArrayList<>();
       for (T mainObj : mainObjList) {
         if (mainObj != null) {
-          BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
-          Number joinPropertyValue = (Number) bw.getPropertyValue(mainObjJoinPropertyName);
+          Number joinPropertyValue = (Number) getSimpleProperty(mainObj, mainObjJoinPropertyName);
           if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {
-            allColumnIds.add((Number) bw.getPropertyValue(mainObjJoinPropertyName));
+            allColumnIds.add(joinPropertyValue);
           }
         }
       }
@@ -970,7 +970,7 @@ public class JdbcTemplateMapper {
         if (mainObj != null) {
           BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
           Number joinPropertyValue = (Number) bw.getPropertyValue(mainObjJoinPropertyName);
-          if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {         
+          if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {
             bw.setPropertyValue(
                 mainObjRelationshipPropertyName, idToObjectMap.get(joinPropertyValue));
           }
@@ -1169,8 +1169,7 @@ public class JdbcTemplateMapper {
       Set<Number> allIds = new LinkedHashSet<>();
       for (T mainObj : mainObjList) {
         if (mainObj != null) {
-          BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
-          Number idVal = (Number) bw.getPropertyValue("id");
+          Number idVal = (Number) getIdProperty(mainObj);
           if (idVal != null && idVal.longValue() > 0) {
             allIds.add((idVal));
           } else {
@@ -1302,7 +1301,6 @@ public class JdbcTemplateMapper {
         for (T mainObj : mainObjList) {
           if (mainObj != null) {
             BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
-            //bw.setConversionService(defaultConversionService);
             Number idValue = (Number) bw.getPropertyValue("id");
             List<U> relatedList = mapColumnIdToManySide.get(idValue);
             bw.setPropertyValue(mainObjCollectionPropertyName, relatedList);
@@ -1326,43 +1324,43 @@ public class JdbcTemplateMapper {
    */
   @SuppressWarnings("all")
   public Map<String, List> multipleModelMapper(ResultSet rs, SelectMapper... selectMappers) {
-	    try {
-	      Map<String, List> resultMap = new HashMap();
-	      for (SelectMapper selectMapper : selectMappers) {
-	        resultMap.put(selectMapper.getSqlColumnPrefix(), new ArrayList());
-	      }
-	      List<String> resultSetColumnNames = getResultSetColumnNames(rs);
-	      while (rs.next()) {
-	        for (SelectMapper selectMapper : selectMappers) {
-	          // Objects should have an id field value to instantiate
-	          Number id = (Number) rs.getObject(selectMapper.getSqlColumnPrefix() + "id");
-	          if (id != null && id.longValue() > 0) {
-	            Object obj =
-	                newInstance(
-	                    selectMapper.getClazz(),
-	                    rs,
-	                    selectMapper.getSqlColumnPrefix(),
-	                    resultSetColumnNames);
-	            
-	            // add only unique objects to list.
-	            boolean exists = false;
-	            for (Object entry : resultMap.get(selectMapper.getSqlColumnPrefix())) {
-	                Number entryId = (Number) getIdProperty(entry);
-	                if (entryId != null && entryId.longValue() == id.longValue()) {
-	                	exists = true;
-	                }
-	              }
-	            if(!exists) {
-	            	resultMap.get(selectMapper.getSqlColumnPrefix()).add(obj);
-	            }
-	          }
-	        }
-	      }
-	      return resultMap;
-	    } catch (Exception e) {
-	      throw new RuntimeException(e);
-	    }
-	  }
+    try {
+      Map<String, List> resultMap = new HashMap();
+      for (SelectMapper selectMapper : selectMappers) {
+        resultMap.put(selectMapper.getSqlColumnPrefix(), new ArrayList());
+      }
+      List<String> resultSetColumnNames = getResultSetColumnNames(rs);
+      while (rs.next()) {
+        for (SelectMapper selectMapper : selectMappers) {
+          // Objects should have an id field value to instantiate
+          Number id = (Number) rs.getObject(selectMapper.getSqlColumnPrefix() + "id");
+          if (id != null && id.longValue() > 0) {
+            Object obj =
+                newInstance(
+                    selectMapper.getClazz(),
+                    rs,
+                    selectMapper.getSqlColumnPrefix(),
+                    resultSetColumnNames);
+
+            // add only unique objects to list.
+            boolean exists = false;
+            for (Object entry : resultMap.get(selectMapper.getSqlColumnPrefix())) {
+              Number entryId = (Number) getIdProperty(entry);
+              if (entryId != null && entryId.longValue() == id.longValue()) {
+                exists = true;
+              }
+            }
+            if (!exists) {
+              resultMap.get(selectMapper.getSqlColumnPrefix()).add(obj);
+            }
+          }
+        }
+      }
+      return resultMap;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   /**
    * Generates a string which can be used in a sql select statement with the all columns of the
@@ -1555,7 +1553,7 @@ public class JdbcTemplateMapper {
         int index = resultSetColumnNames.indexOf(columnName.toLowerCase());
         if (index != -1) {
           // JDBC index starts at 1. using Springs JdbcUtils to handle oracle.sql.Timestamp ....
-          bw.setPropertyValue(propName, JdbcUtils.getResultSetValue(rs, index+1));
+          bw.setPropertyValue(propName, JdbcUtils.getResultSetValue(rs, index + 1));
         }
       }
       return clazz.cast(obj);
@@ -1563,7 +1561,7 @@ public class JdbcTemplateMapper {
       throw new RuntimeException(e);
     }
   }
- 
+
   /**
    * Converts an object to a map with key as database column names and assigned corresponding object
    * value. Camel case property names are converted to snake case. For example property name
@@ -1690,28 +1688,33 @@ public class JdbcTemplateMapper {
     return propertyNames;
   }
 
-  /**
-   * Gets the property value of an object using Springs BeanWrapper
-   *
-   * @param obj the java object
-   * @param propertyName the property name
-   * @return The property value
-   */
   private Object getSimpleProperty(Object obj, String propertyName) {
-    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
-    return bw.getPropertyValue(propertyName);
-  }
-  
-  private Object getIdProperty(Object obj) { 
-	Method method = objectToIdMethodCache.get(obj.getClass().getName());
-	if (method == null) {
-	   method = ReflectionUtils.findMethod(obj.getClass(), "getId");
-	   if(method == null) {
-		 throw new RuntimeException("method getId() not found in object " + obj.getClass().getName());
-	   }
-	   objectToIdMethodCache.put(obj.getClass().getName(), method);
+	if(obj == null && isEmpty(propertyName)) {
+		throw new RuntimeException("obj and propertyName cannot be null");
 	}
-	return ReflectionUtils.invokeMethod(method, obj);
+    Method method =
+        ReflectionUtils.findMethod(obj.getClass(), "get" + StringUtils.capitalize(propertyName));
+    if (method == null) {
+      throw new RuntimeException(
+          "method get"
+              + StringUtils.capitalize(propertyName)
+              + "() not found in object "
+              + obj.getClass().getName());
+    }
+    return ReflectionUtils.invokeMethod(method, obj);
+  }
+
+  private Object getIdProperty(Object obj) {
+    Method method = objectToIdMethodCache.get(obj.getClass().getName());
+    if (method == null) {
+      method = ReflectionUtils.findMethod(obj.getClass(), "getId");
+      if (method == null) {
+        throw new RuntimeException(
+            "method getId() not found in object " + obj.getClass().getName());
+      }
+      objectToIdMethodCache.put(obj.getClass().getName(), method);
+    }
+    return ReflectionUtils.invokeMethod(method, obj);
   }
 
   private TableMapping getTableMapping(Class<?> clazz) {
