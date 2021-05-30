@@ -194,7 +194,7 @@ public class JdbcTemplateMapper {
    */
   public JdbcTemplateMapper(JdbcTemplate jdbcTemplate, String schemaName) {
     if (jdbcTemplate == null) {
-      throw new RuntimeException("dataSource cannot be null");
+      throw new RuntimeException("jdbcTemplate cannot be null");
     }
     this.jdbcTemplate = jdbcTemplate;
     this.schemaName = schemaName;
@@ -375,17 +375,17 @@ public class JdbcTemplateMapper {
    * <p>Also assigns created by, created on, updated by, updated on, version if these properties
    * exist for the object and the JdbcTemplateMapper is configured for them.
    *
-   * @param pojo The object to be saved
+   * @param obj The object to be saved
    */
-  public void insert(Object pojo) {
-    if (pojo == null) {
+  public void insert(Object obj) {
+    if (obj == null) {
       throw new RuntimeException("Object cannot be null");
     }
 
-    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
+    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
     if (!bw.isReadableProperty("id")) {
       throw new RuntimeException(
-          "Object " + pojo.getClass().getSimpleName() + " has to have a property named 'id'.");
+          "Object " + obj.getClass().getSimpleName() + " has to have a property named 'id'.");
     }
 
     Object idValue = bw.getPropertyValue("id");
@@ -394,7 +394,7 @@ public class JdbcTemplateMapper {
           "For method insert() the objects 'id' property has to be null since this insert is for an object whose id is autoincrement in database.");
     }
 
-    String tableName = getTableMapping(pojo.getClass()).getTableName();
+    String tableName = getTableMapping(obj.getClass()).getTableName();
     LocalDateTime now = LocalDateTime.now();
 
     if (createdOnPropertyName != null && bw.isReadableProperty(createdOnPropertyName)) {
@@ -418,7 +418,7 @@ public class JdbcTemplateMapper {
       bw.setPropertyValue(versionPropertyName, 1);
     }
 
-    Map<String, Object> attributes = convertToSnakeCaseAttributes(pojo);
+    Map<String, Object> attributes = convertToSnakeCaseAttributes(obj);
 
     SimpleJdbcInsert jdbcInsert = simpleJdbcInsertCache.get(tableName);
     if (jdbcInsert == null) {
@@ -441,17 +441,17 @@ public class JdbcTemplateMapper {
    * <p>Also assigns created by, created on, updated by, updated on, version if these properties
    * exist for the object and the JdbcTemplateMapper is configured for them.
    *
-   * @param pojo The object to be saved
+   * @param obj The object to be saved
    */
-  public void insertWithId(Object pojo) {
-    if (pojo == null) {
+  public void insertWithId(Object obj) {
+    if (obj == null) {
       throw new RuntimeException("Object cannot be null");
     }
 
-    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
+    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
     if (!bw.isReadableProperty("id")) {
       throw new RuntimeException(
-          "Object " + pojo.getClass().getSimpleName() + " has to have a property named 'id'.");
+          "Object " + obj.getClass().getSimpleName() + " has to have a property named 'id'.");
     }
 
     Object idValue = bw.getPropertyValue("id");
@@ -460,7 +460,7 @@ public class JdbcTemplateMapper {
           "For method insertById() the objects 'id' property cannot be null.");
     }
 
-    String tableName = getTableMapping(pojo.getClass()).getTableName();
+    String tableName = getTableMapping(obj.getClass()).getTableName();
     LocalDateTime now = LocalDateTime.now();
 
     if (createdOnPropertyName != null && bw.isReadableProperty(createdOnPropertyName)) {
@@ -491,7 +491,7 @@ public class JdbcTemplateMapper {
       simpleJdbcInsertCache.put(tableName, jdbcInsert);
     }
 
-    Map<String, Object> attributes = convertToSnakeCaseAttributes(pojo);
+    Map<String, Object> attributes = convertToSnakeCaseAttributes(obj);
     jdbcInsert.execute(attributes);
   }
 
@@ -500,19 +500,19 @@ public class JdbcTemplateMapper {
    * jdbcTemplateMapper is configured for these fields. if 'version' property exists for object
    * throws an OptimisticLockingException if object is stale
    *
-   * @param pojo object to be updated
+   * @param obj object to be updated
    * @return number of records updated
    */
-  public Integer update(Object pojo) {
-    if (pojo == null) {
+  public Integer update(Object obj) {
+    if (obj == null) {
       throw new RuntimeException("Object cannot be null");
     }
-    TableMapping tableMapping = getTableMapping(pojo.getClass());
+    TableMapping tableMapping = getTableMapping(obj.getClass());
     if (tableMapping.getIdName() == null) {
       throw new RuntimeException(
-          "Object " + pojo.getClass().getSimpleName() + " has to have a property named 'id'.");
+          "Object " + obj.getClass().getSimpleName() + " has to have a property named 'id'.");
     }
-    SqlAndParams sqlAndParams = updateSqlCache.get(pojo.getClass().getName());
+    SqlAndParams sqlAndParams = updateSqlCache.get(obj.getClass().getName());
 
     if (sqlAndParams == null) {
       // ignore these attributes when generating the sql 'SET' command
@@ -527,16 +527,16 @@ public class JdbcTemplateMapper {
 
       Set<String> updatePropertyNames = new LinkedHashSet<>();
 
-      for (String propertyName : getObjectPropertyNames(pojo)) {
+      for (String propertyName : getObjectPropertyNames(obj)) {
         if (!ignoreAttrs.contains(propertyName)
             && tableMapping.getColumnName(propertyName) != null) {
           updatePropertyNames.add(propertyName);
         }
       }
       sqlAndParams = buildUpdateSql(tableMapping, updatePropertyNames);
-      updateSqlCache.put(pojo.getClass().getName(), sqlAndParams);
+      updateSqlCache.put(obj.getClass().getName(), sqlAndParams);
     }
-    return issueUpdate(sqlAndParams, pojo);
+    return issueUpdate(sqlAndParams, obj);
   }
 
   /**
@@ -544,18 +544,18 @@ public class JdbcTemplateMapper {
    * these properties exist for the object and the jdbcTemplateMapper is configured for these
    * fields.
    *
-   * @param pojo object to be updated
+   * @param obj object to be updated
    * @param propertyNames array of property names that should be updated
    * @return 0 if no records were updated
    */
-  public Integer update(Object pojo, String... propertyNames) {
-    if (pojo == null || propertyNames == null) {
-      throw new RuntimeException("pojo and propertyNames cannot be null");
+  public Integer update(Object obj, String... propertyNames) {
+    if (obj == null || propertyNames == null) {
+      throw new RuntimeException("object and propertyNames cannot be null");
     }
-    TableMapping tableMapping = getTableMapping(pojo.getClass());
+    TableMapping tableMapping = getTableMapping(obj.getClass());
     String tableName = tableMapping.getTableName();
     // cachekey ex: className-propertyName1-propertyName2
-    String cacheKey = pojo.getClass().getName() + "-" + String.join("-", propertyNames);
+    String cacheKey = obj.getClass().getName() + "-" + String.join("-", propertyNames);
     SqlAndParams sqlAndParams = updateSqlCache.get(cacheKey);
     if (sqlAndParams == null) {
       // check properties have a corresponding table column
@@ -565,30 +565,30 @@ public class JdbcTemplateMapper {
               "property "
                   + propertyName
                   + " is not a property of object "
-                  + pojo.getClass().getName()
+                  + obj.getClass().getName()
                   + " or does not have a corresponding column in table "
                   + tableName);
         }
       }
 
-      // auto assigned properties cannot be updated by user.
-      List<String> ignoreAttrs = new ArrayList<>();
-      ignoreAttrs.add("id");
+      // auto assigned  cannot be updated by user.
+      List<String> autoAssignedAttrs = new ArrayList<>();
+      autoAssignedAttrs.add("id");
       if (versionPropertyName != null && tableMapping.getColumnName(versionPropertyName) != null) {
-        ignoreAttrs.add(versionPropertyName);
+        autoAssignedAttrs.add(versionPropertyName);
       }
       if (updatedOnPropertyName != null
           && tableMapping.getColumnName(updatedOnPropertyName) != null) {
-        ignoreAttrs.add(updatedOnPropertyName);
+        autoAssignedAttrs.add(updatedOnPropertyName);
       }
       if (updatedByPropertyName != null
           && recordOperatorResolver != null
           && tableMapping.getColumnName(updatedByPropertyName) != null) {
-        ignoreAttrs.add(updatedByPropertyName);
+        autoAssignedAttrs.add(updatedByPropertyName);
       }
 
       for (String propertyName : propertyNames) {
-        if (ignoreAttrs.contains(propertyName)) {
+        if (autoAssignedAttrs.contains(propertyName)) {
           throw new RuntimeException(
               "property "
                   + propertyName
@@ -619,27 +619,27 @@ public class JdbcTemplateMapper {
       sqlAndParams = buildUpdateSql(tableMapping, updatePropertyNames);
       updateSqlCache.put(cacheKey, sqlAndParams);
     }
-    return issueUpdate(sqlAndParams, pojo);
+    return issueUpdate(sqlAndParams, obj);
   }
 
   /**
    * Physically Deletes the object from the database
    *
-   * @param pojo Object to be deleted
+   * @param obj Object to be deleted
    * @return 0 if no records were deleted
    */
-  public Integer delete(Object pojo) {
-    if (pojo == null) {
+  public Integer delete(Object obj) {
+    if (obj == null) {
       throw new RuntimeException("Object cannot be null");
     }
 
-    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
+    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
     if (!bw.isReadableProperty("id")) {
       throw new RuntimeException(
-          "Object " + pojo.getClass().getSimpleName() + " has to have a property named 'id'.");
+          "Object " + obj.getClass().getSimpleName() + " has to have a property named 'id'.");
     }
 
-    String tableName = getTableMapping(pojo.getClass()).getTableName();
+    String tableName = getTableMapping(obj.getClass()).getTableName();
 
     String sql = "delete from " + fullyQualifiedTableName(tableName) + " where id = ?";
     Object id = bw.getPropertyValue("id");
@@ -1473,11 +1473,11 @@ public class JdbcTemplateMapper {
     return sqlAndParams;
   }
 
-  private Integer issueUpdate(SqlAndParams sqlAndParams, Object pojo) {
-    if (pojo == null) {
+  private Integer issueUpdate(SqlAndParams sqlAndParams, Object obj) {
+    if (obj == null) {
       throw new RuntimeException("argument cannot be null");
     }
-    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
+    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
     Set<String> parameters = sqlAndParams.getParams();
     if (updatedOnPropertyName != null && parameters.contains(updatedOnPropertyName)) {
       bw.setPropertyValue(updatedOnPropertyName, LocalDateTime.now());
@@ -1488,7 +1488,7 @@ public class JdbcTemplateMapper {
       bw.setPropertyValue(updatedByPropertyName, recordOperatorResolver.getRecordOperator());
     }
 
-    Map<String, Object> attributes = convertObjectToMap(pojo);
+    Map<String, Object> attributes = convertObjectToMap(obj);
     // if object has property version throw OptimisticLockingException
     // when update fails. The version gets incremented on update
     if (sqlAndParams.getParams().contains("incrementedVersion")) {
@@ -1497,7 +1497,7 @@ public class JdbcTemplateMapper {
         throw new RuntimeException(
             versionPropertyName
                 + " cannot be null when updating "
-                + pojo.getClass().getSimpleName());
+                + obj.getClass().getSimpleName());
       } else {
         attributes.put("incrementedVersion", versionVal + 1);
       }
@@ -1506,7 +1506,7 @@ public class JdbcTemplateMapper {
       if (cnt == 0) {
         throw new OptimisticLockingException(
             "Update failed for "
-                + pojo.getClass().getSimpleName()
+                + obj.getClass().getSimpleName()
                 + " for id:"
                 + attributes.get("id")
                 + " and "
@@ -1562,12 +1562,12 @@ public class JdbcTemplateMapper {
    * 'userLastName' will get converted to map key 'user_last_name' and assigned the corresponding
    * object value.
    *
-   * @param pojo The object to convert
+   * @param obj The object to convert
    * @return A map with keys that are in snake case to match database column names and values
    *     corresponding to the object property
    */
-  private Map<String, Object> convertToSnakeCaseAttributes(Object pojo) {
-    Map<String, Object> camelCaseAttrs = convertObjectToMap(pojo);
+  private Map<String, Object> convertToSnakeCaseAttributes(Object obj) {
+    Map<String, Object> camelCaseAttrs = convertObjectToMap(obj);
     Map<String, Object> snakeCaseAttrs = new HashMap<>();
     for (String key : camelCaseAttrs.keySet()) {
       // ex: lastName will get converted to last_name
@@ -1581,13 +1581,13 @@ public class JdbcTemplateMapper {
    * Converts an object to a Map. The map key will be object property name and value with
    * corresponding object property value.
    *
-   * @param pojo The object to be converted.
+   * @param obj The object to be converted.
    * @return Map with key: property name, value: object value
    */
-  private Map<String, Object> convertObjectToMap(Object pojo) {
+  private Map<String, Object> convertObjectToMap(Object obj) {
     Map<String, Object> camelCaseAttrs = new HashMap<>();
-    List<String> propertyNames = getObjectPropertyNames(pojo);
-    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
+    List<String> propertyNames = getObjectPropertyNames(obj);
+    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
     for (String propName : propertyNames) {
       Object propValue = bw.getPropertyValue(propName);
       camelCaseAttrs.put(propName, propValue);
@@ -1660,13 +1660,13 @@ public class JdbcTemplateMapper {
   /**
    * Get property names of an object. The property names are cached by the object class name
    *
-   * @param pojo the java object
+   * @param obj the java object
    * @return List of property names.
    */
-  private List<String> getObjectPropertyNames(Object pojo) {
-    List<String> list = objectPropertyNamesCache.get(pojo.getClass().getSimpleName());
+  private List<String> getObjectPropertyNames(Object obj) {
+    List<String> list = objectPropertyNamesCache.get(obj.getClass().getSimpleName());
     if (list == null) {
-      BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(pojo);
+      BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
       list = new ArrayList<>();
       PropertyDescriptor[] propertyDescriptors = bw.getPropertyDescriptors();
       for (PropertyDescriptor pd : propertyDescriptors) {
@@ -1678,7 +1678,7 @@ public class JdbcTemplateMapper {
           list.add(propName);
         }
       }
-      objectPropertyNamesCache.put(pojo.getClass().getSimpleName(), list);
+      objectPropertyNamesCache.put(obj.getClass().getSimpleName(), list);
     }
     return list;
   }
