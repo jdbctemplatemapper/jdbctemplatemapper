@@ -8,9 +8,17 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
+/**
+ * The database table mapping details on an object
+ * 
+ * @author ajoseph
+ *
+ */
 public class TableMapping {
   private String tableName;
   private String idName;
+  
+  // object property to database column mapping.
   private List<PropertyColumnMapping> propertyColumnMappings = new ArrayList<>();
 
   public String getColumnName(String propertyName) {
