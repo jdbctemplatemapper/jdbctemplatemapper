@@ -33,6 +33,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.DatabaseMetaDataCallback;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.jdbc.support.MetaDataAccessException;
+import org.springframework.util.Assert;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -199,9 +200,8 @@ public class JdbcTemplateMapper {
    * @param schemaName schema name to be used by mapper
    */
   public JdbcTemplateMapper(JdbcTemplate jdbcTemplate, String schemaName) {
-    if (jdbcTemplate == null) {
-      throw new RuntimeException("jdbcTemplate cannot be null");
-    }
+    Assert.notNull(jdbcTemplate, "jdbcTemplate must not be null");
+
     this.jdbcTemplate = jdbcTemplate;
     this.schemaName = schemaName;
     this.npJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
@@ -325,6 +325,7 @@ public class JdbcTemplateMapper {
    * @return the object of the specific type
    */
   public <T> T findById(Object id, Class<T> clazz) {
+    Assert.notNull(clazz, "Class must not be null");
     if (!(id instanceof Integer || id instanceof Long)) {
       throw new RuntimeException("id has to be type of Integer or Long");
     }
@@ -353,6 +354,8 @@ public class JdbcTemplateMapper {
    * @return List of objects
    */
   public <T> List<T> findAll(Class<T> clazz) {
+    Assert.notNull(clazz, "Class must not be null");
+
     String tableName = getTableMapping(clazz).getTableName();
     String sql = "SELECT * FROM " + fullyQualifiedTableName(tableName);
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
@@ -368,6 +371,8 @@ public class JdbcTemplateMapper {
    * @return List of objects
    */
   public <T> List<T> findAll(Class<T> clazz, String orderByClause) {
+    Assert.notNull(clazz, "Class must not be null");
+
     String tableName = getTableMapping(clazz).getTableName();
     String sql = "SELECT * FROM " + fullyQualifiedTableName(tableName) + " " + orderByClause;
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
@@ -384,9 +389,7 @@ public class JdbcTemplateMapper {
    * @param obj The object to be saved
    */
   public void insert(Object obj) {
-    if (obj == null) {
-      throw new RuntimeException("Object cannot be null");
-    }
+    Assert.notNull(obj, "Object must not be null");
 
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
     if (!bw.isReadableProperty("id")) {
@@ -450,9 +453,7 @@ public class JdbcTemplateMapper {
    * @param obj The object to be saved
    */
   public void insertWithId(Object obj) {
-    if (obj == null) {
-      throw new RuntimeException("Object cannot be null");
-    }
+    Assert.notNull(obj, "Object must not be null");
 
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
     if (!bw.isReadableProperty("id")) {
@@ -510,9 +511,8 @@ public class JdbcTemplateMapper {
    * @return number of records updated
    */
   public Integer update(Object obj) {
-    if (obj == null) {
-      throw new RuntimeException("Object cannot be null");
-    }
+    Assert.notNull(obj, "Object must not be null");
+
     TableMapping tableMapping = getTableMapping(obj.getClass());
     if (tableMapping.getIdName() == null) {
       throw new RuntimeException(
@@ -555,9 +555,9 @@ public class JdbcTemplateMapper {
    * @return 0 if no records were updated
    */
   public Integer update(Object obj, String... propertyNames) {
-    if (obj == null || propertyNames == null) {
-      throw new RuntimeException("object and propertyNames cannot be null");
-    }
+    Assert.notNull(obj, "Object must not be null");
+    Assert.notNull(propertyNames, "propertyNames must not be null");
+
     TableMapping tableMapping = getTableMapping(obj.getClass());
     String tableName = tableMapping.getTableName();
     // cachekey ex: className-propertyName1-propertyName2
@@ -635,9 +635,7 @@ public class JdbcTemplateMapper {
    * @return 0 if no records were deleted
    */
   public Integer delete(Object obj) {
-    if (obj == null) {
-      throw new RuntimeException("Object cannot be null");
-    }
+    Assert.notNull(obj, "Object must not be null");
 
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
     if (!bw.isReadableProperty("id")) {
@@ -660,6 +658,7 @@ public class JdbcTemplateMapper {
    * @return 0 if no records were deleted
    */
   public <T> Integer deleteById(Object id, Class<T> clazz) {
+    Assert.notNull(clazz, "Class must not be null");
     if (!(id instanceof Integer || id instanceof Long)) {
       throw new RuntimeException("id has to be type of Integer or Long");
     }
@@ -709,8 +708,14 @@ public class JdbcTemplateMapper {
       Class<U> relationshipClazz,
       String mainObjRelationshipPropertyName,
       String mainObjJoinPropertyName) {
-    List<T> mainObjList = new ArrayList<>();
+
+    Assert.notNull(relationshipClazz, "relationshipClazz must not be null");
+    Assert.notNull(
+        mainObjRelationshipPropertyName, "mainObjRelationshipPropertyName must not be null");
+    Assert.notNull(mainObjJoinPropertyName, "mainObjJoinPropertyName must not be null");
+
     if (mainObj != null) {
+      List<T> mainObjList = new ArrayList<>();
       mainObjList.add(mainObj);
       toOneForList(
           mainObjList, relationshipClazz, mainObjRelationshipPropertyName, mainObjJoinPropertyName);
@@ -758,6 +763,12 @@ public class JdbcTemplateMapper {
       Class<U> relationshipClazz,
       String mainObjRelationshipPropertyName,
       String mainObjJoinPropertyName) {
+
+    Assert.notNull(relationshipClazz, "relationshipClazz must not be null");
+    Assert.notNull(
+        mainObjRelationshipPropertyName, "mainObjRelationshipPropertyName must not be null");
+    Assert.notNull(mainObjJoinPropertyName, "mainObjJoinPropertyName must not be null");
+
     TableMapping tableMapping = getTableMapping(relationshipClazz);
     String tableName = tableMapping.getTableName();
     String idColumnName = getTableIdColumnName(tableMapping);
@@ -859,6 +870,13 @@ public class JdbcTemplateMapper {
       SelectMapper<U> relatedObjMapper,
       String mainObjRelationshipPropertyName,
       String mainObjJoinPropertyName) {
+
+    Assert.notNull(mainObjMapper, "mainObjMapper must not be null");
+    Assert.notNull(relatedObjMapper, "relatedObjMapper must not be null");
+    Assert.notNull(
+        mainObjRelationshipPropertyName, "mainObjRelationshipPropertyName must not be null");
+    Assert.notNull(mainObjJoinPropertyName, "mainObjJoinPropertyName must not be null");
+
     List<T> list =
         toOneMapperForList(
             rs,
@@ -933,6 +951,12 @@ public class JdbcTemplateMapper {
       String mainObjRelationshipPropertyName,
       String mainObjJoinPropertyName) {
 
+    Assert.notNull(mainObjMapper, "mainObjMapper must not be null");
+    Assert.notNull(relatedObjMapper, "relatedObjMapper must not be null");
+    Assert.notNull(
+        mainObjRelationshipPropertyName, "mainObjRelationshipPropertyName must not be null");
+    Assert.notNull(mainObjJoinPropertyName, "mainObjJoinPropertyName must not be null");
+
     Map<String, List> resultMap = multipleModelMapper(rs, mainObjMapper, relatedObjMapper);
     List<T> mainObjList = resultMap.get(mainObjMapper.getSqlColumnPrefix());
     List<U> relatedObjList = resultMap.get(relatedObjMapper.getSqlColumnPrefix());
@@ -957,6 +981,10 @@ public class JdbcTemplateMapper {
       List<U> relatedObjList,
       String mainObjRelationshipPropertyName,
       String mainObjJoinPropertyName) {
+
+    Assert.notNull(
+        mainObjRelationshipPropertyName, "mainObjRelationshipPropertyName must not be null");
+    Assert.notNull(mainObjJoinPropertyName, "mainObjJoinPropertyName must not be null");
 
     if (isNotEmpty(mainObjList) && isNotEmpty(relatedObjList)) {
       // Map key: related object id , value: the related object
@@ -1019,6 +1047,11 @@ public class JdbcTemplateMapper {
       Class<U> manySideClazz,
       String mainObjCollectionPropertyName,
       String manySideJoinPropertyName) {
+
+    Assert.notNull(manySideClazz, "manySideClazz must not be null");
+    Assert.notNull(mainObjCollectionPropertyName, "mainObjCollectionPropertyName must not be null");
+    Assert.notNull(manySideJoinPropertyName, "manySideJoinPropertyName must not be null");
+
     toManyForObject(
         mainObj, manySideClazz, mainObjCollectionPropertyName, manySideJoinPropertyName, null);
   }
@@ -1064,14 +1097,21 @@ public class JdbcTemplateMapper {
       String mainObjCollectionPropertyName,
       String manySideJoinPropertyName,
       String manySideOrderByClause) {
-    List<T> mainObjList = new ArrayList<>();
-    mainObjList.add(mainObj);
-    toManyForList(
-        mainObjList,
-        manySideClazz,
-        mainObjCollectionPropertyName,
-        manySideJoinPropertyName,
-        manySideOrderByClause);
+
+    Assert.notNull(manySideClazz, "manySideClazz must not be null");
+    Assert.notNull(mainObjCollectionPropertyName, "mainObjCollectionPropertyName must not be null");
+    Assert.notNull(manySideJoinPropertyName, "manySideJoinPropertyName must not be null");
+
+    if (mainObj != null) {
+      List<T> mainObjList = new ArrayList<>();
+      mainObjList.add(mainObj);
+      toManyForList(
+          mainObjList,
+          manySideClazz,
+          mainObjCollectionPropertyName,
+          manySideJoinPropertyName,
+          manySideOrderByClause);
+    }
   }
 
   /**
@@ -1116,6 +1156,11 @@ public class JdbcTemplateMapper {
       Class<U> manySideClazz,
       String mainObjCollectionPropertyName,
       String manySideJoinPropertyName) {
+
+    Assert.notNull(manySideClazz, "manySideClazz must not be null");
+    Assert.notNull(mainObjCollectionPropertyName, "mainObjCollectionPropertyName must not be null");
+    Assert.notNull(manySideJoinPropertyName, "manySideJoinPropertyName must not be null");
+
     toManyForList(
         mainObjList, manySideClazz, mainObjCollectionPropertyName, manySideJoinPropertyName, null);
   }
@@ -1163,6 +1208,10 @@ public class JdbcTemplateMapper {
       String mainObjCollectionPropertyName,
       String manySideJoinPropertyName,
       String manySideOrderByClause) {
+
+    Assert.notNull(manySideClazz, "manySideClazz must not be null");
+    Assert.notNull(mainObjCollectionPropertyName, "mainObjCollectionPropertyName must not be null");
+    Assert.notNull(manySideJoinPropertyName, "manySideJoinPropertyName must not be null");
 
     String tableName = getTableMapping(manySideClazz).getTableName();
     if (isNotEmpty(mainObjList)) {
@@ -1227,6 +1276,12 @@ public class JdbcTemplateMapper {
       SelectMapper<U> manySideObjMapper,
       String mainObjCollectionPropertyName,
       String manySideJoinPropertyName) {
+
+    Assert.notNull(mainObjMapper, "mainObjMapper must not be null");
+    Assert.notNull(manySideObjMapper, "manySideObjMapper must not be null");
+    Assert.notNull(mainObjCollectionPropertyName, "mainObjCollectionPropertyName must not be null");
+    Assert.notNull(manySideJoinPropertyName, "manySideJoinPropertyName must not be null");
+
     List<T> list =
         toManyMapperForList(
             rs,
@@ -1261,6 +1316,11 @@ public class JdbcTemplateMapper {
       String mainObjCollectionPropertyName,
       String manySideJoinPropertyName) {
 
+    Assert.notNull(mainObjMapper, "mainObjMapper must not be null");
+    Assert.notNull(manySideObjMapper, "manySideObjMapper must not be null");
+    Assert.notNull(mainObjCollectionPropertyName, "mainObjCollectionPropertyName must not be null");
+    Assert.notNull(manySideJoinPropertyName, "manySideJoinPropertyName must not be null");
+
     Map<String, List> resultMap = multipleModelMapper(rs, mainObjMapper, manySideObjMapper);
     List<T> mainObjList = resultMap.get(mainObjMapper.getSqlColumnPrefix());
     List<U> manySideObjList = resultMap.get(manySideObjMapper.getSqlColumnPrefix());
@@ -1287,8 +1347,11 @@ public class JdbcTemplateMapper {
       String mainObjCollectionPropertyName,
       String manySideJoinPropertyName) {
 
+    Assert.notNull(mainObjCollectionPropertyName, "mainObjCollectionPropertyName must not be null");
+    Assert.notNull(manySideJoinPropertyName, "manySideJoinPropertyName must not be null");
+
     try {
-      if (isNotEmpty(manySideList)) {
+      if (isNotEmpty(mainObjList) && isNotEmpty(manySideList)) {
         Map<Number, List<U>> mapColumnIdToManySide =
             manySideList
                 .stream()
@@ -1324,6 +1387,9 @@ public class JdbcTemplateMapper {
    */
   @SuppressWarnings("all")
   public Map<String, List> multipleModelMapper(ResultSet rs, SelectMapper... selectMappers) {
+
+    Assert.notNull(selectMappers, "selectMappers must not be null");
+
     try {
       Map<String, List> resultMap = new HashMap();
       for (SelectMapper selectMapper : selectMappers) {
@@ -1378,6 +1444,8 @@ public class JdbcTemplateMapper {
    * @return comma separated select column string with a comma at the end of string
    */
   public String selectCols(String tableName, String tableAlias) {
+    Assert.hasLength(tableName, "tableName must not be empty");
+    Assert.hasLength(tableAlias, "tableAlias must not be empty");
     return selectCols(tableName, tableAlias, true);
   }
 
@@ -1397,6 +1465,9 @@ public class JdbcTemplateMapper {
    * @return comma separated select column string
    */
   public String selectCols(String tableName, String tableAlias, boolean includeLastComma) {
+    Assert.hasLength(tableName, "tableName must not be empty");
+    Assert.hasLength(tableAlias, "tableAlias must not be empty");
+
     String str = selectColsCache.get(tableName + "-" + tableAlias);
 
     if (str == null) {
@@ -1431,6 +1502,9 @@ public class JdbcTemplateMapper {
   }
 
   private SqlAndParams buildUpdateSql(TableMapping tableMapping, Set<String> propertyNames) {
+    Assert.notNull(tableMapping, "tableMapping must not be null");
+    Assert.notNull(propertyNames, "propertyNames must not be null");
+
     String idColumnName = tableMapping.getIdName();
     if (idColumnName == null) {
       throw new RuntimeException(
@@ -1482,9 +1556,9 @@ public class JdbcTemplateMapper {
   }
 
   private Integer issueUpdate(SqlAndParams sqlAndParams, Object obj) {
-    if (obj == null) {
-      throw new RuntimeException("argument cannot be null");
-    }
+    Assert.notNull(sqlAndParams, "sqlAndParams must not be null");
+    Assert.notNull(obj, "Object must not be null");
+
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
     Set<String> parameters = sqlAndParams.getParams();
     if (updatedOnPropertyName != null && parameters.contains(updatedOnPropertyName)) {
@@ -1539,6 +1613,11 @@ public class JdbcTemplateMapper {
    */
   private <T> T newInstance(
       Class<T> clazz, ResultSet rs, String prefix, List<String> resultSetColumnNames) {
+
+    Assert.notNull(clazz, "clazz must not be null");
+    Assert.hasLength(prefix, "prefix must not be empty");
+    Assert.notNull(resultSetColumnNames, "resultSetColumnNames must not be null");
+
     try {
       Object obj = clazz.newInstance();
       BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
@@ -1563,8 +1642,8 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Converts an object to a map with key as database column names and assigned corresponding object
-   * value. Camel case property names are converted to snake case. For example property name
+   * Converts an object to a map with key as database column names and values the corresponding
+   * object value. Camel case property names are converted to snake case. For example property name
    * 'userLastName' will get converted to map key 'user_last_name' and assigned the corresponding
    * object value.
    *
@@ -1573,6 +1652,8 @@ public class JdbcTemplateMapper {
    *     corresponding to the object property
    */
   private Map<String, Object> convertToSnakeCaseAttributes(Object obj) {
+    Assert.notNull(obj, "Object must not be null");
+
     Map<String, Object> camelCaseAttrs = convertObjectToMap(obj);
     Map<String, Object> snakeCaseAttrs = new HashMap<>();
     for (String key : camelCaseAttrs.keySet()) {
@@ -1591,6 +1672,7 @@ public class JdbcTemplateMapper {
    * @return Map with key: property name, value: object value
    */
   private Map<String, Object> convertObjectToMap(Object obj) {
+    Assert.notNull(obj, "Object must not be null");
     Map<String, Object> camelCaseAttrs = new HashMap<>();
     List<String> propertyNames = getObjectPropertyNames(obj);
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
@@ -1602,6 +1684,7 @@ public class JdbcTemplateMapper {
   }
 
   private List<String> getTableColumnNames(String tableName) {
+    Assert.hasLength(tableName, "tableName must not be empty");
     try {
       List<String> columnNames = tableColumnNamesCache.get(tableName);
       if (isEmpty(columnNames)) {
@@ -1669,6 +1752,7 @@ public class JdbcTemplateMapper {
    * @return List of property names.
    */
   private List<String> getObjectPropertyNames(Object obj) {
+    Assert.notNull(obj, "Object must not be null");
     List<String> propertyNames = objectPropertyNamesCache.get(obj.getClass().getName());
     if (propertyNames == null) {
       BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
@@ -1689,9 +1773,8 @@ public class JdbcTemplateMapper {
   }
 
   private Object getSimpleProperty(Object obj, String propertyName) {
-	if(obj == null && isEmpty(propertyName)) {
-		throw new RuntimeException("obj and propertyName cannot be null");
-	}
+    Assert.notNull(obj, "Object must not be null");
+    Assert.hasLength(propertyName, "propertyName must not be empty");
     Method method =
         ReflectionUtils.findMethod(obj.getClass(), "get" + StringUtils.capitalize(propertyName));
     if (method == null) {
@@ -1705,6 +1788,7 @@ public class JdbcTemplateMapper {
   }
 
   private Object getIdProperty(Object obj) {
+    Assert.notNull(obj, "Object must not be null");
     Method method = objectToIdMethodCache.get(obj.getClass().getName());
     if (method == null) {
       method = ReflectionUtils.findMethod(obj.getClass(), "getId");
@@ -1718,9 +1802,7 @@ public class JdbcTemplateMapper {
   }
 
   private TableMapping getTableMapping(Class<?> clazz) {
-    if (clazz == null) {
-      throw new RuntimeException("arg clazz cannot be null");
-    }
+    Assert.notNull(clazz, "Class must not be null");
     TableMapping tableMapping = objectToTableMappingCache.get(clazz.getName());
 
     if (tableMapping == null) {
@@ -1776,6 +1858,7 @@ public class JdbcTemplateMapper {
   }
 
   private String getTableIdColumnName(TableMapping tableMapping) {
+    Assert.notNull(tableMapping, "tableMapping must not be null");
     String idName = tableMapping.getIdName();
     if (isEmpty(idName)) {
       throw new RuntimeException(
@@ -1785,9 +1868,9 @@ public class JdbcTemplateMapper {
   }
 
   private String getJoinColumnName(String tableName, String joinPropertyName) {
-    if (isEmpty(tableName) || isEmpty(joinPropertyName)) {
-      throw new RuntimeException("tableName and joinPropertyName cannot be null");
-    }
+    Assert.hasLength(tableName, "tableName must not be empty");
+    Assert.hasLength(joinPropertyName, "joinPropertyName must not be empty");
+
     List<String> columnNames = getTableColumnNames(tableName);
 
     String joinColumnName = convertCamelToSnakeCase(joinPropertyName);
@@ -1843,6 +1926,7 @@ public class JdbcTemplateMapper {
    * @return Collection of lists broken down by chunkSize
    */
   private Collection<List<Number>> chunkList(List<Number> list, Integer chunkSize) {
+    Assert.notNull(list, "list must not be null");
     AtomicInteger counter = new AtomicInteger();
     Collection<List<Number>> result =
         list.stream()
@@ -1853,6 +1937,7 @@ public class JdbcTemplateMapper {
   }
 
   private String fullyQualifiedTableName(String tableName) {
+    Assert.hasLength(tableName, "tableName must not be empty");
     if (isNotEmpty(schemaName)) {
       return schemaName + "." + tableName;
     }
