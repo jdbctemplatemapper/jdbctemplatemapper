@@ -1614,7 +1614,6 @@ public class JdbcTemplateMapper {
                       while (resultSet.next()) {
                         columns.add(resultSet.getString("COLUMN_NAME"));
                       }
-                      resultSet.close();
                       if (isNotEmpty(columns)) {
                         tableColumnNamesCache.put(tableName, columns);
                       }
