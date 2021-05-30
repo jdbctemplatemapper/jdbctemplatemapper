@@ -1414,6 +1414,7 @@ public class JdbcTemplateMapper {
               Number entryId = (Number) getIdProperty(entry);
               if (entryId != null && entryId.longValue() == id.longValue()) {
                 exists = true;
+                break;
               }
             }
             if (!exists) {
