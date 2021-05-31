@@ -170,7 +170,7 @@ public class JdbcTemplateMapper {
   // update sql cache
   // Map key   - table name or sometimes tableName-updatePropertyName1-updatePropertyName2...
   //     value - the update sql
-  private Map<String, UpdateSqlAndParams> updateSqlCache = new ConcurrentHashMap<>();
+  private Map<String, UpdateSqlAndParams> updateSqlAndParamsCache = new ConcurrentHashMap<>();
 
   // Map key - table name,
   //     value - the list of database column names
@@ -526,7 +526,7 @@ public class JdbcTemplateMapper {
       throw new RuntimeException(
           "Object " + obj.getClass().getSimpleName() + " has to have a property named 'id'.");
     }
-    UpdateSqlAndParams updateSqlAndParams = updateSqlCache.get(obj.getClass().getName());
+    UpdateSqlAndParams updateSqlAndParams = updateSqlAndParamsCache.get(obj.getClass().getName());
 
     if (updateSqlAndParams == null) {
       // ignore these attributes when generating the sql 'SET' command
@@ -548,7 +548,7 @@ public class JdbcTemplateMapper {
         }
       }
       updateSqlAndParams = buildUpdateSql(tableMapping, updatePropertyNames);
-      updateSqlCache.put(obj.getClass().getName(), updateSqlAndParams);
+      updateSqlAndParamsCache.put(obj.getClass().getName(), updateSqlAndParams);
     }
     return issueUpdate(updateSqlAndParams, obj);
   }
@@ -570,7 +570,7 @@ public class JdbcTemplateMapper {
     String tableName = tableMapping.getTableName();
     // cachekey ex: className-propertyName1-propertyName2
     String cacheKey = obj.getClass().getName() + "-" + String.join("-", propertyNames);
-    UpdateSqlAndParams updateSqlAndParams = updateSqlCache.get(cacheKey);
+    UpdateSqlAndParams updateSqlAndParams = updateSqlAndParamsCache.get(cacheKey);
     if (updateSqlAndParams == null) {
       // check properties have a corresponding table column
       for (String propertyName : propertyNames) {
@@ -631,7 +631,7 @@ public class JdbcTemplateMapper {
       }
 
       updateSqlAndParams = buildUpdateSql(tableMapping, updatePropertyNames);
-      updateSqlCache.put(cacheKey, updateSqlAndParams);
+      updateSqlAndParamsCache.put(cacheKey, updateSqlAndParams);
     }
     return issueUpdate(updateSqlAndParams, obj);
   }
