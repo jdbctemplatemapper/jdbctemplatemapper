@@ -965,12 +965,23 @@ public class JdbcTemplateMapper {
         mainObjRelationshipPropertyName, "mainObjRelationshipPropertyName must not be null");
     Assert.notNull(mainObjJoinPropertyName, "mainObjJoinPropertyName must not be null");
 
-    Map<String, List> resultMap = multipleModelMapper(rs, mainObjMapper, relatedObjMapper);
-    List<T> mainObjList = resultMap.get(mainObjMapper.getSqlColumnPrefix());
-    List<U> relatedObjList = resultMap.get(relatedObjMapper.getSqlColumnPrefix());
+    Map<String, LinkedHashMap<Long, Object>> resultMap = multipleModelMapperRaw(rs, mainObjMapper, relatedObjMapper);    
+    List<T> mainObjList = new ArrayList(resultMap.get(mainObjMapper.getSqlColumnPrefix()).values());
+    LinkedHashMap<Long, Object> relatedObjMap = resultMap.get(relatedObjMapper.getSqlColumnPrefix());
+    
+    // assign related obj to the main obj relationship property
+    for (Object mainObj : mainObjList) {
+      if (mainObj != null) {
+        Number joinPropertyValue = (Number) getPropertyValue(mainObj, mainObjJoinPropertyName);
+        if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {
+          setPropertyValue(
+              mainObj,
+              mainObjRelationshipPropertyName,
+              relatedObjMap.get(joinPropertyValue.longValue()));
+        }
+      }
+    }
 
-    toOneMerge(
-        mainObjList, relatedObjList, mainObjRelationshipPropertyName, mainObjJoinPropertyName);
     return mainObjList;
   }
 
@@ -1344,7 +1355,7 @@ public class JdbcTemplateMapper {
         mainObjList, manySideObjList, mainObjCollectionPropertyName, manySideJoinPropertyName);
     return mainObjList;
   }
-
+  
   /**
    * Populates each main objects collectionPropertyName with the corresponding manySide objects by
    * matching manySide.joinPropertyName to mainObj.id
@@ -1416,10 +1427,26 @@ public class JdbcTemplateMapper {
     Assert.notNull(selectMappers, "selectMappers must not be null");
 
     try {
+      Map<String, LinkedHashMap<Long, Object>> tempMap = multipleModelMapperRaw(rs,selectMappers);
+      Map<String, List> resultMap = new HashMap<>();
+      for (String key : tempMap.keySet()) {
+        resultMap.put(key, new ArrayList<Object>(tempMap.get(key).values()));
+      }
+      return resultMap;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }  
+  
+  @SuppressWarnings("all")
+  private Map<String, LinkedHashMap<Long, Object>> multipleModelMapperRaw(ResultSet rs, SelectMapper... selectMappers) {
+    Assert.notNull(selectMappers, "selectMappers must not be null");
+
+    try {
       // LinkedHashMap used to retain the order of insertion of records
-      Map<String, LinkedHashMap<Long, Object>> tempMap = new HashMap<>();
+      Map<String, LinkedHashMap<Long, Object>> resultMap = new HashMap<>();
       for (SelectMapper selectMapper : selectMappers) {
-        tempMap.put(selectMapper.getSqlColumnPrefix(), new LinkedHashMap<>());
+        resultMap.put(selectMapper.getSqlColumnPrefix(), new LinkedHashMap<>());
       }
       List<String> resultSetColumnNames = getResultSetColumnNames(rs);
       while (rs.next()) {
@@ -1432,19 +1459,17 @@ public class JdbcTemplateMapper {
                     rs,
                     selectMapper.getSqlColumnPrefix(),
                     resultSetColumnNames);
-            tempMap.get(selectMapper.getSqlColumnPrefix()).put(id.longValue(), obj);
+            resultMap.get(selectMapper.getSqlColumnPrefix()).put(id.longValue(), obj);
           }
         }
       }
-      Map<String, List> resultMap = new HashMap<>();
-      for (String key : tempMap.keySet()) {
-        resultMap.put(key, new ArrayList<Object>(tempMap.get(key).values()));
-      }
+
       return resultMap;
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
+  
 
   /**
    * Generates a string which can be used in a sql select statement with the all columns of the
