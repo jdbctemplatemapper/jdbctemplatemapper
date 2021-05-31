@@ -170,7 +170,7 @@ public class JdbcTemplateMapper {
   // update sql cache
   // Map key   - table name or sometimes tableName-updatePropertyName1-updatePropertyName2...
   //     value - the update sql
-  private Map<String, SqlAndParams> updateSqlCache = new ConcurrentHashMap<>();
+  private Map<String, UpdateSqlAndParams> updateSqlCache = new ConcurrentHashMap<>();
 
   // Map key - table name,
   //     value - the list of database column names
@@ -526,9 +526,9 @@ public class JdbcTemplateMapper {
       throw new RuntimeException(
           "Object " + obj.getClass().getSimpleName() + " has to have a property named 'id'.");
     }
-    SqlAndParams sqlAndParams = updateSqlCache.get(obj.getClass().getName());
+    UpdateSqlAndParams updateSqlAndParams = updateSqlCache.get(obj.getClass().getName());
 
-    if (sqlAndParams == null) {
+    if (updateSqlAndParams == null) {
       // ignore these attributes when generating the sql 'SET' command
       List<String> ignoreAttrs = new ArrayList<>();
       ignoreAttrs.add("id");
@@ -547,10 +547,10 @@ public class JdbcTemplateMapper {
           updatePropertyNames.add(propertyName);
         }
       }
-      sqlAndParams = buildUpdateSql(tableMapping, updatePropertyNames);
-      updateSqlCache.put(obj.getClass().getName(), sqlAndParams);
+      updateSqlAndParams = buildUpdateSql(tableMapping, updatePropertyNames);
+      updateSqlCache.put(obj.getClass().getName(), updateSqlAndParams);
     }
-    return issueUpdate(sqlAndParams, obj);
+    return issueUpdate(updateSqlAndParams, obj);
   }
 
   /**
@@ -570,8 +570,8 @@ public class JdbcTemplateMapper {
     String tableName = tableMapping.getTableName();
     // cachekey ex: className-propertyName1-propertyName2
     String cacheKey = obj.getClass().getName() + "-" + String.join("-", propertyNames);
-    SqlAndParams sqlAndParams = updateSqlCache.get(cacheKey);
-    if (sqlAndParams == null) {
+    UpdateSqlAndParams updateSqlAndParams = updateSqlCache.get(cacheKey);
+    if (updateSqlAndParams == null) {
       // check properties have a corresponding table column
       for (String propertyName : propertyNames) {
         if (tableMapping.getColumnName(propertyName) == null) {
@@ -630,10 +630,10 @@ public class JdbcTemplateMapper {
         updatePropertyNames.add(updatedByPropertyName);
       }
 
-      sqlAndParams = buildUpdateSql(tableMapping, updatePropertyNames);
-      updateSqlCache.put(cacheKey, sqlAndParams);
+      updateSqlAndParams = buildUpdateSql(tableMapping, updatePropertyNames);
+      updateSqlCache.put(cacheKey, updateSqlAndParams);
     }
-    return issueUpdate(sqlAndParams, obj);
+    return issueUpdate(updateSqlAndParams, obj);
   }
 
   /**
@@ -1547,7 +1547,7 @@ public class JdbcTemplateMapper {
     return str;
   }
 
-  private SqlAndParams buildUpdateSql(TableMapping tableMapping, Set<String> propertyNames) {
+  private UpdateSqlAndParams buildUpdateSql(TableMapping tableMapping, Set<String> propertyNames) {
     Assert.notNull(tableMapping, "tableMapping must not be null");
     Assert.notNull(propertyNames, "propertyNames must not be null");
 
@@ -1596,17 +1596,17 @@ public class JdbcTemplateMapper {
     }
 
     String updateSql = sqlBuilder.toString();
-    SqlAndParams sqlAndParams = new SqlAndParams(updateSql, params);
+    UpdateSqlAndParams updateSqlAndParams = new UpdateSqlAndParams(updateSql, params);
 
-    return sqlAndParams;
+    return updateSqlAndParams;
   }
 
-  private Integer issueUpdate(SqlAndParams sqlAndParams, Object obj) {
-    Assert.notNull(sqlAndParams, "sqlAndParams must not be null");
+  private Integer issueUpdate(UpdateSqlAndParams updateSqlAndParams, Object obj) {
+    Assert.notNull(updateSqlAndParams, "sqlAndParams must not be null");
     Assert.notNull(obj, "Object must not be null");
 
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
-    Set<String> parameters = sqlAndParams.getParams();
+    Set<String> parameters = updateSqlAndParams.getParams();
     if (updatedOnPropertyName != null && parameters.contains(updatedOnPropertyName)) {
       bw.setPropertyValue(updatedOnPropertyName, LocalDateTime.now());
     }
@@ -1619,7 +1619,7 @@ public class JdbcTemplateMapper {
     Map<String, Object> attributes = convertObjectToMap(obj);
     // if object has property version throw OptimisticLockingException
     // when update fails. The version gets incremented on update
-    if (sqlAndParams.getParams().contains("incrementedVersion")) {
+    if (updateSqlAndParams.getParams().contains("incrementedVersion")) {
       Integer versionVal = (Integer) bw.getPropertyValue(versionPropertyName);
       if (versionVal == null) {
         throw new RuntimeException(
@@ -1630,7 +1630,7 @@ public class JdbcTemplateMapper {
         attributes.put("incrementedVersion", versionVal + 1);
       }
 
-      int cnt = npJdbcTemplate.update(sqlAndParams.getSql(), attributes);
+      int cnt = npJdbcTemplate.update(updateSqlAndParams.getSql(), attributes);
       if (cnt == 0) {
         throw new OptimisticLockingException(
             "Update failed for "
@@ -1644,7 +1644,7 @@ public class JdbcTemplateMapper {
       }
       return cnt;
     } else {
-      return npJdbcTemplate.update(sqlAndParams.getSql(), attributes);
+      return npJdbcTemplate.update(updateSqlAndParams.getSql(), attributes);
     }
   }
 
