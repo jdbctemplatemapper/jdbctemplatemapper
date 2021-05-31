@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -988,19 +989,23 @@ public class JdbcTemplateMapper {
 
     if (isNotEmpty(mainObjList) && isNotEmpty(relatedObjList)) {
       // Map key: related object id , value: the related object
-      Map<Number, U> idToObjectMap =
-          relatedObjList
-              .stream()
-              .filter(e -> e != null)
-              .collect(Collectors.toMap(e -> (Number) getIdProperty(e), obj -> obj));
-
+      Map<Long, U> idToObjectMap = new HashMap<>();
+      for (U relatedObj : relatedObjList) {
+        if (relatedObj != null) {
+          Number idNumber = (Number) getIdProperty(relatedObj);
+          if (idNumber != null) {
+            idToObjectMap.put(idNumber.longValue(), relatedObj);
+          }
+        }
+      }
+      // assign related obj to the main obj relationship property
       for (T mainObj : mainObjList) {
         if (mainObj != null) {
           BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
           Number joinPropertyValue = (Number) bw.getPropertyValue(mainObjJoinPropertyName);
           if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {
             bw.setPropertyValue(
-                mainObjRelationshipPropertyName, idToObjectMap.get(joinPropertyValue));
+                mainObjRelationshipPropertyName, idToObjectMap.get(joinPropertyValue.longValue()));
           }
         }
       }
@@ -1352,21 +1357,31 @@ public class JdbcTemplateMapper {
 
     try {
       if (isNotEmpty(mainObjList) && isNotEmpty(manySideList)) {
-        Map<Number, List<U>> mapColumnIdToManySide =
-            manySideList
-                .stream()
-                .filter(e -> e != null)
-                .collect(
-                    Collectors.groupingBy(
-                        e -> (Number) getSimpleProperty(e, manySideJoinPropertyName)));
-
+        // many side records are grouped by their join property values
+        Map<Long, List<U>> groupedManySide = new HashMap<>();
+        for (U manySideObj : manySideList) {
+          if (manySideObj != null) {
+            Number val = (Number) getSimpleProperty(manySideObj, manySideJoinPropertyName);
+            if (val != null) {
+              if (groupedManySide.containsKey(val.longValue())) {
+                groupedManySide.get(val.longValue()).add(manySideObj);
+              } else {
+                List<U> list = new ArrayList<>();
+                list.add(manySideObj);
+                groupedManySide.put(val.longValue(), list);
+              }
+            }
+          }
+        }
         // assign the manyside list to the mainobj
         for (T mainObj : mainObjList) {
           if (mainObj != null) {
             BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
-            Number idValue = (Number) bw.getPropertyValue("id");
-            List<U> relatedList = mapColumnIdToManySide.get(idValue);
-            bw.setPropertyValue(mainObjCollectionPropertyName, relatedList);
+            Number idNumber = (Number) bw.getPropertyValue("id");
+            if (idNumber != null) {
+              bw.setPropertyValue(
+                  mainObjCollectionPropertyName, groupedManySide.get(idNumber.longValue()));
+            }
           }
         }
       }
@@ -1387,18 +1402,17 @@ public class JdbcTemplateMapper {
    */
   @SuppressWarnings("all")
   public Map<String, List> multipleModelMapper(ResultSet rs, SelectMapper... selectMappers) {
-
     Assert.notNull(selectMappers, "selectMappers must not be null");
 
     try {
       Map<String, List> resultMap = new HashMap();
+      Map<String, List> tempMap = new HashMap<>();
       for (SelectMapper selectMapper : selectMappers) {
-        resultMap.put(selectMapper.getSqlColumnPrefix(), new ArrayList());
+        tempMap.put(selectMapper.getSqlColumnPrefix(), new ArrayList());
       }
       List<String> resultSetColumnNames = getResultSetColumnNames(rs);
       while (rs.next()) {
         for (SelectMapper selectMapper : selectMappers) {
-          // Objects should have an id field value to instantiate
           Number id = (Number) rs.getObject(selectMapper.getSqlColumnPrefix() + "id");
           if (id != null && id.longValue() > 0) {
             Object obj =
@@ -1407,21 +1421,15 @@ public class JdbcTemplateMapper {
                     rs,
                     selectMapper.getSqlColumnPrefix(),
                     resultSetColumnNames);
-
-            // add only unique objects to list.
-            boolean exists = false;
-            for (Object entry : resultMap.get(selectMapper.getSqlColumnPrefix())) {
-              Number entryId = (Number) getIdProperty(entry);
-              if (entryId != null && entryId.longValue() == id.longValue()) {
-                exists = true;
-                break;
-              }
-            }
-            if (!exists) {
-              resultMap.get(selectMapper.getSqlColumnPrefix()).add(obj);
-            }
+            tempMap.get(selectMapper.getSqlColumnPrefix()).add(obj);
           }
         }
+      }
+
+      // each list should only have elements unique by 'id'
+      for (String key : tempMap.keySet()) {
+        List<Object> list = tempMap.get(key);
+        resultMap.put(key, uniqueByIdList(list));
       }
       return resultMap;
     } catch (Exception e) {
@@ -1943,6 +1951,29 @@ public class JdbcTemplateMapper {
       return schemaName + "." + tableName;
     }
     return tableName;
+  }
+
+  /**
+   * Get list with unique objects by object.id
+   *
+   * @param list
+   * @return List of unique objects by id
+   */
+  private List<Object> uniqueByIdList(List<Object> list) {
+    if (isNotEmpty(list)) {
+      Map<Long, Object> idToObjectMap = new LinkedHashMap<>();
+      for (Object obj : list) {
+        if (obj != null) {
+          Number id = (Number) getIdProperty(obj);
+          if (!idToObjectMap.containsKey(id.longValue())) {
+            idToObjectMap.put(id.longValue(), obj);
+          }
+        }
+      }
+      return new ArrayList<Object>(idToObjectMap.values());
+    } else {
+      return list;
+    }
   }
 
   private boolean isEmpty(String str) {
