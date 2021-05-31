@@ -1967,8 +1967,10 @@ public class JdbcTemplateMapper {
       for (Object obj : list) {
         if (obj != null) {
           Number id = (Number) getIdProperty(obj);
-          if (!idToObjectMap.containsKey(id.longValue())) {
-            idToObjectMap.put(id.longValue(), obj);
+          if (id != null) {
+            if (!idToObjectMap.containsKey(id.longValue())) {
+              idToObjectMap.put(id.longValue(), obj);
+            }
           }
         }
       }
