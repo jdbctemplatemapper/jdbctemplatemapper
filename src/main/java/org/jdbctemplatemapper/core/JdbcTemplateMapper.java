@@ -777,16 +777,17 @@ public class JdbcTemplateMapper {
         mainObjRelationshipPropertyName, "mainObjRelationshipPropertyName must not be null");
     Assert.notNull(mainObjJoinPropertyName, "mainObjJoinPropertyName must not be null");
 
-    TableMapping tableMapping = getTableMapping(relationshipClazz);
-    String tableName = tableMapping.getTableName();
-    String idColumnName = getTableIdColumnName(tableMapping);
+    TableMapping relationshipTableMapping = getTableMapping(relationshipClazz);
+    String relationshipTableName = relationshipTableMapping.getTableName();
+    String idColumnName = getTableIdColumnName(relationshipTableMapping);
+    
     if (isNotEmpty(mainObjList)) {
-      List<Long> allColumnIds = new ArrayList<>();
+      LinkedHashSet<Number> allJoinPropertyIds = new LinkedHashSet<>();
       for (T mainObj : mainObjList) {
         if (mainObj != null) {
           Number joinPropertyValue = (Number) getPropertyValue(mainObj, mainObjJoinPropertyName);
           if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {
-            allColumnIds.add(joinPropertyValue.longValue());
+            allJoinPropertyIds.add(joinPropertyValue);
           }
         }
       }
@@ -794,15 +795,15 @@ public class JdbcTemplateMapper {
       // to avoid query being issued with large number of ids
       // for the 'IN (:columnIds) clause the list is chunked by IN_CLAUSE_CHUNK_SIZE
       // and multiple queries issued if needed.
-      Collection<List<Long>> chunkedColumnIds = chunkList(allColumnIds, IN_CLAUSE_CHUNK_SIZE);
-      for (List<Long> columnIds : chunkedColumnIds) {
+      Collection<List<Number>> chunkedJoinPropertyIds = chunkTheCollection(allJoinPropertyIds, IN_CLAUSE_CHUNK_SIZE);
+      for (List<Number> joinPropertyIds : chunkedJoinPropertyIds) {
         String sql =
             "SELECT * FROM "
-                + fullyQualifiedTableName(tableName)
+                + fullyQualifiedTableName(relationshipTableName)
                 + " WHERE "
                 + idColumnName
-                + " IN (:columnIds)";
-        MapSqlParameterSource params = new MapSqlParameterSource("columnIds", columnIds);
+                + " IN (:joinPropertyIds)";
+        MapSqlParameterSource params = new MapSqlParameterSource("joinPropertyIds", joinPropertyIds);
         RowMapper<U> mapper = BeanPropertyRowMapper.newInstance(relationshipClazz);
         relatedObjList.addAll(npJdbcTemplate.query(sql, params, mapper));
       }
@@ -1239,12 +1240,12 @@ public class JdbcTemplateMapper {
 
     String tableName = getTableMapping(manySideClazz).getTableName();
     if (isNotEmpty(mainObjList)) {
-      Set<Long> allIds = new LinkedHashSet<>();
+      LinkedHashSet<Number> allIds = new LinkedHashSet<>();
       for (T mainObj : mainObjList) {
         if (mainObj != null) {
           Number idVal = (Number) getPropertyValue(mainObj, "id");
           if (idVal != null && idVal.longValue() > 0) {
-            allIds.add(idVal.longValue());
+            allIds.add(idVal);
           } else {
             throw new RuntimeException("id property in mainObjList cannot be null");
           }
@@ -1252,14 +1253,13 @@ public class JdbcTemplateMapper {
       }
 
       // convert set to list
-      List<Long> uniqueIds = new ArrayList<>(allIds);
       String joinColumnName = getJoinColumnName(tableName, manySideJoinPropertyName);
       List<U> manySideList = new ArrayList<>();
       // to avoid query being issued with large number of
       // records for the 'IN (:columnIds) clause the list is chunked by IN_CLAUSE_CHUNK_SIZE
       // and multiple queries issued
-      Collection<List<Long>> chunkedColumnIds = chunkList(uniqueIds, IN_CLAUSE_CHUNK_SIZE);
-      for (List<Long> columnIds : chunkedColumnIds) {
+      Collection<List<Number>> chunkedColumnIds = chunkTheCollection(allIds, IN_CLAUSE_CHUNK_SIZE);
+      for (List<Number> columnIds : chunkedColumnIds) {
         String sql =
             "SELECT * FROM "
                 + fullyQualifiedTableName(tableName)
@@ -1987,11 +1987,11 @@ public class JdbcTemplateMapper {
    * @param chunkSize
    * @return Collection of lists broken down by chunkSize
    */
-  private Collection<List<Long>> chunkList(List<Long> list, Integer chunkSize) {
-    Assert.notNull(list, "list must not be null");
+  private Collection<List<Number>> chunkTheCollection(Collection<Number> collection, Integer chunkSize) {
+    Assert.notNull(collection, "collection must not be null");
     AtomicInteger counter = new AtomicInteger();
-    Collection<List<Long>> result =
-        list.stream()
+    Collection<List<Number>> result =
+        collection.stream()
             .filter(e -> e != null)
             .collect(Collectors.groupingBy(it -> counter.getAndIncrement() / chunkSize))
             .values();
