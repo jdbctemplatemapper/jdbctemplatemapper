@@ -995,7 +995,7 @@ public class JdbcTemplateMapper {
       for (U relatedObj : relatedObjList) {
         if (relatedObj != null) {
           Number idNumber = (Number) getIdProperty(relatedObj);
-          if (idNumber != null) {
+          if (idNumber != null && idNumber.longValue() > 0) {
             idToObjectMap.put(idNumber.longValue(), relatedObj);
           }
         }
