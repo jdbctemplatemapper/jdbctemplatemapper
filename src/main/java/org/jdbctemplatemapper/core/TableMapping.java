@@ -19,12 +19,12 @@ public class TableMapping {
   private String idName;
   
   // object property to database column mapping.
-  private List<PropertyColumnMapping> propertyColumnMappings = new ArrayList<>();
+  private List<PropertyMapping> propertyMappings = new ArrayList<>();
 
   public String getColumnName(String propertyName) {
     String val = null;
     if (propertyName != null) {
-      for (PropertyColumnMapping mapping : propertyColumnMappings) {
+      for (PropertyMapping mapping : propertyMappings) {
         if (mapping.getPropertyName().equals(propertyName)) {
           val = mapping.getColumnName();
           break;

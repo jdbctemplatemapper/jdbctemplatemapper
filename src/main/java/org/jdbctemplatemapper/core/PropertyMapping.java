@@ -8,11 +8,11 @@ import lombok.Data;
  *
  * @author ajoseph
  */
-public class PropertyColumnMapping {
+public class PropertyMapping {
   private String propertyName;
   private String columnName;
 
-  public PropertyColumnMapping(String propertyName, String columnName) {
+  public PropertyMapping(String propertyName, String columnName) {
     if (propertyName == null || columnName == null) {
       throw new IllegalArgumentException("propertyName and columnName must not be null");
     }

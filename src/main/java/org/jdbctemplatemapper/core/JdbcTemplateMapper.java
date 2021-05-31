@@ -1895,17 +1895,17 @@ public class JdbcTemplateMapper {
       try {
         List<String> objPropertyNames = getObjectPropertyNames(clazz.newInstance());
 
-        List<PropertyColumnMapping> propertyColumnMappings = new ArrayList<>();
+        List<PropertyMapping> propertyMappings = new ArrayList<>();
         for (String columnName : columnNames) {
           String propertyName = convertSnakeToCamelCase(columnName);
           if (objPropertyNames.contains(propertyName)) {
-            propertyColumnMappings.add(new PropertyColumnMapping(propertyName, columnName));
+            propertyMappings.add(new PropertyMapping(propertyName, columnName));
           }
         }
 
         tableMapping = new TableMapping();
         tableMapping.setTableName(tableName);
-        tableMapping.setPropertyColumnMappings(propertyColumnMappings);
+        tableMapping.setPropertyMappings(propertyMappings);
 
         // get the case sensitive id name
         for (String columnName : columnNames) {
