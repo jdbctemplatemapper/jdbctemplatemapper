@@ -1013,9 +1013,9 @@ public class JdbcTemplateMapper {
       Map<Number, U> idToObjectMap = new HashMap<>();
       for (U relatedObj : relatedObjList) {
         if (relatedObj != null) {
-          Number idNumber = (Number) getPropertyValue(relatedObj, "id");
-          if (idNumber != null && idNumber.longValue() > 0) {
-            idToObjectMap.put(idNumber, relatedObj);
+          Number idVal = (Number) getPropertyValue(relatedObj, "id");
+          if (idVal != null && idVal.longValue() > 0) {
+            idToObjectMap.put(idVal, relatedObj);
           }
         }
       }
@@ -1379,17 +1379,18 @@ public class JdbcTemplateMapper {
     try {
       if (isNotEmpty(mainObjList) && isNotEmpty(manySideList)) {
         // many side records are grouped by their join property values
+    	// Map key - join property value , value - List of grouped records by join property value
         Map<Number, List<U>> groupedManySide = new HashMap<>();
         for (U manySideObj : manySideList) {
           if (manySideObj != null) {
-            Number val = (Number) getPropertyValue(manySideObj, manySideJoinPropertyName);
-            if (val != null) {
-              if (groupedManySide.containsKey(val)) {
-                groupedManySide.get(val).add(manySideObj);
+            Number joinPropertyValue = (Number) getPropertyValue(manySideObj, manySideJoinPropertyName);
+            if (joinPropertyValue != null) {
+              if (groupedManySide.containsKey(joinPropertyValue)) {
+                groupedManySide.get(joinPropertyValue).add(manySideObj);
               } else {
                 List<U> list = new ArrayList<>();
                 list.add(manySideObj);
-                groupedManySide.put(val, list);
+                groupedManySide.put(joinPropertyValue, list);
               }
             }
           }
@@ -1397,10 +1398,10 @@ public class JdbcTemplateMapper {
         // assign the manyside list to the mainobj
         for (T mainObj : mainObjList) {
           if (mainObj != null) {
-            Number idNumber = (Number) getPropertyValue(mainObj, "id");
-            if (idNumber != null && idNumber.longValue() > 0) {
+            Number idVal = (Number) getPropertyValue(mainObj, "id");
+            if (idVal != null && idVal.longValue() > 0) {
               setPropertyValue(
-                  mainObj, mainObjCollectionPropertyName, groupedManySide.get(idNumber));
+                  mainObj, mainObjCollectionPropertyName, groupedManySide.get(idVal));
             }
           }
         }
