@@ -1,6 +1,7 @@
 package org.jdbctemplatemapper.core;
 
 import java.beans.PropertyDescriptor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -331,7 +332,7 @@ public class JdbcTemplateMapper {
     if (!(id instanceof Integer || id instanceof Long)) {
       throw new RuntimeException("id has to be type of Integer or Long");
     }
-    
+
     TableMapping tableMapping = getTableMapping(clazz);
     String idColumnName = getTableIdColumnName(tableMapping);
     String sql =
@@ -1003,11 +1004,18 @@ public class JdbcTemplateMapper {
       // assign related obj to the main obj relationship property
       for (T mainObj : mainObjList) {
         if (mainObj != null) {
-          BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
-          Number joinPropertyValue = (Number) bw.getPropertyValue(mainObjJoinPropertyName);
+          // BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
+          // Number joinPropertyValue = (Number) bw.getPropertyValue(mainObjJoinPropertyName);
+          Number joinPropertyValue = (Number) getSimpleProperty(mainObj, mainObjJoinPropertyName);
           if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {
-            bw.setPropertyValue(
-                mainObjRelationshipPropertyName, idToObjectMap.get(joinPropertyValue.longValue()));
+            // bw.setPropertyValue(
+            //    mainObjRelationshipPropertyName,
+            // idToObjectMap.get(joinPropertyValue.longValue()));
+
+            setSimpleProperty(
+                mainObj,
+                mainObjRelationshipPropertyName,
+                idToObjectMap.get(joinPropertyValue.longValue()));
           }
         }
       }
@@ -1233,7 +1241,7 @@ public class JdbcTemplateMapper {
           }
         }
       }
-      
+
       // convert set to list
       List<Long> uniqueIds = new ArrayList<>(allIds);
       String joinColumnName = getJoinColumnName(tableName, manySideJoinPropertyName);
@@ -1380,11 +1388,16 @@ public class JdbcTemplateMapper {
         // assign the manyside list to the mainobj
         for (T mainObj : mainObjList) {
           if (mainObj != null) {
-            BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
-            Number idNumber = (Number) bw.getPropertyValue("id");
-            if (idNumber != null) {
-              bw.setPropertyValue(
-                  mainObjCollectionPropertyName, groupedManySide.get(idNumber.longValue()));
+            // BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainObj);
+            // Number idNumber = (Number) bw.getPropertyValue("id");
+            Number idNumber = (Number) getIdProperty(mainObj);
+            if (idNumber != null && idNumber.longValue() > 0) {
+              // bw.setPropertyValue(
+              //    mainObjCollectionPropertyName, groupedManySide.get(idNumber.longValue()));
+              setSimpleProperty(
+                  mainObj,
+                  mainObjCollectionPropertyName,
+                  groupedManySide.get(idNumber.longValue()));
             }
           }
         }
@@ -1425,13 +1438,13 @@ public class JdbcTemplateMapper {
                     rs,
                     selectMapper.getSqlColumnPrefix(),
                     resultSetColumnNames);
-            tempMap.get(selectMapper.getSqlColumnPrefix()).put(id.longValue(),obj);
+            tempMap.get(selectMapper.getSqlColumnPrefix()).put(id.longValue(), obj);
           }
         }
       }
       Map<String, List> resultMap = new HashMap<>();
       for (String key : tempMap.keySet()) {
-        resultMap.put(key, new ArrayList<Object>(tempMap.get(key).values())); 
+        resultMap.put(key, new ArrayList<Object>(tempMap.get(key).values()));
       }
       return resultMap;
     } catch (Exception e) {
@@ -1783,6 +1796,20 @@ public class JdbcTemplateMapper {
     return propertyNames;
   }
 
+  private Object getIdProperty(Object obj) {
+    Assert.notNull(obj, "Object must not be null");
+    Method method = objectToIdMethodCache.get(obj.getClass().getName());
+    if (method == null) {
+      method = ReflectionUtils.findMethod(obj.getClass(), "getId");
+      if (method == null) {
+        throw new RuntimeException(
+            "method getId() not found in object " + obj.getClass().getName());
+      }
+      objectToIdMethodCache.put(obj.getClass().getName(), method);
+    }
+    return ReflectionUtils.invokeMethod(method, obj);
+  }
+
   private Object getSimpleProperty(Object obj, String propertyName) {
     Assert.notNull(obj, "Object must not be null");
     Assert.hasLength(propertyName, "propertyName must not be empty");
@@ -1798,18 +1825,28 @@ public class JdbcTemplateMapper {
     return ReflectionUtils.invokeMethod(method, obj);
   }
 
-  private Object getIdProperty(Object obj) {
+  private Object setSimpleProperty(Object obj, String propertyName, Object val) {
     Assert.notNull(obj, "Object must not be null");
-    Method method = objectToIdMethodCache.get(obj.getClass().getName());
-    if (method == null) {
-      method = ReflectionUtils.findMethod(obj.getClass(), "getId");
-      if (method == null) {
-        throw new RuntimeException(
-            "method getId() not found in object " + obj.getClass().getName());
-      }
-      objectToIdMethodCache.put(obj.getClass().getName(), method);
+    Assert.hasLength(propertyName, "propertyName must not be empty");
+    Field field = ReflectionUtils.findField(obj.getClass(), propertyName);
+    if (field == null) {
+      throw new RuntimeException(
+          "property " + propertyName + " not found in class " + obj.getClass().getName());
     }
-    return ReflectionUtils.invokeMethod(method, obj);
+
+    Method method =
+        ReflectionUtils.findMethod(
+            obj.getClass(), "set" + StringUtils.capitalize(propertyName), field.getType());
+    if (method == null) {
+      throw new RuntimeException(
+          "method set"
+              + StringUtils.capitalize(propertyName)
+              + "("
+              + field.getType().getName()
+              + ") not found in object "
+              + obj.getClass().getName());
+    }
+    return ReflectionUtils.invokeMethod(method, obj, val);
   }
 
   private TableMapping getTableMapping(Class<?> clazz) {
