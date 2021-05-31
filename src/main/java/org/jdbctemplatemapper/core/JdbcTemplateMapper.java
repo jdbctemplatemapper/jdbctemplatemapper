@@ -125,7 +125,8 @@ import org.springframework.util.StringUtils;
  *
  * &#64;Bean
  * public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
- *   return new JdbcTemplateMapper(jdbcTemplate, "yourSchemaName");
+ *   return new JdbcTemplateMapper(jdbcTemplate, "your_database_schema_name");
+ *   //return new JdbcTemplateMapper(jdbcTemplate, null); // for databases like mysql which do not have a schema name
  * }
  *
  * </pre>
@@ -330,6 +331,7 @@ public class JdbcTemplateMapper {
     if (!(id instanceof Integer || id instanceof Long)) {
       throw new RuntimeException("id has to be type of Integer or Long");
     }
+    
     TableMapping tableMapping = getTableMapping(clazz);
     String idColumnName = getTableIdColumnName(tableMapping);
     String sql =
@@ -1407,10 +1409,10 @@ public class JdbcTemplateMapper {
     Assert.notNull(selectMappers, "selectMappers must not be null");
 
     try {
-      Map<String, List> resultMap = new HashMap();
-      Map<String, List> tempMap = new HashMap<>();
+      // LinkedHashMap used to retain the order of insertion of records
+      Map<String, LinkedHashMap<Long, Object>> tempMap = new HashMap<>();
       for (SelectMapper selectMapper : selectMappers) {
-        tempMap.put(selectMapper.getSqlColumnPrefix(), new ArrayList());
+        tempMap.put(selectMapper.getSqlColumnPrefix(), new LinkedHashMap<>());
       }
       List<String> resultSetColumnNames = getResultSetColumnNames(rs);
       while (rs.next()) {
@@ -1423,15 +1425,13 @@ public class JdbcTemplateMapper {
                     rs,
                     selectMapper.getSqlColumnPrefix(),
                     resultSetColumnNames);
-            tempMap.get(selectMapper.getSqlColumnPrefix()).add(obj);
+            tempMap.get(selectMapper.getSqlColumnPrefix()).put(id.longValue(),obj);
           }
         }
       }
-
-      // each list should only have elements unique by 'id'
+      Map<String, List> resultMap = new HashMap<>();
       for (String key : tempMap.keySet()) {
-        List<Object> list = tempMap.get(key);
-        resultMap.put(key, uniqueByIdList(list));
+        resultMap.put(key, new ArrayList<Object>(tempMap.get(key).values())); 
       }
       return resultMap;
     } catch (Exception e) {
@@ -1953,31 +1953,6 @@ public class JdbcTemplateMapper {
       return schemaName + "." + tableName;
     }
     return tableName;
-  }
-
-  /**
-   * Get list with unique objects by object.id
-   *
-   * @param list
-   * @return List of unique objects by id
-   */
-  private List<Object> uniqueByIdList(List<Object> list) {
-    if (isNotEmpty(list)) {
-      Map<Long, Object> idToObjectMap = new LinkedHashMap<>();
-      for (Object obj : list) {
-        if (obj != null) {
-          Number id = (Number) getIdProperty(obj);
-          if (id != null) {
-            if (!idToObjectMap.containsKey(id.longValue())) {
-              idToObjectMap.put(id.longValue(), obj);
-            }
-          }
-        }
-      }
-      return new ArrayList<Object>(idToObjectMap.values());
-    } else {
-      return list;
-    }
   }
 
   private boolean isEmpty(String str) {
