@@ -29,6 +29,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.SqlTypeValue;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
@@ -174,7 +175,7 @@ public class JdbcTemplateMapper {
 
   // Map key - table name,
   //     value - the list of database column names
-  private Map<String, List<String>> tableColumnNamesCache = new ConcurrentHashMap<>();
+  private Map<String, List<ColumnInfo>> tableColumnInfoCache = new ConcurrentHashMap<>();
 
   // Map key - simple Class name
   //     value - list of property names
@@ -783,8 +784,15 @@ public class JdbcTemplateMapper {
 
     if (isNotEmpty(mainObjList)) {
       LinkedHashSet<Number> allJoinPropertyIds = new LinkedHashSet<>();
+      boolean firstRecord = true;
       for (T mainObj : mainObjList) {
         if (mainObj != null) {
+        	if(firstRecord) {
+        		firstRecord = false;
+        		
+        	}
+        	
+        	
           Number joinPropertyValue = (Number) getPropertyValue(mainObj, mainObjJoinPropertyName);
           if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {
             allJoinPropertyIds.add(joinPropertyValue);
@@ -1517,23 +1525,23 @@ public class JdbcTemplateMapper {
     String str = selectColsCache.get(tableName + "-" + tableAlias);
 
     if (str == null) {
-      List<String> tableColumnNames = getTableColumnNames(tableName);
-      if (isEmpty(tableColumnNames)) {
+      List<ColumnInfo> tableColumnInfo = getTableColumnInfo(tableName);
+      if (isEmpty(tableColumnInfo)) {
         // try with uppercase table name
-        tableColumnNames = getTableColumnNames(tableName.toUpperCase());
-        if (isEmpty(tableColumnNames)) {
+        tableColumnInfo = getTableColumnInfo(tableName.toUpperCase());
+        if (isEmpty(tableColumnInfo)) {
           throw new RuntimeException("Could not get column info for table named " + tableName);
         }
       }
       StringBuilder sb = new StringBuilder(" ");
-      for (String colName : tableColumnNames) {
+      for (ColumnInfo colInfo : tableColumnInfo) {
         sb.append(tableAlias)
             .append(".")
-            .append(colName)
+            .append(colInfo.getColumnName())
             .append(" ")
             .append(tableAlias)
             .append("_")
-            .append(colName)
+            .append(colInfo.getColumnName())
             .append(",");
       }
       str = sb.toString();
@@ -1729,37 +1737,37 @@ public class JdbcTemplateMapper {
     return camelCaseAttrs;
   }
 
-  private List<String> getTableColumnNames(String tableName) {
+  private List<ColumnInfo> getTableColumnInfo(String tableName) {
     Assert.hasLength(tableName, "tableName must not be empty");
     try {
-      List<String> columnNames = tableColumnNamesCache.get(tableName);
-      if (isEmpty(columnNames)) {
+      List<ColumnInfo> columnInfos = tableColumnInfoCache.get(tableName);
+      if (isEmpty(columnInfos)) {
         // Using Spring JdbcUtils.extractDatabaseMetaData() since it has some robust processing for
         // metadata access
-        columnNames =
+        columnInfos =
             JdbcUtils.extractDatabaseMetaData(
                 jdbcTemplate.getDataSource(),
-                new DatabaseMetaDataCallback<List<String>>() {
-                  public List<String> processMetaData(DatabaseMetaData metadata)
+                new DatabaseMetaDataCallback<List<ColumnInfo>>() {
+                  public List<ColumnInfo> processMetaData(DatabaseMetaData metadata)
                       throws SQLException, MetaDataAccessException {
-                    ResultSet resultSet = null;
+                    ResultSet rs = null;
                     try {
-                      List<String> columns = new ArrayList<>();
-                      resultSet = metadata.getColumns(null, schemaName, tableName, null);
-                      while (resultSet.next()) {
-                        columns.add(resultSet.getString("COLUMN_NAME"));
+                      List<ColumnInfo> columnInfoList = new ArrayList<>();
+                      rs = metadata.getColumns(null, schemaName, tableName, null);
+                      while (rs.next()) {
+                        columnInfoList.add(new ColumnInfo(rs.getString("COLUMN_NAME"), rs.getInt("DATA_TYPE")));                       
                       }
-                      if (isNotEmpty(columns)) {
-                        tableColumnNamesCache.put(tableName, columns);
+                      if (isNotEmpty(columnInfoList)) {
+                        tableColumnInfoCache.put(tableName, columnInfoList);
                       }
-                      return columns;
+                      return columnInfoList;
                     } finally {
-                      JdbcUtils.closeResultSet(resultSet);
+                      JdbcUtils.closeResultSet(rs);
                     }
                   }
                 });
       }
-      return columnNames;
+      return columnInfos;
     } catch (Exception e) {
       throw new RuntimeException();
     }
@@ -1880,12 +1888,12 @@ public class JdbcTemplateMapper {
         tableName = convertCamelToSnakeCase(clazz.getSimpleName());
       }
 
-      List<String> columnNames = getTableColumnNames(tableName);
-      if (isEmpty(columnNames)) {
+      List<ColumnInfo> columnInfoList = getTableColumnInfo(tableName);
+      if (isEmpty(columnInfoList)) {
         // try with uppercase
         tableName = tableName.toUpperCase();
-        columnNames = getTableColumnNames(tableName);
-        if (isEmpty(columnNames)) {
+        columnInfoList = getTableColumnInfo(tableName);
+        if (isEmpty(columnInfoList)) {
           throw new RuntimeException(
               "Could not find corresponding table for class " + clazz.getSimpleName());
         }
@@ -1896,10 +1904,10 @@ public class JdbcTemplateMapper {
         List<String> objPropertyNames = getObjectPropertyNames(clazz.newInstance());
 
         List<PropertyMapping> propertyMappings = new ArrayList<>();
-        for (String columnName : columnNames) {
-          String propertyName = convertSnakeToCamelCase(columnName);
+        for (ColumnInfo columnInfo : columnInfoList) {
+          String propertyName = convertSnakeToCamelCase(columnInfo.getColumnName());
           if (objPropertyNames.contains(propertyName)) {
-            propertyMappings.add(new PropertyMapping(propertyName, columnName));
+            propertyMappings.add(new PropertyMapping(propertyName, null, columnInfo.getColumnName(),columnInfo.getColumnDataType()));
           }
         }
 
@@ -1908,9 +1916,9 @@ public class JdbcTemplateMapper {
         tableMapping.setPropertyMappings(propertyMappings);
 
         // get the case sensitive id name
-        for (String columnName : columnNames) {
-          if (columnName.equals("id") || columnName.equals("ID")) {
-            tableMapping.setIdName(columnName);
+        for (ColumnInfo columnInfo : columnInfoList) {
+          if ("id".equals(columnInfo.getColumnName()) || "ID".equals(columnInfo.getColumnName())) {
+            tableMapping.setIdName(columnInfo.getColumnName());
             break;
           }
         }
@@ -1936,13 +1944,13 @@ public class JdbcTemplateMapper {
     Assert.hasLength(tableName, "tableName must not be empty");
     Assert.hasLength(joinPropertyName, "joinPropertyName must not be empty");
 
-    List<String> columnNames = getTableColumnNames(tableName);
+    List<ColumnInfo> columnInfoList = getTableColumnInfo(tableName);
 
     String joinColumnName = convertCamelToSnakeCase(joinPropertyName);
     String ucJoinColumnName = joinColumnName.toUpperCase();
-    for (String columnName : columnNames) {
-      if (columnName.equals(joinColumnName) || columnName.equals(ucJoinColumnName)) {
-        return columnName;
+    for (ColumnInfo columnInfo : columnInfoList) {
+      if (joinColumnName.equals(columnInfo.getColumnName()) || ucJoinColumnName.equals(columnInfo.getColumnName())) {
+        return columnInfo.getColumnName();
       }
     }
     // if code reached here throw exception

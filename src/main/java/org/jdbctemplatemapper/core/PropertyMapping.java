@@ -10,13 +10,17 @@ import lombok.Data;
  */
 public class PropertyMapping {
   private String propertyName;
+  private Class<?> propertyType;
   private String columnName;
+  private int columnDataType; // see java.sql.Types
 
-  public PropertyMapping(String propertyName, String columnName) {
+  public PropertyMapping(String propertyName, Class<?> propertyType, String columnName, int columnDataType) {
     if (propertyName == null || columnName == null) {
       throw new IllegalArgumentException("propertyName and columnName must not be null");
     }
     this.propertyName = propertyName;
+    this.propertyType = propertyType;
     this.columnName = columnName;
+    this.columnDataType = columnDataType;
   }
 }
