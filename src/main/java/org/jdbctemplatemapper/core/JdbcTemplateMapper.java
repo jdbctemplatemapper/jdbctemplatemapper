@@ -141,6 +141,8 @@ public class JdbcTemplateMapper {
 
   private String catalogName;
   private String schemaName;
+  //this is for the call to databaseMetaData.getColumns() just in case a database needs something other than null
+  private String metaDataColumnNamePattern;  
   private String createdByPropertyName;
   private String createdOnPropertyName;
   private String updatedByPropertyName;
@@ -313,6 +315,10 @@ public class JdbcTemplateMapper {
   
   public void setCatalogName(String catalogName) {
 	  this.catalogName = catalogName;
+  }
+  
+  public void metaDataColumnNamePattern(String metaDataColumnNamePattern) {
+	  this.metaDataColumnNamePattern = metaDataColumnNamePattern;
   }
   
   /**
@@ -1901,7 +1907,7 @@ public class JdbcTemplateMapper {
                     ResultSet rs = null;
                     try {
                       List<ColumnInfo> columnInfoList = new ArrayList<>();
-                      rs = metadata.getColumns(catalogName, schemaName, tableName, "%");
+                      rs = metadata.getColumns(catalogName, schemaName, tableName, metaDataColumnNamePattern);
                       while (rs.next()) {
                         columnInfoList.add(
                             new ColumnInfo(rs.getString("COLUMN_NAME"), rs.getInt("DATA_TYPE")));
