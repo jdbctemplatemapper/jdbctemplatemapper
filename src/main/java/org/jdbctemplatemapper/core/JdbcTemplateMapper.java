@@ -317,7 +317,7 @@ public class JdbcTemplateMapper {
 	  this.catalogName = catalogName;
   }
   
-  public void metaDataColumnNamePattern(String metaDataColumnNamePattern) {
+  public void setMetaDataColumnNamePattern(String metaDataColumnNamePattern) {
 	  this.metaDataColumnNamePattern = metaDataColumnNamePattern;
   }
   
