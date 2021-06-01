@@ -70,9 +70,10 @@ import org.springframework.util.StringUtils;
  *   The default class to table mapping can be overridden using the @Table annotation)
  *
  * Examples of simple CRUD:
- *
- * public class Product{ // by default maps to table 'product'.
- *    private Integer id;
+ * 
+ * // Product class maps to 'product' table by default. Use @Table(name="someothertablename") to override the default
+ * public class Product { 
+ *    private Integer id; // 'id' property is needed for all models and has to be of type Integer or Long
  *    private String productName;
  *    private Double price;
  *    private LocalDateTime availableDate;
