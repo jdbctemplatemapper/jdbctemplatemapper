@@ -29,7 +29,6 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.SqlTypeValue;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
@@ -179,7 +178,7 @@ public class JdbcTemplateMapper {
 
   // Map key - simple Class name
   //     value - list of property names
-  private Map<String, List<String>> objectPropertyNamesCache = new ConcurrentHashMap<>();
+  private Map<String, List<PropertyInfo>> objectPropertyInfoCache = new ConcurrentHashMap<>();
 
   // Map key - camel case string,
   //     value - snake case string
@@ -542,10 +541,12 @@ public class JdbcTemplateMapper {
 
       Set<String> updatePropertyNames = new LinkedHashSet<>();
 
-      for (String propertyName : getObjectPropertyNames(obj)) {
-        if (!ignoreAttrs.contains(propertyName)
-            && tableMapping.getColumnName(propertyName) != null) {
-          updatePropertyNames.add(propertyName);
+      for (PropertyInfo propertyInfo : getObjectPropertyInfo(obj)) {
+        // if not a ignore property and has a table column mapping add it to the update property
+        // list
+        if (!ignoreAttrs.contains(propertyInfo.getPropertyName())
+            && tableMapping.getColumnName(propertyInfo.getPropertyName()) != null) {
+          updatePropertyNames.add(propertyInfo.getPropertyName());
         }
       }
       updateSqlAndParams = buildUpdateSql(tableMapping, updatePropertyNames);
@@ -787,12 +788,10 @@ public class JdbcTemplateMapper {
       boolean firstRecord = true;
       for (T mainObj : mainObjList) {
         if (mainObj != null) {
-        	if(firstRecord) {
-        		firstRecord = false;
-        		
-        	}
-        	
-        	
+          if (firstRecord) {
+            firstRecord = false;
+          }
+
           Number joinPropertyValue = (Number) getPropertyValue(mainObj, mainObjJoinPropertyName);
           if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {
             allJoinPropertyIds.add(joinPropertyValue);
@@ -800,7 +799,8 @@ public class JdbcTemplateMapper {
         }
       }
       List<U> relatedObjList = new ArrayList<>();
-      // Since some databases have limitations on how many entries can be in an 'IN' clause and to avoid
+      // Since some databases have limitations on how many entries can be in an 'IN' clause and to
+      // avoid
       // query being issued with large number of ids for the 'IN (:joinPropertyIds), the list
       // is chunked by IN_CLAUSE_CHUNK_SIZE and multiple queries issued if needed.
       Collection<List<Number>> chunkedJoinPropertyIds =
@@ -1262,7 +1262,8 @@ public class JdbcTemplateMapper {
 
       String joinColumnName = getJoinColumnName(manySideTableName, manySideJoinPropertyName);
       List<U> manySideList = new ArrayList<>();
-      // Since some databases have limitations on how many entries can be in an 'IN' clause and to avoid
+      // Since some databases have limitations on how many entries can be in an 'IN' clause and to
+      // avoid
       // query being issued with large number of ids for the 'IN (:mainObjIds), the list
       // is chunked by IN_CLAUSE_CHUNK_SIZE and multiple queries issued if needed.
       Collection<List<Number>> chunkedMainObjIds =
@@ -1387,11 +1388,12 @@ public class JdbcTemplateMapper {
     try {
       if (isNotEmpty(mainObjList) && isNotEmpty(manySideList)) {
         // many side records are grouped by their join property values
-    	// Map key - join property value , value - List of grouped records by join property value
+        // Map key - join property value , value - List of grouped records by join property value
         Map<Number, List<U>> groupedManySide = new HashMap<>();
         for (U manySideObj : manySideList) {
           if (manySideObj != null) {
-            Number joinPropertyValue = (Number) getPropertyValue(manySideObj, manySideJoinPropertyName);
+            Number joinPropertyValue =
+                (Number) getPropertyValue(manySideObj, manySideJoinPropertyName);
             if (joinPropertyValue != null) {
               if (groupedManySide.containsKey(joinPropertyValue)) {
                 groupedManySide.get(joinPropertyValue).add(manySideObj);
@@ -1408,8 +1410,7 @@ public class JdbcTemplateMapper {
           if (mainObj != null) {
             Number idVal = (Number) getPropertyValue(mainObj, "id");
             if (idVal != null && idVal.longValue() > 0) {
-              setPropertyValue(
-                  mainObj, mainObjCollectionPropertyName, groupedManySide.get(idVal));
+              setPropertyValue(mainObj, mainObjCollectionPropertyName, groupedManySide.get(idVal));
             }
           }
         }
@@ -1677,16 +1678,16 @@ public class JdbcTemplateMapper {
       BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
       // need below for java.sql.Timestamp to java.time.LocalDateTime conversion etc
       bw.setConversionService(defaultConversionService);
-      List<String> propertyNames = getObjectPropertyNames(obj);
-      for (String propName : propertyNames) {
-        String columnName = convertCamelToSnakeCase(propName);
+      for (PropertyInfo propertyInfo : getObjectPropertyInfo(obj)) {
+        String columnName = convertCamelToSnakeCase(propertyInfo.getPropertyName());
         if (isNotEmpty(prefix)) {
           columnName = prefix + columnName;
         }
         int index = resultSetColumnNames.indexOf(columnName.toLowerCase());
         if (index != -1) {
           // JDBC index starts at 1. using Springs JdbcUtils to handle oracle.sql.Timestamp ....
-          bw.setPropertyValue(propName, JdbcUtils.getResultSetValue(rs, index + 1));
+          bw.setPropertyValue(
+              propertyInfo.getPropertyName(), JdbcUtils.getResultSetValue(rs, index + 1));
         }
       }
       return clazz.cast(obj);
@@ -1728,11 +1729,10 @@ public class JdbcTemplateMapper {
   private Map<String, Object> convertObjectToMap(Object obj) {
     Assert.notNull(obj, "Object must not be null");
     Map<String, Object> camelCaseAttrs = new HashMap<>();
-    List<String> propertyNames = getObjectPropertyNames(obj);
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
-    for (String propName : propertyNames) {
-      Object propValue = bw.getPropertyValue(propName);
-      camelCaseAttrs.put(propName, propValue);
+    for (PropertyInfo propertyInfo : getObjectPropertyInfo(obj)) {
+      camelCaseAttrs.put(
+          propertyInfo.getPropertyName(), bw.getPropertyValue(propertyInfo.getPropertyName()));
     }
     return camelCaseAttrs;
   }
@@ -1755,7 +1755,8 @@ public class JdbcTemplateMapper {
                       List<ColumnInfo> columnInfoList = new ArrayList<>();
                       rs = metadata.getColumns(null, schemaName, tableName, null);
                       while (rs.next()) {
-                        columnInfoList.add(new ColumnInfo(rs.getString("COLUMN_NAME"), rs.getInt("DATA_TYPE")));                       
+                        columnInfoList.add(
+                            new ColumnInfo(rs.getString("COLUMN_NAME"), rs.getInt("DATA_TYPE")));
                       }
                       if (isNotEmpty(columnInfoList)) {
                         tableColumnInfoCache.put(tableName, columnInfoList);
@@ -1805,12 +1806,12 @@ public class JdbcTemplateMapper {
    * @param obj the java object
    * @return List of property names.
    */
-  private List<String> getObjectPropertyNames(Object obj) {
+  private List<PropertyInfo> getObjectPropertyInfo(Object obj) {
     Assert.notNull(obj, "Object must not be null");
-    List<String> propertyNames = objectPropertyNamesCache.get(obj.getClass().getName());
-    if (propertyNames == null) {
+    List<PropertyInfo> propertyInfoList = objectPropertyInfoCache.get(obj.getClass().getName());
+    if (propertyInfoList == null) {
       BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
-      propertyNames = new ArrayList<>();
+      propertyInfoList = new ArrayList<>();
       PropertyDescriptor[] propertyDescriptors = bw.getPropertyDescriptors();
       for (PropertyDescriptor pd : propertyDescriptors) {
         String propName = pd.getName();
@@ -1818,12 +1819,12 @@ public class JdbcTemplateMapper {
         if ("class".equals(propName)) {
           continue;
         } else {
-          propertyNames.add(propName);
+          propertyInfoList.add(new PropertyInfo(propName, pd.getPropertyType()));
         }
       }
-      objectPropertyNamesCache.put(obj.getClass().getName(), propertyNames);
+      objectPropertyInfoCache.put(obj.getClass().getName(), propertyInfoList);
     }
-    return propertyNames;
+    return propertyInfoList;
   }
 
   private Object getPropertyValue(Object obj, String propertyName) {
@@ -1901,13 +1902,28 @@ public class JdbcTemplateMapper {
 
       // if code reaches here table exists
       try {
-        List<String> objPropertyNames = getObjectPropertyNames(clazz.newInstance());
-
+        List<PropertyInfo> propertyInfoList = getObjectPropertyInfo(clazz.newInstance());
         List<PropertyMapping> propertyMappings = new ArrayList<>();
+        // Match  database table columns to the Object properties
         for (ColumnInfo columnInfo : columnInfoList) {
+          // property name corresponding to column name
           String propertyName = convertSnakeToCamelCase(columnInfo.getColumnName());
-          if (objPropertyNames.contains(propertyName)) {
-            propertyMappings.add(new PropertyMapping(propertyName, null, columnInfo.getColumnName(),columnInfo.getColumnDataType()));
+          // check for match
+          PropertyInfo propertyInfo =
+              propertyInfoList
+                  .stream()
+                  .filter(pi -> propertyName.equals(pi.getPropertyName()))
+                  .findAny()
+                  .orElse(null);
+
+          // add matched object property info and table column info to mappings
+          if (propertyInfo != null) {
+            propertyMappings.add(
+                new PropertyMapping(
+                    propertyInfo.getPropertyName(),
+                    propertyInfo.getPropertyType(),
+                    columnInfo.getColumnName(),
+                    columnInfo.getColumnDataType()));
           }
         }
 
@@ -1949,7 +1965,8 @@ public class JdbcTemplateMapper {
     String joinColumnName = convertCamelToSnakeCase(joinPropertyName);
     String ucJoinColumnName = joinColumnName.toUpperCase();
     for (ColumnInfo columnInfo : columnInfoList) {
-      if (joinColumnName.equals(columnInfo.getColumnName()) || ucJoinColumnName.equals(columnInfo.getColumnName())) {
+      if (joinColumnName.equals(columnInfo.getColumnName())
+          || ucJoinColumnName.equals(columnInfo.getColumnName())) {
         return columnInfo.getColumnName();
       }
     }
