@@ -785,13 +785,21 @@ public class JdbcTemplateMapper {
 
     if (isNotEmpty(mainObjList)) {
       LinkedHashSet<Number> allJoinPropertyIds = new LinkedHashSet<>();
+
       boolean firstRecord = true;
       for (T mainObj : mainObjList) {
         if (mainObj != null) {
+          // Do some validations
           if (firstRecord) {
             firstRecord = false;
+            validateToOne(
+                mainObj,
+                relationshipClazz,
+                mainObjRelationshipPropertyName,
+                mainObjJoinPropertyName);
           }
 
+          // create the list fo all join property ids
           Number joinPropertyValue = (Number) getPropertyValue(mainObj, mainObjJoinPropertyName);
           if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {
             allJoinPropertyIds.add(joinPropertyValue);
@@ -820,6 +828,68 @@ public class JdbcTemplateMapper {
 
       toOneMerge(
           mainObjList, relatedObjList, mainObjRelationshipPropertyName, mainObjJoinPropertyName);
+    }
+  }
+
+  private void validateToOne(
+      Object mainObj,
+      Class<?> relationshipClazz,
+      String mainObjRelationshipPropertyName,
+      String mainObjJoinPropertyName) {
+    List<PropertyInfo> propertyInfoList = getObjectPropertyInfo(mainObj);
+
+    if ("id".equals(mainObjRelationshipPropertyName)) {
+      throw new RuntimeException("The argument mainObjRelationshipPropertyName cannot be 'id'.");
+    }
+
+    // validate mainObjRelationshipPropertyName
+    PropertyInfo propertyInfo =
+        propertyInfoList
+            .stream()
+            .filter(pi -> mainObjRelationshipPropertyName.equals(pi.getPropertyName()))
+            .findAny()
+            .orElse(null);
+
+    if (propertyInfo == null) {
+      throw new RuntimeException(
+          "property "
+              + mainObjRelationshipPropertyName
+              + " does not exist for object "
+              + mainObj.getClass().getName());
+    } else {
+      if (!relationshipClazz.equals(propertyInfo.getPropertyType())) {
+        throw new RuntimeException(
+            "type mismatch. property "
+                + mainObjRelationshipPropertyName
+                + " is of type "
+                + propertyInfo.getPropertyType()
+                + " while the argment relationshipClazz is "
+                + relationshipClazz.getName());
+      }
+    }
+
+    // validate mainObjJoinPropertyName
+    if ("id".equals(mainObjJoinPropertyName)) {
+      throw new RuntimeException("The argument mainObjJoinPropertyName cannot be 'id'.");
+    }
+
+    propertyInfo =
+        propertyInfoList
+            .stream()
+            .filter(pi -> mainObjJoinPropertyName.equals(pi.getPropertyName()))
+            .findAny()
+            .orElse(null);
+
+    if (propertyInfo == null) {
+      throw new RuntimeException(
+          "property " + mainObjJoinPropertyName + " not found in object " + mainObj);
+    } else {
+      if (!Integer.class.equals(propertyInfo.getPropertyType())
+          && !Long.class.equals(propertyInfo.getPropertyType())) {
+        throw new RuntimeException(
+                "type of property " + mainObjJoinPropertyName
+                + " which is used as a join property has to be of type Integer or Long ");
+      }
     }
   }
 
@@ -1249,8 +1319,15 @@ public class JdbcTemplateMapper {
     String manySideTableName = getTableMapping(manySideClazz).getTableName();
     if (isNotEmpty(mainObjList)) {
       LinkedHashSet<Number> allMainObjIds = new LinkedHashSet<>();
+      boolean firstRecord = true;
       for (T mainObj : mainObjList) {
         if (mainObj != null) {
+          if (firstRecord) {
+            validateToManyMainObj(mainObj, mainObjCollectionPropertyName);
+            validateToManyManySideObj(manySideClazz, manySideJoinPropertyName);
+            firstRecord = false;
+          }
+
           Number idVal = (Number) getPropertyValue(mainObj, "id");
           if (idVal != null && idVal.longValue() > 0) {
             allMainObjIds.add(idVal);
@@ -1285,6 +1362,71 @@ public class JdbcTemplateMapper {
 
       toManyMerge(
           mainObjList, manySideList, mainObjCollectionPropertyName, manySideJoinPropertyName);
+    }
+  }
+
+  private void validateToManyMainObj(Object mainObj, String mainObjCollectionPropertyName) {
+
+    List<PropertyInfo> propertyInfoList = getObjectPropertyInfo(mainObj);
+
+    if ("id".equals(mainObjCollectionPropertyName)) {
+      throw new RuntimeException("The argument mainObjRelationshipPropertyName cannot be 'id'.");
+    }
+
+    // validate mainObjRelationshipPropertyName
+    PropertyInfo propertyInfo =
+        propertyInfoList
+            .stream()
+            .filter(pi -> mainObjCollectionPropertyName.equals(pi.getPropertyName()))
+            .findAny()
+            .orElse(null);
+
+    if (propertyInfo == null) {
+      throw new RuntimeException(
+          "property "
+              + mainObjCollectionPropertyName
+              + " does not exist for object "
+              + mainObj.getClass().getName());
+    } else {
+      if (!List.class.equals(propertyInfo.getPropertyType())) {
+        throw new RuntimeException(
+            "property " + mainObjCollectionPropertyName + " should be of type List.");
+      }
+    }
+  }
+
+  private void validateToManyManySideObj(Class<?> manySideClazz, String manySideJoinPropertyName) {
+    List<PropertyInfo> propertyInfoList = null;
+    try {
+      propertyInfoList = getObjectPropertyInfo(manySideClazz.newInstance());
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
+    if ("id".equals(manySideJoinPropertyName)) {
+      throw new RuntimeException("The argument manySideJoinPropertyName cannot be 'id'.");
+    }
+
+    PropertyInfo propertyInfo =
+        propertyInfoList
+            .stream()
+            .filter(pi -> manySideJoinPropertyName.equals(pi.getPropertyName()))
+            .findAny()
+            .orElse(null);
+
+    if (propertyInfo == null) {
+      throw new RuntimeException(
+          "property "
+              + manySideJoinPropertyName
+              + " does not exist for object "
+              + manySideClazz.getName());
+    } else {
+      if (!Integer.class.equals(propertyInfo.getPropertyType())
+          && !Long.class.equals(propertyInfo.getPropertyType())) {
+          throw new RuntimeException(
+                  "type of property " + manySideJoinPropertyName
+                  + " which is used as a join property has to be of type Integer or Long ");
+      }
     }
   }
 

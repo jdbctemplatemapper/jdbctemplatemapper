@@ -15,8 +15,8 @@ public class PropertyMapping {
   private int columnDataType; // see java.sql.Types
 
   public PropertyMapping(String propertyName, Class<?> propertyType, String columnName, int columnDataType) {
-    if (propertyName == null || columnName == null) {
-      throw new IllegalArgumentException("propertyName and columnName must not be null");
+    if (propertyName == null || propertyType == null || columnName == null) {
+      throw new IllegalArgumentException("propertyName, propertyType, columnName must not be null");
     }
     this.propertyName = propertyName;
     this.propertyType = propertyType;

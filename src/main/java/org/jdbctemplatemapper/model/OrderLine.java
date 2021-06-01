@@ -11,4 +11,6 @@ public class OrderLine {
     /**************************************/
     private Order order;
     private Product product;
+    
+    private String status;
 }
