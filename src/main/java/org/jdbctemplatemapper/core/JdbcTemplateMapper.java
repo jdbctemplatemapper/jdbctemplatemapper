@@ -784,7 +784,7 @@ public class JdbcTemplateMapper {
     String idColumnName = getTableIdColumnName(relationshipTableMapping);
 
     if (isNotEmpty(mainObjList)) {
-      LinkedHashSet<Number> allJoinPropertyIds = new LinkedHashSet<>();
+      LinkedHashSet<Long> allJoinPropertyIds = new LinkedHashSet<>();
 
       boolean firstRecord = true;
       for (T mainObj : mainObjList) {
@@ -802,7 +802,7 @@ public class JdbcTemplateMapper {
           // create the list fo all join property ids
           Number joinPropertyValue = (Number) getPropertyValue(mainObj, mainObjJoinPropertyName);
           if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {
-            allJoinPropertyIds.add(joinPropertyValue);
+            allJoinPropertyIds.add(joinPropertyValue.longValue());
           }
         }
       }
@@ -811,9 +811,9 @@ public class JdbcTemplateMapper {
       // avoid
       // query being issued with large number of ids for the 'IN (:joinPropertyIds), the list
       // is chunked by IN_CLAUSE_CHUNK_SIZE and multiple queries issued if needed.
-      Collection<List<Number>> chunkedJoinPropertyIds =
+      Collection<List<Long>> chunkedJoinPropertyIds =
           chunkTheCollection(allJoinPropertyIds, IN_CLAUSE_CHUNK_SIZE);
-      for (List<Number> joinPropertyIds : chunkedJoinPropertyIds) {
+      for (List<Long> joinPropertyIds : chunkedJoinPropertyIds) {
         String sql =
             "SELECT * FROM "
                 + fullyQualifiedTableName(relationshipTableName)
@@ -1046,19 +1046,19 @@ public class JdbcTemplateMapper {
         mainObjRelationshipPropertyName, "mainObjRelationshipPropertyName must not be null");
     Assert.notNull(mainObjJoinPropertyName, "mainObjJoinPropertyName must not be null");
 
-    Map<String, LinkedHashMap<Number, Object>> resultMap =
+    Map<String, LinkedHashMap<Long, Object>> resultMap =
         multipleModelMapperRaw(rs, mainObjMapper, relatedObjMapper);
     List<T> mainObjList = new ArrayList(resultMap.get(mainObjMapper.getSqlColumnPrefix()).values());
-    LinkedHashMap<Number, Object> relatedObjMap =
+    LinkedHashMap<Long, Object> relatedObjMap =
         resultMap.get(relatedObjMapper.getSqlColumnPrefix());
-
+     
     // assign related obj to the main obj relationship property
     for (Object mainObj : mainObjList) {
       if (mainObj != null) {
         Number joinPropertyValue = (Number) getPropertyValue(mainObj, mainObjJoinPropertyName);
-        if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {
+        if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {        	
           setPropertyValue(
-              mainObj, mainObjRelationshipPropertyName, relatedObjMap.get(joinPropertyValue));
+              mainObj, mainObjRelationshipPropertyName, relatedObjMap.get(joinPropertyValue.longValue()));
         }
       }
     }
@@ -1088,12 +1088,12 @@ public class JdbcTemplateMapper {
 
     if (isNotEmpty(mainObjList) && isNotEmpty(relatedObjList)) {
       // Map key: related object id , value: the related object
-      Map<Number, U> idToObjectMap = new HashMap<>();
+      Map<Long, U> idToObjectMap = new HashMap<>();
       for (U relatedObj : relatedObjList) {
         if (relatedObj != null) {
           Number idVal = (Number) getPropertyValue(relatedObj, "id");
           if (idVal != null && idVal.longValue() > 0) {
-            idToObjectMap.put(idVal, relatedObj);
+            idToObjectMap.put(idVal.longValue(), relatedObj);
           }
         }
       }
@@ -1103,7 +1103,7 @@ public class JdbcTemplateMapper {
           Number joinPropertyValue = (Number) getPropertyValue(mainObj, mainObjJoinPropertyName);
           if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {
             setPropertyValue(
-                mainObj, mainObjRelationshipPropertyName, idToObjectMap.get(joinPropertyValue));
+                mainObj, mainObjRelationshipPropertyName, idToObjectMap.get(joinPropertyValue.longValue()));
           }
         }
       }
@@ -1318,7 +1318,7 @@ public class JdbcTemplateMapper {
 
     String manySideTableName = getTableMapping(manySideClazz).getTableName();
     if (isNotEmpty(mainObjList)) {
-      LinkedHashSet<Number> allMainObjIds = new LinkedHashSet<>();
+      LinkedHashSet<Long> allMainObjIds = new LinkedHashSet<>();
       boolean firstRecord = true;
       for (T mainObj : mainObjList) {
         if (mainObj != null) {
@@ -1330,7 +1330,7 @@ public class JdbcTemplateMapper {
 
           Number idVal = (Number) getPropertyValue(mainObj, "id");
           if (idVal != null && idVal.longValue() > 0) {
-            allMainObjIds.add(idVal);
+            allMainObjIds.add(idVal.longValue());
           } else {
             throw new RuntimeException("id property in mainObjList cannot be null");
           }
@@ -1343,9 +1343,9 @@ public class JdbcTemplateMapper {
       // avoid
       // query being issued with large number of ids for the 'IN (:mainObjIds), the list
       // is chunked by IN_CLAUSE_CHUNK_SIZE and multiple queries issued if needed.
-      Collection<List<Number>> chunkedMainObjIds =
+      Collection<List<Long>> chunkedMainObjIds =
           chunkTheCollection(allMainObjIds, IN_CLAUSE_CHUNK_SIZE);
-      for (List<Number> mainObjIds : chunkedMainObjIds) {
+      for (List<Long> mainObjIds : chunkedMainObjIds) {
         String sql =
             "SELECT * FROM "
                 + fullyQualifiedTableName(manySideTableName)
@@ -1531,18 +1531,18 @@ public class JdbcTemplateMapper {
       if (isNotEmpty(mainObjList) && isNotEmpty(manySideList)) {
         // many side records are grouped by their join property values
         // Map key - join property value , value - List of grouped records by join property value
-        Map<Number, List<U>> groupedManySide = new HashMap<>();
+        Map<Long, List<U>> groupedManySide = new HashMap<>();
         for (U manySideObj : manySideList) {
           if (manySideObj != null) {
             Number joinPropertyValue =
                 (Number) getPropertyValue(manySideObj, manySideJoinPropertyName);
-            if (joinPropertyValue != null) {
-              if (groupedManySide.containsKey(joinPropertyValue)) {
-                groupedManySide.get(joinPropertyValue).add(manySideObj);
+            if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {
+              if (groupedManySide.containsKey(joinPropertyValue.longValue())) {
+                groupedManySide.get(joinPropertyValue.longValue()).add(manySideObj);
               } else {
                 List<U> list = new ArrayList<>();
                 list.add(manySideObj);
-                groupedManySide.put(joinPropertyValue, list);
+                groupedManySide.put(joinPropertyValue.longValue(), list);
               }
             }
           }
@@ -1552,7 +1552,7 @@ public class JdbcTemplateMapper {
           if (mainObj != null) {
             Number idVal = (Number) getPropertyValue(mainObj, "id");
             if (idVal != null && idVal.longValue() > 0) {
-              setPropertyValue(mainObj, mainObjCollectionPropertyName, groupedManySide.get(idVal));
+              setPropertyValue(mainObj, mainObjCollectionPropertyName, groupedManySide.get(idVal.longValue()));
             }
           }
         }
@@ -1577,7 +1577,7 @@ public class JdbcTemplateMapper {
     Assert.notNull(selectMappers, "selectMappers must not be null");
 
     try {
-      Map<String, LinkedHashMap<Number, Object>> tempMap =
+      Map<String, LinkedHashMap<Long, Object>> tempMap =
           multipleModelMapperRaw(rs, selectMappers);
       Map<String, List> resultMap = new HashMap<>();
       for (String key : tempMap.keySet()) {
@@ -1590,7 +1590,7 @@ public class JdbcTemplateMapper {
   }
 
   @SuppressWarnings("all")
-  private Map<String, LinkedHashMap<Number, Object>> multipleModelMapperRaw(
+  private Map<String, LinkedHashMap<Long, Object>> multipleModelMapperRaw(
       ResultSet rs, SelectMapper... selectMappers) {
     Assert.notNull(selectMappers, "selectMappers must not be null");
 
@@ -1599,7 +1599,7 @@ public class JdbcTemplateMapper {
       // Map key - sql column prefix
       // LinkedHashMap key - id of object
       // LinkedHashMap value - the object
-      Map<String, LinkedHashMap<Number, Object>> resultMap = new HashMap<>();
+      Map<String, LinkedHashMap<Long, Object>> resultMap = new HashMap<>();
       for (SelectMapper selectMapper : selectMappers) {
         resultMap.put(selectMapper.getSqlColumnPrefix(), new LinkedHashMap<>());
       }
@@ -1614,7 +1614,7 @@ public class JdbcTemplateMapper {
                     rs,
                     selectMapper.getSqlColumnPrefix(),
                     resultSetColumnNames);
-            resultMap.get(selectMapper.getSqlColumnPrefix()).put(id, obj);
+            resultMap.get(selectMapper.getSqlColumnPrefix()).put(id.longValue(), obj);
           }
         }
       }
@@ -2157,11 +2157,11 @@ public class JdbcTemplateMapper {
    * @param chunkSize
    * @return Collection of lists broken down by chunkSize
    */
-  private Collection<List<Number>> chunkTheCollection(
-      Collection<Number> collection, Integer chunkSize) {
+  private Collection<List<Long>> chunkTheCollection(
+      Collection<Long> collection, Integer chunkSize) {
     Assert.notNull(collection, "collection must not be null");
     AtomicInteger counter = new AtomicInteger();
-    Collection<List<Number>> result =
+    Collection<List<Long>> result =
         collection
             .stream()
             .filter(e -> e != null)
