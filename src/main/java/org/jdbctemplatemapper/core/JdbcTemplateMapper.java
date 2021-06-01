@@ -1530,7 +1530,7 @@ public class JdbcTemplateMapper {
     try {
       if (isNotEmpty(mainObjList) && isNotEmpty(manySideList)) {
         // many side records are grouped by their join property values
-        // Map key - join property value , value - List of grouped records by join property value
+        // Map key - join property value , value - List of records grouped by the join property value
         Map<Long, List<U>> groupedManySide = new HashMap<>();
         for (U manySideObj : manySideList) {
           if (manySideObj != null) {
@@ -1606,15 +1606,15 @@ public class JdbcTemplateMapper {
       List<String> resultSetColumnNames = getResultSetColumnNames(rs);
       while (rs.next()) {
         for (SelectMapper selectMapper : selectMappers) {
-          Number id = (Number) rs.getObject(selectMapper.getSqlColumnPrefix() + "id");
-          if (id != null && id.longValue() > 0) {
+          Number idVal = (Number) rs.getObject(selectMapper.getSqlColumnPrefix() + "id");
+          if (idVal != null && idVal.longValue() > 0) {
             Object obj =
                 newInstance(
                     selectMapper.getClazz(),
                     rs,
                     selectMapper.getSqlColumnPrefix(),
                     resultSetColumnNames);
-            resultMap.get(selectMapper.getSqlColumnPrefix()).put(id.longValue(), obj);
+            resultMap.get(selectMapper.getSqlColumnPrefix()).put(idVal.longValue(), obj);
           }
         }
       }
