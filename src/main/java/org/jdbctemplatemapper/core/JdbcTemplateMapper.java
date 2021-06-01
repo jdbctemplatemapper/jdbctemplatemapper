@@ -139,6 +139,7 @@ public class JdbcTemplateMapper {
   private NamedParameterJdbcTemplate npJdbcTemplate;
   private IRecordOperatorResolver recordOperatorResolver;
 
+  private String catalogName;
   private String schemaName;
   private String createdByPropertyName;
   private String createdOnPropertyName;
@@ -309,7 +310,11 @@ public class JdbcTemplateMapper {
     this.versionPropertyName = propName;
     return this;
   }
-
+  
+  public void setCatalogName(String catalogName) {
+	  this.catalogName = catalogName;
+  }
+  
   /**
    * Some old drivers use non compliant JDBC resultSet behavior where
    * resultSetMetaData.getColumnName() retrieves the alias instead of
@@ -441,6 +446,7 @@ public class JdbcTemplateMapper {
     if (jdbcInsert == null) {
       jdbcInsert =
           new SimpleJdbcInsert(jdbcTemplate)
+              .withCatalogName(catalogName)
               .withSchemaName(schemaName)
               .withTableName(tableName)
               .usingGeneratedKeyColumns("id");
@@ -501,7 +507,7 @@ public class JdbcTemplateMapper {
     SimpleJdbcInsert jdbcInsert = simpleJdbcInsertCache.get(tableName);
     if (jdbcInsert == null) {
       jdbcInsert =
-          new SimpleJdbcInsert(jdbcTemplate).withSchemaName(schemaName).withTableName(tableName);
+          new SimpleJdbcInsert(jdbcTemplate).withCatalogName(catalogName).withSchemaName(schemaName).withTableName(tableName);
 
       simpleJdbcInsertCache.put(tableName, jdbcInsert);
     }
@@ -1895,7 +1901,7 @@ public class JdbcTemplateMapper {
                     ResultSet rs = null;
                     try {
                       List<ColumnInfo> columnInfoList = new ArrayList<>();
-                      rs = metadata.getColumns(null, schemaName, tableName, null);
+                      rs = metadata.getColumns(catalogName, schemaName, tableName, "%");
                       while (rs.next()) {
                         columnInfoList.add(
                             new ColumnInfo(rs.getString("COLUMN_NAME"), rs.getInt("DATA_TYPE")));
