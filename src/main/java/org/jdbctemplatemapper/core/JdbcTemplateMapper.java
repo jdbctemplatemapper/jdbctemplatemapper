@@ -71,7 +71,7 @@ import org.springframework.util.StringUtils;
  *
  * Examples of simple CRUD:
  * 
- * // Product class maps to 'product' table by default. Use @Table(name="someothertablename") to override the default
+ * // Product class maps to 'product' table by default. Use annotation @Table(name="someothertablename") to override the default
  * public class Product { 
  *    private Integer id; // 'id' property is needed for all models and has to be of type Integer or Long
  *    private String productName;
