@@ -40,13 +40,15 @@ import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
- * Spring's JdbcTemplate gives full control of data access using SQL. It removes a lot of the boiler
- * plate code which is required by JDBC. Unfortunately it is still verbose. JdbcTemplateMapper tries
- * to mitigate the verboseness. It is a utility class which uses JdbcTemplate, allowing for single
- * line CRUD and less verbose ways to query relationships.
+ * <pre>
+ * Spring's JdbcTemplate gives full control of data access using SQL which is a very good option for complex
+ * enterprise applications. It removes a lot of the boiler plate code required by JDBC. Unfortunately it is
+ * still verbose.
  *
- * <p>IMPORTANT!!! JdbcTemplateMapper is a helper utility for JdbcTemplate and NOT a replacement for
- * it. Project code will generally be a mix of JdbcTemplate and JdbcTemplateMapper.
+ * JdbcTemplateMapper tries to mitigate the verboseness. It is a helper utility for JdbcTemplate (NOT a replacement)
+ * It provides simple CRUD one liners and less verbose ways to query relationships. Your project code will be a mix of
+ * JdbcTemplate and JdbcTemplateMapper. Use JdbcTemplateMapper's  more concise features where appropriate, along
+ * with the full power of JdbcTemplate/SQL
  *
  * <p><b>NOTE: An instance of this class is thread-safe once configured.</b>
  *
@@ -58,22 +60,23 @@ import org.springframework.util.StringUtils;
  * 4) Can be configured to auto assign properties created by, updated by using an
  *    implementation of IRecordOperatorResolver.
  * 5) Can be configured to provide optimistic locking functionality for updates using a version property.
- * 6) Tested against PostgreSQL, MySQL, Oracle, SQLServer
+ * 6) Tested against PostgreSQL, MySQL, Oracle, SQLServer. (Unit tests are run against each of these databases)
  *
- * JdbcTemplateMapper is opinionated. Projects have to meet the following 2 criteria to use it:
- * 1) Models should have a property named 'id' which has to be of type Integer or Long.
+ * <b>JdbcTemplateMapper is opinionated</>. Projects have to meet the following 2 criteria to use it:
+ * 1) Models should have a property exactly named 'id' which has to be of type Integer or Long.
  * 2) Model property to table column mapping:
  *   Camel case property names are mapped to snake case database column names.
  *   Properties of a model like 'firstName', 'lastName' will be mapped to corresponding database columns
  *   first_name/FIRST_NAME and last_name/LAST_NAME in the database table. If you are using a
- *   case sensitive database setup and have mixed case column names like 'Order_Date' the tool won't work.
+ *   case sensitive database installation and have mixed case column names like 'Order_Date' the tool won't work.
  *   (Model to table mapping does not have this restriction. By default a class maps to its snake case table name.
  *   The default class to table mapping can be overridden using the @Table annotation)
  *
  * Examples of simple CRUD:
- * 
- * // Product class maps to 'product' table by default. Use annotation @Table(name="someothertablename") to override the default
- * public class Product { 
+ *
+ * // Product class below maps to 'product' table by default.
+ * // Use annotation @Table(name="someothertablename") to override the default
+ * public class Product {
  *    private Integer id; // 'id' property is needed for all models and has to be of type Integer or Long
  *    private String productName;
  *    private Double price;
@@ -90,7 +93,7 @@ import org.springframework.util.StringUtils;
  * product.setProductName("some product name");
  * product.setPrice(10.25);
  * product.setAvailableDate(LocalDateTime.now());
- * jdbcTemplateMapper.insert(product);
+ * jdbcTemplateMapper.insert(product); // see insertWithId() for non auto increment database id columns
  *
  * product = jdbcTemplateMapper.findById(1, Product.class);
  * product.setPrice(11.50);
@@ -103,7 +106,7 @@ import org.springframework.util.StringUtils;
  * See methods toOne..() and  toMany..() for relationship retrieval.
  *
  * Installation:
- * Requires Java8 or above.
+ * Requires Java8 or above and dependencies are the same as that for Spring's JdbcTemplate
  *
  * pom.xml dependencies
  * For a spring boot application:
@@ -124,12 +127,12 @@ import org.springframework.util.StringUtils;
  * }
  *
  * Spring bean configuration for JdbcTemplateMapper will look something like below:
- * (Assuming that org.springframework.jdbc.core.JdbcTemplate.JdbcTemplate is configured as per Spring instructions)
+ * (Assuming that org.springframework.jdbc.core.JdbcTemplate is configured as per Spring instructions)
  *
  * &#64;Bean
  * public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
+ *   //for databases like mysql which do not have a schema name pass null as argument for schemaName.
  *   return new JdbcTemplateMapper(jdbcTemplate, "your_database_schema_name");
- *   //return new JdbcTemplateMapper(jdbcTemplate, null); // for databases like mysql which do not have a schema name
  * }
  *
  * </pre>
@@ -143,8 +146,9 @@ public class JdbcTemplateMapper {
 
   private String catalogName;
   private String schemaName;
-  //this is for the call to databaseMetaData.getColumns() just in case a database needs something other than null
-  private String metaDataColumnNamePattern;  
+  // this is for the call to databaseMetaData.getColumns() just in case a database needs something
+  // other than null
+  private String metaDataColumnNamePattern;
   private String createdByPropertyName;
   private String createdOnPropertyName;
   private String updatedByPropertyName;
@@ -314,15 +318,15 @@ public class JdbcTemplateMapper {
     this.versionPropertyName = propName;
     return this;
   }
-  
+
   public void setCatalogName(String catalogName) {
-	  this.catalogName = catalogName;
+    this.catalogName = catalogName;
   }
-  
+
   public void setMetaDataColumnNamePattern(String metaDataColumnNamePattern) {
-	  this.metaDataColumnNamePattern = metaDataColumnNamePattern;
+    this.metaDataColumnNamePattern = metaDataColumnNamePattern;
   }
-  
+
   /**
    * Some old drivers use non compliant JDBC resultSet behavior where
    * resultSetMetaData.getColumnName() retrieves the alias instead of
@@ -515,7 +519,10 @@ public class JdbcTemplateMapper {
     SimpleJdbcInsert jdbcInsert = simpleJdbcInsertCache.get(tableName);
     if (jdbcInsert == null) {
       jdbcInsert =
-          new SimpleJdbcInsert(jdbcTemplate).withCatalogName(catalogName).withSchemaName(schemaName).withTableName(tableName);
+          new SimpleJdbcInsert(jdbcTemplate)
+              .withCatalogName(catalogName)
+              .withSchemaName(schemaName)
+              .withTableName(tableName);
 
       simpleJdbcInsertCache.put(tableName, jdbcInsert);
     }
@@ -901,7 +908,8 @@ public class JdbcTemplateMapper {
       if (!Integer.class.equals(propertyInfo.getPropertyType())
           && !Long.class.equals(propertyInfo.getPropertyType())) {
         throw new RuntimeException(
-                "type of property " + mainObjJoinPropertyName
+            "type of property "
+                + mainObjJoinPropertyName
                 + " which is used as a join property has to be of type Integer or Long ");
       }
     }
@@ -1065,14 +1073,16 @@ public class JdbcTemplateMapper {
     List<T> mainObjList = new ArrayList(resultMap.get(mainObjMapper.getSqlColumnPrefix()).values());
     LinkedHashMap<Long, Object> relatedObjMap =
         resultMap.get(relatedObjMapper.getSqlColumnPrefix());
-     
+
     // assign related obj to the main obj relationship property
     for (Object mainObj : mainObjList) {
       if (mainObj != null) {
         Number joinPropertyValue = (Number) getPropertyValue(mainObj, mainObjJoinPropertyName);
-        if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {        	
+        if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {
           setPropertyValue(
-              mainObj, mainObjRelationshipPropertyName, relatedObjMap.get(joinPropertyValue.longValue()));
+              mainObj,
+              mainObjRelationshipPropertyName,
+              relatedObjMap.get(joinPropertyValue.longValue()));
         }
       }
     }
@@ -1117,7 +1127,9 @@ public class JdbcTemplateMapper {
           Number joinPropertyValue = (Number) getPropertyValue(mainObj, mainObjJoinPropertyName);
           if (joinPropertyValue != null && joinPropertyValue.longValue() > 0) {
             setPropertyValue(
-                mainObj, mainObjRelationshipPropertyName, idToObjectMap.get(joinPropertyValue.longValue()));
+                mainObj,
+                mainObjRelationshipPropertyName,
+                idToObjectMap.get(joinPropertyValue.longValue()));
           }
         }
       }
@@ -1437,9 +1449,10 @@ public class JdbcTemplateMapper {
     } else {
       if (!Integer.class.equals(propertyInfo.getPropertyType())
           && !Long.class.equals(propertyInfo.getPropertyType())) {
-          throw new RuntimeException(
-                  "type of property " + manySideJoinPropertyName
-                  + " which is used as a join property has to be of type Integer or Long ");
+        throw new RuntimeException(
+            "type of property "
+                + manySideJoinPropertyName
+                + " which is used as a join property has to be of type Integer or Long ");
       }
     }
   }
@@ -1544,7 +1557,8 @@ public class JdbcTemplateMapper {
     try {
       if (isNotEmpty(mainObjList) && isNotEmpty(manySideList)) {
         // many side records are grouped by their join property values
-        // Map key - join property value , value - List of records grouped by the join property value
+        // Map key - join property value , value - List of records grouped by the join property
+        // value
         Map<Long, List<U>> groupedManySide = new HashMap<>();
         for (U manySideObj : manySideList) {
           if (manySideObj != null) {
@@ -1566,7 +1580,8 @@ public class JdbcTemplateMapper {
           if (mainObj != null) {
             Number idVal = (Number) getPropertyValue(mainObj, "id");
             if (idVal != null && idVal.longValue() > 0) {
-              setPropertyValue(mainObj, mainObjCollectionPropertyName, groupedManySide.get(idVal.longValue()));
+              setPropertyValue(
+                  mainObj, mainObjCollectionPropertyName, groupedManySide.get(idVal.longValue()));
             }
           }
         }
@@ -1591,8 +1606,7 @@ public class JdbcTemplateMapper {
     Assert.notNull(selectMappers, "selectMappers must not be null");
 
     try {
-      Map<String, LinkedHashMap<Long, Object>> tempMap =
-          multipleModelMapperRaw(rs, selectMappers);
+      Map<String, LinkedHashMap<Long, Object>> tempMap = multipleModelMapperRaw(rs, selectMappers);
       Map<String, List> resultMap = new HashMap<>();
       for (String key : tempMap.keySet()) {
         resultMap.put(key, new ArrayList<Object>(tempMap.get(key).values()));
@@ -1816,10 +1830,10 @@ public class JdbcTemplateMapper {
   /**
    * Used by mappers to instantiate object from the result set
    *
-   * @param clazz Class of object to be instantiated
-   * @param rs Sql result set
+   * @param clazz Class of object to be instantiated. Object should have a no argument constructor
+   * @param rs the sql result set
    * @param prefix The sql column alias prefix in the query
-   * @param resultSetColumnNames the column names in the sql statement.
+   * @param resultSetColumnNames The column names in the sql statement.
    * @return Object of type T populated from the data in the result set
    */
   private <T> T newInstance(
@@ -1899,7 +1913,7 @@ public class JdbcTemplateMapper {
       List<ColumnInfo> columnInfos = tableColumnInfoCache.get(tableName);
       if (isEmpty(columnInfos)) {
         // Using Spring JdbcUtils.extractDatabaseMetaData() since it has some robust processing for
-        // metadata access
+        // connection access
         columnInfos =
             JdbcUtils.extractDatabaseMetaData(
                 jdbcTemplate.getDataSource(),
@@ -1909,7 +1923,9 @@ public class JdbcTemplateMapper {
                     ResultSet rs = null;
                     try {
                       List<ColumnInfo> columnInfoList = new ArrayList<>();
-                      rs = metadata.getColumns(catalogName, schemaName, tableName, metaDataColumnNamePattern);
+                      rs =
+                          metadata.getColumns(
+                              catalogName, schemaName, tableName, metaDataColumnNamePattern);
                       while (rs.next()) {
                         columnInfoList.add(
                             new ColumnInfo(rs.getString("COLUMN_NAME"), rs.getInt("DATA_TYPE")));
@@ -1957,10 +1973,10 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Get property names of an object. The property names are cached by the object class name
+   * Get property information of an object. The property infos are cached by the object class name
    *
-   * @param obj the java object
-   * @return List of property names.
+   * @param obj The object
+   * @return List of PropertyInfo
    */
   private List<PropertyInfo> getObjectPropertyInfo(Object obj) {
     Assert.notNull(obj, "Object must not be null");
@@ -1983,6 +1999,13 @@ public class JdbcTemplateMapper {
     return propertyInfoList;
   }
 
+  /**
+   * Get a property using reflection. The getter Methods are cached for performance.
+   *
+   * @param obj The object
+   * @param propertyName The property that needs needs to be retrieved
+   * @return the value of property
+   */
   private Object getPropertyValue(Object obj, String propertyName) {
     Assert.notNull(obj, "Object must not be null");
     Assert.hasLength(propertyName, "propertyName must not be empty");
@@ -2003,7 +2026,14 @@ public class JdbcTemplateMapper {
     return ReflectionUtils.invokeMethod(method, obj);
   }
 
-  private Object setPropertyValue(Object obj, String propertyName, Object val) {
+  /**
+   * Set a property using reflection. The setter Methods are cached for performance.
+   *
+   * @param obj The object
+   * @param propertyName The property that needs to be set
+   * @param val The value that needs to be set
+   */
+  private void setPropertyValue(Object obj, String propertyName, Object val) {
     Assert.notNull(obj, "Object must not be null");
     Assert.hasLength(propertyName, "propertyName must not be empty");
 
@@ -2028,9 +2058,19 @@ public class JdbcTemplateMapper {
       }
       objectSetMethodCache.put(obj.getClass().getName() + "-" + propertyName, method);
     }
-    return ReflectionUtils.invokeMethod(method, obj, val);
+    ReflectionUtils.invokeMethod(method, obj, val);
   }
 
+  /**
+   * Gets the table mapping for the Object. The table mapping for object property mappings which are
+   * all the properties of the object with their corresponding database column info.
+   *
+   * <p>Table name is either from the @Tabel annotation or the snake case conversion of the Object
+   * name.
+   *
+   * @param clazz The object class
+   * @return The table mapping.
+   */
   private TableMapping getTableMapping(Class<?> clazz) {
     Assert.notNull(clazz, "Class must not be null");
     TableMapping tableMapping = objectToTableMappingCache.get(clazz.getName());
@@ -2047,7 +2087,7 @@ public class JdbcTemplateMapper {
 
       List<ColumnInfo> columnInfoList = getTableColumnInfo(tableName);
       if (isEmpty(columnInfoList)) {
-        // try with uppercase
+        // try again with upper case table name
         tableName = tableName.toUpperCase();
         columnInfoList = getTableColumnInfo(tableName);
         if (isEmpty(columnInfoList)) {
@@ -2064,7 +2104,7 @@ public class JdbcTemplateMapper {
         for (ColumnInfo columnInfo : columnInfoList) {
           // property name corresponding to column name
           String propertyName = convertSnakeToCamelCase(columnInfo.getColumnName());
-          // check for match
+          // check if the property exists for the Object
           PropertyInfo propertyInfo =
               propertyInfoList
                   .stream()
@@ -2102,6 +2142,13 @@ public class JdbcTemplateMapper {
     return tableMapping;
   }
 
+  /**
+   * Since some databases are case sensitive returns 'id' or 'ID' depending on target databases meta
+   * data.
+   *
+   * @param tableMapping The table mapping
+   * @return 'id' or 'ID'
+   */
   private String getTableIdColumnName(TableMapping tableMapping) {
     Assert.notNull(tableMapping, "tableMapping must not be null");
     String idName = tableMapping.getIdName();
@@ -2165,10 +2212,10 @@ public class JdbcTemplateMapper {
 
   /**
    * Splits the list into multiple lists of chunk size. Used to split the sql IN clauses since some
-   * databases have a limitation of 1024. We set the chuck size to IN_CLAUSE_CHUNK_SIZE
+   * databases have a limitation of 1024. The chunk size used is IN_CLAUSE_CHUNK_SIZE
    *
-   * @param list
-   * @param chunkSize
+   * @param list The list of Long
+   * @param chunkSize The size of each chunk
    * @return Collection of lists broken down by chunkSize
    */
   private Collection<List<Long>> chunkTheCollection(
@@ -2184,6 +2231,13 @@ public class JdbcTemplateMapper {
     return result;
   }
 
+  /**
+   * Get the fully qualified table name. If schema is present then will be schemaName.tableName
+   * otherwise just tableName
+   *
+   * @param tableName The table name
+   * @return The fully qualified table name
+   */
   private String fullyQualifiedTableName(String tableName) {
     Assert.hasLength(tableName, "tableName must not be empty");
     if (isNotEmpty(schemaName)) {
