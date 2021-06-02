@@ -58,6 +58,7 @@ import org.springframework.util.StringUtils;
  * 4) Can be configured to auto assign properties created by, updated by using an
  *    implementation of IRecordOperatorResolver.
  * 5) Can be configured to provide optimistic locking functionality for updates using a version property.
+ * 6) Tested against PostgreSQL, MySQL, Oracle, SQLServer
  *
  * JdbcTemplateMapper is opinionated. Projects have to meet the following 2 criteria to use it:
  * 1) Models should have a property named 'id' which has to be of type Integer or Long.
