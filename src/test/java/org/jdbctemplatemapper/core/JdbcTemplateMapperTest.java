@@ -1214,6 +1214,7 @@ public class JdbcTemplateMapperTest {
   }
   
   @Test
+  @SuppressWarnings("all")
   public void selectCol_TypeCheckQueryTest(){
     TypeCheck obj = new TypeCheck();
     

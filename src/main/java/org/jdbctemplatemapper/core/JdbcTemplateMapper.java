@@ -1855,7 +1855,7 @@ public class JdbcTemplateMapper {
         }
         int index = resultSetColumnNames.indexOf(columnName.toLowerCase());
         if (index != -1) {
-          // JDBC index starts at 1. using Springs JdbcUtils to handle oracle.sql.Timestamp ....
+          // JDBC index starts at 1. using Springs JdbcUtils to get values from resultSet
           bw.setPropertyValue(
               propertyInfo.getPropertyName(), JdbcUtils.getResultSetValue(rs, index + 1, propertyInfo.getPropertyType()));
         }
