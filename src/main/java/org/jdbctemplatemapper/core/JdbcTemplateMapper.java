@@ -155,11 +155,6 @@ public class JdbcTemplateMapper {
   private String updatedOnPropertyName;
   private String versionPropertyName;
 
-  // Some old drivers use non compliant JDBC resultSet behavior where
-  // resultSetMetaData.getColumnName()
-  // retrieves the alias instead of resultSetMetaData.getColumnLabel()
-  private boolean useOldAliasMetadataBehavior = false;
-
   // Need this for type conversions like java.sql.Timestamp to java.time.LocalDateTime etc
   private DefaultConversionService defaultConversionService = new DefaultConversionService();
 
@@ -325,19 +320,6 @@ public class JdbcTemplateMapper {
 
   public void setMetaDataColumnNamePattern(String metaDataColumnNamePattern) {
     this.metaDataColumnNamePattern = metaDataColumnNamePattern;
-  }
-
-  /**
-   * Some old drivers use non compliant JDBC resultSet behavior where
-   * resultSetMetaData.getColumnName() retrieves the alias instead of
-   * resultSetMetaData.getColumnLabel()
-   *
-   * <p>For old drivers set this to true.
-   *
-   * @param val The value
-   */
-  public void useOldAliasMetadataBehavior(boolean val) {
-    this.useOldAliasMetadataBehavior = val;
   }
 
   /**
@@ -1960,11 +1942,7 @@ public class JdbcTemplateMapper {
       int numberOfColumns = rsmd.getColumnCount();
       // jdbc indexes start at 1
       for (int i = 1; i <= numberOfColumns; i++) {
-        if (useOldAliasMetadataBehavior) {
-          rsColNames.add(rsmd.getColumnName(i).toLowerCase());
-        } else {
           rsColNames.add(rsmd.getColumnLabel(i).toLowerCase());
-        }
       }
     } catch (Exception e) {
       throw new RuntimeException(e);
