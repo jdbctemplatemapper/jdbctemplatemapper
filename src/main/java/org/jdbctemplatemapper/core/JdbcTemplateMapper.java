@@ -1637,7 +1637,7 @@ public class JdbcTemplateMapper {
           Number idVal = (Number) rs.getObject(selectMapper.getSqlColumnPrefix() + "id");
           if (idVal != null && idVal.longValue() > 0) {
             Object obj =
-                newInstance(
+                constructInstance(
                     selectMapper.getClazz(),
                     rs,
                     selectMapper.getSqlColumnPrefix(),
@@ -1828,7 +1828,7 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Used by mappers to instantiate object from the result set
+   * Used by mappers to construct an object from the result set
    *
    * @param clazz Class of object to be instantiated. Object should have a no argument constructor
    * @param rs the sql result set
@@ -1836,7 +1836,7 @@ public class JdbcTemplateMapper {
    * @param resultSetColumnNames The column names in the sql statement.
    * @return Object of type T populated from the data in the result set
    */
-  private <T> T newInstance(
+  private <T> T constructInstance(
       Class<T> clazz, ResultSet rs, String prefix, List<String> resultSetColumnNames) {
 
     Assert.notNull(clazz, "clazz must not be null");
