@@ -570,7 +570,7 @@ public class JdbcTemplateMapper {
           updatePropertyNames.add(propertyInfo.getPropertyName());
         }
       }
-      updateSqlAndParams = buildUpdateSql(tableMapping, updatePropertyNames);
+      updateSqlAndParams = buildUpdateSqlAndParams(tableMapping, updatePropertyNames);
       updateSqlAndParamsCache.put(obj.getClass().getName(), updateSqlAndParams);
     }
     return issueUpdate(updateSqlAndParams, obj);
@@ -653,7 +653,7 @@ public class JdbcTemplateMapper {
         updatePropertyNames.add(updatedByPropertyName);
       }
 
-      updateSqlAndParams = buildUpdateSql(tableMapping, updatePropertyNames);
+      updateSqlAndParams = buildUpdateSqlAndParams(tableMapping, updatePropertyNames);
       updateSqlAndParamsCache.put(cacheKey, updateSqlAndParams);
     }
     return issueUpdate(updateSqlAndParams, obj);
@@ -1726,7 +1726,7 @@ public class JdbcTemplateMapper {
     return str;
   }
 
-  private UpdateSqlAndParams buildUpdateSql(TableMapping tableMapping, Set<String> propertyNames) {
+  private UpdateSqlAndParams buildUpdateSqlAndParams(TableMapping tableMapping, Set<String> propertyNames) {
     Assert.notNull(tableMapping, "tableMapping must not be null");
     Assert.notNull(propertyNames, "propertyNames must not be null");
 
