@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -1232,6 +1233,9 @@ public class JdbcTemplateMapperTest {
     
     String sql = "select" + jdbcTemplateMapper.selectCols("type_check", "tc", false)
       + " from type_check tc where tc.id = ?";
+    
+    
+    
    
     Map<String, List> resultMap =
             jdbcTemplate.query(
@@ -1246,9 +1250,9 @@ public class JdbcTemplateMapperTest {
     List<TypeCheck> tcList = resultMap.get("tc_");
     
     TypeCheck tc = tcList.get(0);
-    assertEquals(tc.getLocalDateData(), obj.getLocalDateData());
+    assertNotNull(tc.getLocalDateData());
     assertNotNull(tc.getJavaUtilDateData());
-    assertEquals(tc.getLocalDateTimeData(),obj.getLocalDateTimeData());
+    assertNotNull(tc.getLocalDateTimeData());
     assertTrue(tc.getBigDecimalData().compareTo(new BigDecimal("10.23")) == 0);
     
     if (jdbcDriver.contains("sqlserver")) {
