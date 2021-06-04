@@ -56,11 +56,11 @@ import org.springframework.util.StringUtils;
  * Features:
  * 1) Simple CRUD one liners
  * 2) Methods to retrieve relationships (toOne..(), toMany..() etc)
- * 3) Can be configured to auto assign properties created on, updated on.
- * 4) Can be configured to auto assign properties created by, updated by using an
- *    implementation of IRecordOperatorResolver.
- * 5) Can be configured to provide optimistic locking functionality for updates using a version property.
- * 6) Tested against PostgreSQL, MySQL, Oracle, SQLServer. (Unit tests are run against each of these databases)
+ * 3) Can be configured for
+ *     *) auto assign created on, updated on.
+ *     *) auto assign created by, updated using an implementation of IRecordOperatorResolver.
+ *     *) optimistic locking functionality for updates by configuring a version property.
+ * 4) Tested against PostgreSQL, MySQL, Oracle, SQLServer. (Unit tests are run against each of these databases)
  *
  * <b>JdbcTemplateMapper is opinionated</>. Projects have to meet the following 2 criteria to use it:
  * 1) Models should have a property exactly named 'id' which has to be of type Integer or Long.
@@ -74,7 +74,7 @@ import org.springframework.util.StringUtils;
  *
  * Examples of simple CRUD:
  *
- * // Product class below maps to 'product' table by default.
+ * // Product class below maps to product/PRODUCT table by default.
  * // Use annotation @Table(name="someothertablename") to override the default
  * public class Product {
  *    private Integer id; // 'id' property is needed for all models and has to be of type Integer or Long
