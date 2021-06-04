@@ -56,6 +56,15 @@ CREATE TABLE jdbctemplatemapper.no_id_object (
 	something varchar(100)
 );
 
+CREATE TABLE jdbctemplatemapper.type_check (
+   id NUMBER GENERATED ALWAYS AS IDENTITY,
+   local_date_data date,
+   java_util_date_data date,
+   local_date_time_data timestamp,
+   java_util_date_ts_data timestamp,
+   big_decimal_data number(10,2)
+);
+
 
 
 

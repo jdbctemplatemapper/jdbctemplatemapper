@@ -5,7 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -17,11 +22,13 @@ import org.jdbctemplatemapper.model.Order;
 import org.jdbctemplatemapper.model.OrderLine;
 import org.jdbctemplatemapper.model.Person;
 import org.jdbctemplatemapper.model.Product;
+import org.jdbctemplatemapper.model.TypeCheck;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -33,6 +40,9 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
 public class JdbcTemplateMapperTest {
+
+  @Value("${spring.datasource.driver-class-name}")
+  private String jdbcDriver;
 
   @Autowired private JdbcTemplateMapper jdbcTemplateMapper;
 
@@ -1107,5 +1117,146 @@ public class JdbcTemplateMapperTest {
         () -> {
           jdbcTemplateMapper.selectCols("aaaaaaaaa", "a");
         });
+  }
+
+  @Test
+  public void insert_TypeCheckTest() {
+    TypeCheck obj = new TypeCheck();
+    
+    obj.setLocalDateData(LocalDate.now());   
+    obj.setJavaUtilDateData(new Date());
+    obj.setLocalDateTimeData(LocalDateTime.now());
+    obj.setBigDecimalData(new BigDecimal("10.23"));
+    
+    if (jdbcDriver.contains("sqlserver")) {
+      obj.setJavaUtilDateDtData(new Date());
+    }
+    else {
+    	obj.setJavaUtilDateTsData(new Date());
+    }
+
+    jdbcTemplateMapper.insert(obj);
+    
+    TypeCheck tc = jdbcTemplateMapper.findById(obj.getId(), TypeCheck.class);
+    assertNotNull(tc.getLocalDateData());
+    assertNotNull(tc.getJavaUtilDateData());
+    assertNotNull(tc.getLocalDateTimeData());
+    System.out.println(tc.getBigDecimalData());
+    System.out.println(obj.getBigDecimalData());
+    assertTrue(tc.getBigDecimalData().compareTo(obj.getBigDecimalData()) == 0);
+    
+    if (jdbcDriver.contains("sqlserver")) {
+      assertNotNull(tc.getJavaUtilDateDtData());
+    }
+    else {
+    	assertNotNull(tc.getJavaUtilDateTsData());
+    }
+  }
+  
+  @Test
+  public void update_TypeCheckTest(){
+    TypeCheck obj = new TypeCheck();
+    
+    obj.setLocalDateData(LocalDate.now());   
+    obj.setJavaUtilDateData(new Date());
+    obj.setLocalDateTimeData(LocalDateTime.now());
+    obj.setBigDecimalData(new BigDecimal("10.23"));
+    
+    if (jdbcDriver.contains("sqlserver")) {
+      obj.setJavaUtilDateDtData(new Date());
+    }
+    else {
+    	obj.setJavaUtilDateTsData(new Date());
+    }
+
+    jdbcTemplateMapper.insert(obj);
+    
+  
+    TypeCheck tc = jdbcTemplateMapper.findById(obj.getId(), TypeCheck.class);
+    
+    TypeCheck tc1 = jdbcTemplateMapper.findById(obj.getId(), TypeCheck.class);
+    
+    
+    Instant instant = LocalDate.now().plusDays(1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant();
+    java.util.Date nextDay = Date.from(instant);
+    
+    Instant instant1 = LocalDateTime.now().plusDays(1).atZone(ZoneId.systemDefault()).toInstant();
+    java.util.Date nextDayDateTime = Date.from(instant1);
+    
+    tc1.setLocalDateData(LocalDate.now().plusDays(1));   
+    tc1.setJavaUtilDateData(nextDay);
+    tc1.setLocalDateTimeData(LocalDateTime.now().plusDays(1));
+    tc1.setBigDecimalData(new BigDecimal("11.34"));
+    if (jdbcDriver.contains("sqlserver")) {
+        tc1.setJavaUtilDateDtData(nextDayDateTime);
+      }
+      else {
+      	tc1.setJavaUtilDateTsData(nextDayDateTime);
+      }
+    
+    jdbcTemplateMapper.update(tc1);
+    
+    
+    TypeCheck tc2 = jdbcTemplateMapper.findById(obj.getId(), TypeCheck.class);
+   
+    assertTrue(tc2.getLocalDateData().isAfter(tc.getLocalDateData()));
+    assertTrue(tc2.getJavaUtilDateData().getTime() > tc.getJavaUtilDateData().getTime());
+    assertTrue(tc2.getLocalDateTimeData().isAfter(tc.getLocalDateTimeData()));
+    assertTrue(tc2.getBigDecimalData().compareTo(new BigDecimal("11.34")) == 0);
+    
+    if (jdbcDriver.contains("sqlserver")) {
+    assertTrue(tc2.getJavaUtilDateDtData().getTime() > tc.getJavaUtilDateDtData().getTime());
+    }
+    else {
+    	assertTrue(tc2.getJavaUtilDateTsData().getTime() > tc.getJavaUtilDateTsData().getTime());
+    }
+  }
+  
+  @Test
+  public void selectCol_TypeCheckQueryTest(){
+    TypeCheck obj = new TypeCheck();
+    
+    obj.setLocalDateData(LocalDate.now());   
+    obj.setJavaUtilDateData(new Date());
+    obj.setLocalDateTimeData(LocalDateTime.now());
+    obj.setBigDecimalData(new BigDecimal("10.23"));
+    
+    if (jdbcDriver.contains("sqlserver")) {
+      obj.setJavaUtilDateDtData(new Date());
+    }
+    else {
+    	obj.setJavaUtilDateTsData(new Date());
+    }
+
+    jdbcTemplateMapper.insert(obj);
+    
+    String sql = "select" + jdbcTemplateMapper.selectCols("type_check", "tc", false)
+      + " from type_check tc where tc.id = ?";
+   
+    Map<String, List> resultMap =
+            jdbcTemplate.query(
+                sql,
+                new Object[] {obj.getId()}, // args
+                new int[] {java.sql.Types.INTEGER}, // arg types
+                rs -> {
+                  return jdbcTemplateMapper.multipleModelMapper(
+                      rs,
+                      new SelectMapper<TypeCheck>(TypeCheck.class, "tc_"));
+                });
+    List<TypeCheck> tcList = resultMap.get("tc_");
+    
+    TypeCheck tc = tcList.get(0);
+    assertEquals(tc.getLocalDateData(), obj.getLocalDateData());
+    assertNotNull(tc.getJavaUtilDateData());
+    assertEquals(tc.getLocalDateTimeData(),obj.getLocalDateTimeData());
+    assertTrue(tc.getBigDecimalData().compareTo(new BigDecimal("10.23")) == 0);
+    
+    if (jdbcDriver.contains("sqlserver")) {
+      assertNotNull(tc.getJavaUtilDateDtData());
+    }
+    else {
+    	assertNotNull(tc.getJavaUtilDateTsData());
+    }
+  
   }
 }

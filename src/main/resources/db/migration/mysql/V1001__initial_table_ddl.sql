@@ -55,6 +55,16 @@ CREATE TABLE jdbctemplatemapper.no_id_object (
 	something varchar(100)
 );
 
+CREATE TABLE jdbctemplatemapper.type_check (
+   	id integer NOT NULL AUTO_INCREMENT,
+   local_date_data date,
+   java_util_date_data date,
+   local_date_time_data timestamp,
+   java_util_date_ts_data timestamp,
+   big_decimal_data numeric(10,2),
+   	CONSTRAINT type_check_pk PRIMARY KEY (id)
+);
+
 
 
 

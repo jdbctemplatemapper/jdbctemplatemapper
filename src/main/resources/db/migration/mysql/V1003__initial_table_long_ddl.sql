@@ -8,7 +8,7 @@ CREATE TABLE jdbctemplatemapper.order_long (
 	created_by varchar(100) NULL,
 	updated_on timestamp NULL,
 	updated_by varchar(100) NULL,
-	version int4 NULL,
+	version integer  NULL,
 	CONSTRAINT order_long_pk PRIMARY KEY (id)
 );
 
@@ -16,7 +16,7 @@ CREATE TABLE jdbctemplatemapper.order_line_long (
 	id bigint NOT NULL AUTO_INCREMENT,
 	order_long_id bigint NOT NULL,
 	product_long_id bigint NOT NULL,
-	num_of_units int4 NULL,
+	num_of_units integer  NULL,
 	CONSTRAINT order_line_long_pk PRIMARY KEY (id)
 );
 
@@ -35,6 +35,6 @@ CREATE TABLE jdbctemplatemapper.product_long (
 	created_by varchar(100) NULL,
 	updated_on timestamp NULL,
 	updated_by varchar(100) NULL,
-	version int4 NULL,
+	version integer  NULL,
 	CONSTRAINT product_long_pk PRIMARY KEY (id)
 );
