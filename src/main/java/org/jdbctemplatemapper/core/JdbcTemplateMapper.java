@@ -432,7 +432,9 @@ public class JdbcTemplateMapper {
     }
 
     TableMapping tableMapping = getTableMapping(obj.getClass());
-    String tableName = tableMapping.getTableName();
+    if(tableMapping.getIdColumnName() == null) {
+    	throw new RuntimeException("table " + tableMapping.getTableName() + " does not have a property named 'id'");
+    }
     LocalDateTime now = LocalDateTime.now();
 
     if (createdOnPropertyName != null
@@ -460,15 +462,15 @@ public class JdbcTemplateMapper {
 
     Map<String, Object> attributes = convertToSnakeCaseAttributes(obj);
 
-    SimpleJdbcInsert jdbcInsert = simpleJdbcInsertCache.get(tableName);
+    SimpleJdbcInsert jdbcInsert = simpleJdbcInsertCache.get(tableMapping.getTableName());
     if (jdbcInsert == null) {
       jdbcInsert =
           new SimpleJdbcInsert(jdbcTemplate)
               .withCatalogName(catalogName)
               .withSchemaName(schemaName)
-              .withTableName(tableName)
+              .withTableName(tableMapping.getTableName())
               .usingGeneratedKeyColumns("id");
-      simpleJdbcInsertCache.put(tableName, jdbcInsert);
+      simpleJdbcInsertCache.put(tableMapping.getTableName(), jdbcInsert);
     }
 
     Number idNumber = jdbcInsert.executeAndReturnKey(attributes);
@@ -500,9 +502,11 @@ public class JdbcTemplateMapper {
     }
 
     TableMapping tableMapping = getTableMapping(obj.getClass());
-    String tableName = tableMapping.getTableName();
+    if(tableMapping.getIdColumnName() == null) {
+    	throw new RuntimeException("table " + tableMapping.getTableName() + " does not have a property named 'id'");
+    }
+       
     LocalDateTime now = LocalDateTime.now();
-
     if (createdOnPropertyName != null
         && tableMapping.getColumnName(createdOnPropertyName) != null) {
       bw.setPropertyValue(createdOnPropertyName, now);
@@ -525,15 +529,15 @@ public class JdbcTemplateMapper {
       bw.setPropertyValue(versionPropertyName, 1);
     }
 
-    SimpleJdbcInsert jdbcInsert = simpleJdbcInsertCache.get(tableName);
+    SimpleJdbcInsert jdbcInsert = simpleJdbcInsertCache.get(tableMapping.getTableName());
     if (jdbcInsert == null) {
       jdbcInsert =
           new SimpleJdbcInsert(jdbcTemplate)
               .withCatalogName(catalogName)
               .withSchemaName(schemaName)
-              .withTableName(tableName);
+              .withTableName(tableMapping.getTableName());
 
-      simpleJdbcInsertCache.put(tableName, jdbcInsert);
+      simpleJdbcInsertCache.put(tableMapping.getTableName(), jdbcInsert);
     }
 
     Map<String, Object> attributes = convertToSnakeCaseAttributes(obj);
@@ -698,9 +702,12 @@ public class JdbcTemplateMapper {
           "Object " + obj.getClass().getSimpleName() + " has to have a property named 'id'.");
     }
 
-    String tableName = getTableMapping(obj.getClass()).getTableName();
+    TableMapping tableMapping = getTableMapping(obj.getClass());
+    if(tableMapping.getIdColumnName() == null) {
+    	throw new RuntimeException("table " + tableMapping.getTableName() + " does not have a property named 'id'");
+    }
 
-    String sql = "delete from " + fullyQualifiedTableName(tableName) + " where id = ?";
+    String sql = "delete from " + fullyQualifiedTableName(tableMapping.getTableName()) + " where id = ?";
     Object id = bw.getPropertyValue("id");
     return jdbcTemplate.update(sql, id);
   }
