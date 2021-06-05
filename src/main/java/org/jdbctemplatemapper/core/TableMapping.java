@@ -19,6 +19,7 @@ public class TableMapping {
   private String idName;
   
   // object property to database column mapping.
+  // Only properties which have corresponding database column will be in list.
   private List<PropertyMapping> propertyMappings = new ArrayList<>();
 
   public String getColumnName(String propertyName) {

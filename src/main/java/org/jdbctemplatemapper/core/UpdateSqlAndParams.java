@@ -6,6 +6,11 @@ import org.springframework.util.ObjectUtils;
 
 import lombok.Data;
 
+/**
+ * This holds the sql and the sql params needed to issue and update.
+ * 
+ * @author ajoseph
+ */
 @Data
 public class UpdateSqlAndParams {
   private String sql; // the sql string

@@ -41,9 +41,10 @@ import org.springframework.util.StringUtils;
 
 /**
  * <pre>
- * Spring's JdbcTemplate gives full control of data access using SQL which is a very good option for complex
- * enterprise applications. It removes a lot of the boiler plate code required by JDBC. Unfortunately it is
- * still verbose.
+ * Spring's JdbcTemplate gives full control of data access using SQL which is better option for complex
+ * enterprise applications than an ORM (ORM magic gets in the way for large complex applications).  
+ * Unfortunately even though it removes a lot of the boiler plate code required by JDBC it
+ * is still verbose.
  *
  * JdbcTemplateMapper tries to mitigate the verboseness. It is a helper utility for JdbcTemplate (NOT a replacement)
  * It provides simple CRUD one liners and less verbose ways to query relationships. Your project code will be a mix of
@@ -62,15 +63,13 @@ import org.springframework.util.StringUtils;
  *     *) optimistic locking functionality for updates by configuring a version property.
  * 4) Tested against PostgreSQL, MySQL, Oracle, SQLServer. (Unit tests are run against each of these databases)
  *
- * <b>JdbcTemplateMapper is opinionated</>. Projects have to meet the following 2 criteria to use it:
+ * <b>JdbcTemplateMapper is opinionated<b/>. Projects have to meet the following 2 criteria to use it:
  * 1) Models should have a property exactly named 'id' which has to be of type Integer or Long.
  * 2) Model property to table column mapping:
  *   Camel case property names are mapped to snake case database column names.
  *   Properties of a model like 'firstName', 'lastName' will be mapped to corresponding database columns
  *   first_name/FIRST_NAME and last_name/LAST_NAME in the database table. If you are using a
  *   case sensitive database installation and have mixed case column names like 'Order_Date' the tool won't work.
- *   (Model to table mapping does not have this restriction. By default a class maps to its snake case table name.
- *   The default class to table mapping can be overridden using the @Table annotation)
  *
  * Examples of simple CRUD:
  *
