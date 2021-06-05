@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
  */
 public class TableMapping {
   private String tableName;
-  private String idName;
+  private String idColumnName;
   
   // object property to database column mapping.
   // Only properties which have corresponding database column will be in list.

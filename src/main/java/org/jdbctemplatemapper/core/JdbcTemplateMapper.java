@@ -43,7 +43,7 @@ import org.springframework.util.StringUtils;
  * <pre>
  * Spring's JdbcTemplate gives full control of data access using SQL. Its a is better option for complex
  * enterprise applications than an ORM (ORM magic/nuances get in the way for large and complex
- * applications). Even though JdbcTemplate removes a lot of the boiler plate code needed by JDBC it is 
+ * applications). Even though JdbcTemplate removes a lot of the boiler plate code needed by JDBC it is
  * verbose.
  *
  * JdbcTemplateMapper tries to mitigate the verboseness. It is a helper utility for JdbcTemplate (NOT a replacement)
@@ -253,7 +253,7 @@ public class JdbcTemplateMapper {
   /**
    * An implementation of IRecordOperatorResolver is used to populate the created by and updated by
    * fields. Assign this while initializing the jdbcTemplateMapper
-   * 
+   *
    * @param recordOperatorResolver The implement for interface IRecordOperatorResolver
    * @return The jdbcTemplateMapper The jdbcTemplateMapper
    */
@@ -350,7 +350,15 @@ public class JdbcTemplateMapper {
     }
 
     TableMapping tableMapping = getTableMapping(clazz);
-    String idColumnName = getTableIdColumnName(tableMapping);
+    String idColumnName = tableMapping.getIdColumnName();
+    if (idColumnName == null) {
+      throw new RuntimeException(
+          "Either "
+              + clazz.getSimpleName()
+              + " does not have an 'id' property or its corresponding table "
+              + tableMapping.getTableName()
+              + " does not have an 'id' column");
+    }
     String sql =
         "SELECT * FROM "
             + fullyQualifiedTableName(tableMapping.getTableName())
@@ -542,15 +550,18 @@ public class JdbcTemplateMapper {
    */
   public Integer update(Object obj) {
     Assert.notNull(obj, "Object must not be null");
-    
-    if(!hasIdProperty(obj)) {
-    	throw new RuntimeException("Object " + obj.getClass().getSimpleName() + " does not have a property named 'id'");
+
+    if (!hasIdProperty(obj)) {
+      throw new RuntimeException(
+          "Object " + obj.getClass().getSimpleName() + " does not have a property named 'id'");
     }
-    
+
     TableMapping tableMapping = getTableMapping(obj.getClass());
-    // will throw exception if 'id' column name does not exist in database
-    getTableIdColumnName(tableMapping);
-    
+    String idColumnName = tableMapping.getIdColumnName();
+    if(idColumnName == null) {
+    	throw new RuntimeException("table " + tableMapping.getTableName() + " does not have a column named 'id'");
+    }
+
     UpdateSqlAndParams updateSqlAndParams = updateSqlAndParamsCache.get(obj.getClass().getName());
 
     if (updateSqlAndParams == null) {
@@ -593,15 +604,17 @@ public class JdbcTemplateMapper {
     Assert.notNull(obj, "Object must not be null");
     Assert.notNull(propertyNames, "propertyNames must not be null");
 
-    if(!hasIdProperty(obj)) {
-    	throw new RuntimeException("Object " + obj.getClass().getSimpleName() + " does not have a property named 'id'");
+    if (!hasIdProperty(obj)) {
+      throw new RuntimeException(
+          "Object " + obj.getClass().getSimpleName() + " does not have a property named 'id'");
     }
-    
+
     TableMapping tableMapping = getTableMapping(obj.getClass());
-    String tableName = tableMapping.getTableName();
-    // will throw exception if 'id' column name does not exist in database
-    getTableIdColumnName(tableMapping);
-    
+    String idColumnName = tableMapping.getIdColumnName();
+    if(idColumnName == null) {
+    	throw new RuntimeException("table " + tableMapping.getTableName() + " does not have a column named 'id'");
+    }
+
     // cachekey ex: className-propertyName1-propertyName2
     String cacheKey = obj.getClass().getName() + "-" + String.join("-", propertyNames);
     UpdateSqlAndParams updateSqlAndParams = updateSqlAndParamsCache.get(cacheKey);
@@ -615,7 +628,7 @@ public class JdbcTemplateMapper {
                   + " is not a property of object "
                   + obj.getClass().getName()
                   + " or does not have a corresponding column in table "
-                  + tableName);
+                  + tableMapping.getTableName());
         }
       }
 
@@ -701,7 +714,7 @@ public class JdbcTemplateMapper {
    */
   public <T> Integer deleteById(Object id, Class<T> clazz) {
     Assert.notNull(clazz, "Class must not be null");
-    
+
     if (!(id instanceof Integer || id instanceof Long)) {
       throw new RuntimeException("id has to be type of Integer or Long");
     }
@@ -813,12 +826,18 @@ public class JdbcTemplateMapper {
     Assert.notNull(mainObjJoinPropertyName, "mainObjJoinPropertyName must not be null");
 
     TableMapping relationshipTableMapping = getTableMapping(relationshipClazz);
-    String relationshipTableName = relationshipTableMapping.getTableName();
-    String idColumnName = getTableIdColumnName(relationshipTableMapping);
+    String idColumnName = relationshipTableMapping.getIdColumnName();
+    if(idColumnName == null) {
+        throw new RuntimeException(
+                "Either "
+                    + relationshipClazz.getSimpleName()
+                    + " does not have an 'id' property or its corresponding table "
+                    + relationshipTableMapping.getTableName()
+                    + " does not have an 'id' column");
+    }
 
     if (isNotEmpty(mainObjList)) {
       LinkedHashSet<Long> allJoinPropertyIds = new LinkedHashSet<>();
-
       boolean firstRecord = true;
       for (T mainObj : mainObjList) {
         if (mainObj != null) {
@@ -848,7 +867,7 @@ public class JdbcTemplateMapper {
       for (List<Long> joinPropertyIds : chunkedJoinPropertyIds) {
         String sql =
             "SELECT * FROM "
-                + fullyQualifiedTableName(relationshipTableName)
+                + fullyQualifiedTableName(relationshipTableMapping.getTableName())
                 + " WHERE "
                 + idColumnName
                 + " IN (:joinPropertyIds)";
@@ -1613,7 +1632,7 @@ public class JdbcTemplateMapper {
     Assert.notNull(tableMapping, "tableMapping must not be null");
     Assert.notNull(propertyNames, "propertyNames must not be null");
 
-    String idColumnName = tableMapping.getIdName();
+    String idColumnName = tableMapping.getIdColumnName();
     if (idColumnName == null) {
       throw new RuntimeException(
           "could not find id column for table " + tableMapping.getTableName());
@@ -2159,7 +2178,7 @@ public class JdbcTemplateMapper {
         // get the case sensitive id name
         for (ColumnInfo columnInfo : columnInfoList) {
           if ("id".equals(columnInfo.getColumnName()) || "ID".equals(columnInfo.getColumnName())) {
-            tableMapping.setIdName(columnInfo.getColumnName());
+            tableMapping.setIdColumnName(columnInfo.getColumnName());
             break;
           }
         }
@@ -2169,23 +2188,6 @@ public class JdbcTemplateMapper {
     }
     objectToTableMappingCache.put(clazz.getName(), tableMapping);
     return tableMapping;
-  }
-
-  /**
-   * Since some databases are case sensitive returns 'id' or 'ID' depending on target databases meta
-   * data.
-   *
-   * @param tableMapping The table mapping
-   * @return 'id' or 'ID'
-   */
-  private String getTableIdColumnName(TableMapping tableMapping) {
-    Assert.notNull(tableMapping, "tableMapping must not be null");
-    String idName = tableMapping.getIdName();
-    if (isEmpty(idName)) {
-      throw new RuntimeException(
-          "Could not find id column for table" + tableMapping.getTableName());
-    }
-    return idName;
   }
 
   private String getJoinColumnName(String tableName, String joinPropertyName) {
@@ -2274,23 +2276,23 @@ public class JdbcTemplateMapper {
     }
     return tableName;
   }
-  
+
   /**
    * checks if an object has an property named 'id'
-   * 
+   *
    * @param obj The object
    * @return true/false depending on if obj has 'id' property
    */
   private boolean hasIdProperty(Object obj) {
-	    List<PropertyInfo> propertyInfoList = getObjectPropertyInfo(obj);
-	    PropertyInfo propertyInfo =
-	        propertyInfoList
-	            .stream()
-	            .filter(pi -> "id".equals(pi.getPropertyName()))
-	            .findAny()
-	            .orElse(null);
+    List<PropertyInfo> propertyInfoList = getObjectPropertyInfo(obj);
+    PropertyInfo propertyInfo =
+        propertyInfoList
+            .stream()
+            .filter(pi -> "id".equals(pi.getPropertyName()))
+            .findAny()
+            .orElse(null);
 
-	    return propertyInfo == null ? false: true;
+    return propertyInfo == null ? false : true;
   }
 
   private boolean isEmpty(String str) {
