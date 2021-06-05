@@ -2172,7 +2172,7 @@ public class JdbcTemplateMapper {
     String idName = tableMapping.getIdName();
     if (isEmpty(idName)) {
       throw new RuntimeException(
-          "Could not find id column for table" + tableMapping.getTableName());
+          "Object does not have id property or table does not have id column" + tableMapping.getTableName());
     }
     return idName;
   }
