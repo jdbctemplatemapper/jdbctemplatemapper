@@ -42,8 +42,8 @@ import org.springframework.util.StringUtils;
 /**
  * <pre>
  * Spring's JdbcTemplate gives full control of data access using SQL which is better option for complex
- * enterprise applications than an ORM. An ORMs magic/complexity gets in the way when an application is large 
- * and complex. Unfortunately, even though JdbcTemplate removes a lot of the boiler plate code needed 
+ * enterprise applications than an ORM. An ORMs magic/complexity gets in the way when an application is large
+ * and complex. Unfortunately, even though JdbcTemplate removes a lot of the boiler plate code needed
  * by JDBC, it is verbose.
  *
  * JdbcTemplateMapper tries to mitigate the verboseness. It is a helper utility for JdbcTemplate (NOT a replacement)
@@ -263,7 +263,7 @@ public class JdbcTemplateMapper {
 
   /**
    * Assign this to identify the property name of the created by field. The created by property will
-   * be assigned the value from recordOperatorResolver.getRecordOperator() when the object is
+   * be assigned the value from IRecordOperatorResolver.getRecordOperator() when the object is
    * inserted into the database. Assign this while initializing the jdbcTemplateMapper
    *
    * @param propName : the created by property name.
@@ -289,7 +289,7 @@ public class JdbcTemplateMapper {
 
   /**
    * Assign this to identify the property name of updated by field. The updated by property will be
-   * assigned the value from recordOperatorResolver.getRecordOperator when the object is updated in
+   * assigned the value from IRecordOperatorResolver.getRecordOperator when the object is updated in
    * the database. Assign this while initializing the jdbcTemplateMapper
    *
    * @param propName : the update by property name.
@@ -315,17 +315,18 @@ public class JdbcTemplateMapper {
 
   /**
    * For databases which have a catalog set the catalog name
-   * @param catalogName
+   *
+   * @param catalogName The catalog
    */
   public void setCatalogName(String catalogName) {
     this.catalogName = catalogName;
   }
 
   /**
-   * For most jdbc drivers when getting column metadata using jdbc the columnPattern argument null returns
-   * all the columns. Some jdbc drivers may require to pass something like '%'. Use this to set the 
-   * columnn pattern for If you are using for of those drivers set the pattern using this method.
-   * 
+   * For most jdbc drivers when getting column metadata using jdbc, the columnPattern argument null
+   * returns all the columns (which is the default for JdbcTemplateMapper). Some jdbc drivers may
+   * require to pass something like '%'. Use this method to set the column pattern.
+   *
    * @param metaDataColumnNamePattern
    */
   public void setMetaDataColumnNamePattern(String metaDataColumnNamePattern) {
@@ -424,7 +425,8 @@ public class JdbcTemplateMapper {
     String tableName = tableMapping.getTableName();
     LocalDateTime now = LocalDateTime.now();
 
-    if (createdOnPropertyName != null && tableMapping.getColumnName(createdOnPropertyName) != null) {
+    if (createdOnPropertyName != null
+        && tableMapping.getColumnName(createdOnPropertyName) != null) {
       bw.setPropertyValue(createdOnPropertyName, now);
     }
 
@@ -433,7 +435,8 @@ public class JdbcTemplateMapper {
         && tableMapping.getColumnName(createdByPropertyName) != null) {
       bw.setPropertyValue(createdByPropertyName, recordOperatorResolver.getRecordOperator());
     }
-    if (updatedOnPropertyName != null && tableMapping.getColumnName(updatedOnPropertyName) != null) {
+    if (updatedOnPropertyName != null
+        && tableMapping.getColumnName(updatedOnPropertyName) != null) {
       bw.setPropertyValue(updatedOnPropertyName, now);
     }
     if (updatedByPropertyName != null
@@ -485,12 +488,13 @@ public class JdbcTemplateMapper {
       throw new RuntimeException(
           "For method insertById() the objects 'id' property cannot be null.");
     }
-    
+
     TableMapping tableMapping = getTableMapping(obj.getClass());
     String tableName = tableMapping.getTableName();
     LocalDateTime now = LocalDateTime.now();
 
-    if (createdOnPropertyName != null && tableMapping.getColumnName(createdOnPropertyName) != null) {
+    if (createdOnPropertyName != null
+        && tableMapping.getColumnName(createdOnPropertyName) != null) {
       bw.setPropertyValue(createdOnPropertyName, now);
     }
     if (createdByPropertyName != null
@@ -498,7 +502,8 @@ public class JdbcTemplateMapper {
         && tableMapping.getColumnName(createdByPropertyName) != null) {
       bw.setPropertyValue(createdByPropertyName, recordOperatorResolver.getRecordOperator());
     }
-    if (updatedOnPropertyName != null && tableMapping.getColumnName(updatedOnPropertyName) != null) {
+    if (updatedOnPropertyName != null
+        && tableMapping.getColumnName(updatedOnPropertyName) != null) {
       bw.setPropertyValue(updatedOnPropertyName, now);
     }
     if (updatedByPropertyName != null
