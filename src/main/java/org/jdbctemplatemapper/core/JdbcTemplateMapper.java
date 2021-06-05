@@ -313,10 +313,21 @@ public class JdbcTemplateMapper {
     return this;
   }
 
+  /**
+   * For databases which have a catalog set the catalog name
+   * @param catalogName
+   */
   public void setCatalogName(String catalogName) {
     this.catalogName = catalogName;
   }
 
+  /**
+   * For most jdbc drivers when getting column metadata using jdbc the columnPattern argument null returns
+   * all the columns. Some jdbc drivers may require to pass something like '%'. Use this to set the 
+   * columnn pattern for If you are using for of those drivers set the pattern using this method.
+   * 
+   * @param metaDataColumnNamePattern
+   */
   public void setMetaDataColumnNamePattern(String metaDataColumnNamePattern) {
     this.metaDataColumnNamePattern = metaDataColumnNamePattern;
   }
@@ -409,27 +420,28 @@ public class JdbcTemplateMapper {
           "For method insert() the objects 'id' property has to be null since this insert is for an object whose id is autoincrement in database.");
     }
 
-    String tableName = getTableMapping(obj.getClass()).getTableName();
+    TableMapping tableMapping = getTableMapping(obj.getClass());
+    String tableName = tableMapping.getTableName();
     LocalDateTime now = LocalDateTime.now();
 
-    if (createdOnPropertyName != null && bw.isReadableProperty(createdOnPropertyName)) {
+    if (createdOnPropertyName != null && tableMapping.getColumnName(createdOnPropertyName) != null) {
       bw.setPropertyValue(createdOnPropertyName, now);
     }
 
     if (createdByPropertyName != null
         && recordOperatorResolver != null
-        && bw.isReadableProperty(createdByPropertyName)) {
+        && tableMapping.getColumnName(createdByPropertyName) != null) {
       bw.setPropertyValue(createdByPropertyName, recordOperatorResolver.getRecordOperator());
     }
-    if (updatedOnPropertyName != null && bw.isReadableProperty(updatedOnPropertyName)) {
+    if (updatedOnPropertyName != null && tableMapping.getColumnName(updatedOnPropertyName) != null) {
       bw.setPropertyValue(updatedOnPropertyName, now);
     }
     if (updatedByPropertyName != null
         && recordOperatorResolver != null
-        && bw.isReadableProperty(updatedByPropertyName)) {
+        && tableMapping.getColumnName(updatedByPropertyName) != null) {
       bw.setPropertyValue(updatedByPropertyName, recordOperatorResolver.getRecordOperator());
     }
-    if (versionPropertyName != null && bw.isReadableProperty(versionPropertyName)) {
+    if (versionPropertyName != null && tableMapping.getColumnName(versionPropertyName) != null) {
       bw.setPropertyValue(versionPropertyName, 1);
     }
 
@@ -473,27 +485,28 @@ public class JdbcTemplateMapper {
       throw new RuntimeException(
           "For method insertById() the objects 'id' property cannot be null.");
     }
-
-    String tableName = getTableMapping(obj.getClass()).getTableName();
+    
+    TableMapping tableMapping = getTableMapping(obj.getClass());
+    String tableName = tableMapping.getTableName();
     LocalDateTime now = LocalDateTime.now();
 
-    if (createdOnPropertyName != null && bw.isReadableProperty(createdOnPropertyName)) {
+    if (createdOnPropertyName != null && tableMapping.getColumnName(createdOnPropertyName) != null) {
       bw.setPropertyValue(createdOnPropertyName, now);
     }
     if (createdByPropertyName != null
         && recordOperatorResolver != null
-        && bw.isReadableProperty(createdByPropertyName)) {
+        && tableMapping.getColumnName(createdByPropertyName) != null) {
       bw.setPropertyValue(createdByPropertyName, recordOperatorResolver.getRecordOperator());
     }
-    if (updatedOnPropertyName != null && bw.isReadableProperty(updatedOnPropertyName)) {
+    if (updatedOnPropertyName != null && tableMapping.getColumnName(updatedOnPropertyName) != null) {
       bw.setPropertyValue(updatedOnPropertyName, now);
     }
     if (updatedByPropertyName != null
         && recordOperatorResolver != null
-        && bw.isReadableProperty(updatedByPropertyName)) {
+        && tableMapping.getColumnName(updatedByPropertyName) != null) {
       bw.setPropertyValue(updatedByPropertyName, recordOperatorResolver.getRecordOperator());
     }
-    if (versionPropertyName != null && bw.isReadableProperty(versionPropertyName)) {
+    if (versionPropertyName != null && tableMapping.getColumnName(versionPropertyName) != null) {
       bw.setPropertyValue(versionPropertyName, 1);
     }
 
