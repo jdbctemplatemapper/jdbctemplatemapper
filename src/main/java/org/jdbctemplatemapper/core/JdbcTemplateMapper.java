@@ -42,9 +42,9 @@ import org.springframework.util.StringUtils;
 /**
  * <pre>
  * Spring's JdbcTemplate gives full control of data access using SQL which is better option for complex
- * enterprise applications than an ORM (ORM magic gets in the way when an application is large and complex).  
- * Unfortunately even though JdbcTemplate removes a lot of the boiler plate code required by JDBC it
- * is still verbose.
+ * enterprise applications than an ORM. An ORMs magic/complexity gets in the way when an application is large 
+ * and complex. Unfortunately, even though JdbcTemplate removes a lot of the boiler plate code needed 
+ * by JDBC, it is verbose.
  *
  * JdbcTemplateMapper tries to mitigate the verboseness. It is a helper utility for JdbcTemplate (NOT a replacement)
  * It provides simple CRUD one liners and less verbose ways to query relationships. Your project code will be a mix of
@@ -810,9 +810,8 @@ public class JdbcTemplateMapper {
       }
       List<U> relatedObjList = new ArrayList<>();
       // Since some databases have limitations on how many entries can be in an 'IN' clause and to
-      // avoid
-      // query being issued with large number of ids for the 'IN (:joinPropertyIds), the list
-      // is chunked by IN_CLAUSE_CHUNK_SIZE and multiple queries issued if needed.
+      // avoid query being issued with large number of ids for the 'IN (:joinPropertyIds), the
+      // list is chunked by IN_CLAUSE_CHUNK_SIZE and multiple queries issued if needed.
       Collection<List<Long>> chunkedJoinPropertyIds =
           chunkTheCollection(allJoinPropertyIds, IN_CLAUSE_CHUNK_SIZE);
       for (List<Long> joinPropertyIds : chunkedJoinPropertyIds) {
@@ -830,69 +829,6 @@ public class JdbcTemplateMapper {
 
       toOneMerge(
           mainObjList, relatedObjList, mainObjRelationshipPropertyName, mainObjJoinPropertyName);
-    }
-  }
-
-  private void validateToOne(
-      Object mainObj,
-      Class<?> relationshipClazz,
-      String mainObjRelationshipPropertyName,
-      String mainObjJoinPropertyName) {
-    List<PropertyInfo> propertyInfoList = getObjectPropertyInfo(mainObj);
-
-    if ("id".equals(mainObjRelationshipPropertyName)) {
-      throw new RuntimeException("The argument mainObjRelationshipPropertyName cannot be 'id'.");
-    }
-
-    // validate mainObjRelationshipPropertyName
-    PropertyInfo propertyInfo =
-        propertyInfoList
-            .stream()
-            .filter(pi -> mainObjRelationshipPropertyName.equals(pi.getPropertyName()))
-            .findAny()
-            .orElse(null);
-
-    if (propertyInfo == null) {
-      throw new RuntimeException(
-          "property "
-              + mainObjRelationshipPropertyName
-              + " does not exist for object "
-              + mainObj.getClass().getName());
-    } else {
-      if (!relationshipClazz.equals(propertyInfo.getPropertyType())) {
-        throw new RuntimeException(
-            "type mismatch. property "
-                + mainObjRelationshipPropertyName
-                + " is of type "
-                + propertyInfo.getPropertyType()
-                + " while the argment relationshipClazz is "
-                + relationshipClazz.getName());
-      }
-    }
-
-    // validate mainObjJoinPropertyName
-    if ("id".equals(mainObjJoinPropertyName)) {
-      throw new RuntimeException("The argument mainObjJoinPropertyName cannot be 'id'.");
-    }
-
-    propertyInfo =
-        propertyInfoList
-            .stream()
-            .filter(pi -> mainObjJoinPropertyName.equals(pi.getPropertyName()))
-            .findAny()
-            .orElse(null);
-
-    if (propertyInfo == null) {
-      throw new RuntimeException(
-          "property " + mainObjJoinPropertyName + " not found in object " + mainObj);
-    } else {
-      if (!Integer.class.equals(propertyInfo.getPropertyType())
-          && !Long.class.equals(propertyInfo.getPropertyType())) {
-        throw new RuntimeException(
-            "type of property "
-                + mainObjJoinPropertyName
-                + " which is used as a join property has to be of type Integer or Long ");
-      }
     }
   }
 
@@ -1372,72 +1308,6 @@ public class JdbcTemplateMapper {
     }
   }
 
-  private void validateToManyMainObj(Object mainObj, String mainObjCollectionPropertyName) {
-
-    List<PropertyInfo> propertyInfoList = getObjectPropertyInfo(mainObj);
-
-    if ("id".equals(mainObjCollectionPropertyName)) {
-      throw new RuntimeException("The argument mainObjRelationshipPropertyName cannot be 'id'.");
-    }
-
-    // validate mainObjRelationshipPropertyName
-    PropertyInfo propertyInfo =
-        propertyInfoList
-            .stream()
-            .filter(pi -> mainObjCollectionPropertyName.equals(pi.getPropertyName()))
-            .findAny()
-            .orElse(null);
-
-    if (propertyInfo == null) {
-      throw new RuntimeException(
-          "property "
-              + mainObjCollectionPropertyName
-              + " does not exist for object "
-              + mainObj.getClass().getName());
-    } else {
-      if (!List.class.equals(propertyInfo.getPropertyType())) {
-        throw new RuntimeException(
-            "property " + mainObjCollectionPropertyName + " should be of type List.");
-      }
-    }
-  }
-
-  private void validateToManyManySideObj(Class<?> manySideClazz, String manySideJoinPropertyName) {
-    List<PropertyInfo> propertyInfoList = null;
-    try {
-      propertyInfoList = getObjectPropertyInfo(manySideClazz.newInstance());
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-
-    if ("id".equals(manySideJoinPropertyName)) {
-      throw new RuntimeException("The argument manySideJoinPropertyName cannot be 'id'.");
-    }
-
-    PropertyInfo propertyInfo =
-        propertyInfoList
-            .stream()
-            .filter(pi -> manySideJoinPropertyName.equals(pi.getPropertyName()))
-            .findAny()
-            .orElse(null);
-
-    if (propertyInfo == null) {
-      throw new RuntimeException(
-          "property "
-              + manySideJoinPropertyName
-              + " does not exist for object "
-              + manySideClazz.getName());
-    } else {
-      if (!Integer.class.equals(propertyInfo.getPropertyType())
-          && !Long.class.equals(propertyInfo.getPropertyType())) {
-        throw new RuntimeException(
-            "type of property "
-                + manySideJoinPropertyName
-                + " which is used as a join property has to be of type Integer or Long ");
-      }
-    }
-  }
-
   /**
    * Populates a single main object and its many side collection with the data from the ResultSet
    * using their respective SqlMappers.
@@ -1707,7 +1577,8 @@ public class JdbcTemplateMapper {
     return str;
   }
 
-  private UpdateSqlAndParams buildUpdateSqlAndParams(TableMapping tableMapping, Set<String> propertyNames) {
+  private UpdateSqlAndParams buildUpdateSqlAndParams(
+      TableMapping tableMapping, Set<String> propertyNames) {
     Assert.notNull(tableMapping, "tableMapping must not be null");
     Assert.notNull(propertyNames, "propertyNames must not be null");
 
@@ -1838,12 +1709,162 @@ public class JdbcTemplateMapper {
         if (index != -1) {
           // JDBC index starts at 1. using Springs JdbcUtils to get values from resultSet
           bw.setPropertyValue(
-              propertyInfo.getPropertyName(), JdbcUtils.getResultSetValue(rs, index + 1, propertyInfo.getPropertyType()));
+              propertyInfo.getPropertyName(),
+              JdbcUtils.getResultSetValue(rs, index + 1, propertyInfo.getPropertyType()));
         }
       }
       return clazz.cast(obj);
     } catch (Exception e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Validates the arguments for toOne..() methods
+   *
+   * @param mainObj The main Object
+   * @param relationshipClazz The relationship class
+   * @param mainObjRelationshipPropertyName The main object relationship property name
+   * @param mainObjJoinPropertyName The main object join property name
+   */
+  private void validateToOne(
+      Object mainObj,
+      Class<?> relationshipClazz,
+      String mainObjRelationshipPropertyName,
+      String mainObjJoinPropertyName) {
+    List<PropertyInfo> propertyInfoList = getObjectPropertyInfo(mainObj);
+
+    if ("id".equals(mainObjRelationshipPropertyName)) {
+      throw new RuntimeException("The argument mainObjRelationshipPropertyName cannot be 'id'.");
+    }
+
+    // validate mainObjRelationshipPropertyName
+    PropertyInfo propertyInfo =
+        propertyInfoList
+            .stream()
+            .filter(pi -> mainObjRelationshipPropertyName.equals(pi.getPropertyName()))
+            .findAny()
+            .orElse(null);
+
+    if (propertyInfo == null) {
+      throw new RuntimeException(
+          "property "
+              + mainObjRelationshipPropertyName
+              + " does not exist for object "
+              + mainObj.getClass().getName());
+    } else {
+      if (!relationshipClazz.equals(propertyInfo.getPropertyType())) {
+        throw new RuntimeException(
+            "type mismatch. property "
+                + mainObjRelationshipPropertyName
+                + " is of type "
+                + propertyInfo.getPropertyType()
+                + " while the argment relationshipClazz is "
+                + relationshipClazz.getName());
+      }
+    }
+
+    // validate mainObjJoinPropertyName
+    if ("id".equals(mainObjJoinPropertyName)) {
+      throw new RuntimeException("The argument mainObjJoinPropertyName cannot be 'id'.");
+    }
+
+    propertyInfo =
+        propertyInfoList
+            .stream()
+            .filter(pi -> mainObjJoinPropertyName.equals(pi.getPropertyName()))
+            .findAny()
+            .orElse(null);
+
+    if (propertyInfo == null) {
+      throw new RuntimeException(
+          "property " + mainObjJoinPropertyName + " not found in object " + mainObj);
+    } else {
+      if (!Integer.class.equals(propertyInfo.getPropertyType())
+          && !Long.class.equals(propertyInfo.getPropertyType())) {
+        throw new RuntimeException(
+            "type of property "
+                + mainObjJoinPropertyName
+                + " which is used as a join property has to be of type Integer or Long ");
+      }
+    }
+  }
+
+  /**
+   * Validates the main object info for the toMany..() methods
+   *
+   * @param mainObj
+   * @param mainObjCollectionPropertyName
+   */
+  private void validateToManyMainObj(Object mainObj, String mainObjCollectionPropertyName) {
+
+    List<PropertyInfo> propertyInfoList = getObjectPropertyInfo(mainObj);
+
+    if ("id".equals(mainObjCollectionPropertyName)) {
+      throw new RuntimeException("The argument mainObjRelationshipPropertyName cannot be 'id'.");
+    }
+
+    // validate mainObjRelationshipPropertyName
+    PropertyInfo propertyInfo =
+        propertyInfoList
+            .stream()
+            .filter(pi -> mainObjCollectionPropertyName.equals(pi.getPropertyName()))
+            .findAny()
+            .orElse(null);
+
+    if (propertyInfo == null) {
+      throw new RuntimeException(
+          "property "
+              + mainObjCollectionPropertyName
+              + " does not exist for object "
+              + mainObj.getClass().getName());
+    } else {
+      if (!List.class.equals(propertyInfo.getPropertyType())) {
+        throw new RuntimeException(
+            "property " + mainObjCollectionPropertyName + " should be of type List.");
+      }
+    }
+  }
+
+  /**
+   * Validates the many side object args for toMany...() methods
+   *
+   * @param manySideClazz
+   * @param manySideJoinPropertyName
+   */
+  private void validateToManyManySideObj(Class<?> manySideClazz, String manySideJoinPropertyName) {
+    List<PropertyInfo> propertyInfoList = null;
+    try {
+      propertyInfoList = getObjectPropertyInfo(manySideClazz.newInstance());
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
+    if ("id".equals(manySideJoinPropertyName)) {
+      throw new RuntimeException("The argument manySideJoinPropertyName cannot be 'id'.");
+    }
+
+    PropertyInfo propertyInfo =
+        propertyInfoList
+            .stream()
+            .filter(pi -> manySideJoinPropertyName.equals(pi.getPropertyName()))
+            .findAny()
+            .orElse(null);
+
+    if (propertyInfo == null) {
+      throw new RuntimeException(
+          "property "
+              + manySideJoinPropertyName
+              + " does not exist for object "
+              + manySideClazz.getName());
+    } else {
+      if (!Integer.class.equals(propertyInfo.getPropertyType())
+          && !Long.class.equals(propertyInfo.getPropertyType())) {
+        throw new RuntimeException(
+            "type of property "
+                + manySideJoinPropertyName
+                + " which is used as a join property has to be of type Integer or Long ");
+      }
     }
   }
 
@@ -1941,7 +1962,7 @@ public class JdbcTemplateMapper {
       int numberOfColumns = rsmd.getColumnCount();
       // jdbc indexes start at 1
       for (int i = 1; i <= numberOfColumns; i++) {
-          rsColNames.add(rsmd.getColumnLabel(i).toLowerCase());
+        rsColNames.add(rsmd.getColumnLabel(i).toLowerCase());
       }
     } catch (Exception e) {
       throw new RuntimeException(e);
