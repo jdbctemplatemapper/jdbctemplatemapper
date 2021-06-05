@@ -42,8 +42,8 @@ import org.springframework.util.StringUtils;
 /**
  * <pre>
  * Spring's JdbcTemplate gives full control of data access using SQL. Its a is better option for complex
- * enterprise applications than an ORM (An ORMs magic/complexity gets in the way for application large
- * complex applications). Even though JdbcTemplate removes a lot of the boiler plate code needed by JDBC it is 
+ * enterprise applications than an ORM (ORM magic/nuances get in the way for large and complex
+ * applications). Even though JdbcTemplate removes a lot of the boiler plate code needed by JDBC it is 
  * verbose.
  *
  * JdbcTemplateMapper tries to mitigate the verboseness. It is a helper utility for JdbcTemplate (NOT a replacement)
