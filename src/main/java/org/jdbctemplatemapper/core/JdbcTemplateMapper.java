@@ -542,12 +542,15 @@ public class JdbcTemplateMapper {
    */
   public Integer update(Object obj) {
     Assert.notNull(obj, "Object must not be null");
-
-    TableMapping tableMapping = getTableMapping(obj.getClass());
-    if (tableMapping.getIdName() == null) {
-      throw new RuntimeException(
-          "Object " + obj.getClass().getSimpleName() + " has to have a property named 'id'.");
+    
+    if(!hasIdProperty(obj)) {
+    	throw new RuntimeException("Object " + obj.getClass().getSimpleName() + " does not have a property named 'id'");
     }
+    
+    TableMapping tableMapping = getTableMapping(obj.getClass());
+    // will throw exception if 'id' column name does not exist in database
+    getTableIdColumnName(tableMapping);
+    
     UpdateSqlAndParams updateSqlAndParams = updateSqlAndParamsCache.get(obj.getClass().getName());
 
     if (updateSqlAndParams == null) {
@@ -590,8 +593,15 @@ public class JdbcTemplateMapper {
     Assert.notNull(obj, "Object must not be null");
     Assert.notNull(propertyNames, "propertyNames must not be null");
 
+    if(!hasIdProperty(obj)) {
+    	throw new RuntimeException("Object " + obj.getClass().getSimpleName() + " does not have a property named 'id'");
+    }
+    
     TableMapping tableMapping = getTableMapping(obj.getClass());
     String tableName = tableMapping.getTableName();
+    // will throw exception if 'id' column name does not exist in database
+    getTableIdColumnName(tableMapping);
+    
     // cachekey ex: className-propertyName1-propertyName2
     String cacheKey = obj.getClass().getName() + "-" + String.join("-", propertyNames);
     UpdateSqlAndParams updateSqlAndParams = updateSqlAndParamsCache.get(cacheKey);
@@ -691,6 +701,7 @@ public class JdbcTemplateMapper {
    */
   public <T> Integer deleteById(Object id, Class<T> clazz) {
     Assert.notNull(clazz, "Class must not be null");
+    
     if (!(id instanceof Integer || id instanceof Long)) {
       throw new RuntimeException("id has to be type of Integer or Long");
     }
@@ -2172,7 +2183,7 @@ public class JdbcTemplateMapper {
     String idName = tableMapping.getIdName();
     if (isEmpty(idName)) {
       throw new RuntimeException(
-          "Object does not have id property or table does not have id column" + tableMapping.getTableName());
+          "Could not find id column for table" + tableMapping.getTableName());
     }
     return idName;
   }
@@ -2262,6 +2273,24 @@ public class JdbcTemplateMapper {
       return schemaName + "." + tableName;
     }
     return tableName;
+  }
+  
+  /**
+   * checks if an object has an property named 'id'
+   * 
+   * @param obj The object
+   * @return true/false depending on if obj has 'id' property
+   */
+  private boolean hasIdProperty(Object obj) {
+	    List<PropertyInfo> propertyInfoList = getObjectPropertyInfo(obj);
+	    PropertyInfo propertyInfo =
+	        propertyInfoList
+	            .stream()
+	            .filter(pi -> "id".equals(pi.getPropertyName()))
+	            .findAny()
+	            .orElse(null);
+
+	    return propertyInfo == null ? false: true;
   }
 
   private boolean isEmpty(String str) {
