@@ -41,10 +41,10 @@ import org.springframework.util.StringUtils;
 
 /**
  * <pre>
- * Spring's JdbcTemplate gives full control of data access using SQL which is better option for complex
- * enterprise applications than an ORM. An ORMs magic/complexity gets in the way when an application is large
- * and complex. Unfortunately, even though JdbcTemplate removes a lot of the boiler plate code needed
- * by JDBC, it is verbose.
+ * Spring's JdbcTemplate gives full control of data access using SQL. Its a is better option for complex
+ * enterprise applications than an ORM (An ORMs magic/complexity gets in the way for application large
+ * complex applications). Even though JdbcTemplate removes a lot of the boiler plate code needed by JDBC it is 
+ * verbose.
  *
  * JdbcTemplateMapper tries to mitigate the verboseness. It is a helper utility for JdbcTemplate (NOT a replacement)
  * It provides simple CRUD one liners and less verbose ways to query relationships. Your project code will be a mix of
@@ -58,10 +58,11 @@ import org.springframework.util.StringUtils;
  * 1) Simple CRUD one liners
  * 2) Methods to retrieve relationships (toOne..(), toMany..() etc)
  * 3) Can be configured for
- *     *) auto assign created on, updated on.
- *     *) auto assign created by, updated using an implementation of IRecordOperatorResolver.
- *     *) optimistic locking functionality for updates by configuring a version property.
- * 4) Tested against PostgreSQL, MySQL, Oracle, SQLServer. (Unit tests are run against each of these databases)
+ *     a) auto assign created on, updated on.
+ *     b) auto assign created by, updated by using an implementation of IRecordOperatorResolver.
+ *     c) optimistic locking functionality for updates by configuring a version property.
+ * 4) Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases).
+ *    Should work with other databases too.
  *
  * <b>JdbcTemplateMapper is opinionated<b/>. Projects have to meet the following 2 criteria to use it:
  * 1) Models should have a property exactly named 'id' which has to be of type Integer or Long.
@@ -69,7 +70,8 @@ import org.springframework.util.StringUtils;
  *   Camel case property names are mapped to snake case database column names.
  *   Properties of a model like 'firstName', 'lastName' will be mapped to corresponding database columns
  *   first_name/FIRST_NAME and last_name/LAST_NAME in the database table. If you are using a
- *   case sensitive database installation and have mixed case column names like 'Order_Date' the tool won't work.
+ *   case sensitive database installation and have mixed case column names like 'Last_Name' you could
+ *   run into problems.
  *
  * Examples of simple CRUD:
  *
