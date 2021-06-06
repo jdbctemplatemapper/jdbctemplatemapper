@@ -57,12 +57,12 @@ import org.springframework.util.StringUtils;
  * Features:
  * 1) Simple CRUD one liners
  * 2) Methods to retrieve relationships (toOne..(), toMany..() etc)
- * 3) Can be configured for
+ * 3) Can be configured for:
  *     a) auto assign created on, updated on.
  *     b) auto assign created by, updated by using an implementation of IRecordOperatorResolver.
  *     c) optimistic locking functionality for updates by configuring a version property.
  * 4) Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases).
- *    Should work with other databases too.
+ *    Should work with all other relational databases.
  *
  * <b>JdbcTemplateMapper is opinionated<b/>. Projects have to meet the following 2 criteria to use it:
  * 1) Models should have a property exactly named 'id' which has to be of type Integer or Long.
