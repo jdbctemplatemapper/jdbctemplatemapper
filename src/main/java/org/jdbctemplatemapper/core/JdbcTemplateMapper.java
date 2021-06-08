@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
@@ -2131,11 +2132,10 @@ public class JdbcTemplateMapper {
     TableMapping tableMapping = objectToTableMappingCache.get(clazz.getName());
 
     if (tableMapping == null) {
-      String tableName = null;
-      if (clazz.isAnnotationPresent(Table.class)) {
-        // @Table annotation is present. Get the table name
-        Table table = clazz.getAnnotation(Table.class);
-        tableName = table.name();
+      String tableName = null;    
+      Table tableAnnotation = AnnotationUtils.findAnnotation(clazz, Table.class);   
+      if (tableAnnotation != null) {
+        tableName = tableAnnotation.name();
       } else {
         tableName = convertCamelToSnakeCase(clazz.getSimpleName());
       }
