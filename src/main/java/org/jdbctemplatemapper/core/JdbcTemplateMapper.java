@@ -191,8 +191,8 @@ public class JdbcTemplateMapper {
   private Map<String, String> camelToSnakeCache = new ConcurrentHashMap<>();
 
   // Map key - tableName-tableAlias
-  //     value - the selectCols string
-  private Map<String, String> selectColsCache = new ConcurrentHashMap<>();
+  //     value - the selectAllCols string
+  private Map<String, String> selectAllColsCache = new ConcurrentHashMap<>();
 
   // Map key - object class name
   //     value - the table name
@@ -924,7 +924,7 @@ public class JdbcTemplateMapper {
    * left join customer c on o.customer_id = c.id
    * where o.id = ?
    *
-   * See selectCols()} on how to make the select clause less verbose.
+   * See selectAllCols()} on how to make the select clause less verbose.
    *
    * Example call to get Order and its Customer (toOne relationship) populated from the sql above:
    * Order order =
@@ -1006,7 +1006,7 @@ public class JdbcTemplateMapper {
    * from order o
    * left join customer c on o.customer_id = c.id
    *
-   * See selectCols() to make the select clause less verbose.
+   * See selectAllCols() to make the select clause less verbose.
    *
    * Example call to get Orders and its Customer (toOne relationship) populated from the sql above:
    * List<Order> orders =
@@ -1569,7 +1569,7 @@ public class JdbcTemplateMapper {
    * <pre>
    * Note: the string will have a comma as its last character.
    *
-   * selectCols("employee", "emp") where "emp" is the alias will return something like:
+   * selectAllCols("employee", "emp") where "emp" is the alias will return something like:
    * "emp.id emp_id, emp.last_name emp_last_name, emp.first_name emp_first_name,"
    * </pre>
    *
@@ -1577,10 +1577,10 @@ public class JdbcTemplateMapper {
    * @param tableAlias the alias being used in the sql statement for the table.
    * @return comma separated select column string with a comma at the end of string
    */
-  public String selectCols(String tableName, String tableAlias) {
+  public String selectAllCols(String tableName, String tableAlias) {
     Assert.hasLength(tableName, "tableName must not be empty");
     Assert.hasLength(tableAlias, "tableAlias must not be empty");
-    return selectCols(tableName, tableAlias, true);
+    return selectAllCols(tableName, tableAlias, true);
   }
 
   /**
@@ -1588,7 +1588,7 @@ public class JdbcTemplateMapper {
    * table.
    *
    * <pre>
-   * selectCols("employee", "emp", false) where "emp" is the alias will return something like:
+   * selectAllCols("employee", "emp", false) where "emp" is the alias will return something like:
    * "emp.id emp_id, emp.last_name emp_last_name, emp.first_name emp_first_name"
    * </pre>
    *
@@ -1598,11 +1598,11 @@ public class JdbcTemplateMapper {
    *     comma at end
    * @return comma separated select column string
    */
-  public String selectCols(String tableName, String tableAlias, boolean includeLastComma) {
+  public String selectAllCols(String tableName, String tableAlias, boolean includeLastComma) {
     Assert.hasLength(tableName, "tableName must not be empty");
     Assert.hasLength(tableAlias, "tableAlias must not be empty");
 
-    String str = selectColsCache.get(tableName + "-" + tableAlias);
+    String str = selectAllColsCache.get(tableName + "-" + tableAlias);
 
     if (str == null) {
       List<ColumnInfo> tableColumnInfo = getTableColumnInfo(tableName);
@@ -1625,7 +1625,7 @@ public class JdbcTemplateMapper {
             .append(",");
       }
       str = sb.toString();
-      selectColsCache.put(tableName + "-" + tableAlias, str);
+      selectAllColsCache.put(tableName + "-" + tableAlias, str);
     }
 
     if (!includeLastComma) {

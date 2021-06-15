@@ -426,10 +426,10 @@ public class JdbcTemplateMapperLongTest {
 
     String sql =
         "select "
-            + jdbcTemplateMapper.selectCols("order_long", "o")
-            + jdbcTemplateMapper.selectCols("order_line_long", "ol")
-            + jdbcTemplateMapper.selectCols("customer_long", "c")
-            + jdbcTemplateMapper.selectCols("product_long", "p", false)
+            + jdbcTemplateMapper.selectAllCols("order_long", "o")
+            + jdbcTemplateMapper.selectAllCols("order_line_long", "ol")
+            + jdbcTemplateMapper.selectAllCols("customer_long", "c")
+            + jdbcTemplateMapper.selectAllCols("product_long", "p", false)
             + " from jdbctemplatemapper.order_long o"
             + " left join order_line_long ol on o.id = ol.order_long_id"
             + " join customer_long c on o.customer_long_id = c.id"

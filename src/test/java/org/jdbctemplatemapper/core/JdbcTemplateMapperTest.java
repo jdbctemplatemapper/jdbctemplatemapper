@@ -1011,10 +1011,10 @@ public class JdbcTemplateMapperTest {
 
     String sql =
         "select "
-            + jdbcTemplateMapper.selectCols("orders", "o")
-            + jdbcTemplateMapper.selectCols("order_line", "ol")
-            + jdbcTemplateMapper.selectCols("customer", "c")
-            + jdbcTemplateMapper.selectCols("product", "p", false)
+            + jdbcTemplateMapper.selectAllCols("orders", "o")
+            + jdbcTemplateMapper.selectAllCols("order_line", "ol")
+            + jdbcTemplateMapper.selectAllCols("customer", "c")
+            + jdbcTemplateMapper.selectAllCols("product", "p", false)
             + " from jdbctemplatemapper.orders o"
             + " left join jdbctemplatemapper.order_line ol on o.id = ol.order_id"
             + " left join jdbctemplatemapper.customer c on o.customer_id = c.id"
@@ -1077,10 +1077,10 @@ public class JdbcTemplateMapperTest {
     // query returns no records
     String sql =
         "select "
-            + jdbcTemplateMapper.selectCols("orders", "o")
-            + jdbcTemplateMapper.selectCols("order_line", "ol")
-            + jdbcTemplateMapper.selectCols("customer", "c")
-            + jdbcTemplateMapper.selectCols("product", "p", false)
+            + jdbcTemplateMapper.selectAllCols("orders", "o")
+            + jdbcTemplateMapper.selectAllCols("order_line", "ol")
+            + jdbcTemplateMapper.selectAllCols("customer", "c")
+            + jdbcTemplateMapper.selectAllCols("product", "p", false)
             + " from jdbctemplatemapper.orders o"
             + " left join jdbctemplatemapper.order_line ol on o.id = ol.order_id"
             + " left join jdbctemplatemapper.customer c on o.customer_id = c.id"
@@ -1115,7 +1115,7 @@ public class JdbcTemplateMapperTest {
     Assertions.assertThrows(
         RuntimeException.class,
         () -> {
-          jdbcTemplateMapper.selectCols("aaaaaaaaa", "a");
+          jdbcTemplateMapper.selectAllCols("aaaaaaaaa", "a");
         });
   }
 
@@ -1231,7 +1231,7 @@ public class JdbcTemplateMapperTest {
 
     jdbcTemplateMapper.insert(obj);
     
-    String sql = "select" + jdbcTemplateMapper.selectCols("type_check", "tc", false)
+    String sql = "select" + jdbcTemplateMapper.selectAllCols("type_check", "tc", false)
       + " from type_check tc where tc.id = ?";
     
     
