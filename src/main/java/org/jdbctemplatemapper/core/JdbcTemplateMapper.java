@@ -470,7 +470,7 @@ public class JdbcTemplateMapper {
               .withCatalogName(catalogName)
               .withSchemaName(schemaName)
               .withTableName(tableMapping.getTableName())
-              .usingGeneratedKeyColumns("id");
+              .usingGeneratedKeyColumns(tableMapping.getIdColumnName());
       simpleJdbcInsertCache.put(tableMapping.getTableName(), jdbcInsert);
     }
 
