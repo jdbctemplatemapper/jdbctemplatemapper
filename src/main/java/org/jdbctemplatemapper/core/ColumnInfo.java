@@ -7,5 +7,5 @@ import lombok.Data;
 @AllArgsConstructor
 public class ColumnInfo {
 	private String columnName;
-	private int columnDataType; // see  java.sql.Types
+	private int columnSqlDataType; // see  java.sql.Types
 }

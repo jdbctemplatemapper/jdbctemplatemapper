@@ -12,15 +12,15 @@ public class PropertyMapping {
   private String propertyName;
   private Class<?> propertyType;
   private String columnName;
-  private int columnDataType; // see java.sql.Types
+  private int columnSqlDataType; // see java.sql.Types
 
-  public PropertyMapping(String propertyName, Class<?> propertyType, String columnName, int columnDataType) {
+  public PropertyMapping(String propertyName, Class<?> propertyType, String columnName, int columnSqlDataType) {
     if (propertyName == null || propertyType == null || columnName == null) {
       throw new IllegalArgumentException("propertyName, propertyType, columnName must not be null");
     }
     this.propertyName = propertyName;
     this.propertyType = propertyType;
     this.columnName = columnName;
-    this.columnDataType = columnDataType;
+    this.columnSqlDataType = columnSqlDataType;
   }
 }

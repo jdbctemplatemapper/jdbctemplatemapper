@@ -433,8 +433,9 @@ public class JdbcTemplateMapper {
     }
 
     TableMapping tableMapping = getTableMapping(obj.getClass());
-    if(tableMapping.getIdColumnName() == null) {
-    	throw new RuntimeException("table " + tableMapping.getTableName() + " does not have a property named 'id'");
+    if (tableMapping.getIdColumnName() == null) {
+      throw new RuntimeException(
+          "table " + tableMapping.getTableName() + " does not have a property named 'id'");
     }
     LocalDateTime now = LocalDateTime.now();
 
@@ -503,10 +504,11 @@ public class JdbcTemplateMapper {
     }
 
     TableMapping tableMapping = getTableMapping(obj.getClass());
-    if(tableMapping.getIdColumnName() == null) {
-    	throw new RuntimeException("table " + tableMapping.getTableName() + " does not have a property named 'id'");
+    if (tableMapping.getIdColumnName() == null) {
+      throw new RuntimeException(
+          "table " + tableMapping.getTableName() + " does not have a property named 'id'");
     }
-       
+
     LocalDateTime now = LocalDateTime.now();
     if (createdOnPropertyName != null
         && tableMapping.getColumnName(createdOnPropertyName) != null) {
@@ -563,8 +565,9 @@ public class JdbcTemplateMapper {
 
     TableMapping tableMapping = getTableMapping(obj.getClass());
     String idColumnName = tableMapping.getIdColumnName();
-    if(idColumnName == null) {
-    	throw new RuntimeException("table " + tableMapping.getTableName() + " does not have a column named 'id'");
+    if (idColumnName == null) {
+      throw new RuntimeException(
+          "table " + tableMapping.getTableName() + " does not have a column named 'id'");
     }
 
     UpdateSqlAndParams updateSqlAndParams = updateSqlAndParamsCache.get(obj.getClass().getName());
@@ -593,7 +596,7 @@ public class JdbcTemplateMapper {
       updateSqlAndParams = buildUpdateSqlAndParams(tableMapping, updatePropertyNames);
       updateSqlAndParamsCache.put(obj.getClass().getName(), updateSqlAndParams);
     }
-    return issueUpdate(updateSqlAndParams, obj);
+    return issueUpdate(updateSqlAndParams, obj, tableMapping);
   }
 
   /**
@@ -616,8 +619,9 @@ public class JdbcTemplateMapper {
 
     TableMapping tableMapping = getTableMapping(obj.getClass());
     String idColumnName = tableMapping.getIdColumnName();
-    if(idColumnName == null) {
-    	throw new RuntimeException("table " + tableMapping.getTableName() + " does not have a column named 'id'");
+    if (idColumnName == null) {
+      throw new RuntimeException(
+          "table " + tableMapping.getTableName() + " does not have a column named 'id'");
     }
 
     // cachekey ex: className-propertyName1-propertyName2
@@ -685,7 +689,7 @@ public class JdbcTemplateMapper {
       updateSqlAndParams = buildUpdateSqlAndParams(tableMapping, updatePropertyNames);
       updateSqlAndParamsCache.put(cacheKey, updateSqlAndParams);
     }
-    return issueUpdate(updateSqlAndParams, obj);
+    return issueUpdate(updateSqlAndParams, obj, tableMapping);
   }
 
   /**
@@ -704,11 +708,13 @@ public class JdbcTemplateMapper {
     }
 
     TableMapping tableMapping = getTableMapping(obj.getClass());
-    if(tableMapping.getIdColumnName() == null) {
-    	throw new RuntimeException("table " + tableMapping.getTableName() + " does not have a property named 'id'");
+    if (tableMapping.getIdColumnName() == null) {
+      throw new RuntimeException(
+          "table " + tableMapping.getTableName() + " does not have a property named 'id'");
     }
 
-    String sql = "delete from " + fullyQualifiedTableName(tableMapping.getTableName()) + " where id = ?";
+    String sql =
+        "delete from " + fullyQualifiedTableName(tableMapping.getTableName()) + " where id = ?";
     Object id = bw.getPropertyValue("id");
     return jdbcTemplate.update(sql, id);
   }
@@ -835,13 +841,13 @@ public class JdbcTemplateMapper {
 
     TableMapping relationshipTableMapping = getTableMapping(relationshipClazz);
     String idColumnName = relationshipTableMapping.getIdColumnName();
-    if(idColumnName == null) {
-        throw new RuntimeException(
-                "Either "
-                    + relationshipClazz.getSimpleName()
-                    + " does not have an 'id' property or its corresponding table "
-                    + relationshipTableMapping.getTableName()
-                    + " does not have an 'id' column");
+    if (idColumnName == null) {
+      throw new RuntimeException(
+          "Either "
+              + relationshipClazz.getSimpleName()
+              + " does not have an 'id' property or its corresponding table "
+              + relationshipTableMapping.getTableName()
+              + " does not have an 'id' column");
     }
 
     if (isNotEmpty(mainObjList)) {
@@ -1675,6 +1681,8 @@ public class JdbcTemplateMapper {
 
     // the where clause
     sqlBuilder.append(" WHERE " + idColumnName + " = :id");
+    params.add("id");
+    
     if (versionPropertyName != null && versionColumnName != null) {
       sqlBuilder
           .append(" AND ")
@@ -1690,7 +1698,8 @@ public class JdbcTemplateMapper {
     return updateSqlAndParams;
   }
 
-  private Integer issueUpdate(UpdateSqlAndParams updateSqlAndParams, Object obj) {
+  private Integer issueUpdate(
+      UpdateSqlAndParams updateSqlAndParams, Object obj, TableMapping tableMapping) {
     Assert.notNull(updateSqlAndParams, "sqlAndParams must not be null");
     Assert.notNull(obj, "Object must not be null");
 
@@ -1705,35 +1714,43 @@ public class JdbcTemplateMapper {
       bw.setPropertyValue(updatedByPropertyName, recordOperatorResolver.getRecordOperator());
     }
 
-    Map<String, Object> attributes = convertObjectToMap(obj);
+    MapSqlParameterSource mapSqlParameterSource = new MapSqlParameterSource();
+    for (String paramName : parameters) {
+      if (paramName.equals("incrementedVersion")) {
+        Integer versionVal = (Integer) bw.getPropertyValue(versionPropertyName);
+        if (versionVal == null) {
+          throw new RuntimeException(
+              versionPropertyName
+                  + " cannot be null when updating "
+                  + obj.getClass().getSimpleName());
+        } else {
+          mapSqlParameterSource.addValue(
+              "incrementedVersion", versionVal + 1, java.sql.Types.INTEGER);
+        }
+      } else {
+        mapSqlParameterSource.addValue(
+            paramName, bw.getPropertyValue(paramName), tableMapping.getPropertySqlType(paramName));
+      }
+    }
+
     // if object has property version throw OptimisticLockingException
     // when update fails. The version gets incremented on update
     if (updateSqlAndParams.getParams().contains("incrementedVersion")) {
-      Integer versionVal = (Integer) bw.getPropertyValue(versionPropertyName);
-      if (versionVal == null) {
-        throw new RuntimeException(
-            versionPropertyName
-                + " cannot be null when updating "
-                + obj.getClass().getSimpleName());
-      } else {
-        attributes.put("incrementedVersion", versionVal + 1);
-      }
-
-      int cnt = npJdbcTemplate.update(updateSqlAndParams.getSql(), attributes);
+      int cnt = npJdbcTemplate.update(updateSqlAndParams.getSql(), mapSqlParameterSource);
       if (cnt == 0) {
         throw new OptimisticLockingException(
             "Update failed for "
                 + obj.getClass().getSimpleName()
                 + " for id:"
-                + attributes.get("id")
+                + bw.getPropertyValue("id")
                 + " and "
                 + versionPropertyName
                 + ":"
-                + attributes.get(versionPropertyName));
+                + bw.getPropertyValue(versionPropertyName));
       }
       return cnt;
     } else {
-      return npJdbcTemplate.update(updateSqlAndParams.getSql(), attributes);
+      return npJdbcTemplate.update(updateSqlAndParams.getSql(), mapSqlParameterSource);
     }
   }
 
@@ -2132,8 +2149,8 @@ public class JdbcTemplateMapper {
     TableMapping tableMapping = objectToTableMappingCache.get(clazz.getName());
 
     if (tableMapping == null) {
-      String tableName = null;    
-      Table tableAnnotation = AnnotationUtils.findAnnotation(clazz, Table.class);   
+      String tableName = null;
+      Table tableAnnotation = AnnotationUtils.findAnnotation(clazz, Table.class);
       if (tableAnnotation != null) {
         tableName = tableAnnotation.name();
       } else {
@@ -2174,7 +2191,7 @@ public class JdbcTemplateMapper {
                     propertyInfo.getPropertyName(),
                     propertyInfo.getPropertyType(),
                     columnInfo.getColumnName(),
-                    columnInfo.getColumnDataType()));
+                    columnInfo.getColumnSqlDataType()));
           }
         }
 

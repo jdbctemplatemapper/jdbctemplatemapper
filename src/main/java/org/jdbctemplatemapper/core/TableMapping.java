@@ -34,4 +34,19 @@ public class TableMapping {
     }
     return val;
   }
+  
+  public int getPropertySqlType(String propertyName) {
+	    int val = 0;
+	    if (propertyName != null) {
+	      for (PropertyMapping mapping : propertyMappings) {
+	        if (mapping.getPropertyName().equals(propertyName)) {
+	          val = mapping.getColumnSqlDataType();
+	          break;
+	        }
+	      }
+	    }
+	    return val;
+	  }
+  
+  
 }
