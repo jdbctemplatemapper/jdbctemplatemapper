@@ -1700,7 +1700,7 @@ public class JdbcTemplateMapper {
 
   private Integer issueUpdate(
       UpdateSqlAndParams updateSqlAndParams, Object obj, TableMapping tableMapping) {
-    Assert.notNull(updateSqlAndParams, "sqlAndParams must not be null");
+    Assert.notNull(updateSqlAndParams, "updateSqlAndParams must not be null");
     Assert.notNull(obj, "Object must not be null");
 
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
