@@ -530,21 +530,21 @@ public class JdbcTemplateMapperTest {
             + " where o.id = ?";
 
     Integer orderId = 1;
-
+    
     Order order =
-        jdbcTemplate.query(
-            sql,
-            new Object[] {orderId}, // args
-            new int[] {java.sql.Types.INTEGER}, // arg types
-            rs -> {
-              return jdbcTemplateMapper.toOneMapperForObject(
-                  rs,
-                  new SelectMapper<Order>(Order.class, "o_"),
-                  new SelectMapper<Customer>(Customer.class, "c_"),
-                  "customer",
-                  "customerId");
-            });
-
+            jdbcTemplate.query(
+                sql,
+                rs -> {
+                  return jdbcTemplateMapper.toOneMapperForObject(
+                      rs,
+                      new SelectMapper<Order>(Order.class, "o_"),
+                      new SelectMapper<Customer>(Customer.class, "c_"),
+                      "customer",
+                      "customerId");
+                },
+                new Object[] {orderId} // args
+                );
+    
     assertNotNull(order);
     assertNotNull(order.getOrderDate());
     assertEquals("tony", order.getCustomer().getFirstName());
@@ -566,8 +566,6 @@ public class JdbcTemplateMapperTest {
     Order order =
         jdbcTemplate.query(
             sql,
-            new Object[] {orderId}, // args
-            new int[] {java.sql.Types.INTEGER}, // arg types
             rs -> {
               return jdbcTemplateMapper.toOneMapperForObject(
                   rs,
@@ -575,7 +573,8 @@ public class JdbcTemplateMapperTest {
                   new SelectMapper<Customer>(Customer.class, "c_"),
                   "customer",
                   "customerId");
-            });
+            },
+            new Object[] {orderId}); // args
 
     assertNotNull(order);
     assertNotNull(order.getOrderDate());
@@ -597,8 +596,6 @@ public class JdbcTemplateMapperTest {
     Order order =
         jdbcTemplate.query(
             sql,
-            new Object[] {orderId}, // args
-            new int[] {java.sql.Types.INTEGER}, // arg types
             rs -> {
               return jdbcTemplateMapper.toOneMapperForObject(
                   rs,
@@ -606,7 +603,8 @@ public class JdbcTemplateMapperTest {
                   new SelectMapper<Customer>(Customer.class, "c_"),
                   "customer",
                   "customerId");
-            });
+            },
+            new Object[] {orderId}); // args
 
     assertNull(order);
   }
@@ -861,8 +859,6 @@ public class JdbcTemplateMapperTest {
     Order order =
         jdbcTemplate.query(
             sql,
-            new Object[] {orderId}, // args
-            new int[] {java.sql.Types.INTEGER}, // arg types
             rs -> {
               return jdbcTemplateMapper.toManyMapperForObject(
                   rs,
@@ -870,7 +866,8 @@ public class JdbcTemplateMapperTest {
                   new SelectMapper<OrderLine>(OrderLine.class, "ol_"),
                   "orderLines",
                   "orderId");
-            });
+            },
+            new Object[] {orderId}); // args
 
     assertNotNull(order);
     assertNotNull(order.getOrderDate());
@@ -897,8 +894,6 @@ public class JdbcTemplateMapperTest {
     Order order =
         jdbcTemplate.query(
             sql,
-            new Object[] {orderId}, // args
-            new int[] {java.sql.Types.INTEGER}, // arg types
             rs -> {
               return jdbcTemplateMapper.toManyMapperForObject(
                   rs,
@@ -906,7 +901,8 @@ public class JdbcTemplateMapperTest {
                   new SelectMapper<OrderLine>(OrderLine.class, "ol_"),
                   "orderLines",
                   "orderId");
-            });
+            },
+            new Object[] {orderId}); // args
 
     assertNotNull(order);
     assertNotNull(order.getOrderDate());
@@ -930,8 +926,6 @@ public class JdbcTemplateMapperTest {
     Order order =
         jdbcTemplate.query(
             sql,
-            new Object[] {orderId}, // args
-            new int[] {java.sql.Types.INTEGER}, // arg types
             rs -> {
               return jdbcTemplateMapper.toManyMapperForObject(
                   rs,
@@ -939,7 +933,8 @@ public class JdbcTemplateMapperTest {
                   new SelectMapper<OrderLine>(OrderLine.class, "ol_"),
                   "orderLines",
                   "orderId");
-            });
+            },
+            new Object[] {orderId}); // args
 
     assertNull(order);
   }
