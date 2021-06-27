@@ -62,7 +62,8 @@ import org.springframework.util.StringUtils;
  *     a) auto assign created on, updated on.
  *     b) auto assign created by, updated by using an implementation of IRecordOperatorResolver.
  *     c) optimistic locking functionality for updates by configuring a version property.
- * 4) Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases).
+ * 4) Thread safe
+ * 5) Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases).
  *    Should work with all other relational databases.
  *
  * <b>JdbcTemplateMapper is opinionated<b/>. Projects have to meet the following 2 criteria to use it:
@@ -71,7 +72,7 @@ import org.springframework.util.StringUtils;
  *   Camel case property names are mapped to snake case database column names.
  *   Properties of a model like 'firstName', 'lastName' will be mapped to corresponding database columns
  *   first_name/FIRST_NAME and last_name/LAST_NAME in the database table. If you are using a
- *   case sensitive database installation and have mixed case column names like 'Last_Name' you could
+ *   case sensitive database installation and have mixed case database column names like 'Last_Name' you could
  *   run into problems.
  *
  * Examples of simple CRUD:
