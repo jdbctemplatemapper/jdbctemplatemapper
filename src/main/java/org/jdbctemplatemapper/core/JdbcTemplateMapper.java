@@ -215,7 +215,6 @@ public class JdbcTemplateMapper {
    */
   public JdbcTemplateMapper(JdbcTemplate jdbcTemplate, String schemaName) {
     Assert.notNull(jdbcTemplate, "jdbcTemplate must not be null");
-
     this.jdbcTemplate = jdbcTemplate;
     this.schemaName = schemaName;
     this.npJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
