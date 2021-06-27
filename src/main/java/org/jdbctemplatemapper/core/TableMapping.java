@@ -10,43 +10,36 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 /**
  * The database table mapping details on an object
- * 
- * @author ajoseph
  *
+ * @author ajoseph
  */
 public class TableMapping {
   private String tableName;
   private String idColumnName;
-  
+
   // object property to database column mapping.
-  // Only properties which have corresponding database column will be in list.
+  // Only properties which have corresponding database column will be in this list.
   private List<PropertyMapping> propertyMappings = new ArrayList<>();
 
   public String getColumnName(String propertyName) {
-    String val = null;
     if (propertyName != null) {
       for (PropertyMapping mapping : propertyMappings) {
-        if (mapping.getPropertyName().equals(propertyName)) {
-          val = mapping.getColumnName();
-          break;
+        if (propertyName.equals(mapping.getPropertyName())) {
+          return mapping.getColumnName();
         }
       }
     }
-    return val;
+    return null;
   }
-  
+
   public int getPropertySqlType(String propertyName) {
-	    int val = 0;
-	    if (propertyName != null) {
-	      for (PropertyMapping mapping : propertyMappings) {
-	        if (mapping.getPropertyName().equals(propertyName)) {
-	          val = mapping.getColumnSqlDataType();
-	          break;
-	        }
-	      }
-	    }
-	    return val;
-	  }
-  
-  
+    if (propertyName != null) {
+      for (PropertyMapping mapping : propertyMappings) {
+        if (propertyName.equals(mapping.getPropertyName())) {
+          return mapping.getColumnSqlDataType();
+        }
+      }
+    }
+    return 0;
+  }
 }
