@@ -191,7 +191,7 @@ public class JdbcTemplateMapperLongTest {
   public void toOneForObject_LongTest(){
     OrderLong order = jdbcTemplateMapper.findById(1L, OrderLong.class);
     // this method issues a query behind the scenes to populate customer
-    jdbcTemplateMapper.toOneForObject(order, CustomerLong.class, "customer", "customerLongId");
+    jdbcTemplateMapper.toOneForObject(order,  "customer", "customerLongId");
 
     assertEquals("tony", order.getCustomer().getFirstName());
     assertEquals("joe", order.getCustomer().getLastName());
@@ -202,7 +202,7 @@ public class JdbcTemplateMapperLongTest {
     List<OrderLong> orders = jdbcTemplateMapper.findAll(OrderLong.class, "order by id");
 
     // this method issues a query behind the scenes to populate customer
-    jdbcTemplateMapper.toOneForList(orders, CustomerLong.class, "customer", "customerLongId");
+    jdbcTemplateMapper.toOneForList(orders, "customer", "customerLongId");
 
     assertTrue(orders.size() >= 2);
     assertEquals("tony", orders.get(0).getCustomer().getFirstName());
@@ -294,7 +294,7 @@ public class JdbcTemplateMapperLongTest {
     OrderLong order = jdbcTemplateMapper.findById(1L, OrderLong.class);
 
     // This issues a query to get the orderlines
-    jdbcTemplateMapper.toManyForObject(order,  OrderLineLong.class,"orderLines", "orderLongId", "order by id");
+    jdbcTemplateMapper.toManyForObject(order, "orderLines", "orderLongId", "order by id");
 
     assertEquals(1, order.getOrderLines().get(0).getProductLongId());
     assertEquals(2, order.getOrderLines().get(1).getProductLongId());
@@ -307,7 +307,7 @@ public class JdbcTemplateMapperLongTest {
     List<OrderLong> orders = jdbcTemplateMapper.findAll(OrderLong.class, "order by id");
 
     // This issues a query to get the orderlines
-    jdbcTemplateMapper.toManyForList(orders, OrderLineLong.class, "orderLines", "orderLongId", "order by id");
+    jdbcTemplateMapper.toManyForList(orders, "orderLines", "orderLongId", "order by id");
 
     assertTrue(orders.size() >= 2);
     assertEquals(2, orders.get(0).getOrderLines().size());

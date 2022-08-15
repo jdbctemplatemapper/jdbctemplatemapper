@@ -447,7 +447,7 @@ public class JdbcTemplateMapperTest {
   public void toOneForObject_Test() {
     Order order = jdbcTemplateMapper.findById(1, Order.class);
     // this method issues a query behind the scenes to populate customer
-    jdbcTemplateMapper.toOneForObject(order, Customer.class, "customer", "customerId");
+    jdbcTemplateMapper.toOneForObject(order, "customer", "customerId");
 
     assertEquals("tony", order.getCustomer().getFirstName());
     assertEquals("joe", order.getCustomer().getLastName());
@@ -457,7 +457,7 @@ public class JdbcTemplateMapperTest {
   public void toOneForObject_NullRelationshipTest() {
     Order order = jdbcTemplateMapper.findById(3, Order.class);
     // order 3 has null customer
-    jdbcTemplateMapper.toOneForObject(order, Customer.class, "customer", "customerId");
+    jdbcTemplateMapper.toOneForObject(order, "customer", "customerId");
 
     assertNull(order.getCustomer());
   }
@@ -466,7 +466,7 @@ public class JdbcTemplateMapperTest {
   public void toOneForObject_NoRecordTest() {
     Order order = jdbcTemplateMapper.findById(999, Order.class);
     // order 3 has null customer
-    jdbcTemplateMapper.toOneForObject(order, Customer.class, "customer", "customerId");
+    jdbcTemplateMapper.toOneForObject(order, "customer", "customerId");
 
     assertNull(order);
   }
@@ -476,7 +476,7 @@ public class JdbcTemplateMapperTest {
     List<Order> orders = jdbcTemplateMapper.findAll(Order.class, "order by id");
 
     // this method issues a query behind the scenes to populate customer
-    jdbcTemplateMapper.toOneForList(orders, Customer.class, "customer", "customerId");
+    jdbcTemplateMapper.toOneForList(orders, "customer", "customerId");
 
     assertTrue(orders.size() >= 3);
     assertEquals("tony", orders.get(0).getCustomer().getFirstName());
@@ -488,7 +488,7 @@ public class JdbcTemplateMapperTest {
   public void toOneForList_NoRecordTest() {
     // mimick query returning no orders
     List<Order> orders = null;
-    jdbcTemplateMapper.toOneForList(orders, Customer.class, "customer", "customerId");
+    jdbcTemplateMapper.toOneForList(orders, "customer", "customerId");
 
     assertNull(orders);
   }
@@ -501,21 +501,21 @@ public class JdbcTemplateMapperTest {
         RuntimeException.class,
         () -> {
           // invalid mainObjRelationshipPropertyName
-          jdbcTemplateMapper.toOneForList(orders, Customer.class, "xyz", "customerId");
+          jdbcTemplateMapper.toOneForList(orders, "xyz", "customerId");
         });
 
     Assertions.assertThrows(
         RuntimeException.class,
         () -> {
           // invalid mainObjJoinPropertyName
-          jdbcTemplateMapper.toOneForList(orders, Customer.class, "customer", "customerIdx");
+          jdbcTemplateMapper.toOneForList(orders, "customer", "customerIdx");
         });
 
     Assertions.assertThrows(
         RuntimeException.class,
         () -> {
           // type of mainOjJoinPropertyName has to be Integer or Long
-          jdbcTemplateMapper.toOneForList(orders, Customer.class, "customer", "status");
+          jdbcTemplateMapper.toOneForList(orders, "customer", "status");
         });
   }
 
@@ -699,7 +699,7 @@ public class JdbcTemplateMapperTest {
 
     // This issues a query to get the orderlines
     jdbcTemplateMapper.toManyForObject(
-        order, OrderLine.class, "orderLines", "orderId", "order by id");
+        order, "orderLines", "orderId", "order by id");
 
     assertEquals(1, order.getOrderLines().get(0).getProductId());
     assertEquals(2, order.getOrderLines().get(1).getProductId());
@@ -714,7 +714,7 @@ public class JdbcTemplateMapperTest {
     Order order = jdbcTemplateMapper.findById(3, Order.class);
 
     jdbcTemplateMapper.toManyForObject(
-        order, OrderLine.class, "orderLines", "orderId", "order by id");
+        order, "orderLines", "orderId", "order by id");
 
     assertNull(order.getOrderLines());
   }
@@ -725,7 +725,7 @@ public class JdbcTemplateMapperTest {
 
     // This issues a query to get the orderlines
     jdbcTemplateMapper.toManyForList(
-        orders, OrderLine.class, "orderLines", "orderId", "order by id");
+        orders, "orderLines", "orderId", "order by id");
 
     assertTrue(orders.size() >= 3);
     assertEquals(2, orders.get(0).getOrderLines().size());
@@ -747,35 +747,35 @@ public class JdbcTemplateMapperTest {
         RuntimeException.class,
         () -> {
           // invalid mainObj property
-          jdbcTemplateMapper.toManyForList(orders, OrderLine.class, "orderLinex", "orderId");
+          jdbcTemplateMapper.toManyForList(orders,  "orderLinex", "orderId");
         });
 
     Assertions.assertThrows(
         RuntimeException.class,
         () -> {
           // mainObjCollectionPropertyName has to be of type List
-          jdbcTemplateMapper.toManyForList(orders, OrderLine.class, "person", "orderId");
+          jdbcTemplateMapper.toManyForList(orders, "person", "orderId");
         });
 
     Assertions.assertThrows(
         RuntimeException.class,
         () -> {
           // invalid manySideJoinPropertyName
-          jdbcTemplateMapper.toManyForList(orders, OrderLine.class, "orderLines", "orderIdx");
+          jdbcTemplateMapper.toManyForList(orders, "orderLines", "orderIdx");
         });
 
     Assertions.assertThrows(
         RuntimeException.class,
         () -> {
           //  manySideJoinPropert cannot be id
-          jdbcTemplateMapper.toManyForList(orders, OrderLine.class, "orderLines", "id");
+          jdbcTemplateMapper.toManyForList(orders, "orderLines", "id");
         });
 
     Assertions.assertThrows(
         RuntimeException.class,
         () -> {
           // manySideJoinPropertyName has to be Integer/Long
-          jdbcTemplateMapper.toManyForList(orders, OrderLine.class, "orderLines", "status");
+          jdbcTemplateMapper.toManyForList(orders, "orderLines", "status");
         });
   }
 
@@ -786,7 +786,7 @@ public class JdbcTemplateMapperTest {
 
     // This issues a query to get the orderlines
     jdbcTemplateMapper.toManyForList(
-        orders, OrderLine.class, "orderLines", "orderId", "order by id");
+        orders, "orderLines", "orderId", "order by id");
 
     assertNull(orders);
   }

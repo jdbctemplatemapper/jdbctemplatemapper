@@ -3,6 +3,8 @@ package org.jdbctemplatemapper.core;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -763,23 +765,18 @@ public class JdbcTemplateMapper {
    * Order order = jdbcTemplateMapper.findById(orderId, Order.class);
    *
    * 2) Populate the Order's toOne customer property. This will issue an sql and populate order.customer
-   * jdbcTemplateMapper.toOneForObject(order, Customer.class, "customer", "customerId");
+   * jdbcTemplateMapper.toOneForObject(order,"customer", "customerId");
    *
    * </pre>
    *
    * @param mainObj the main object
-   * @param relationShipClazz The relationship class
    * @param mainObjRelationshipPropertyName The propertyName of the toOne relationship (on mainOjb)
    *     that needs to be populated.
    * @param mainObjJoinPropertyName the join property on main object.
    */
-  public <T, U> void toOneForObject(
-      T mainObj,
-      Class<U> relationshipClazz,
-      String mainObjRelationshipPropertyName,
-      String mainObjJoinPropertyName) {
+  public <T> void toOneForObject(
+      T mainObj, String mainObjRelationshipPropertyName, String mainObjJoinPropertyName) {
 
-    Assert.notNull(relationshipClazz, "relationshipClazz must not be null");
     Assert.notNull(
         mainObjRelationshipPropertyName, "mainObjRelationshipPropertyName must not be null");
     Assert.notNull(mainObjJoinPropertyName, "mainObjJoinPropertyName must not be null");
@@ -787,8 +784,7 @@ public class JdbcTemplateMapper {
     if (mainObj != null) {
       List<T> mainObjList = new ArrayList<>();
       mainObjList.add(mainObj);
-      toOneForList(
-          mainObjList, relationshipClazz, mainObjRelationshipPropertyName, mainObjJoinPropertyName);
+      toOneForList(mainObjList, mainObjRelationshipPropertyName, mainObjJoinPropertyName);
     }
   }
 
@@ -819,38 +815,36 @@ public class JdbcTemplateMapper {
    *
    * 2) Populate each Order's toOne customer property. This will issue an sql to get the corresponding
    *    customers using an IN clause.
-   * jdbcTemplateMapper.toOneForList(orders, Customer.class, "customer", "customerId");
+   * jdbcTemplateMapper.toOneForList(orders, "customer", "customerId");
    *
    * </pre>
    *
    * @param mainObjList list of main objects
-   * @param relationShipClazz The relationship class
    * @param mainObjRelationshipPropertyName The toOne relationship property name on main object
    * @param mainObjJoinPropertyName the join property name on the main object.
    */
-  public <T, U> void toOneForList(
-      List<T> mainObjList,
-      Class<U> relationshipClazz,
-      String mainObjRelationshipPropertyName,
-      String mainObjJoinPropertyName) {
+  @SuppressWarnings("all")
+  public <T> void toOneForList(
+      List<T> mainObjList, String mainObjRelationshipPropertyName, String mainObjJoinPropertyName) {
 
-    Assert.notNull(relationshipClazz, "relationshipClazz must not be null");
     Assert.notNull(
         mainObjRelationshipPropertyName, "mainObjRelationshipPropertyName must not be null");
     Assert.notNull(mainObjJoinPropertyName, "mainObjJoinPropertyName must not be null");
 
-    TableMapping relationshipTableMapping = getTableMapping(relationshipClazz);
-    String idColumnName = relationshipTableMapping.getIdColumnName();
-    if (idColumnName == null) {
-      throw new RuntimeException(
-          "Either "
-              + relationshipClazz.getSimpleName()
-              + " does not have an 'id' property or its corresponding table "
-              + relationshipTableMapping.getTableName()
-              + " does not have an 'id' column");
-    }
-
     if (isNotEmpty(mainObjList)) {
+      Class<?> relationshipClazz =
+          getPropertyClass(mainObjList.get(0), mainObjRelationshipPropertyName);
+      TableMapping relationshipTableMapping = getTableMapping(relationshipClazz);
+      String idColumnName = relationshipTableMapping.getIdColumnName();
+      if (idColumnName == null) {
+        throw new RuntimeException(
+            "Either "
+                + relationshipClazz.getSimpleName()
+                + " does not have an 'id' property or its corresponding table "
+                + relationshipTableMapping.getTableName()
+                + " does not have an 'id' column");
+      }
+
       LinkedHashSet<Long> allJoinPropertyIds = new LinkedHashSet<>();
       boolean firstRecord = true;
       for (T mainObj : mainObjList) {
@@ -872,7 +866,7 @@ public class JdbcTemplateMapper {
           }
         }
       }
-      List<U> relatedObjList = new ArrayList<>();
+      List relatedObjList = new ArrayList();
       // Since some databases have limitations on how many entries can be in an 'IN' clause and to
       // avoid query being issued with large number of ids for the 'IN (:joinPropertyIds), the
       // list is chunked by IN_CLAUSE_CHUNK_SIZE and multiple queries issued if needed.
@@ -887,7 +881,7 @@ public class JdbcTemplateMapper {
                 + " IN (:joinPropertyIds)";
         MapSqlParameterSource params =
             new MapSqlParameterSource("joinPropertyIds", joinPropertyIds);
-        RowMapper<U> mapper = BeanPropertyRowMapper.newInstance(relationshipClazz);
+        RowMapper mapper = BeanPropertyRowMapper.newInstance(relationshipClazz);
         relatedObjList.addAll(npJdbcTemplate.query(sql, params, mapper));
       }
 
@@ -1143,28 +1137,23 @@ public class JdbcTemplateMapper {
    * Order order = jdbcTemplateMapper.findById(orderId)
    *
    * 2) Populate the order's orderLines. This will issue an sql and populate order.orderLines
-   * jdbcTemplateMapper.toManyForObject(order, OrderLine.class, "orderLines", "orderId");
+   * jdbcTemplateMapper.toManyForObject(order, "orderLines", "orderId");
    *
    * </pre>
    *
    * @param mainObjList the main object list
-   * @param manySideClass The many side class
    * @param mainObjCollectionPropertyName The collection property name on main object
    * @param manySideJoinPropertyName The join property name on the many side object
    */
-  public <T, U> void toManyForObject(
-      T mainObj,
-      Class<U> manySideClazz,
-      String mainObjCollectionPropertyName,
-      String manySideJoinPropertyName) {
+  public <T> void toManyForObject(
+      T mainObj, String mainObjCollectionPropertyName, String manySideJoinPropertyName) {
 
-    Assert.notNull(manySideClazz, "manySideClazz must not be null");
     Assert.notNull(mainObjCollectionPropertyName, "mainObjCollectionPropertyName must not be null");
     Assert.notNull(manySideJoinPropertyName, "manySideJoinPropertyName must not be null");
 
-    toManyForObject(
-        mainObj, manySideClazz, mainObjCollectionPropertyName, manySideJoinPropertyName, null);
+    toManyForObject(mainObj, mainObjCollectionPropertyName, manySideJoinPropertyName, null);
   }
+
   /**
    * Populates the toMany relationship. Issues an sql query to get the many side records. The many
    * side ordering can be customized using the last argument. Make sure the id property of the
@@ -1192,23 +1181,20 @@ public class JdbcTemplateMapper {
    * Order order = jdbcTemplateMapper.findById(orderId)
    *
    * 2) Populate the order's orderLines. This will issue an sql with the ordering clause and populate order.orderLines
-   * jdbcTemplateMapper.toManyForObject(order, OrderLine.class, "orderLines", "orderId", "order by price");
+   * jdbcTemplateMapper.toManyForObject(order, "orderLines", "orderId", "order by price");
    * </pre>
    *
    * @param mainObjList the main object list
-   * @param manySideClass The many side class
    * @param mainObjCollectionPropertyName The collection property name on main object
    * @param manySideJoinPropertyName The join property name on the many side object
    * @param manySideOrderByClause The order by clause for the many side query
    */
   public <T, U> void toManyForObject(
       T mainObj,
-      Class<U> manySideClazz,
       String mainObjCollectionPropertyName,
       String manySideJoinPropertyName,
       String manySideOrderByClause) {
 
-    Assert.notNull(manySideClazz, "manySideClazz must not be null");
     Assert.notNull(mainObjCollectionPropertyName, "mainObjCollectionPropertyName must not be null");
     Assert.notNull(manySideJoinPropertyName, "manySideJoinPropertyName must not be null");
 
@@ -1217,7 +1203,6 @@ public class JdbcTemplateMapper {
       mainObjList.add(mainObj);
       toManyForList(
           mainObjList,
-          manySideClazz,
           mainObjCollectionPropertyName,
           manySideJoinPropertyName,
           manySideOrderByClause);
@@ -1252,27 +1237,21 @@ public class JdbcTemplateMapper {
    *
    * 2) Populate each order's orderlines . This will issue an sql (with an IN clause) and
    *    populate order.orderLines.
-   * jdbcTemplateMapper.toManyForList(orders, OrderLine.class, "orderLines", "orderId");
+   * jdbcTemplateMapper.toManyForList(orders, "orderLines", "orderId");
    *
    * </pre>
    *
    * @param mainObjList the main object list
-   * @param manySideClass The many side class
    * @param mainObjCollectionPropertyName The collection property name on mainObj
    * @param manySideJoinPropertyName the join property name on the many side object
    */
-  public <T, U> void toManyForList(
-      List<T> mainObjList,
-      Class<U> manySideClazz,
-      String mainObjCollectionPropertyName,
-      String manySideJoinPropertyName) {
+  public <T> void toManyForList(
+      List<T> mainObjList, String mainObjCollectionPropertyName, String manySideJoinPropertyName) {
 
-    Assert.notNull(manySideClazz, "manySideClazz must not be null");
     Assert.notNull(mainObjCollectionPropertyName, "mainObjCollectionPropertyName must not be null");
     Assert.notNull(manySideJoinPropertyName, "manySideJoinPropertyName must not be null");
 
-    toManyForList(
-        mainObjList, manySideClazz, mainObjCollectionPropertyName, manySideJoinPropertyName, null);
+    toManyForList(mainObjList, mainObjCollectionPropertyName, manySideJoinPropertyName, null);
   }
 
   /**
@@ -1302,29 +1281,29 @@ public class JdbcTemplateMapper {
    * List<Order> orders = jdbcTemplateMapper.findAll(Order.class);
    *
    * 2) Populate each Order's orderLines . This will issue an sql with the ordering clause and populate order.orderLines.
-   * jdbcTemplateMapper.toManyForList(orders, OrderLine.class, "orderLines", "orderId", "order by price");
+   * jdbcTemplateMapper.toManyForList(orders, "orderLines", "orderId", "order by price");
    *
    * </pre>
    *
    * @param mainObjList the main object list
-   * @param manySideClass The many side class
    * @param mainObjCollectionPropertyName The collection property name on mainObj
    * @param manySideJoinPropertyName the join property name on the many side object
    * @param manySideOrderByClause The order by clause for the many side query
    */
-  public <T, U> void toManyForList(
+  @SuppressWarnings("all")
+  public <T> void toManyForList(
       List<T> mainObjList,
-      Class<U> manySideClazz,
       String mainObjCollectionPropertyName,
       String manySideJoinPropertyName,
       String manySideOrderByClause) {
 
-    Assert.notNull(manySideClazz, "manySideClazz must not be null");
     Assert.notNull(mainObjCollectionPropertyName, "mainObjCollectionPropertyName must not be null");
     Assert.notNull(manySideJoinPropertyName, "manySideJoinPropertyName must not be null");
 
-    String manySideTableName = getTableMapping(manySideClazz).getTableName();
     if (isNotEmpty(mainObjList)) {
+      Class<?> manySideClazz =
+          getGenericTypeOfCollection(mainObjList.get(0), mainObjCollectionPropertyName);
+      String manySideTableName = getTableMapping(manySideClazz).getTableName();
       LinkedHashSet<Long> allMainObjIds = new LinkedHashSet<>();
       boolean firstRecord = true;
       for (T mainObj : mainObjList) {
@@ -1345,7 +1324,7 @@ public class JdbcTemplateMapper {
       }
 
       String joinColumnName = getJoinColumnName(manySideTableName, manySideJoinPropertyName);
-      List<U> manySideList = new ArrayList<>();
+      List manySideList = new ArrayList();
       // Since some databases have limitations on how many entries can be in an 'IN' clause and to
       // avoid
       // query being issued with large number of ids for the 'IN (:mainObjIds), the list
@@ -1363,7 +1342,7 @@ public class JdbcTemplateMapper {
           sql += " " + manySideOrderByClause;
         }
         MapSqlParameterSource params = new MapSqlParameterSource("mainObjIds", mainObjIds);
-        RowMapper<U> mapper = BeanPropertyRowMapper.newInstance(manySideClazz);
+        RowMapper mapper = BeanPropertyRowMapper.newInstance(manySideClazz);
         manySideList.addAll(npJdbcTemplate.query(sql, params, mapper));
       }
 
@@ -1682,7 +1661,7 @@ public class JdbcTemplateMapper {
     // the where clause
     sqlBuilder.append(" WHERE " + idColumnName + " = :id");
     params.add("id");
-    
+
     if (versionPropertyName != null && versionColumnName != null) {
       sqlBuilder
           .append(" AND ")
@@ -2335,5 +2314,49 @@ public class JdbcTemplateMapper {
   @SuppressWarnings("all")
   private boolean isNotEmpty(Collection coll) {
     return !isEmpty(coll);
+  }
+
+  private Class<?> getGenericTypeOfCollection(Object mainObj, String propertyName) {
+    Assert.notNull(mainObj, "mainObj must not be null");
+    Assert.notNull(propertyName, "propertyName must not be null");
+    try {
+      Field field = mainObj.getClass().getDeclaredField(propertyName);
+
+      ParameterizedType pt = (ParameterizedType) field.getGenericType();
+      Type[] genericType = pt.getActualTypeArguments();
+
+      if (genericType != null && genericType.length > 0) {
+        return Class.forName(genericType[0].getTypeName());
+      } else {
+        throw new RuntimeException(
+            "Could not find generic type for property: "
+                + propertyName
+                + " in class: "
+                + mainObj.getClass().getSimpleName());
+      }
+
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private Class<?> getPropertyClass(Object obj, String propertyName) {
+    Assert.notNull(obj, "obj must not be null");
+    Assert.notNull(propertyName, "propertyName must not be null");
+
+    List<PropertyInfo> propertyInfoList = getObjectPropertyInfo(obj);
+    PropertyInfo propertyInfo =
+        propertyInfoList
+            .stream()
+            .filter(pi -> propertyName.equals(pi.getPropertyName()))
+            .findAny()
+            .orElse(null);
+
+    if (propertyInfo == null) {
+      throw new RuntimeException(
+          "property:" + propertyName + " not found in class:" + obj.getClass().getName());
+    } else {
+      return propertyInfo.getPropertyType();
+    }
   }
 }
