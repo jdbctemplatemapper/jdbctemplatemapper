@@ -54,7 +54,7 @@ import org.springframework.util.StringUtils;
  * JdbcTemplate and JdbcTemplateMapper. Use JdbcTemplateMapper's  more concise features where appropriate, along
  * with the full power of JdbcTemplate/SQL
  *
- * <p><b>NOTE: An instance of this class is thread-safe once configured.</b>
+ * <p><b>NOTE: An instance of JdbcTemplateMapper class is thread-safe.</b>
  *
  * <pre>
  * Features:
