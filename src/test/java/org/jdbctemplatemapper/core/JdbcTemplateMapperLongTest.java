@@ -294,7 +294,7 @@ public class JdbcTemplateMapperLongTest {
     OrderLong order = jdbcTemplateMapper.findById(1L, OrderLong.class);
 
     // This issues a query to get the orderlines
-    jdbcTemplateMapper.toManyForObject(order, "orderLines", "orderLongId", "order by id");
+    jdbcTemplateMapper.toMany(order, "orderLines", "orderLongId", "order by id");
 
     assertEquals(1, order.getOrderLines().get(0).getProductLongId());
     assertEquals(2, order.getOrderLines().get(1).getProductLongId());
@@ -307,7 +307,7 @@ public class JdbcTemplateMapperLongTest {
     List<OrderLong> orders = jdbcTemplateMapper.findAll(OrderLong.class, "order by id");
 
     // This issues a query to get the orderlines
-    jdbcTemplateMapper.toManyForList(orders, "orderLines", "orderLongId", "order by id");
+    jdbcTemplateMapper.toMany(orders, "orderLines", "orderLongId", "order by id");
 
     assertTrue(orders.size() >= 2);
     assertEquals(2, orders.get(0).getOrderLines().size());

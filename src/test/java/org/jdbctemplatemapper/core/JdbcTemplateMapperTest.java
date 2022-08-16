@@ -698,7 +698,7 @@ public class JdbcTemplateMapperTest {
     Order order = jdbcTemplateMapper.findById(1, Order.class);
 
     // This issues a query to get the orderlines
-    jdbcTemplateMapper.toManyForObject(
+    jdbcTemplateMapper.toMany(
         order, "orderLines", "orderId", "order by id");
 
     assertEquals(1, order.getOrderLines().get(0).getProductId());
@@ -713,7 +713,7 @@ public class JdbcTemplateMapperTest {
     // Order 3 has no orderLines
     Order order = jdbcTemplateMapper.findById(3, Order.class);
 
-    jdbcTemplateMapper.toManyForObject(
+    jdbcTemplateMapper.toMany(
         order, "orderLines", "orderId", "order by id");
 
     assertNull(order.getOrderLines());
@@ -724,7 +724,7 @@ public class JdbcTemplateMapperTest {
     List<Order> orders = jdbcTemplateMapper.findAll(Order.class, "order by id");
 
     // This issues a query to get the orderlines
-    jdbcTemplateMapper.toManyForList(
+    jdbcTemplateMapper.toMany(
         orders, "orderLines", "orderId", "order by id");
 
     assertTrue(orders.size() >= 3);
@@ -747,35 +747,35 @@ public class JdbcTemplateMapperTest {
         RuntimeException.class,
         () -> {
           // invalid mainObj property
-          jdbcTemplateMapper.toManyForList(orders,  "orderLinex", "orderId");
+          jdbcTemplateMapper.toMany(orders,  "orderLinex", "orderId");
         });
 
     Assertions.assertThrows(
         RuntimeException.class,
         () -> {
           // mainObjCollectionPropertyName has to be of type List
-          jdbcTemplateMapper.toManyForList(orders, "person", "orderId");
+          jdbcTemplateMapper.toMany(orders, "person", "orderId");
         });
 
     Assertions.assertThrows(
         RuntimeException.class,
         () -> {
           // invalid manySideJoinPropertyName
-          jdbcTemplateMapper.toManyForList(orders, "orderLines", "orderIdx");
+          jdbcTemplateMapper.toMany(orders, "orderLines", "orderIdx");
         });
 
     Assertions.assertThrows(
         RuntimeException.class,
         () -> {
           //  manySideJoinPropert cannot be id
-          jdbcTemplateMapper.toManyForList(orders, "orderLines", "id");
+          jdbcTemplateMapper.toMany(orders, "orderLines", "id");
         });
 
     Assertions.assertThrows(
         RuntimeException.class,
         () -> {
           // manySideJoinPropertyName has to be Integer/Long
-          jdbcTemplateMapper.toManyForList(orders, "orderLines", "status");
+          jdbcTemplateMapper.toMany(orders, "orderLines", "status");
         });
   }
 
@@ -785,7 +785,7 @@ public class JdbcTemplateMapperTest {
     List<Order> orders = null;
 
     // This issues a query to get the orderlines
-    jdbcTemplateMapper.toManyForList(
+    jdbcTemplateMapper.toMany(
         orders, "orderLines", "orderId", "order by id");
 
     assertNull(orders);

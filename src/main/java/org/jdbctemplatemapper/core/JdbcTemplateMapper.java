@@ -1137,7 +1137,7 @@ public class JdbcTemplateMapper {
    * Order order = jdbcTemplateMapper.findById(orderId)
    *
    * 2) Populate the order's orderLines. This will issue an sql and populate order.orderLines
-   * jdbcTemplateMapper.toManyForObject(order, "orderLines", "orderId");
+   * jdbcTemplateMapper.toMany(order, "orderLines", "orderId");
    *
    * </pre>
    *
@@ -1145,13 +1145,13 @@ public class JdbcTemplateMapper {
    * @param mainObjCollectionPropertyName The collection property name on main object
    * @param manySideJoinPropertyName The join property name on the many side object
    */
-  public <T> void toManyForObject(
+  public <T> void toMany(
       T mainObj, String mainObjCollectionPropertyName, String manySideJoinPropertyName) {
 
     Assert.notNull(mainObjCollectionPropertyName, "mainObjCollectionPropertyName must not be null");
     Assert.notNull(manySideJoinPropertyName, "manySideJoinPropertyName must not be null");
 
-    toManyForObject(mainObj, mainObjCollectionPropertyName, manySideJoinPropertyName, null);
+    toMany(mainObj, mainObjCollectionPropertyName, manySideJoinPropertyName, null);
   }
 
   /**
@@ -1181,7 +1181,7 @@ public class JdbcTemplateMapper {
    * Order order = jdbcTemplateMapper.findById(orderId)
    *
    * 2) Populate the order's orderLines. This will issue an sql with the ordering clause and populate order.orderLines
-   * jdbcTemplateMapper.toManyForObject(order, "orderLines", "orderId", "order by price");
+   * jdbcTemplateMapper.toMany(order, "orderLines", "orderId", "order by price");
    * </pre>
    *
    * @param mainObjList the main object list
@@ -1189,7 +1189,7 @@ public class JdbcTemplateMapper {
    * @param manySideJoinPropertyName The join property name on the many side object
    * @param manySideOrderByClause The order by clause for the many side query
    */
-  public <T, U> void toManyForObject(
+  public <T, U> void toMany(
       T mainObj,
       String mainObjCollectionPropertyName,
       String manySideJoinPropertyName,
@@ -1201,7 +1201,7 @@ public class JdbcTemplateMapper {
     if (mainObj != null) {
       List<T> mainObjList = new ArrayList<>();
       mainObjList.add(mainObj);
-      toManyForList(
+      toMany(
           mainObjList,
           mainObjCollectionPropertyName,
           manySideJoinPropertyName,
@@ -1237,7 +1237,7 @@ public class JdbcTemplateMapper {
    *
    * 2) Populate each order's orderlines . This will issue an sql (with an IN clause) and
    *    populate order.orderLines.
-   * jdbcTemplateMapper.toManyForList(orders, "orderLines", "orderId");
+   * jdbcTemplateMapper.toMany(orders, "orderLines", "orderId");
    *
    * </pre>
    *
@@ -1245,13 +1245,13 @@ public class JdbcTemplateMapper {
    * @param mainObjCollectionPropertyName The collection property name on mainObj
    * @param manySideJoinPropertyName the join property name on the many side object
    */
-  public <T> void toManyForList(
+  public <T> void toMany(
       List<T> mainObjList, String mainObjCollectionPropertyName, String manySideJoinPropertyName) {
 
     Assert.notNull(mainObjCollectionPropertyName, "mainObjCollectionPropertyName must not be null");
     Assert.notNull(manySideJoinPropertyName, "manySideJoinPropertyName must not be null");
 
-    toManyForList(mainObjList, mainObjCollectionPropertyName, manySideJoinPropertyName, null);
+    toMany(mainObjList, mainObjCollectionPropertyName, manySideJoinPropertyName, null);
   }
 
   /**
@@ -1281,7 +1281,7 @@ public class JdbcTemplateMapper {
    * List<Order> orders = jdbcTemplateMapper.findAll(Order.class);
    *
    * 2) Populate each Order's orderLines . This will issue an sql with the ordering clause and populate order.orderLines.
-   * jdbcTemplateMapper.toManyForList(orders, "orderLines", "orderId", "order by price");
+   * jdbcTemplateMapper.toMany(orders, "orderLines", "orderId", "order by price");
    *
    * </pre>
    *
@@ -1291,7 +1291,7 @@ public class JdbcTemplateMapper {
    * @param manySideOrderByClause The order by clause for the many side query
    */
   @SuppressWarnings("all")
-  public <T> void toManyForList(
+  public <T> void toMany(
       List<T> mainObjList,
       String mainObjCollectionPropertyName,
       String manySideJoinPropertyName,
@@ -1493,7 +1493,8 @@ public class JdbcTemplateMapper {
    *
    * @param rs The jdbc result set
    * @param selectMappers array of sql mappers.
-   * @return Map key: 'sqlColumnPrefix' of each sqlMapper, value: unique list for each sqlMapper
+   * @return Map key: 'sqlColumnPrefix' of each sqlMapper, value: unique list of objects mapped by
+   *     sqlMapper
    */
   @SuppressWarnings("all")
   public Map<String, List> multipleModelMapper(ResultSet rs, SelectMapper... selectMappers) {
