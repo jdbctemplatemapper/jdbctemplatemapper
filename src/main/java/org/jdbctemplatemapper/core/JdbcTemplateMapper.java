@@ -765,7 +765,7 @@ public class JdbcTemplateMapper {
    * Order order = jdbcTemplateMapper.findById(orderId, Order.class);
    *
    * 2) Populate the Order's toOne customer property. This will issue an sql and populate order.customer
-   * jdbcTemplateMapper.toOneForObject(order,"customer", "customerId");
+   * jdbcTemplateMapper.toOne(order,"customer", "customerId");
    *
    * </pre>
    *
@@ -774,7 +774,7 @@ public class JdbcTemplateMapper {
    *     that needs to be populated.
    * @param mainObjJoinPropertyName the join property on main object.
    */
-  public <T> void toOneForObject(
+  public <T> void toOne(
       T mainObj, String mainObjRelationshipPropertyName, String mainObjJoinPropertyName) {
 
     Assert.notNull(
@@ -784,7 +784,7 @@ public class JdbcTemplateMapper {
     if (mainObj != null) {
       List<T> mainObjList = new ArrayList<>();
       mainObjList.add(mainObj);
-      toOneForList(mainObjList, mainObjRelationshipPropertyName, mainObjJoinPropertyName);
+      toOne(mainObjList, mainObjRelationshipPropertyName, mainObjJoinPropertyName);
     }
   }
 
@@ -815,7 +815,7 @@ public class JdbcTemplateMapper {
    *
    * 2) Populate each Order's toOne customer property. This will issue an sql to get the corresponding
    *    customers using an IN clause.
-   * jdbcTemplateMapper.toOneForList(orders, "customer", "customerId");
+   * jdbcTemplateMapper.toOne(orders, "customer", "customerId");
    *
    * </pre>
    *
@@ -824,7 +824,7 @@ public class JdbcTemplateMapper {
    * @param mainObjJoinPropertyName the join property name on the main object.
    */
   @SuppressWarnings("all")
-  public <T> void toOneForList(
+  public <T> void toOne(
       List<T> mainObjList, String mainObjRelationshipPropertyName, String mainObjJoinPropertyName) {
 
     Assert.notNull(

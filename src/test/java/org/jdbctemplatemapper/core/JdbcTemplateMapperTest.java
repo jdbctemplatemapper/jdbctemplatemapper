@@ -447,7 +447,7 @@ public class JdbcTemplateMapperTest {
   public void toOneForObject_Test() {
     Order order = jdbcTemplateMapper.findById(1, Order.class);
     // this method issues a query behind the scenes to populate customer
-    jdbcTemplateMapper.toOneForObject(order, "customer", "customerId");
+    jdbcTemplateMapper.toOne(order, "customer", "customerId");
 
     assertEquals("tony", order.getCustomer().getFirstName());
     assertEquals("joe", order.getCustomer().getLastName());
@@ -457,7 +457,7 @@ public class JdbcTemplateMapperTest {
   public void toOneForObject_NullRelationshipTest() {
     Order order = jdbcTemplateMapper.findById(3, Order.class);
     // order 3 has null customer
-    jdbcTemplateMapper.toOneForObject(order, "customer", "customerId");
+    jdbcTemplateMapper.toOne(order, "customer", "customerId");
 
     assertNull(order.getCustomer());
   }
@@ -466,7 +466,7 @@ public class JdbcTemplateMapperTest {
   public void toOneForObject_NoRecordTest() {
     Order order = jdbcTemplateMapper.findById(999, Order.class);
     // order 3 has null customer
-    jdbcTemplateMapper.toOneForObject(order, "customer", "customerId");
+    jdbcTemplateMapper.toOne(order, "customer", "customerId");
 
     assertNull(order);
   }
@@ -476,7 +476,7 @@ public class JdbcTemplateMapperTest {
     List<Order> orders = jdbcTemplateMapper.findAll(Order.class, "order by id");
 
     // this method issues a query behind the scenes to populate customer
-    jdbcTemplateMapper.toOneForList(orders, "customer", "customerId");
+    jdbcTemplateMapper.toOne(orders, "customer", "customerId");
 
     assertTrue(orders.size() >= 3);
     assertEquals("tony", orders.get(0).getCustomer().getFirstName());
@@ -488,7 +488,7 @@ public class JdbcTemplateMapperTest {
   public void toOneForList_NoRecordTest() {
     // mimick query returning no orders
     List<Order> orders = null;
-    jdbcTemplateMapper.toOneForList(orders, "customer", "customerId");
+    jdbcTemplateMapper.toOne(orders, "customer", "customerId");
 
     assertNull(orders);
   }
@@ -501,21 +501,21 @@ public class JdbcTemplateMapperTest {
         RuntimeException.class,
         () -> {
           // invalid mainObjRelationshipPropertyName
-          jdbcTemplateMapper.toOneForList(orders, "xyz", "customerId");
+          jdbcTemplateMapper.toOne(orders, "xyz", "customerId");
         });
 
     Assertions.assertThrows(
         RuntimeException.class,
         () -> {
           // invalid mainObjJoinPropertyName
-          jdbcTemplateMapper.toOneForList(orders, "customer", "customerIdx");
+          jdbcTemplateMapper.toOne(orders, "customer", "customerIdx");
         });
 
     Assertions.assertThrows(
         RuntimeException.class,
         () -> {
           // type of mainOjJoinPropertyName has to be Integer or Long
-          jdbcTemplateMapper.toOneForList(orders, "customer", "status");
+          jdbcTemplateMapper.toOne(orders, "customer", "status");
         });
   }
 

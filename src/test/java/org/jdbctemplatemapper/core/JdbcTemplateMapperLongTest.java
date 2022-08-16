@@ -191,7 +191,7 @@ public class JdbcTemplateMapperLongTest {
   public void toOneForObject_LongTest(){
     OrderLong order = jdbcTemplateMapper.findById(1L, OrderLong.class);
     // this method issues a query behind the scenes to populate customer
-    jdbcTemplateMapper.toOneForObject(order,  "customer", "customerLongId");
+    jdbcTemplateMapper.toOne(order,  "customer", "customerLongId");
 
     assertEquals("tony", order.getCustomer().getFirstName());
     assertEquals("joe", order.getCustomer().getLastName());
@@ -202,7 +202,7 @@ public class JdbcTemplateMapperLongTest {
     List<OrderLong> orders = jdbcTemplateMapper.findAll(OrderLong.class, "order by id");
 
     // this method issues a query behind the scenes to populate customer
-    jdbcTemplateMapper.toOneForList(orders, "customer", "customerLongId");
+    jdbcTemplateMapper.toOne(orders, "customer", "customerLongId");
 
     assertTrue(orders.size() >= 2);
     assertEquals("tony", orders.get(0).getCustomer().getFirstName());
