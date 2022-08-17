@@ -59,7 +59,7 @@ import org.springframework.util.StringUtils;
  * <pre>
  * Features:
  * 1) Simple CRUD one liners
- * 2) Methods to retrieve relationships (toOne..(), toMany..() etc)
+ * 2) Methods to retrieve relationships (toOne(), toMany() etc)
  * 3) Can be configured for:
  *     a) auto assign created on, updated on.
  *     b) auto assign created by, updated by using an implementation of IRecordOperatorResolver.
@@ -108,7 +108,7 @@ import org.springframework.util.StringUtils;
  *
  * jdbcTemplateMapper.delete(product);
  *
- * See methods toOne..() and  toMany..() for relationship retrieval.
+ * See methods toOne() and  toMany() for relationship retrieval.
  *
  * Installation:
  * Requires Java8 or above and dependencies are the same as that for Spring's JdbcTemplate
