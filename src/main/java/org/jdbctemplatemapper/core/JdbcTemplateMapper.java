@@ -1489,12 +1489,11 @@ public class JdbcTemplateMapper {
    * Returns lists for each mapper passed in as an argument. The values in the list are UNIQUE and
    * in same order as the ResultSet values.
    *
-   * <p>Returns a map. The keys in the map are the SqlMapper column prefixes.
-   *
    * @param rs The jdbc result set
-   * @param selectMappers array of sql mappers.
-   * @return Map key: 'sqlColumnPrefix' of each sqlMapper, value: unique list of objects mapped by
-   *     sqlMapper
+   * @param selectMappers An array of sql mappers.
+   * @return Map <pre>
+   *         key: 'sqlColumnPrefix' of each sqlMapper
+   *         value: unique list of objects mapped by the sqlMapper
    */
   @SuppressWarnings("all")
   public Map<String, List> multipleModelMapper(ResultSet rs, SelectMapper... selectMappers) {
@@ -1512,6 +1511,18 @@ public class JdbcTemplateMapper {
     }
   }
 
+  /**
+   * Returns a LinkedHashmap for each mapper passed in as an argument. The values in the hashmap are
+   * in same order as the ResultSet values.
+   *
+   * @param rs The jdbc result set
+   * @param selectMappers array of sql mappers.
+   * @return Map <pre>
+   *        key: 'sqlColumnPrefix' of each sqlMapper,
+   *        value: LinkedHashMap of objects mapped by sqlMapper.
+   *                   LinkedHashMap key - id of object
+   *                   LinkedHashMap value - the object
+   */
   @SuppressWarnings("all")
   private Map<String, LinkedHashMap<Long, Object>> multipleModelMapperRaw(
       ResultSet rs, SelectMapper... selectMappers) {
@@ -1519,7 +1530,7 @@ public class JdbcTemplateMapper {
 
     try {
       // LinkedHashMap used to retain the order of insertion of records
-      // Map key - sql column prefix
+      // Map key - SelectMapper's sql column prefix
       // LinkedHashMap key - id of object
       // LinkedHashMap value - the object
       Map<String, LinkedHashMap<Long, Object>> resultMap = new HashMap<>();
@@ -1587,10 +1598,8 @@ public class JdbcTemplateMapper {
             .append(",");
       }
       str = sb.toString();
-      
       // remove the last comma.
       str = str.substring(0, str.length() - 1) + " ";
-      
       selectColumnsCache.put(tableName + "-" + tableAlias, str);
     }
     return str;
@@ -1713,7 +1722,7 @@ public class JdbcTemplateMapper {
    * Used by mappers to construct an object from the result set
    *
    * @param clazz Class of object to be instantiated. Object should have a no argument constructor
-   * @param rs the sql result set
+   * @param rs The sql result set
    * @param prefix The sql column alias prefix in the query
    * @param resultSetColumnNames The column names in the sql statement.
    * @return Object of type T populated from the data in the result set
