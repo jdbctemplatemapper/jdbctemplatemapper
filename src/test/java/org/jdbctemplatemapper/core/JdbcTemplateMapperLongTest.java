@@ -28,6 +28,12 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
+/**
+ * Tests where the id of object is of type Long
+ * 
+ * @author ajoseph
+ */
+
 public class JdbcTemplateMapperLongTest {
   @Autowired 
   private JdbcTemplateMapper jdbcTemplateMapper;
@@ -426,10 +432,13 @@ public class JdbcTemplateMapperLongTest {
 
     String sql =
         "select "
-            + jdbcTemplateMapper.selectAllCols("order_long", "o")
-            + jdbcTemplateMapper.selectAllCols("order_line_long", "ol")
-            + jdbcTemplateMapper.selectAllCols("customer_long", "c")
-            + jdbcTemplateMapper.selectAllCols("product_long", "p", false)
+            + jdbcTemplateMapper.selectColumns("order_long", "o")
+            +","
+            + jdbcTemplateMapper.selectColumns("order_line_long", "ol")
+            +","
+            + jdbcTemplateMapper.selectColumns("customer_long", "c")
+            +","
+            + jdbcTemplateMapper.selectColumns("product_long", "p")
             + " from jdbctemplatemapper.order_long o"
             + " left join order_line_long ol on o.id = ol.order_long_id"
             + " join customer_long c on o.customer_long_id = c.id"

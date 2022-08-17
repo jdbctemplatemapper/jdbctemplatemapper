@@ -14,6 +14,12 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
+/**
+ * Tests where the jdbcTemplateMapper does NOT have things like
+ * createdOn, updatedOn, createdBy, updatedBy, version etc configured
+ * @author ajoseph
+ *
+ */
 public class JdbcTemplateMapperWithNoAutoAssignmentTest {
 
   @Autowired

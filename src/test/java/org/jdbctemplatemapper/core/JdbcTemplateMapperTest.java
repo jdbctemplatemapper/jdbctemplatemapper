@@ -444,7 +444,7 @@ public class JdbcTemplateMapperTest {
   }
 
   @Test
-  public void toOneForObject_Test() {
+  public void toOne_ForObject_Test() {
     Order order = jdbcTemplateMapper.findById(1, Order.class);
     // this method issues a query behind the scenes to populate customer
     jdbcTemplateMapper.toOne(order, "customer", "customerId");
@@ -454,7 +454,7 @@ public class JdbcTemplateMapperTest {
   }
 
   @Test
-  public void toOneForObject_NullRelationshipTest() {
+  public void toOne_ForObject_NullRelationshipTest() {
     Order order = jdbcTemplateMapper.findById(3, Order.class);
     // order 3 has null customer
     jdbcTemplateMapper.toOne(order, "customer", "customerId");
@@ -463,7 +463,7 @@ public class JdbcTemplateMapperTest {
   }
 
   @Test
-  public void toOneForObject_NoRecordTest() {
+  public void toOne_ForObject_NoRecordTest() {
     Order order = jdbcTemplateMapper.findById(999, Order.class);
     // order 3 has null customer
     jdbcTemplateMapper.toOne(order, "customer", "customerId");
@@ -472,7 +472,7 @@ public class JdbcTemplateMapperTest {
   }
 
   @Test
-  public void toOneForList_Test() {
+  public void toOne_ForList_Test() {
     List<Order> orders = jdbcTemplateMapper.findAll(Order.class, "order by id");
 
     // this method issues a query behind the scenes to populate customer
@@ -485,7 +485,7 @@ public class JdbcTemplateMapperTest {
   }
 
   @Test
-  public void toOneForList_NoRecordTest() {
+  public void toOne_ForList_NoRecordTest() {
     // mimick query returning no orders
     List<Order> orders = null;
     jdbcTemplateMapper.toOne(orders, "customer", "customerId");
@@ -494,7 +494,7 @@ public class JdbcTemplateMapperTest {
   }
 
   @Test
-  public void toOneForList_InvalidArgumentsFailureTest() {
+  public void toOne_ForList_InvalidArgumentsFailureTest() {
     List<Order> orders = jdbcTemplateMapper.findAll(Order.class);
 
     Assertions.assertThrows(
@@ -694,7 +694,7 @@ public class JdbcTemplateMapperTest {
   }
 
   @Test
-  public void toManyForObject_Test() {
+  public void toMany_ForObject_Test() {
     Order order = jdbcTemplateMapper.findById(1, Order.class);
 
     // This issues a query to get the orderlines
@@ -708,7 +708,7 @@ public class JdbcTemplateMapperTest {
   }
 
   @Test
-  public void toManyForObject_NoManyRecordsTest() {
+  public void toMany_ForObject_NoManyRecordsTest() {
 
     // Order 3 has no orderLines
     Order order = jdbcTemplateMapper.findById(3, Order.class);
@@ -720,7 +720,7 @@ public class JdbcTemplateMapperTest {
   }
 
   @Test
-  public void toManyForList_Test() {
+  public void toMany_ForList_Test() {
     List<Order> orders = jdbcTemplateMapper.findAll(Order.class, "order by id");
 
     // This issues a query to get the orderlines
@@ -740,7 +740,7 @@ public class JdbcTemplateMapperTest {
   }
 
   @Test
-  public void toManyForList_InvalidArgumentsFailureTest() {
+  public void toMany_ForList_InvalidArgumentsFailureTest() {
     List<Order> orders = jdbcTemplateMapper.findAll(Order.class);
 
     Assertions.assertThrows(
@@ -780,7 +780,7 @@ public class JdbcTemplateMapperTest {
   }
 
   @Test
-  public void toManyForList_NoRecordsTest() {
+  public void toMany_ForList_NoRecordsTest() {
     // mimick no order results
     List<Order> orders = null;
 
@@ -1006,10 +1006,13 @@ public class JdbcTemplateMapperTest {
 
     String sql =
         "select "
-            + jdbcTemplateMapper.selectAllCols("orders", "o")
-            + jdbcTemplateMapper.selectAllCols("order_line", "ol")
-            + jdbcTemplateMapper.selectAllCols("customer", "c")
-            + jdbcTemplateMapper.selectAllCols("product", "p", false)
+            + jdbcTemplateMapper.selectColumns("orders", "o")
+            +","
+            + jdbcTemplateMapper.selectColumns("order_line", "ol")
+            +","
+            + jdbcTemplateMapper.selectColumns("customer", "c")
+            +","
+            + jdbcTemplateMapper.selectColumns("product", "p")
             + " from jdbctemplatemapper.orders o"
             + " left join jdbctemplatemapper.order_line ol on o.id = ol.order_id"
             + " left join jdbctemplatemapper.customer c on o.customer_id = c.id"
@@ -1072,10 +1075,13 @@ public class JdbcTemplateMapperTest {
     // query returns no records
     String sql =
         "select "
-            + jdbcTemplateMapper.selectAllCols("orders", "o")
-            + jdbcTemplateMapper.selectAllCols("order_line", "ol")
-            + jdbcTemplateMapper.selectAllCols("customer", "c")
-            + jdbcTemplateMapper.selectAllCols("product", "p", false)
+            + jdbcTemplateMapper.selectColumns("orders", "o")
+            +","
+            + jdbcTemplateMapper.selectColumns("order_line", "ol")
+            +","
+            + jdbcTemplateMapper.selectColumns("customer", "c")
+            +","
+            + jdbcTemplateMapper.selectColumns("product", "p")
             + " from jdbctemplatemapper.orders o"
             + " left join jdbctemplatemapper.order_line ol on o.id = ol.order_id"
             + " left join jdbctemplatemapper.customer c on o.customer_id = c.id"
@@ -1106,11 +1112,11 @@ public class JdbcTemplateMapperTest {
   }
 
   @Test
-  public void selectCol_InvalidTableNameFailureTest() {
+  public void selectColumns_InvalidTableNameFailureTest() {
     Assertions.assertThrows(
         RuntimeException.class,
         () -> {
-          jdbcTemplateMapper.selectAllCols("aaaaaaaaa", "a");
+          jdbcTemplateMapper.selectColumns("aaaaaaaaa", "a");
         });
   }
 
@@ -1209,7 +1215,7 @@ public class JdbcTemplateMapperTest {
   
   @Test
   @SuppressWarnings("all")
-  public void selectCol_TypeCheckQueryTest(){
+  public void selectColumns_TypeCheckQueryTest(){
     TypeCheck obj = new TypeCheck();
     
     obj.setLocalDateData(LocalDate.now());   
@@ -1226,12 +1232,9 @@ public class JdbcTemplateMapperTest {
 
     jdbcTemplateMapper.insert(obj);
     
-    String sql = "select" + jdbcTemplateMapper.selectAllCols("type_check", "tc", false)
+    String sql = "select" + jdbcTemplateMapper.selectColumns("type_check", "tc")
       + " from type_check tc where tc.id = ?";
-    
-    
-    
-   
+       
     Map<String, List> resultMap =
             jdbcTemplate.query(
                 sql,
