@@ -1759,7 +1759,7 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Validates the arguments for toOne..() methods
+   * Validates the arguments for toOne() methods
    *
    * @param mainObj The main Object
    * @param relationshipClazz The relationship class
@@ -1830,7 +1830,7 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Validates the main object info for the toMany..() methods
+   * Validates the main object info for the toMany() methods
    *
    * @param mainObj
    * @param mainObjCollectionPropertyName
@@ -1866,7 +1866,7 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Validates the many side object args for toMany...() methods
+   * Validates the many side object args for toMany() methods
    *
    * @param manySideClazz
    * @param manySideJoinPropertyName
@@ -2037,7 +2037,9 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Get a property using reflection. The getter Methods are cached for performance.
+   * Get a property using reflection. Used instead of BeanWrapper since it is too heavy creating
+   * an instance of BeanWrapper to just lookup 1 property. The getter Methods are cached for
+   * performance.
    *
    * @param obj The object
    * @param propertyName The property that needs needs to be retrieved
@@ -2064,7 +2066,9 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Set a property using reflection. The setter Methods are cached for performance.
+   * Set a property using reflection. Used instead of BeanWrapper since it is too heavy creating
+   * an instance of BeanWrapper just to set 1 property. The setter Methods are cached for
+   * performance.
    *
    * @param obj The object
    * @param propertyName The property that needs to be set
