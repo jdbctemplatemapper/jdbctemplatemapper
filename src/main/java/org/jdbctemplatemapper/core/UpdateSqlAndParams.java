@@ -4,14 +4,11 @@ import java.util.Set;
 
 import org.springframework.util.ObjectUtils;
 
-import lombok.Data;
-
 /**
  * This holds the sql and the sql params needed to issue and update.
- * 
+ *
  * @author ajoseph
  */
-@Data
 public class UpdateSqlAndParams {
   private String sql; // the sql string
   private Set<String> params; // the parameters for the sql
@@ -22,5 +19,13 @@ public class UpdateSqlAndParams {
     }
     this.sql = sql;
     this.params = params;
+  }
+
+  public String getSql() {
+    return sql;
+  }
+
+  public Set<String> getParams() {
+    return params;
   }
 }

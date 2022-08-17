@@ -1,8 +1,5 @@
 package org.jdbctemplatemapper.core;
 
-import lombok.Data;
-
-@Data
 /**
  * object property to database column mapping.
  *
@@ -14,7 +11,8 @@ public class PropertyMapping {
   private String columnName;
   private int columnSqlDataType; // see java.sql.Types
 
-  public PropertyMapping(String propertyName, Class<?> propertyType, String columnName, int columnSqlDataType) {
+  public PropertyMapping(
+      String propertyName, Class<?> propertyType, String columnName, int columnSqlDataType) {
     if (propertyName == null || propertyType == null || columnName == null) {
       throw new IllegalArgumentException("propertyName, propertyType, columnName must not be null");
     }
@@ -22,5 +20,21 @@ public class PropertyMapping {
     this.propertyType = propertyType;
     this.columnName = columnName;
     this.columnSqlDataType = columnSqlDataType;
+  }
+
+  public String getPropertyName() {
+    return propertyName;
+  }
+
+  public Class<?> getPropertyType() {
+    return propertyType;
+  }
+
+  public String getColumnName() {
+    return columnName;
+  }
+
+  public int getColumnSqlDataType() {
+    return columnSqlDataType;
   }
 }

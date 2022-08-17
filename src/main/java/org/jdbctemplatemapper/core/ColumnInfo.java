@@ -1,11 +1,21 @@
 package org.jdbctemplatemapper.core;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-
-@Data
-@AllArgsConstructor
 public class ColumnInfo {
-	private String columnName;
-	private int columnSqlDataType; // see  java.sql.Types
+  private String columnName;
+  private int columnSqlDataType; // see  java.sql.Types
+
+  public ColumnInfo(String columnName, int columnSqlDataType) {
+    super();
+    this.columnName = columnName;
+    this.columnSqlDataType = columnSqlDataType;
+  }
+
+  public String getColumnName() {
+    return columnName;
+  }
+
+  public int getColumnSqlDataType() {
+    return columnSqlDataType;
+  }
+
 }

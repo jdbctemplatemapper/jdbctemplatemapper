@@ -1,7 +1,13 @@
 package org.jdbctemplatemapper.model;
 
-import lombok.Data;
-@Data
 public class NoIdObject {
-	private String something;
+  private String something;
+
+  public String getSomething() {
+    return something;
+  }
+
+  public void setSomething(String something) {
+    this.something = something;
+  }
 }

@@ -3,11 +3,6 @@ package org.jdbctemplatemapper.core;
 import java.util.ArrayList;
 import java.util.List;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@NoArgsConstructor
 /**
  * The database table mapping details on an object
  *
@@ -41,5 +36,29 @@ public class TableMapping {
       }
     }
     return 0;
+  }
+
+  public String getTableName() {
+    return tableName;
+  }
+
+  public void setTableName(String tableName) {
+    this.tableName = tableName;
+  }
+
+  public String getIdColumnName() {
+    return idColumnName;
+  }
+
+  public void setIdColumnName(String idColumnName) {
+    this.idColumnName = idColumnName;
+  }
+
+  public List<PropertyMapping> getPropertyMappings() {
+    return propertyMappings;
+  }
+
+  public void setPropertyMappings(List<PropertyMapping> propertyMappings) {
+    this.propertyMappings = propertyMappings;
   }
 }
