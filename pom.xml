@@ -92,19 +92,19 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
         <configuration>
-          <!-- Need the the prevent plugin to from erroring out on 'No main 
+          <!-- Need this to prevent plugin from erroring out on 'No main 
             class found' on repackging -->
           <skip>true</skip>
           <classifier>test</classifier>
         </configuration>
       </plugin>
       <plugin>
-        <!-- the libary jar file which other applications can use. Only includes 
-          the java classes in org.jdbctemplatemapper.core -->
+        <!-- the libary jar file produced should only include 
+          the java classes in org.jdbctemplatemapper.core  -->
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <configuration>
-          <!-- need this to prevent plugin to NOT create the unwanted /maven 
+          <!-- need this to prevent the plugin from creating the unwanted '/maven' 
             dir in META-INF -->
           <archive>
             <addMavenDescriptor>false</addMavenDescriptor>
