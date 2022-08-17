@@ -93,7 +93,7 @@
         </configuration>
       </plugin>
       <plugin>
-        <!-- the libary jar file produced should only include 
+        <!-- the jar file produced should only include 
           the java classes in org.jdbctemplatemapper.core  -->
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
