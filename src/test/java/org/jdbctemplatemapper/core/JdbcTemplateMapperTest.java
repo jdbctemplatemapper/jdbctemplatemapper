@@ -67,13 +67,19 @@ public class JdbcTemplateMapperTest {
     order.setCustomerId(2);
 
     jdbcTemplateMapper.insert(order);
-
-    order = jdbcTemplateMapper.findById(order.getId(), Order.class);
-
-    assertNotNull(order.getId());
-    assertNotNull(order.getCreatedBy());
+    
+    // check if auto assigned properties have been assigned.
     assertNotNull(order.getCreatedOn());
-    assertNotNull(order.getUpdatedBy());
+    assertNotNull(order.getUpdatedOn());
+    assertEquals(1, order.getVersion());
+    assertEquals("tester", order.getCreatedBy());
+    assertEquals("tester", order.getUpdatedBy());
+    
+    // requery and test.
+    order = jdbcTemplateMapper.findById(order.getId(), Order.class);
+    assertNotNull(order.getId());
+    assertNotNull(order.getOrderDate());
+    assertNotNull(order.getCreatedOn());
     assertNotNull(order.getUpdatedOn());
     assertEquals(1, order.getVersion());
     assertEquals("tester", order.getCreatedBy());
@@ -140,13 +146,19 @@ public class JdbcTemplateMapperTest {
 
     jdbcTemplateMapper.insertWithId(product);
 
+    // check if auto assigned properties are assigned.
+    assertNotNull(product.getCreatedOn());
+    assertNotNull(product.getUpdatedOn());
+    assertEquals(1, product.getVersion());
+    assertEquals("tester", product.getCreatedBy());
+    assertEquals("tester", product.getUpdatedBy());
+    
+    // requery and check
     product = jdbcTemplateMapper.findById(1001, Product.class);
     assertNotNull(product.getId());
     assertEquals("hat", product.getName());
     assertEquals(12.25, product.getCost());
-    assertNotNull(product.getCreatedBy());
     assertNotNull(product.getCreatedOn());
-    assertNotNull(product.getUpdatedBy());
     assertNotNull(product.getUpdatedOn());
     assertEquals(1, product.getVersion());
     assertEquals("tester", product.getCreatedBy());
@@ -196,7 +208,14 @@ public class JdbcTemplateMapperTest {
 
     jdbcTemplateMapper.update(order);
 
-    order = jdbcTemplateMapper.findById(1, Order.class); // requery
+    // check if auto assigned properties have changed.
+    assertEquals(2, order.getVersion()); 
+    assertTrue(order.getUpdatedOn().isAfter(prevUpdatedOn));
+    assertEquals("tester", order.getUpdatedBy());
+    
+    
+    // requery and check
+    order = jdbcTemplateMapper.findById(1, Order.class); 
     assertEquals("IN PROCESS", order.getStatus());
     assertEquals(2, order.getVersion()); // version incremented
     assertTrue(order.getUpdatedOn().isAfter(prevUpdatedOn));
@@ -268,9 +287,14 @@ public class JdbcTemplateMapperTest {
 
     Thread.sleep(1000); // avoid timing issue.
     jdbcTemplateMapper.update(order, "status");
-
+    
+    // check if auto assigned values of object changes
+    assertTrue(order.getVersion() > prevVersion); // version incremented
+    assertTrue(order.getUpdatedOn().isAfter(prevUpdatedOn));
+    assertEquals("tester", order.getUpdatedBy());
+    
+    // requery and check
     order = jdbcTemplateMapper.findById(2, Order.class); // requery
-
     assertEquals("COMPLETE", order.getStatus());
     assertTrue(order.getVersion() > prevVersion); // version incremented
     assertTrue(order.getUpdatedOn().isAfter(prevUpdatedOn));

@@ -551,8 +551,8 @@ public class JdbcTemplateMapper {
 
   /**
    * Updates object. Assigns updated by, updated on if these properties exist for the object and the
-   * jdbcTemplateMapper is configured for these fields. if 'version' property exists for object
-   * throws an OptimisticLockingException if object is stale
+   * jdbcTemplateMapper is configured for these fields. if optimistic locking 'version' property
+   * exists for object throws an OptimisticLockingException if object is stale
    *
    * @param obj object to be updated
    * @return number of records updated
@@ -1687,7 +1687,7 @@ public class JdbcTemplateMapper {
               versionPropertyName
                   + " cannot be null when updating "
                   + obj.getClass().getSimpleName());
-        } else {
+        } else {         
           mapSqlParameterSource.addValue(
               "incrementedVersion", versionVal + 1, java.sql.Types.INTEGER);
         }
@@ -1697,8 +1697,8 @@ public class JdbcTemplateMapper {
       }
     }
 
-    // if object has property version throw OptimisticLockingException
-    // when update fails. The version gets incremented on update
+    // if object has property version the version gets incremented on update.
+    // throws OptimisticLockingException when update fails.
     if (updateSqlAndParams.getParams().contains("incrementedVersion")) {
       int cnt = npJdbcTemplate.update(updateSqlAndParams.getSql(), mapSqlParameterSource);
       if (cnt == 0) {
@@ -1712,6 +1712,8 @@ public class JdbcTemplateMapper {
                 + ":"
                 + bw.getPropertyValue(versionPropertyName));
       }
+      // update the version in object with new version
+      bw.setPropertyValue(versionPropertyName, mapSqlParameterSource.getValue("incrementedVersion"));
       return cnt;
     } else {
       return npJdbcTemplate.update(updateSqlAndParams.getSql(), mapSqlParameterSource);
@@ -2037,8 +2039,8 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Get a property using reflection. Used instead of BeanWrapper since it is too heavy creating
-   * an instance of BeanWrapper to just lookup 1 property. The getter Methods are cached for
+   * Get a property using reflection. Used instead of BeanWrapper since it is too heavy creating an
+   * instance of BeanWrapper to just lookup 1 property. The getter Methods are cached for
    * performance.
    *
    * @param obj The object
@@ -2066,9 +2068,8 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Set a property using reflection. Used instead of BeanWrapper since it is too heavy creating
-   * an instance of BeanWrapper just to set 1 property. The setter Methods are cached for
-   * performance.
+   * Set a property using reflection. Used instead of BeanWrapper since it is too heavy creating an
+   * instance of BeanWrapper just to set 1 property. The setter Methods are cached for performance.
    *
    * @param obj The object
    * @param propertyName The property that needs to be set
