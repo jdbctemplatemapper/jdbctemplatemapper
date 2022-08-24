@@ -46,15 +46,12 @@ import org.springframework.util.StringUtils;
  * <pre>
  * Spring's JdbcTemplate gives full control of data access using SQL. Its a is better option for complex
  * enterprise applications than an ORM (ORM magic/nuances get in the way for large and complex
- * applications). Even though JdbcTemplate removes a lot of the boiler plate code needed by JDBC it is
+ * applications). Even though JdbcTemplate abstracts away a lot of the boiler plate code needed by JDBC, it is
  * verbose.
  *
  * JdbcTemplateMapper tries to mitigate the verboseness. It is a helper utility for JdbcTemplate (NOT a replacement)
  * It provides simple CRUD one liners and less verbose ways to query relationships. Your project code will be a mix of
- * JdbcTemplate and JdbcTemplateMapper. Use JdbcTemplateMapper's  more concise features where appropriate, along
- * with the full power of JdbcTemplate/SQL
- *
- * <p><b>NOTE: An instance of JdbcTemplateMapper class is thread-safe.</b>
+ * JdbcTemplate and JdbcTemplateMapper. Use JdbcTemplateMapper's more concise features where appropriate.
  *
  * <pre>
  * Features:
@@ -69,9 +66,8 @@ import org.springframework.util.StringUtils;
  *    Should work with all other relational databases.
  *
  * <b>JdbcTemplateMapper is opinionated<b/>. Projects have to meet the following 2 criteria to use it:
- * 1) Models should have a property exactly named 'id' which has to be of type Integer or Long.
- * 2) Model property to table column mapping:
- *   Camel case property names are mapped to snake case database column names.
+ * 1)Models should have a property exactly named 'id' (or 'ID') which has to be of type Integer or Long.
+ * 2)Camel case object property names are mapped to snake case database column names.
  *   Properties of a model like 'firstName', 'lastName' will be mapped to corresponding database columns
  *   first_name/FIRST_NAME and last_name/LAST_NAME in the database table. If you are using a
  *   case sensitive database installation and have mixed case database column names like 'Last_Name' you could
@@ -80,14 +76,15 @@ import org.springframework.util.StringUtils;
  * Examples of simple CRUD:
  *
  * // Product class below maps to product/PRODUCT table by default.
- * // Use annotation @Table(name="someothertablename") to override the default
+ * // Use annotation @Table(name="some_other_tablename") to override the default
+ * 
  * public class Product {
  *    private Integer id; // 'id' property is needed for all models and has to be of type Integer or Long
  *    private String productName;
  *    private Double price;
  *    private LocalDateTime availableDate;
  *
- *    // for insert/update/find.. jdbcTemplateMapper will ignore properties which do not
+ *    // for insert/update/find.. methods will ignore properties which do not
  *    // have a corresponding snake case columns in database table
  *    private String someNonDatabaseProperty;
  *
@@ -98,7 +95,7 @@ import org.springframework.util.StringUtils;
  * product.setProductName("some product name");
  * product.setPrice(10.25);
  * product.setAvailableDate(LocalDateTime.now());
- * jdbcTemplateMapper.insert(product); // see insertWithId() for non auto increment database id columns
+ * jdbcTemplateMapper.insert(product);
  *
  * product = jdbcTemplateMapper.findById(1, Product.class);
  * product.setPrice(11.50);
@@ -136,8 +133,11 @@ import org.springframework.util.StringUtils;
  *
  * &#64;Bean
  * public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
- *   //for databases like mysql which do not have a schema name pass null as argument for schemaName.
- *   return new JdbcTemplateMapper(jdbcTemplate, "your_database_schema_name");
+ * 
+ *   return new JdbcTemplateMapper(jdbcTemplate);
+ *   
+ *   //if the database setup needs a schema name, pass it as argument.
+ *   //return new JdbcTemplateMapper(jdbcTemplate, "your_database_schema_name");   
  * }
  *
  * </pre>
@@ -209,6 +209,16 @@ public class JdbcTemplateMapper {
   //     value - The setter Method
   private Map<String, Method> objectSetMethodCache = new ConcurrentHashMap<>();
 
+  
+  /**
+   * The constructor.
+   *
+   * @param dataSource The dataSource for the mapper
+   */
+  public JdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
+	  this(jdbcTemplate, null);
+  }
+  
   /**
    * The constructor.
    *
@@ -411,8 +421,7 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Inserts an object whose id in database is auto increment. Note the 'id' has to be null for the
-   * object to be inserted. Once inserted the object will have the id assigned.
+   * Inserts an object whose id in database is auto increment. Once inserted the object will have the id assigned.
    *
    * <p>Also assigns created by, created on, updated by, updated on, version if these properties
    * exist for the object and the JdbcTemplateMapper is configured for them.
@@ -608,7 +617,7 @@ public class JdbcTemplateMapper {
    *
    * @param obj object to be updated
    * @param propertyNames array of property names that should be updated
-   * @return 0 if no records were updated
+   * @return number of records updated (1 or 0)
    */
   public Integer update(Object obj, String... propertyNames) {
     Assert.notNull(obj, "Object must not be null");
@@ -698,7 +707,7 @@ public class JdbcTemplateMapper {
    * Physically Deletes the object from the database
    *
    * @param obj Object to be deleted
-   * @return 0 if no records were deleted
+   * @return number of records were deleted (1 or 0)
    */
   public Integer delete(Object obj) {
     Assert.notNull(obj, "Object must not be null");
@@ -726,7 +735,7 @@ public class JdbcTemplateMapper {
    *
    * @param id Id of object to be deleted
    * @param clazz Type of object to be deleted.
-   * @return 0 if no records were deleted
+   * @return number records were deleted (1 or 0)
    */
   public <T> Integer deleteById(Object id, Class<T> clazz) {
     Assert.notNull(clazz, "Class must not be null");
@@ -1066,7 +1075,7 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Merges relatedObjecList to the mainObj list by assigning
+   * Merges relatedObjectList to the mainObj list by assigning
    * mainOjbj.mainObjRelationshipPropertyName with matching related objects ie
    * mainObj.mainObjJoinPropertyName = relatedObj.id
    *
@@ -1288,7 +1297,8 @@ public class JdbcTemplateMapper {
    * @param mainObjList the main object list
    * @param mainObjCollectionPropertyName The collection property name on mainObj
    * @param manySideJoinPropertyName the join property name on the many side object
-   * @param manySideOrderByClause The order by clause for the many side query
+   * @param manySideOrderByClause The order by clause for the many side query. Use the database
+   *     columns in this clause because it is passed as is.
    */
   @SuppressWarnings("all")
   public <T> void toMany(
