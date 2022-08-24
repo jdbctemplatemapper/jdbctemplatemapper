@@ -1687,7 +1687,7 @@ public class JdbcTemplateMapper {
               versionPropertyName
                   + " cannot be null when updating "
                   + obj.getClass().getSimpleName());
-        } else {         
+        } else {
           mapSqlParameterSource.addValue(
               "incrementedVersion", versionVal + 1, java.sql.Types.INTEGER);
         }
@@ -1713,7 +1713,8 @@ public class JdbcTemplateMapper {
                 + bw.getPropertyValue(versionPropertyName));
       }
       // update the version in object with new version
-      bw.setPropertyValue(versionPropertyName, mapSqlParameterSource.getValue("incrementedVersion"));
+      bw.setPropertyValue(
+          versionPropertyName, mapSqlParameterSource.getValue("incrementedVersion"));
       return cnt;
     } else {
       return npJdbcTemplate.update(updateSqlAndParams.getSql(), mapSqlParameterSource);
@@ -2104,8 +2105,8 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Gets the table mapping for the Object. The table mapping for object property mappings which are
-   * all the properties of the object with their corresponding database column info.
+   * Gets the table mapping for the Object. The table mapping has the table name and and object
+   * property to database column mapping.
    *
    * <p>Table name is either from the @Tabel annotation or the snake case conversion of the Object
    * name.
