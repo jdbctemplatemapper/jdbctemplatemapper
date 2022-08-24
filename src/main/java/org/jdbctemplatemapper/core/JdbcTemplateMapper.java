@@ -159,14 +159,14 @@ public class JdbcTemplateMapper {
   private String updatedByPropertyName;
   private String updatedOnPropertyName;
   private String versionPropertyName;
-
-  // Need this for type conversions like java.sql.Timestamp to java.time.LocalDateTime etc
-  private DefaultConversionService defaultConversionService = new DefaultConversionService();
-
+  
   // to avoid query being issued with large number of ids
   // for the sql 'IN' clause the id list is chunked by this size
   // and multiple queries issued if needed.
-  private static int IN_CLAUSE_CHUNK_SIZE = 100;
+  private int inClauseChunkSize = 100;
+
+  // Need this for type conversions like java.sql.Timestamp to java.time.LocalDateTime etc
+  private DefaultConversionService defaultConversionService = new DefaultConversionService();
 
   // Convert camel case to snake case regex pattern. Pattern is thread safe
   private static Pattern TO_SNAKE_CASE_PATTERN = Pattern.compile("(.)(\\p{Upper})");
@@ -223,7 +223,7 @@ public class JdbcTemplateMapper {
    * The constructor.
    *
    * @param dataSource The dataSource for the mapper
-   * @param schemaName schema name to be used by mapper
+   * @param schemaName database schema name.
    */
   public JdbcTemplateMapper(JdbcTemplate jdbcTemplate, String schemaName) {
     Assert.notNull(jdbcTemplate, "jdbcTemplate must not be null");
@@ -233,7 +233,7 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Gets the JdbcTemplate used by the jdbcTemplateMapper
+   * Gets the JdbcTemplate of the jdbcTemplateMapper
    *
    * @return the JdbcTemplate
    */
@@ -242,7 +242,7 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * Gets the NamedParameterJdbcTemplate used by the jdbcTemplateMapper
+   * Gets the NamedParameterJdbcTemplate of the jdbcTemplateMapper
    *
    * @return the NamedParameterJdbcTemplate
    */
@@ -346,6 +346,17 @@ public class JdbcTemplateMapper {
    */
   public void setMetaDataColumnNamePattern(String metaDataColumnNamePattern) {
     this.metaDataColumnNamePattern = metaDataColumnNamePattern;
+  }
+  
+  /**
+   * Set the chunk size of the sql IN clause. Default is 100
+   * @param chunkSize
+   */
+  public void setInClauseChunkSize(Integer chunkSize) {
+	  if (chunkSize == null || chunkSize <= 0) {
+		  throw new IllegalArgumentException("chunkSize cannot be null and has to be greater than 0");
+	  }
+	  this.inClauseChunkSize = chunkSize;
   }
 
   /**
@@ -880,7 +891,7 @@ public class JdbcTemplateMapper {
       // avoid query being issued with large number of ids for the 'IN (:joinPropertyIds), the
       // list is chunked by IN_CLAUSE_CHUNK_SIZE and multiple queries issued if needed.
       Collection<List<Long>> chunkedJoinPropertyIds =
-          chunkTheCollection(allJoinPropertyIds, IN_CLAUSE_CHUNK_SIZE);
+          chunkTheCollection(allJoinPropertyIds, inClauseChunkSize);
       for (List<Long> joinPropertyIds : chunkedJoinPropertyIds) {
         String sql =
             "SELECT * FROM "
@@ -1340,7 +1351,7 @@ public class JdbcTemplateMapper {
       // query being issued with large number of ids for the 'IN (:mainObjIds), the list
       // is chunked by IN_CLAUSE_CHUNK_SIZE and multiple queries issued if needed.
       Collection<List<Long>> chunkedMainObjIds =
-          chunkTheCollection(allMainObjIds, IN_CLAUSE_CHUNK_SIZE);
+          chunkTheCollection(allMainObjIds, inClauseChunkSize);
       for (List<Long> mainObjIds : chunkedMainObjIds) {
         String sql =
             "SELECT * FROM "
@@ -2247,7 +2258,7 @@ public class JdbcTemplateMapper {
 
   /**
    * Splits the list into multiple lists of chunk size. Used to split the sql IN clauses since some
-   * databases have a limitation of 1024. The chunk size used is IN_CLAUSE_CHUNK_SIZE
+   * databases have a limitation of 1024.
    *
    * @param list The list of Long
    * @param chunkSize The size of each chunk
