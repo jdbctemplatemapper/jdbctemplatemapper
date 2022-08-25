@@ -1,6 +1,6 @@
 # JdbcTemplateMapper #
 
-Spring's JdbcTemplate provides full data access control using SQL for a relational database. It is a better option for complex enterprise applications over an ORM. ORM magic/nuances get in the way when used for large and complex applications. Even though JdbcTemplate abstracts away a lot of the low level JDBC code, it is still verbose.
+Spring's JdbcTemplate provides data access using SQL for a relational database. It is a better option for complex enterprise applications over an ORM. ORM magic/nuances get in the way when used for large and complex applications. Even though JdbcTemplate abstracts away a lot of the low level JDBC code, it is still verbose.
 
 JdbcTemplateMapper tries to mitigate the verboseness. It is a helper utility for JdbcTemplate (NOT a replacement). It provides simple CRUD one liners and less verbose ways to query relationships. Your project code will be a mix of
 JdbcTemplate and JdbcTemplateMapper. Use JdbcTemplateMapper's more concise features where appropriate and JdbcTemplate for others.
@@ -17,8 +17,8 @@ JdbcTemplate and JdbcTemplateMapper. Use JdbcTemplateMapper's more concise featu
 Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with other relational databases.
 
  **JdbcTemplateMapper is opinionated:** 
- 
  Projects have to meet the following 2 criteria to use it:
+ 
  1. Models should have a property exactly named 'id' (or 'ID') which has to be of type Integer or Long.
  2. Camel case object property names are mapped to snake case database column names. Properties of a model like 'firstName' will be mapped to corresponding database column 'last_name' in the table. 
  
@@ -28,13 +28,13 @@ Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against 
  // By default the Product class maps to 'product' table. Use @Table(name="some_other_tablename") 
  // annotation to override the default table name
  public class Product { 
-    private Integer id; // 'id' property is needed for all models and has to be of type Integer or Long
-    private String productName;
-    private Double price;
-    private LocalDateTime availableDate;
+   private Integer id; // 'id' property is needed for all models and has to be of type Integer or Long
+   private String productName;
+   private Double price;
+   private LocalDateTime availableDate;
     
-    // for insert/update/find.. properties which do not have a corresponding snake case column in database table will be ignored
-    private String someNonDatabaseProperty;
+   // for insert/update/find.. properties which do not have a corresponding snake case column in database table will be ignored
+   private String someNonDatabaseProperty;
     
    // getters and setters ...
  }
@@ -58,48 +58,48 @@ Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against 
  **Example of toOne, toMany relationships:**
  
  ```java
-   public class Order{
-     Integer id;
-     LocalDateTime orderDate;
-     Integer customerId; 
-     Customer customer; // the toOne relationship
-     List<OrderLine> orderLines; // toMany relationship
+ public class Order{
+   Integer id;
+   LocalDateTime orderDate;
+   Integer customerId; 
+   Customer customer; // the toOne relationship
+   List<OrderLine> orderLines; // toMany relationship
      
-     // getters and setters ...
-   }
+   // getters and setters ...
+ }
     
-    public class Customer{
-      Integer id;
-      String firstName;
-      String lastName;
-      String address;
+ public class Customer{
+  Integer id;
+  String firstName;
+  String lastName;
+  String address;
       
-      // getters and setters ...
-    }
+  // getters and setters ...
+ }
     
-   public class OrderLine{
-     Integer id;
-     Integer orderId; 
-     Integer productId;
-     Integer quantity;
-     Double price;
+ public class OrderLine{
+   Integer id;
+   Integer orderId; 
+   Integer productId;
+   Integer quantity;
+   Double price;
      
-     // getters and setters ...
-  }
+   // getters and setters ...
+}
     
-   Order order = jdbcTemplateMapper.findById(orderId, Order.class);
-   // Populate the order's toOne customer property. This will issue an sql query
-   jdbcTemplateMapper.toOne(order,"customer", "customerId");'
+Order order = jdbcTemplateMapper.findById(orderId, Order.class);
+// Populate the order's toOne customer property. This will issue an sql query
+jdbcTemplateMapper.toOne(order,"customer", "customerId");'
    
-   // Populate the order's toMany orderLines property This will issue an sql query
-   jdbcTemplateMapper.toMany(order, "orderLines", "orderId");
+// Populate the order's toMany orderLines property This will issue an sql query
+jdbcTemplateMapper.toMany(order, "orderLines", "orderId");
    
-   // For a list of orders populate their customer property
-   List<Order> orders = jdbcTemplateMapper.findAll(Order.class);
-   jdbcTemplateMapper.toOne(orders,"customer", "customerId");
+// For a list of orders populate their customer property
+List<Order> orders = jdbcTemplateMapper.findAll(Order.class);
+jdbcTemplateMapper.toOne(orders,"customer", "customerId");
    
-   // For a list of orders populate their orderLines property. 
-   jdbcTemplateMapper.toMany(orders, "orderLines", "orderId");
+// For a list of orders populate their orderLines property. 
+jdbcTemplateMapper.toMany(orders, "orderLines", "orderId");
    
  ```
  
@@ -111,7 +111,7 @@ Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against 
  # log the sql
  logging.level.org.springframework.jdbc.core.JdbcTemplate=TRACE
 
- # need this to log sql of inserts
+ # need this to log the sql for inserts
  logging.level.org.springframework.jdbc.core.simple.SimpleJdbcInsert=TRACE
 
  # log the parameters of sql statement
@@ -135,12 +135,12 @@ Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against 
  **Spring bean configuration for JdbcTemplateMapper:** 
  
  ```
- @Bean
- public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
-   return new JdbcTemplateMapper(jdbcTemplate);
+@Bean
+public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
+  return new JdbcTemplateMapper(jdbcTemplate);
       
-  //if the database setup needs a schema name, pass it as argument.
-  //return new JdbcTemplateMapper(jdbcTemplate, "your_database_schema_name");  
-  }
+  // if the database setup needs a schema name, pass it as argument.
+  // return new JdbcTemplateMapper(jdbcTemplate, "your_database_schema_name");  
+}
   
   ```
