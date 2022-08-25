@@ -1,11 +1,11 @@
-#JdbcTemplateMapper
+# JdbcTemplateMapper #
 
 Spring's JdbcTemplate provides full data access control using SQL for a relational database. It is a better option for complex enterprise applications over ORM. ORM magic/nuances get in the way when used for large and complex applications. Even though JdbcTemplate abstracts away a lot of the boiler plate code needed by JDBC, it is verbose.
 
 JdbcTemplateMapper tries to mitigate the verboseness. It is a helper utility for JdbcTemplate (NOT a replacement). It provides simple CRUD one liners and less verbose ways to query relationships. Your project code will be a mix of
 JdbcTemplate and JdbcTemplateMapper. Use JdbcTemplateMapper's more concise features where appropriate and JdbcTemplate for others.
 
-** Features:** 
+**Features:** 
  1. Simple CRUD one liners
  2. Methods to retrieve relationships (toOne(), toMany() etc)
  3. Can be configured for
