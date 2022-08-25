@@ -1,6 +1,6 @@
 # JdbcTemplateMapper #
 
-Spring's JdbcTemplate provides full data access control using SQL for a relational database. It is a better option for complex enterprise applications over ORM. ORM magic/nuances get in the way when used for large and complex applications. Even though JdbcTemplate abstracts away a lot of the boiler plate code needed by JDBC, it is verbose.
+Spring's JdbcTemplate provides full data access control using SQL for a relational database. It is a better option for complex enterprise applications over an ORM. ORM magic/nuances get in the way when used for large and complex applications. Even though JdbcTemplate abstracts away a lot of the low level JDBC code, it is still verbose.
 
 JdbcTemplateMapper tries to mitigate the verboseness. It is a helper utility for JdbcTemplate (NOT a replacement). It provides simple CRUD one liners and less verbose ways to query relationships. Your project code will be a mix of
 JdbcTemplate and JdbcTemplateMapper. Use JdbcTemplateMapper's more concise features where appropriate and JdbcTemplate for others.
@@ -25,7 +25,9 @@ Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against 
  **Example of simple CRUD:** 
  
  ```java
- public class Product { // By default this maps to product table. Use @Table(name="some_other_tablename") to override default table name
+ // By default this maps to product table. Use @Table(name="some_other_tablename") 
+ // annotation to override the default table name
+ public class Product { 
     private Integer id; // 'id' property is needed for all models and has to be of type Integer or Long
     private String productName;
     private Double price;
@@ -101,6 +103,22 @@ Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against 
    
  ```
  
+ **Logging:**
+ 
+ Behind the scenes JdbcTemplateMapper uses JdbcTemplate for all its sql.
+ 
+ ```
+ # log the sql
+ logging.level.org.springframework.jdbc.core.JdbcTemplate=TRACE
+
+ # need this to log sql of inserts
+ logging.level.org.springframework.jdbc.core.simple.SimpleJdbcInsert=TRACE
+
+ # log the parameters of sql statement
+ logging.level.org.springframework.jdbc.core.StatementCreatorUtils=TRACE
+ 
+ ```
+ 
  **Installation:** 
  
  Requires Java8 or above and dependencies are the same as that for Spring's JdbcTemplate
@@ -119,8 +137,10 @@ Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against 
  ```
  @Bean
  public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
-   return new JdbcTemplateMapper(jdbcTemplate);   
+   return new JdbcTemplateMapper(jdbcTemplate);
+      
   //if the database setup needs a schema name, pass it as argument.
-  //return new JdbcTemplateMapper(jdbcTemplate, "your_database_schema_name");   
+  //return new JdbcTemplateMapper(jdbcTemplate, "your_database_schema_name");  
   }
+  
   ```
