@@ -103,22 +103,6 @@ jdbcTemplateMapper.toMany(orders, "orderLines", "orderId");
    
  ```
  
- **Logging:**
- 
- Behind the scenes JdbcTemplateMapper uses JdbcTemplate for all its sql.
- 
- ```
- # log the sql
- logging.level.org.springframework.jdbc.core.JdbcTemplate=TRACE
-
- # need this to log the sql for inserts
- logging.level.org.springframework.jdbc.core.simple.SimpleJdbcInsert=TRACE
-
- # log the parameters of sql statement
- logging.level.org.springframework.jdbc.core.StatementCreatorUtils=TRACE
- 
- ```
- 
  **Installation:** 
  
  Requires Java8 or above and dependencies are the same as that for Spring's JdbcTemplate
@@ -144,3 +128,19 @@ public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
 }
   
   ```
+  
+**Logging:**
+ 
+Behind the scenes JdbcTemplateMapper uses JdbcTemplate for all its sql.
+ 
+ ```
+ # log the sql
+ logging.level.org.springframework.jdbc.core.JdbcTemplate=TRACE
+
+ # need this to log the sql for inserts
+ logging.level.org.springframework.jdbc.core.simple.SimpleJdbcInsert=TRACE
+
+ # log the parameters of sql statement
+ logging.level.org.springframework.jdbc.core.StatementCreatorUtils=TRACE
+ 
+ ```
