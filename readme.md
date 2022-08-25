@@ -16,7 +16,8 @@ JdbcTemplate and JdbcTemplateMapper. Use JdbcTemplateMapper's more concise featu
  
 Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with other relational databases.
 
- **JdbcTemplateMapper is opinionated:** 
+ **JdbcTemplateMapper is opinionated:**
+  
  Projects have to meet the following 2 criteria to use it:
  
  1. Models should have a property exactly named 'id' (or 'ID') which has to be of type Integer or Long.
