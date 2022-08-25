@@ -104,18 +104,8 @@ jdbcTemplateMapper.toMany(orders, "orderLines", "orderId");
    
  ```
  
- **Installation:** 
- 
- Requires Java8 or above and dependencies are the same as that for Spring's JdbcTemplate
- 
- For a spring boot application:
- 
- ```
- <dependency>
-   <groupId>org.springframework.boot</groupId>
-   <artifactId>spring-boot-starter-jdbc</artifactId>
- </dependency>
- ```
+ **Maven coordinates:** 
+ TODO
  
  **Spring bean configuration for JdbcTemplateMapper:** 
  
