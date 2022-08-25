@@ -2264,7 +2264,7 @@ public class JdbcTemplateMapper {
    * @param chunkSize The size of each chunk
    * @return Collection of lists broken down by chunkSize
    */
-  private Collection<List<Long>> chunkTheCollection(
+  public Collection<List<Long>> chunkTheCollection(
       Collection<Long> collection, Integer chunkSize) {
     Assert.notNull(collection, "collection must not be null");
     AtomicInteger counter = new AtomicInteger();

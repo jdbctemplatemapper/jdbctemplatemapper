@@ -10,6 +10,8 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -1285,4 +1287,15 @@ public class JdbcTemplateMapperTest {
     }
   
   }
+  
+  
+  @Test
+  public void inClauseChunkSize_Test() {
+      List<Long> ids = Arrays.asList(1L,2L,3L,4L,5L,6L,7L,8L,9L, 10L, 11L);
+      Collection<List<Long>> chunkedList = jdbcTemplateMapper.chunkTheCollection(
+    	      ids, 3);
+      assertEquals(4, chunkedList.size()); 
+    
+  }
+  
 }
