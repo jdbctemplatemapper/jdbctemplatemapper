@@ -20,9 +20,9 @@ Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against 
  
  Projects have to meet the following 2 criteria to use it:
  1. Models should have a property exactly named 'id' (or 'ID') which has to be of type Integer or Long.
- 2. Camel case object property names are mapped to snake case database column names. Properties of a model like 'firstName' will be mapped to corresponding database column 'last__name' in the table. 
+ 2. Camel case object property names are mapped to snake case database column names. Properties of a model like 'firstName' will be mapped to corresponding database column 'last_name' in the table. 
  
- **Examples of simple CRUD:** 
+ **Example of simple CRUD:** 
  
  ```java
  public class Product { // By default this maps to product table. Use @Table(name="some_other_tablename") to override default table name
@@ -53,7 +53,7 @@ Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against 
  
  ```
  
- **Example of toOne, toMany relationships **
+ **Example of toOne, toMany relationships:**
  
  ```
    public class Order{
