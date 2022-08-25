@@ -25,7 +25,7 @@ Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against 
  **Example of simple CRUD:** 
  
  ```java
- // By default this maps to product table. Use @Table(name="some_other_tablename") 
+ // By default the Product class maps to 'product' table. Use @Table(name="some_other_tablename") 
  // annotation to override the default table name
  public class Product { 
     private Integer id; // 'id' property is needed for all models and has to be of type Integer or Long
@@ -57,7 +57,7 @@ Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against 
  
  **Example of toOne, toMany relationships:**
  
- ```
+ ```java
    public class Order{
      Integer id;
      LocalDateTime orderDate;
