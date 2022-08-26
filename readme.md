@@ -1,16 +1,16 @@
 # JdbcTemplateMapper #
 
-Spring's JdbcTemplate provides data access using SQL for relational databases. It is a better option for complex enterprise applications over an ORM. ORM magic/nuances get in the way when used for large and complex applications. 
+Spring's JdbcTemplate provides data access using SQL/JDBC for relational databases. It is a better option for complex enterprise applications over an ORM. ORM magic/nuances get in the way when used for large and complex applications. 
 
-Even though JdbcTemplate simplifies the use of JDBC it is still verbose. JdbcTemplateMapper tries to mitigate the verboseness. It is a helper utility for JdbcTemplate. It provides simple CRUD one liners and less verbose ways to query relationships. Use JdbcTemplateMapper's more concise features where appropriate and JdbcTemplate for others.
+Even though JdbcTemplate simplifies the use of JDBC, it is still verbose. JdbcTemplateMapper tries to mitigate the verboseness. It is a helper utility for JdbcTemplate. It provides simple CRUD one liners and less verbose ways to query relationships. Use JdbcTemplateMapper's more concise features where appropriate and JdbcTemplate for others.
 
 **Features:** 
  1. Simple CRUD one liners
- 2. Methods to retrieve relationships (toOne(), toMany() etc)
+ 2. Methods to retrieve relationships
  3. Can be configured for
     1. auto assign created on and updated on fields during insert/updates
     2. auto assign created by and updated by fields using an implementation of IRecordOperatorResolver.
- 4. optimistic locking functionality for updates by configuring a version property.
+ 4. Optimistic locking functionality for updates by configuring a version property.
  5. Thread safe. Just need to configure a singleton bean.
  
 Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with other relational databases.
@@ -19,14 +19,14 @@ Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against 
   
  Projects have to meet the following 2 criteria to use it:
  
- 1. Models should have a property exactly named 'id' (or 'ID') which has to be of type Integer or Long.
- 2. Camel case object property names are mapped to snake case database column names. Properties of a model like 'firstName' will be mapped to corresponding database column 'last_name' in the table. 
+ 1. Models should have a property exactly named 'id' which has to be of type Integer or Long.
+ 2. Camel case object property names are mapped to snake case database column names. Properties of a model like 'firstName' will be mapped to corresponding database column 'last_name'/'LAST_NAME' in the table. 
  
  **Example of simple CRUD:** 
  
  ```java
- // By default the Product class maps to 'product' table. Use @Table(name="some_other_tablename") 
- // annotation to override the default table name
+ // By default the Product class maps to 'product' table. Use annotation @Table(name="some_other_tablename") 
+ // to override the default table name
  public class Product { 
    private Integer id; // 'id' property is needed for all models and has to be of type Integer or Long
    private String productName;
@@ -134,3 +134,9 @@ Behind the scenes JdbcTemplateMapper uses JdbcTemplate for all its sql.
  logging.level.org.springframework.jdbc.core.StatementCreatorUtils=TRACE
  
  ```
+ 
+ **Notes:**
+ 1. If insert/update fails do not reuse the object since it could be in an inconsistent state
+ 2. Database changes will need a restart of the application since JdbcTemplateMapper caches table metadata
+  
+ 
