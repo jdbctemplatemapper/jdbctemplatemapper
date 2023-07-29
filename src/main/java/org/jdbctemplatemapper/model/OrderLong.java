@@ -3,7 +3,10 @@ package org.jdbctemplatemapper.model;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.jdbctemplatemapper.annotation.Id;
+
 public class OrderLong {
+	@Id
   private Long id;
   private LocalDateTime orderDate;
   private Long customerLongId;

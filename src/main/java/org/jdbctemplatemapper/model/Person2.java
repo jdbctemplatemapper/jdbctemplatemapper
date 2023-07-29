@@ -2,7 +2,7 @@ package org.jdbctemplatemapper.model;
 
 import java.time.LocalDateTime;
 
-import org.jdbctemplatemapper.core.Table;
+import org.jdbctemplatemapper.annotation.Table;
 
 @Table(name = "person")
 public class Person2 {

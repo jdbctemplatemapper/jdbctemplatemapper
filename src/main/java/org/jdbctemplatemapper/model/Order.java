@@ -3,7 +3,7 @@ package org.jdbctemplatemapper.model;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.jdbctemplatemapper.core.Table;
+import org.jdbctemplatemapper.annotation.Table;
 
 @Table(name = "orders")
 public class Order {
