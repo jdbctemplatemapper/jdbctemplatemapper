@@ -47,11 +47,11 @@ public class MappingUtils {
       }
 
       Id idAnnotation = null;
-      String idFieldName = null;
+      String idPropertyName = null;
       for (Field field : clazz.getDeclaredFields()) {
         idAnnotation = AnnotationUtils.findAnnotation(field, Id.class);
         if (idAnnotation != null) {
-          idFieldName = field.getName();
+          idPropertyName = field.getName();
           break;
         }
       }
@@ -59,7 +59,7 @@ public class MappingUtils {
         throw new RuntimeException("@Id annotation not found for class " + clazz.getName());
       } else {
         System.out.println("Annotation @Id FOUND for class" + clazz.getName() + "" + idAnnotation);
-        System.out.println("id field name= " + idFieldName);
+        System.out.println("id field name= " + idPropertyName);
       }
 
       List<ColumnInfo> columnInfoList = dbUtils.getTableColumnInfo(tableName);
@@ -73,7 +73,7 @@ public class MappingUtils {
         }
       }
 
-      // if code reaches here table exists
+      // if code reaches here table exists and class has @Id annotation
       try {
         List<PropertyInfo> propertyInfoList =
             CommonUtils.getObjectPropertyInfo(clazz.newInstance());
@@ -92,26 +92,18 @@ public class MappingUtils {
 
           // add matched object property info and table column info to mappings
           if (propertyInfo != null) {
-            propertyMappings.add(
-                new PropertyMapping(
-                    propertyInfo.getPropertyName(),
-                    propertyInfo.getPropertyType(),
-                    columnInfo.getColumnName(),
-                    columnInfo.getColumnSqlDataType()));
+        	  PropertyMapping propertyMapping = new PropertyMapping(
+                      propertyInfo.getPropertyName(),
+                      propertyInfo.getPropertyType(),
+                      columnInfo.getColumnName(),
+                      columnInfo.getColumnSqlDataType());
+            propertyMappings.add(propertyMapping);
+            
           }
         }
 
-        tableMapping = new TableMapping();
-        tableMapping.setTableName(tableName);
-        tableMapping.setPropertyMappings(propertyMappings);
+        tableMapping = new TableMapping(tableName, idPropertyName, propertyMappings);
 
-        // get the case sensitive id name
-        for (ColumnInfo columnInfo : columnInfoList) {
-          if ("id".equals(columnInfo.getColumnName()) || "ID".equals(columnInfo.getColumnName())) {
-            tableMapping.setIdColumnName(columnInfo.getColumnName());
-            break;
-          }
-        }
       } catch (Exception e) {
         throw new RuntimeException(e);
       }

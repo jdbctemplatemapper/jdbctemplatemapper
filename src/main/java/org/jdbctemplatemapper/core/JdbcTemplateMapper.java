@@ -39,22 +39,24 @@ import org.springframework.util.Assert;
  * <pre>
  * Features:
  * 1) Simple CRUD one liners
- * 2) Methods to retrieve relationships (toOne(), toMany() etc)
- * 3) Can be configured for:
+ * 2) Can be configured for:
  *     a) auto assign created on, updated on.
  *     b) auto assign created by, updated by using an implementation of IRecordOperatorResolver.
  *     c) optimistic locking functionality for updates by configuring a version property.
- * 4) Thread safe
- * 5) Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases).
+ * 3) Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases).
  *    Should work with all other relational databases.
  *
  * <b>JdbcTemplateMapper is opinionated<b/>. Projects have to meet the following 2 criteria to use it:
- * 1)Models should have a property exactly named 'id' (or 'ID') which has to be of type Integer or Long.
- * 2)Camel case object property names are mapped to snake case database column names.
+ * 1)Camel case object property names are mapped to snake case database column names.
  *   Properties of a model like 'firstName', 'lastName' will be mapped to corresponding database columns
  *   first_name/FIRST_NAME and last_name/LAST_NAME in the database table. If you are using a
  *   case sensitive database installation and have mixed case database column names like 'Last_Name' you could
  *   run into problems.
+ * 2) The database able columns map to object properties and has no concept of relationships so foriegn keys in your
+ *    database will need a corresponding field in your model so there will be an extra property for a relationship.
+ *
+ *    So for example if and 'Order" it tied to a 'Customer' you will need to have the customerId as a property on Order.
+ *
  *
  * Examples of simple CRUD:
  *
@@ -62,7 +64,8 @@ import org.springframework.util.Assert;
  * // Use annotation @Table(name="some_other_tablename") to override the default
  *
  * public class Product {
- *    private Integer id; // 'id' property is needed for all models and has to be of type Integer or Long
+ *    @
+ *    private Integer id;
  *    private String productName;
  *    private Double price;
  *    private LocalDateTime availableDate;
@@ -314,25 +317,13 @@ public class JdbcTemplateMapper {
    */
   public <T> T findById(Object id, Class<T> clazz) {
     Assert.notNull(clazz, "Class must not be null");
-    if (!(id instanceof Integer || id instanceof Long)) {
-      throw new RuntimeException("id has to be type of Integer or Long");
-    }
 
     TableMapping tableMapping = mappingUtils.getTableMapping(clazz);
-    String idColumnName = tableMapping.getIdColumnName();
-    if (idColumnName == null) {
-      throw new RuntimeException(
-          "Either "
-              + clazz.getSimpleName()
-              + " does not have an 'id' property or its corresponding table "
-              + tableMapping.getTableName()
-              + " does not have an 'id' column");
-    }
     String sql =
         "SELECT * FROM "
             + dbUtils.fullyQualifiedTableName(tableMapping.getTableName())
             + " WHERE "
-            + idColumnName
+            + tableMapping.getIdColumnName()
             + " = ?";
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
     try {
@@ -389,23 +380,18 @@ public class JdbcTemplateMapper {
   public void insert(Object obj) {
     Assert.notNull(obj, "Object must not be null");
 
-    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
-    if (!bw.isReadableProperty("id")) {
-      throw new RuntimeException(
-          "Object " + obj.getClass().getSimpleName() + " has to have a property named 'id'.");
-    }
+    TableMapping tableMapping = mappingUtils.getTableMapping(obj.getClass());
 
-    Object idValue = bw.getPropertyValue("id");
+    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
+
+    Object idValue = bw.getPropertyValue(tableMapping.getIdPropertyName());
     if (idValue != null) {
       throw new RuntimeException(
-          "For method insert() the objects 'id' property has to be null since this insert is for an object whose id is autoincrement in database.");
+          "For method insert() the objects "
+              + tableMapping.getIdPropertyName()
+              + " property has to be null since this insert is for an object whose id is autoincrement in database.");
     }
 
-    TableMapping tableMapping = mappingUtils.getTableMapping(obj.getClass());
-    if (tableMapping.getIdColumnName() == null) {
-      throw new RuntimeException(
-          "table " + tableMapping.getTableName() + " does not have a property named 'id'");
-    }
     LocalDateTime now = LocalDateTime.now();
 
     if (createdOnPropertyName != null
@@ -460,22 +446,18 @@ public class JdbcTemplateMapper {
   public void insertWithId(Object obj) {
     Assert.notNull(obj, "Object must not be null");
 
-    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
-    if (!bw.isReadableProperty("id")) {
-      throw new RuntimeException(
-          "Object " + obj.getClass().getSimpleName() + " has to have a property named 'id'.");
-    }
+    TableMapping tableMapping = mappingUtils.getTableMapping(obj.getClass());
 
-    Object idValue = bw.getPropertyValue("id");
+    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
+
+    Object idValue = bw.getPropertyValue(tableMapping.getIdPropertyName());
     if (idValue == null) {
       throw new RuntimeException(
-          "For method insertById() the objects 'id' property cannot be null.");
-    }
-
-    TableMapping tableMapping = mappingUtils.getTableMapping(obj.getClass());
-    if (tableMapping.getIdColumnName() == null) {
-      throw new RuntimeException(
-          "table " + tableMapping.getTableName() + " does not have a property named 'id'");
+          "For method insertById() "
+              + obj.getClass().getName()
+              + "."
+              + tableMapping.getIdPropertyName()
+              + " property cannot be null.");
     }
 
     LocalDateTime now = LocalDateTime.now();
@@ -527,24 +509,14 @@ public class JdbcTemplateMapper {
   public Integer update(Object obj) {
     Assert.notNull(obj, "Object must not be null");
 
-    if (!hasIdProperty(obj)) {
-      throw new RuntimeException(
-          "Object " + obj.getClass().getSimpleName() + " does not have a property named 'id'");
-    }
-
     TableMapping tableMapping = mappingUtils.getTableMapping(obj.getClass());
-    String idColumnName = tableMapping.getIdColumnName();
-    if (idColumnName == null) {
-      throw new RuntimeException(
-          "table " + tableMapping.getTableName() + " does not have a column named 'id'");
-    }
 
     UpdateSqlAndParams updateSqlAndParams = updateSqlAndParamsCache.get(obj.getClass().getName());
 
     if (updateSqlAndParams == null) {
       // ignore these attributes when generating the sql 'SET' command
       List<String> ignoreAttrs = new ArrayList<>();
-      ignoreAttrs.add("id");
+      ignoreAttrs.add(tableMapping.getIdPropertyName());
       if (createdByPropertyName != null) {
         ignoreAttrs.add(createdByPropertyName);
       }
@@ -581,17 +553,7 @@ public class JdbcTemplateMapper {
     Assert.notNull(obj, "Object must not be null");
     Assert.notNull(propertyNames, "propertyNames must not be null");
 
-    if (!hasIdProperty(obj)) {
-      throw new RuntimeException(
-          "Object " + obj.getClass().getSimpleName() + " does not have a property named 'id'");
-    }
-
     TableMapping tableMapping = mappingUtils.getTableMapping(obj.getClass());
-    String idColumnName = tableMapping.getIdColumnName();
-    if (idColumnName == null) {
-      throw new RuntimeException(
-          "table " + tableMapping.getTableName() + " does not have a column named 'id'");
-    }
 
     // cachekey ex: className-propertyName1-propertyName2
     String cacheKey = obj.getClass().getName() + "-" + String.join("-", propertyNames);
@@ -612,7 +574,7 @@ public class JdbcTemplateMapper {
 
       // auto assigned  cannot be updated by user.
       List<String> autoAssignedAttrs = new ArrayList<>();
-      autoAssignedAttrs.add("id");
+      autoAssignedAttrs.add(tableMapping.getIdPropertyName());
       if (versionPropertyName != null && tableMapping.getColumnName(versionPropertyName) != null) {
         autoAssignedAttrs.add(versionPropertyName);
       }
@@ -670,23 +632,15 @@ public class JdbcTemplateMapper {
   public Integer delete(Object obj) {
     Assert.notNull(obj, "Object must not be null");
 
-    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
-    if (!bw.isReadableProperty("id")) {
-      throw new RuntimeException(
-          "Object " + obj.getClass().getSimpleName() + " has to have a property named 'id'.");
-    }
-
     TableMapping tableMapping = mappingUtils.getTableMapping(obj.getClass());
-    if (tableMapping.getIdColumnName() == null) {
-      throw new RuntimeException(
-          "table " + tableMapping.getTableName() + " does not have a property named 'id'");
-    }
 
     String sql =
         "delete from "
             + dbUtils.fullyQualifiedTableName(tableMapping.getTableName())
-            + " where id = ?";
-    Object id = bw.getPropertyValue("id");
+            + " where "
+            + tableMapping.getIdColumnName()
+            + "= ?";
+    Object id = CommonUtils.getPropertyValue(obj, tableMapping.getIdPropertyName());
     return jdbcTemplate.update(sql, id);
   }
 
@@ -699,15 +653,17 @@ public class JdbcTemplateMapper {
    */
   public <T> Integer deleteById(Object id, Class<T> clazz) {
     Assert.notNull(clazz, "Class must not be null");
+    Assert.notNull(id, "id must not be null");
 
-    if (!(id instanceof Integer || id instanceof Long)) {
-      throw new RuntimeException("id has to be type of Integer or Long");
-    }
-    String tableName = mappingUtils.getTableMapping(clazz).getTableName();
-    String sql = "delete from " + dbUtils.fullyQualifiedTableName(tableName) + " where id = ?";
+    TableMapping tableMapping = mappingUtils.getTableMapping(clazz);
+    String sql =
+        "delete from "
+            + dbUtils.fullyQualifiedTableName(tableMapping.getTableName())
+            + " where "
+            + tableMapping.getIdColumnName()
+            + " = ?";
     return jdbcTemplate.update(sql, id);
   }
-
 
   /**
    * Returns lists for each mapper passed in as an argument. The values in the list are UNIQUE and
@@ -724,7 +680,8 @@ public class JdbcTemplateMapper {
     Assert.notNull(selectMappers, "selectMappers must not be null");
 
     try {
-      Map<String, LinkedHashMap<Long, Object>> tempMap = multipleModelMapperRaw(rs, selectMappers);
+      Map<String, LinkedHashMap<Object, Object>> tempMap =
+          multipleModelMapperRaw(rs, selectMappers);
       Map<String, List> resultMap = new HashMap<>();
       for (String key : tempMap.keySet()) {
         resultMap.put(key, new ArrayList<Object>(tempMap.get(key).values()));
@@ -748,7 +705,7 @@ public class JdbcTemplateMapper {
    *                   LinkedHashMap value - the object
    */
   @SuppressWarnings("all")
-  private Map<String, LinkedHashMap<Long, Object>> multipleModelMapperRaw(
+  private Map<String, LinkedHashMap<Object, Object>> multipleModelMapperRaw(
       ResultSet rs, SelectMapper... selectMappers) {
     Assert.notNull(selectMappers, "selectMappers must not be null");
 
@@ -757,22 +714,22 @@ public class JdbcTemplateMapper {
       // Map key - SelectMapper's sql column prefix
       // LinkedHashMap key - id of object
       // LinkedHashMap value - the object
-      Map<String, LinkedHashMap<Long, Object>> resultMap = new HashMap<>();
+      Map<String, LinkedHashMap<Object, Object>> resultMap = new HashMap<>();
       for (SelectMapper selectMapper : selectMappers) {
         resultMap.put(selectMapper.getSqlColumnPrefix(), new LinkedHashMap<>());
       }
       List<String> resultSetColumnNames = dbUtils.getResultSetColumnNames(rs);
       while (rs.next()) {
         for (SelectMapper selectMapper : selectMappers) {
-          Number idVal = (Number) rs.getObject(selectMapper.getSqlColumnPrefix() + "id");
-          if (idVal != null && idVal.longValue() > 0) {
+          Object id = rs.getObject(selectMapper.getSqlColumnPrefix() + "id");
+          if (!rs.wasNull()) {
             Object obj =
                 constructInstance(
                     selectMapper.getClazz(),
                     rs,
                     selectMapper.getSqlColumnPrefix(),
                     resultSetColumnNames);
-            resultMap.get(selectMapper.getSqlColumnPrefix()).put(idVal.longValue(), obj);
+            resultMap.get(selectMapper.getSqlColumnPrefix()).put(id, obj);
           }
         }
       }
@@ -834,11 +791,6 @@ public class JdbcTemplateMapper {
     Assert.notNull(tableMapping, "tableMapping must not be null");
     Assert.notNull(propertyNames, "propertyNames must not be null");
 
-    String idColumnName = tableMapping.getIdColumnName();
-    if (idColumnName == null) {
-      throw new RuntimeException(
-          "could not find id column for table " + tableMapping.getTableName());
-    }
     Set<String> params = new HashSet<>();
     StringBuilder sqlBuilder = new StringBuilder("UPDATE ");
     sqlBuilder.append(dbUtils.fullyQualifiedTableName(tableMapping.getTableName()));
@@ -868,8 +820,9 @@ public class JdbcTemplateMapper {
     }
 
     // the where clause
-    sqlBuilder.append(" WHERE " + idColumnName + " = :id");
-    params.add("id");
+    sqlBuilder.append(
+        " WHERE " + tableMapping.getIdColumnName() + " = :" + tableMapping.getIdPropertyName());
+    params.add(tableMapping.getIdPropertyName());
 
     if (versionPropertyName != null && versionColumnName != null) {
       sqlBuilder
@@ -929,8 +882,10 @@ public class JdbcTemplateMapper {
         throw new OptimisticLockingException(
             "Update failed for "
                 + obj.getClass().getSimpleName()
-                + " for id:"
-                + bw.getPropertyValue("id")
+                + " for "
+                + tableMapping.getIdPropertyName()
+                + ":"
+                + bw.getPropertyValue(tableMapping.getIdPropertyName())
                 + " and "
                 + versionPropertyName
                 + ":"
@@ -983,23 +938,5 @@ public class JdbcTemplateMapper {
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
-  }
-
-  /**
-   * checks if an object has an property named 'id'
-   *
-   * @param obj The object
-   * @return true/false depending on if obj has 'id' property
-   */
-  private boolean hasIdProperty(Object obj) {
-    List<PropertyInfo> propertyInfoList = CommonUtils.getObjectPropertyInfo(obj);
-    PropertyInfo propertyInfo =
-        propertyInfoList
-            .stream()
-            .filter(pi -> "id".equals(pi.getPropertyName()))
-            .findAny()
-            .orElse(null);
-
-    return propertyInfo == null ? false : true;
   }
 }
