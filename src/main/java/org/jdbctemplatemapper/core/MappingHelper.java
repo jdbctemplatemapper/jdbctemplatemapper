@@ -2,8 +2,6 @@ package org.jdbctemplatemapper.core;
 
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -58,14 +56,16 @@ public class MappingHelper {
   // require to pass something like '%'.
   private final String metaDataColumnNamePattern;
 
-  public MappingHelper(JdbcTemplate jdbcTemplate, String schemaName) {
-    this(jdbcTemplate, schemaName, null, null);
-  }
-
-  public MappingHelper(JdbcTemplate jdbcTemplate, String schemaName, String catalogName) {
-    this(jdbcTemplate, schemaName, catalogName, null);
-  }
-
+  /**
+   * Constructor.
+   *
+   * @param dataSource - The dataSource for the mapper
+   * @param schemaName - database schema name.
+   * @param catalogName - database catalog name.
+   * @param metaDataColumnNamePattern - For most jdbc drivers getting column metadata from database
+   *     the metaDataColumnNamePattern argument of null returns all the columns (which is the
+   *     default for JdbcTemplateMapper). Some jdbc drivers may require to pass something like '%'.
+   */
   public MappingHelper(
       JdbcTemplate jdbcTemplate,
       String schemaName,
@@ -301,50 +301,6 @@ public class MappingHelper {
       objectPropertyInfoCache.put(obj.getClass().getName(), propertyInfoList);
     }
     return propertyInfoList;
-  }
-
-  public Class<?> getGenericTypeOfCollection(Object mainObj, String propertyName) {
-    Assert.notNull(mainObj, "mainObj must not be null");
-    Assert.notNull(propertyName, "propertyName must not be null");
-    try {
-      Field field = mainObj.getClass().getDeclaredField(propertyName);
-
-      ParameterizedType pt = (ParameterizedType) field.getGenericType();
-      Type[] genericType = pt.getActualTypeArguments();
-
-      if (genericType != null && genericType.length > 0) {
-        return Class.forName(genericType[0].getTypeName());
-      } else {
-        throw new RuntimeException(
-            "Could not find generic type for property: "
-                + propertyName
-                + " in class: "
-                + mainObj.getClass().getSimpleName());
-      }
-
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public Class<?> getPropertyClass(Object obj, String propertyName) {
-    Assert.notNull(obj, "obj must not be null");
-    Assert.notNull(propertyName, "propertyName must not be null");
-
-    List<PropertyInfo> propertyInfoList = getObjectPropertyInfo(obj);
-    PropertyInfo propertyInfo =
-        propertyInfoList
-            .stream()
-            .filter(pi -> propertyName.equals(pi.getPropertyName()))
-            .findAny()
-            .orElse(null);
-
-    if (propertyInfo == null) {
-      throw new RuntimeException(
-          "property:" + propertyName + " not found in class:" + obj.getClass().getName());
-    } else {
-      return propertyInfo.getPropertyType();
-    }
   }
 
   /**

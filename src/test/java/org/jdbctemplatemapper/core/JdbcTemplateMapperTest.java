@@ -10,18 +10,13 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.jdbctemplatemapper.model.Customer;
 import org.jdbctemplatemapper.model.NoIdObject;
 import org.jdbctemplatemapper.model.NoTableObject;
 import org.jdbctemplatemapper.model.Order;
-import org.jdbctemplatemapper.model.OrderLine;
 import org.jdbctemplatemapper.model.Person;
 import org.jdbctemplatemapper.model.Product;
 import org.jdbctemplatemapper.model.TypeCheck;
@@ -32,10 +27,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -47,20 +39,6 @@ public class JdbcTemplateMapperTest {
   private String jdbcDriver;
 
   @Autowired private JdbcTemplateMapper jdbcTemplateMapper;
-
-  private JdbcTemplate jdbcTemplate;
-  private NamedParameterJdbcTemplate npJdbcTemplate;
-
-  private boolean flag = false;
-
-  @BeforeEach
-  public void setup() {
-    if (!flag) {
-      this.jdbcTemplate = jdbcTemplateMapper.getJdbcTemplate();
-      this.npJdbcTemplate = jdbcTemplateMapper.getNamedParameterJdbcTemplate();
-      flag = true;
-    }
-  }
 
   @Test
   public void insert_Test() {
@@ -470,48 +448,7 @@ public class JdbcTemplateMapperTest {
   }
 
 
-  @Test
-  @SuppressWarnings("all")
-  public void multipleModelMapper_NoRecordsTest() {
-
-    // query returns no records
-    String sql =
-        "select "
-            + jdbcTemplateMapper.selectColumns("orders", "o")
-            +","
-            + jdbcTemplateMapper.selectColumns("order_line", "ol")
-            +","
-            + jdbcTemplateMapper.selectColumns("customer", "c")
-            +","
-            + jdbcTemplateMapper.selectColumns("product", "p")
-            + " from jdbctemplatemapper.orders o"
-            + " left join jdbctemplatemapper.order_line ol on o.id = ol.order_id"
-            + " left join jdbctemplatemapper.customer c on o.customer_id = c.id"
-            + " left join jdbctemplatemapper.product p on ol.product_id = p.id"
-            + " where o.id in (998,999)";
-
-    Map<String, List> resultMap =
-        jdbcTemplate.query(
-            sql,
-            rs -> {
-              return jdbcTemplateMapper.multipleModelMapper(
-                  rs,
-                  new SelectMapper<Order>(Order.class, "o_"),
-                  new SelectMapper<OrderLine>(OrderLine.class, "ol_"),
-                  new SelectMapper<Customer>(Customer.class, "c_"),
-                  new SelectMapper<Product>(Product.class, "p_"));
-            });
-
-    List<Order> orders = resultMap.get("o_");
-    List<OrderLine> orderLines = resultMap.get("ol_");
-    List<Customer> customers = resultMap.get("c_");
-    List<Product> products = resultMap.get("p_");
-
-    assertEquals(0, orders.size());
-    assertEquals(0, orderLines.size());
-    assertEquals(0, customers.size());
-    assertEquals(0, products.size());
-  }
+ 
 
   @Test
   public void selectColumns_InvalidTableNameFailureTest() {
@@ -615,53 +552,5 @@ public class JdbcTemplateMapperTest {
     }
   }
   
-  @Test
-  @SuppressWarnings("all")
-  public void selectColumns_TypeCheckQueryTest(){
-    TypeCheck obj = new TypeCheck();
-    
-    obj.setLocalDateData(LocalDate.now());   
-    obj.setJavaUtilDateData(new Date());
-    obj.setLocalDateTimeData(LocalDateTime.now());
-    obj.setBigDecimalData(new BigDecimal("10.23"));
-    
-    if (jdbcDriver.contains("sqlserver")) {
-      obj.setJavaUtilDateDtData(new Date());
-    }
-    else {
-    	obj.setJavaUtilDateTsData(new Date());
-    }
-
-    jdbcTemplateMapper.insert(obj);
-    
-    String sql = "select" + jdbcTemplateMapper.selectColumns("type_check", "tc")
-      + " from type_check tc where tc.id = ?";
-       
-    Map<String, List> resultMap =
-            jdbcTemplate.query(
-                sql,
-                new Object[] {obj.getId()}, // args
-                new int[] {java.sql.Types.INTEGER}, // arg types
-                rs -> {
-                  return jdbcTemplateMapper.multipleModelMapper(
-                      rs,
-                      new SelectMapper<TypeCheck>(TypeCheck.class, "tc_"));
-                });
-    List<TypeCheck> tcList = resultMap.get("tc_");
-    
-    TypeCheck tc = tcList.get(0);
-    assertNotNull(tc.getLocalDateData());
-    assertNotNull(tc.getJavaUtilDateData());
-    assertNotNull(tc.getLocalDateTimeData());
-    assertTrue(tc.getBigDecimalData().compareTo(new BigDecimal("10.23")) == 0);
-    
-    if (jdbcDriver.contains("sqlserver")) {
-      assertNotNull(tc.getJavaUtilDateDtData());
-    }
-    else {
-    	assertNotNull(tc.getJavaUtilDateTsData());
-    }
-  
-  }
   
 }

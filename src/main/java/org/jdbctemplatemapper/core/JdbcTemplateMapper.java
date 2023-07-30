@@ -1,11 +1,8 @@
 package org.jdbctemplatemapper.core;
 
-import java.sql.ResultSet;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +11,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
-import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -22,7 +18,6 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
-import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.util.Assert;
 
 /**
@@ -145,9 +140,6 @@ public class JdbcTemplateMapper {
   private String updatedOnPropertyName;
   private String versionPropertyName;
 
-  // Need this for type conversions like java.sql.Timestamp to java.time.LocalDateTime etc
-  private DefaultConversionService defaultConversionService = new DefaultConversionService();
-
   // Inserts use SimpleJdbcInsert. Since SimpleJdbcInsert is thread safe, cache it
   // Map key - table name,
   //     value - SimpleJdcInsert object for the specific table
@@ -168,7 +160,7 @@ public class JdbcTemplateMapper {
    * @param dataSource The dataSource for the mapper
    */
   public JdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
-    this(jdbcTemplate, null);
+    this(jdbcTemplate, null, null, null);
   }
 
   /**
@@ -178,11 +170,7 @@ public class JdbcTemplateMapper {
    * @param schemaName database schema name.
    */
   public JdbcTemplateMapper(JdbcTemplate jdbcTemplate, String schemaName) {
-    Assert.notNull(jdbcTemplate, "jdbcTemplate must not be null");
-    this.jdbcTemplate = jdbcTemplate;
-    npJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
-
-    mappingHelper = new MappingHelper(jdbcTemplate, schemaName);
+	  this(jdbcTemplate, schemaName, null, null);
   }
 
   /**
@@ -193,12 +181,7 @@ public class JdbcTemplateMapper {
    * @param catalogName database catalog name.
    */
   public JdbcTemplateMapper(JdbcTemplate jdbcTemplate, String schemaName, String catalogName) {
-    Assert.notNull(jdbcTemplate, "jdbcTemplate must not be null");
-    this.jdbcTemplate = jdbcTemplate;
-
-    npJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
-
-    mappingHelper = new MappingHelper(jdbcTemplate, schemaName, catalogName);
+	  this(jdbcTemplate, schemaName, catalogName, null);
   }
 
   /**
@@ -207,7 +190,7 @@ public class JdbcTemplateMapper {
    * @param dataSource - The dataSource for the mapper
    * @param schemaName - database schema name.
    * @param catalogName - database catalog name.
-   * @param metaDataColumnNamePattern - For most jdbc drivers when getting column metadata from database
+   * @param metaDataColumnNamePattern - For most jdbc drivers getting column metadata from database
    *     the metaDataColumnNamePattern argument of null returns all the columns (which is the default for
    *     JdbcTemplateMapper). Some jdbc drivers may require to pass something like '%'.
    */
@@ -216,6 +199,7 @@ public class JdbcTemplateMapper {
       String schemaName,
       String catalogName,
       String metaDataColumnNamePattern) {
+	  
     Assert.notNull(jdbcTemplate, "jdbcTemplate must not be null");
     this.jdbcTemplate = jdbcTemplate;
 
@@ -231,7 +215,7 @@ public class JdbcTemplateMapper {
    * @return the JdbcTemplate
    */
   public JdbcTemplate getJdbcTemplate() {
-    return this.jdbcTemplate;
+    return jdbcTemplate;
   }
 
   /**
@@ -240,7 +224,11 @@ public class JdbcTemplateMapper {
    * @return the NamedParameterJdbcTemplate
    */
   public NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {
-    return this.npJdbcTemplate;
+    return npJdbcTemplate;
+  }
+  
+  public MappingHelper getMappingHelper() {
+	  return mappingHelper;
   }
 
   /**
@@ -741,81 +729,6 @@ public class JdbcTemplateMapper {
     return updateSqlAndParams;
   }
 
-  /**
-   * Returns lists for each mapper passed in as an argument. The values in the list are UNIQUE and
-   * in same order as the ResultSet values.
-   *
-   * @param rs The jdbc result set
-   * @param selectMappers An array of sql mappers.
-   * @return Map <pre>
-   *         key: 'sqlColumnPrefix' of each sqlMapper
-   *         value: unique list of objects mapped by the sqlMapper
-   */
-  @SuppressWarnings("all")
-  public Map<String, List> multipleModelMapper(ResultSet rs, SelectMapper... selectMappers) {
-    Assert.notNull(selectMappers, "selectMappers must not be null");
-
-    try {
-      Map<String, LinkedHashMap<Object, Object>> tempMap =
-          multipleModelMapperRaw(rs, selectMappers);
-      Map<String, List> resultMap = new HashMap<>();
-      for (String key : tempMap.keySet()) {
-        resultMap.put(key, new ArrayList<Object>(tempMap.get(key).values()));
-      }
-      return resultMap;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  /**
-   * Returns a LinkedHashmap for each mapper passed in as an argument. The values in the hashmap are
-   * in same order as the ResultSet values.
-   *
-   * @param rs The jdbc result set
-   * @param selectMappers array of sql mappers.
-   * @return Map <pre>
-   *        key: 'sqlColumnPrefix' of each sqlMapper,
-   *        value: LinkedHashMap of objects mapped by sqlMapper.
-   *                   LinkedHashMap key - id of object
-   *                   LinkedHashMap value - the object
-   */
-  @SuppressWarnings("all")
-  private Map<String, LinkedHashMap<Object, Object>> multipleModelMapperRaw(
-      ResultSet rs, SelectMapper... selectMappers) {
-    Assert.notNull(selectMappers, "selectMappers must not be null");
-
-    try {
-      // LinkedHashMap used to retain the order of insertion of records
-      // Map key - SelectMapper's sql column prefix
-      // LinkedHashMap key - id of object
-      // LinkedHashMap value - the object
-      Map<String, LinkedHashMap<Object, Object>> resultMap = new HashMap<>();
-      for (SelectMapper selectMapper : selectMappers) {
-        resultMap.put(selectMapper.getSqlColumnPrefix(), new LinkedHashMap<>());
-      }
-      List<String> resultSetColumnNames = mappingHelper.getResultSetColumnNames(rs);
-      while (rs.next()) {
-        for (SelectMapper selectMapper : selectMappers) {
-          Object id = rs.getObject(selectMapper.getSqlColumnPrefix() + "id");
-          if (!rs.wasNull()) {
-            Object obj =
-                constructInstance(
-                    selectMapper.getClazz(),
-                    rs,
-                    selectMapper.getSqlColumnPrefix(),
-                    resultSetColumnNames);
-            resultMap.get(selectMapper.getSqlColumnPrefix()).put(id, obj);
-          }
-        }
-      }
-
-      return resultMap;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   private Integer issueUpdate(
       UpdateSqlAndParams updateSqlAndParams, Object obj, TableMapping tableMapping) {
     Assert.notNull(updateSqlAndParams, "updateSqlAndParams must not be null");
@@ -874,46 +787,6 @@ public class JdbcTemplateMapper {
       return cnt;
     } else {
       return npJdbcTemplate.update(updateSqlAndParams.getSql(), mapSqlParameterSource);
-    }
-  }
-
-  /**
-   * Used by mappers to construct an object from the result set
-   *
-   * @param clazz Class of object to be instantiated. Object should have a no argument constructor
-   * @param rs The sql result set
-   * @param prefix The sql column alias prefix in the query
-   * @param resultSetColumnNames The column names in the sql statement.
-   * @return Object of type T populated from the data in the result set
-   */
-  private <T> T constructInstance(
-      Class<T> clazz, ResultSet rs, String prefix, List<String> resultSetColumnNames) {
-
-    Assert.notNull(clazz, "clazz must not be null");
-    Assert.hasLength(prefix, "prefix must not be empty");
-    Assert.notNull(resultSetColumnNames, "resultSetColumnNames must not be null");
-
-    try {
-      Object obj = clazz.newInstance();
-      BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
-      // need below for java.sql.Timestamp to java.time.LocalDateTime conversion etc
-      bw.setConversionService(defaultConversionService);
-      for (PropertyInfo propertyInfo : mappingHelper.getObjectPropertyInfo(obj)) {
-        String columnName = mappingHelper.convertCamelToSnakeCase(propertyInfo.getPropertyName());
-        if (mappingHelper.isNotEmpty(prefix)) {
-          columnName = prefix + columnName;
-        }
-        int index = resultSetColumnNames.indexOf(columnName.toLowerCase());
-        if (index != -1) {
-          // JDBC index starts at 1. using Springs JdbcUtils to get values from resultSet
-          bw.setPropertyValue(
-              propertyInfo.getPropertyName(),
-              JdbcUtils.getResultSetValue(rs, index + 1, propertyInfo.getPropertyType()));
-        }
-      }
-      return clazz.cast(obj);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
     }
   }
 }
