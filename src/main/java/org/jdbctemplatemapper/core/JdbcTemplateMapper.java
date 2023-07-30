@@ -165,7 +165,6 @@ public class JdbcTemplateMapper {
   private Map<String, String> selectColumnsCache = new ConcurrentHashMap<>();
 
   private DatabaseUtils dbUtils;
-  private MappingUtils mappingUtils;
 
   /**
    * The constructor.
@@ -185,11 +184,9 @@ public class JdbcTemplateMapper {
   public JdbcTemplateMapper(JdbcTemplate jdbcTemplate, String schemaName) {
     Assert.notNull(jdbcTemplate, "jdbcTemplate must not be null");
     this.jdbcTemplate = jdbcTemplate;
-    this.npJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
-
-    this.dbUtils = new DatabaseUtils(jdbcTemplate, npJdbcTemplate, schemaName);
-
-    this.mappingUtils = new MappingUtils(dbUtils);
+    npJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
+    
+    dbUtils = new DatabaseUtils(jdbcTemplate, schemaName);
   }
 
   /**
@@ -319,7 +316,7 @@ public class JdbcTemplateMapper {
   public <T> T findById(Object id, Class<T> clazz) {
     Assert.notNull(clazz, "Class must not be null");
 
-    TableMapping tableMapping = mappingUtils.getTableMapping(clazz);
+    TableMapping tableMapping = dbUtils.getTableMapping(clazz);
     String sql =
         "SELECT * FROM "
             + dbUtils.fullyQualifiedTableName(tableMapping.getTableName())
@@ -345,7 +342,7 @@ public class JdbcTemplateMapper {
   public <T> List<T> findAll(Class<T> clazz) {
     Assert.notNull(clazz, "Class must not be null");
 
-    String tableName = mappingUtils.getTableMapping(clazz).getTableName();
+    String tableName = dbUtils.getTableMapping(clazz).getTableName();
     String sql = "SELECT * FROM " + dbUtils.fullyQualifiedTableName(tableName);
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
     return jdbcTemplate.query(sql, mapper);
@@ -362,7 +359,7 @@ public class JdbcTemplateMapper {
   public <T> List<T> findAll(Class<T> clazz, String orderByClause) {
     Assert.notNull(clazz, "Class must not be null");
 
-    String tableName = mappingUtils.getTableMapping(clazz).getTableName();
+    String tableName = dbUtils.getTableMapping(clazz).getTableName();
     String sql =
         "SELECT * FROM " + dbUtils.fullyQualifiedTableName(tableName) + " " + orderByClause;
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
@@ -381,7 +378,7 @@ public class JdbcTemplateMapper {
   public void insert(Object obj) {
     Assert.notNull(obj, "Object must not be null");
 
-    TableMapping tableMapping = mappingUtils.getTableMapping(obj.getClass());
+    TableMapping tableMapping = dbUtils.getTableMapping(obj.getClass());
 
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
 
@@ -430,26 +427,25 @@ public class JdbcTemplateMapper {
       bw.setPropertyValue(versionPropertyName, 1);
     }
 
-    Map<String, Object> attributes = CommonUtils.convertToSnakeCaseAttributes(obj);
+    Map<String, Object> attributes = dbUtils.convertToSnakeCaseAttributes(obj);
 
     SimpleJdbcInsert jdbcInsert = simpleJdbcInsertCache.get(tableMapping.getTableName());
     if (jdbcInsert == null) {
-    	if (tableMapping.isIdAutoIncrement()) {
-       jdbcInsert =
-          new SimpleJdbcInsert(jdbcTemplate)
-              .withCatalogName(dbUtils.getCatalogName())
-              .withSchemaName(dbUtils.getSchemaName())
-              .withTableName(tableMapping.getTableName())
-              .usingGeneratedKeyColumns(tableMapping.getIdColumnName());
-    	}
-    	else {
-      	      jdbcInsert =
- 	          new SimpleJdbcInsert(jdbcTemplate)
-              .withCatalogName(dbUtils.getCatalogName())
-              .withSchemaName(dbUtils.getSchemaName())
-              .withTableName(tableMapping.getTableName());
-    	}
-      
+      if (tableMapping.isIdAutoIncrement()) {
+        jdbcInsert =
+            new SimpleJdbcInsert(jdbcTemplate)
+                .withCatalogName(dbUtils.getCatalogName())
+                .withSchemaName(dbUtils.getSchemaName())
+                .withTableName(tableMapping.getTableName())
+                .usingGeneratedKeyColumns(tableMapping.getIdColumnName());
+      } else {
+        jdbcInsert =
+            new SimpleJdbcInsert(jdbcTemplate)
+                .withCatalogName(dbUtils.getCatalogName())
+                .withSchemaName(dbUtils.getSchemaName())
+                .withTableName(tableMapping.getTableName());
+      }
+
       simpleJdbcInsertCache.put(tableMapping.getTableName(), jdbcInsert);
     }
 
@@ -457,9 +453,8 @@ public class JdbcTemplateMapper {
       Number idNumber = jdbcInsert.executeAndReturnKey(attributes);
       bw.setPropertyValue(
           tableMapping.getIdPropertyName(), idNumber); // set the auto increment id value on object
-    }
-    else {
-    	jdbcInsert.execute(attributes);
+    } else {
+      jdbcInsert.execute(attributes);
     }
   }
 
@@ -474,7 +469,7 @@ public class JdbcTemplateMapper {
   public Integer update(Object obj) {
     Assert.notNull(obj, "Object must not be null");
 
-    TableMapping tableMapping = mappingUtils.getTableMapping(obj.getClass());
+    TableMapping tableMapping = dbUtils.getTableMapping(obj.getClass());
 
     UpdateSqlAndParams updateSqlAndParams = updateSqlAndParamsCache.get(obj.getClass().getName());
 
@@ -491,7 +486,7 @@ public class JdbcTemplateMapper {
 
       Set<String> updatePropertyNames = new LinkedHashSet<>();
 
-      for (PropertyInfo propertyInfo : CommonUtils.getObjectPropertyInfo(obj)) {
+      for (PropertyInfo propertyInfo : dbUtils.getObjectPropertyInfo(obj)) {
         // if not a ignore property and has a table column mapping add it to the update property
         // list
         if (!ignoreAttrs.contains(propertyInfo.getPropertyName())
@@ -518,7 +513,7 @@ public class JdbcTemplateMapper {
     Assert.notNull(obj, "Object must not be null");
     Assert.notNull(propertyNames, "propertyNames must not be null");
 
-    TableMapping tableMapping = mappingUtils.getTableMapping(obj.getClass());
+    TableMapping tableMapping = dbUtils.getTableMapping(obj.getClass());
 
     // cachekey ex: className-propertyName1-propertyName2
     String cacheKey = obj.getClass().getName() + "-" + String.join("-", propertyNames);
@@ -597,7 +592,7 @@ public class JdbcTemplateMapper {
   public Integer delete(Object obj) {
     Assert.notNull(obj, "Object must not be null");
 
-    TableMapping tableMapping = mappingUtils.getTableMapping(obj.getClass());
+    TableMapping tableMapping = dbUtils.getTableMapping(obj.getClass());
 
     String sql =
         "delete from "
@@ -605,7 +600,8 @@ public class JdbcTemplateMapper {
             + " where "
             + tableMapping.getIdColumnName()
             + "= ?";
-    Object id = CommonUtils.getPropertyValue(obj, tableMapping.getIdPropertyName());
+    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
+    Object id = bw.getPropertyValue(tableMapping.getIdPropertyName());
     return jdbcTemplate.update(sql, id);
   }
 
@@ -620,7 +616,7 @@ public class JdbcTemplateMapper {
     Assert.notNull(clazz, "Class must not be null");
     Assert.notNull(id, "id must not be null");
 
-    TableMapping tableMapping = mappingUtils.getTableMapping(clazz);
+    TableMapping tableMapping = dbUtils.getTableMapping(clazz);
     String sql =
         "delete from "
             + dbUtils.fullyQualifiedTableName(tableMapping.getTableName())
@@ -630,7 +626,6 @@ public class JdbcTemplateMapper {
     return jdbcTemplate.update(sql, id);
   }
 
- 
   /**
    * Generates a string which can be used in a sql select statement with all the columns of the
    * table.
@@ -651,10 +646,10 @@ public class JdbcTemplateMapper {
     String str = selectColumnsCache.get(tableName + "-" + tableAlias);
     if (str == null) {
       List<ColumnInfo> tableColumnInfo = dbUtils.getTableColumnInfo(tableName);
-      if (CommonUtils.isEmpty(tableColumnInfo)) {
+      if (dbUtils.isEmpty(tableColumnInfo)) {
         // try with uppercase table name
         tableColumnInfo = dbUtils.getTableColumnInfo(tableName.toUpperCase());
-        if (CommonUtils.isEmpty(tableColumnInfo)) {
+        if (dbUtils.isEmpty(tableColumnInfo)) {
           throw new RuntimeException("Could not get column info for table named " + tableName);
         }
       }
@@ -729,7 +724,7 @@ public class JdbcTemplateMapper {
 
     return updateSqlAndParams;
   }
-  
+
   /**
    * Returns lists for each mapper passed in as an argument. The values in the list are UNIQUE and
    * in same order as the ResultSet values.
@@ -804,7 +799,6 @@ public class JdbcTemplateMapper {
       throw new RuntimeException(e);
     }
   }
-
 
   private Integer issueUpdate(
       UpdateSqlAndParams updateSqlAndParams, Object obj, TableMapping tableMapping) {
@@ -888,9 +882,9 @@ public class JdbcTemplateMapper {
       BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
       // need below for java.sql.Timestamp to java.time.LocalDateTime conversion etc
       bw.setConversionService(defaultConversionService);
-      for (PropertyInfo propertyInfo : CommonUtils.getObjectPropertyInfo(obj)) {
-        String columnName = CommonUtils.convertCamelToSnakeCase(propertyInfo.getPropertyName());
-        if (CommonUtils.isNotEmpty(prefix)) {
+      for (PropertyInfo propertyInfo : dbUtils.getObjectPropertyInfo(obj)) {
+        String columnName = dbUtils.convertCamelToSnakeCase(propertyInfo.getPropertyName());
+        if (dbUtils.isNotEmpty(prefix)) {
           columnName = prefix + columnName;
         }
         int index = resultSetColumnNames.indexOf(columnName.toLowerCase());
