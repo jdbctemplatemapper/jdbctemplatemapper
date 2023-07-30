@@ -28,17 +28,18 @@ import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.jdbc.support.MetaDataAccessException;
 import org.springframework.util.Assert;
 
-public class DatabaseUtils {
-  // Map key - table name,
-  //     value - the list of database column names
-  private Map<String, List<ColumnInfo>> tableColumnInfoCache = new ConcurrentHashMap<>();
-  
-  // Map key - object class name
-  //     value - the table name
-  private Map<String, TableMapping> objectToTableMappingCache = new ConcurrentHashMap<>();
+public class MappingHelper {
 
   // Convert camel case to snake case regex pattern. Pattern is thread safe
   private static Pattern TO_SNAKE_CASE_PATTERN = Pattern.compile("(.)(\\p{Upper})");
+  
+  // Map key - table name,
+  //     value - the list of database column names
+  private Map<String, List<ColumnInfo>> tableColumnInfoCache = new ConcurrentHashMap<>();
+
+  // Map key - object class name
+  //     value - the table name
+  private Map<String, TableMapping> objectToTableMappingCache = new ConcurrentHashMap<>();
 
   // Map key - camel case string,
   //     value - snake case string
@@ -46,21 +47,17 @@ public class DatabaseUtils {
 
   // Map key - simple Class name
   //     value - list of property names
-  private Map<String, List<PropertyInfo>> objectPropertyInfoCache =
-      new ConcurrentHashMap<>();
-  
-  
+  private Map<String, List<PropertyInfo>> objectPropertyInfoCache = new ConcurrentHashMap<>();
+
   private JdbcTemplate jdbcTemplate;
   private String schemaName;
   private String catalogName;
-
 
   // this is for the call to databaseMetaData.getColumns() just in case a database needs something
   // other than null
   private String metaDataColumnNamePattern;
 
-  public DatabaseUtils(
-      JdbcTemplate jdbcTemplate, String schemaName) {
+  public MappingHelper(JdbcTemplate jdbcTemplate, String schemaName) {
     this.jdbcTemplate = jdbcTemplate;
     this.schemaName = schemaName;
   }
@@ -85,7 +82,6 @@ public class DatabaseUtils {
     this.metaDataColumnNamePattern = metaDataColumnNamePattern;
   }
 
-  
   /**
    * Gets the table mapping for the Object. The table mapping has the table name and and object
    * property to database column mapping.
@@ -117,7 +113,7 @@ public class DatabaseUtils {
         if (idAnnotation != null) {
           idPropertyName = field.getName();
           if (idAnnotation.type() == IdType.AUTO_INCREMENT) {
-        	  isAutoIncrement = true;
+            isAutoIncrement = true;
           }
           break;
         }
@@ -142,8 +138,7 @@ public class DatabaseUtils {
 
       // if code reaches here table exists and class has @Id annotation
       try {
-        List<PropertyInfo> propertyInfoList =
-            getObjectPropertyInfo(clazz.newInstance());
+        List<PropertyInfo> propertyInfoList = getObjectPropertyInfo(clazz.newInstance());
         List<PropertyMapping> propertyMappings = new ArrayList<>();
         // Match  database table columns to the Object properties
         for (ColumnInfo columnInfo : columnInfoList) {
@@ -159,13 +154,13 @@ public class DatabaseUtils {
 
           // add matched object property info and table column info to mappings
           if (propertyInfo != null) {
-        	  PropertyMapping propertyMapping = new PropertyMapping(
-                      propertyInfo.getPropertyName(),
-                      propertyInfo.getPropertyType(),
-                      columnInfo.getColumnName(),
-                      columnInfo.getColumnSqlDataType());
+            PropertyMapping propertyMapping =
+                new PropertyMapping(
+                    propertyInfo.getPropertyName(),
+                    propertyInfo.getPropertyType(),
+                    columnInfo.getColumnName(),
+                    columnInfo.getColumnSqlDataType());
             propertyMappings.add(propertyMapping);
-                        
           }
         }
 
@@ -179,7 +174,7 @@ public class DatabaseUtils {
     objectToTableMappingCache.put(clazz.getName(), tableMapping);
     return tableMapping;
   }
-  
+
   public List<ColumnInfo> getTableColumnInfo(String tableName) {
     Assert.hasLength(tableName, "tableName must not be empty");
     try {
@@ -218,8 +213,7 @@ public class DatabaseUtils {
       throw new RuntimeException();
     }
   }
-  
-  
+
   /**
    * Gets the resultSet lower case column names ie the column names in the 'select' statement of the
    * sql
@@ -241,7 +235,7 @@ public class DatabaseUtils {
     }
     return rsColNames;
   }
-  
+
   /**
    * Get the fully qualified table name. If schema is present then will be schemaName.tableName
    * otherwise just tableName
@@ -256,7 +250,7 @@ public class DatabaseUtils {
     }
     return tableName;
   }
-  
+
   public boolean isEmpty(String str) {
     return str == null || str.length() == 0;
   }
@@ -264,7 +258,7 @@ public class DatabaseUtils {
   public boolean isNotEmpty(String str) {
     return !isEmpty(str);
   }
-  
+
   @SuppressWarnings("all")
   public boolean isEmpty(Collection coll) {
     return (coll == null || coll.isEmpty());
@@ -371,11 +365,10 @@ public class DatabaseUtils {
    * @param str snake case string
    * @return the camel case string
    */
-  public  String convertSnakeToCamelCase(String str) {
+  public String convertSnakeToCamelCase(String str) {
     return JdbcUtils.convertUnderscoreNameToPropertyName(str);
   }
-  
-  
+
   /**
    * Converts an object to a Map. The map key will be object property name and value with
    * corresponding object property value.
@@ -393,7 +386,7 @@ public class DatabaseUtils {
     }
     return camelCaseAttrs;
   }
-  
+
   /**
    * Converts an object to a map with key as database column names and values the corresponding
    * object value. Camel case property names are converted to snake case. For example property name
@@ -404,7 +397,7 @@ public class DatabaseUtils {
    * @return A map with keys that are in snake case to match database column names and values
    *     corresponding to the object property
    */
-  public  Map<String, Object> convertToSnakeCaseAttributes(Object obj) {
+  public Map<String, Object> convertToSnakeCaseAttributes(Object obj) {
     Assert.notNull(obj, "Object must not be null");
 
     Map<String, Object> camelCaseAttrs = convertObjectToMap(obj);

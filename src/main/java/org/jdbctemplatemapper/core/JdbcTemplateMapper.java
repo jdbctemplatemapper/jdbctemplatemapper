@@ -164,7 +164,7 @@ public class JdbcTemplateMapper {
   //     value - the selectColumns string
   private Map<String, String> selectColumnsCache = new ConcurrentHashMap<>();
 
-  private DatabaseUtils dbUtils;
+  private MappingHelper mappingHelper;
 
   /**
    * The constructor.
@@ -186,7 +186,7 @@ public class JdbcTemplateMapper {
     this.jdbcTemplate = jdbcTemplate;
     npJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
     
-    dbUtils = new DatabaseUtils(jdbcTemplate, schemaName);
+    mappingHelper = new MappingHelper(jdbcTemplate, schemaName);
   }
 
   /**
@@ -291,7 +291,7 @@ public class JdbcTemplateMapper {
    * @param catalogName The catalog
    */
   public void setCatalogName(String catalogName) {
-    dbUtils.setCatalogName(catalogName);
+    mappingHelper.setCatalogName(catalogName);
   }
 
   /**
@@ -302,7 +302,7 @@ public class JdbcTemplateMapper {
    * @param metaDataColumnNamePattern
    */
   public void setMetaDataColumnNamePattern(String metaDataColumnNamePattern) {
-    dbUtils.setMetaDataColumnNamePattern(metaDataColumnNamePattern);
+    mappingHelper.setMetaDataColumnNamePattern(metaDataColumnNamePattern);
   }
 
   /**
@@ -316,10 +316,10 @@ public class JdbcTemplateMapper {
   public <T> T findById(Object id, Class<T> clazz) {
     Assert.notNull(clazz, "Class must not be null");
 
-    TableMapping tableMapping = dbUtils.getTableMapping(clazz);
+    TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
     String sql =
         "SELECT * FROM "
-            + dbUtils.fullyQualifiedTableName(tableMapping.getTableName())
+            + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName())
             + " WHERE "
             + tableMapping.getIdColumnName()
             + " = ?";
@@ -342,8 +342,8 @@ public class JdbcTemplateMapper {
   public <T> List<T> findAll(Class<T> clazz) {
     Assert.notNull(clazz, "Class must not be null");
 
-    String tableName = dbUtils.getTableMapping(clazz).getTableName();
-    String sql = "SELECT * FROM " + dbUtils.fullyQualifiedTableName(tableName);
+    String tableName = mappingHelper.getTableMapping(clazz).getTableName();
+    String sql = "SELECT * FROM " + mappingHelper.fullyQualifiedTableName(tableName);
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
     return jdbcTemplate.query(sql, mapper);
   }
@@ -359,9 +359,9 @@ public class JdbcTemplateMapper {
   public <T> List<T> findAll(Class<T> clazz, String orderByClause) {
     Assert.notNull(clazz, "Class must not be null");
 
-    String tableName = dbUtils.getTableMapping(clazz).getTableName();
+    String tableName = mappingHelper.getTableMapping(clazz).getTableName();
     String sql =
-        "SELECT * FROM " + dbUtils.fullyQualifiedTableName(tableName) + " " + orderByClause;
+        "SELECT * FROM " + mappingHelper.fullyQualifiedTableName(tableName) + " " + orderByClause;
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
     return jdbcTemplate.query(sql, mapper);
   }
@@ -378,7 +378,7 @@ public class JdbcTemplateMapper {
   public void insert(Object obj) {
     Assert.notNull(obj, "Object must not be null");
 
-    TableMapping tableMapping = dbUtils.getTableMapping(obj.getClass());
+    TableMapping tableMapping = mappingHelper.getTableMapping(obj.getClass());
 
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
 
@@ -427,22 +427,22 @@ public class JdbcTemplateMapper {
       bw.setPropertyValue(versionPropertyName, 1);
     }
 
-    Map<String, Object> attributes = dbUtils.convertToSnakeCaseAttributes(obj);
+    Map<String, Object> attributes = mappingHelper.convertToSnakeCaseAttributes(obj);
 
     SimpleJdbcInsert jdbcInsert = simpleJdbcInsertCache.get(tableMapping.getTableName());
     if (jdbcInsert == null) {
       if (tableMapping.isIdAutoIncrement()) {
         jdbcInsert =
             new SimpleJdbcInsert(jdbcTemplate)
-                .withCatalogName(dbUtils.getCatalogName())
-                .withSchemaName(dbUtils.getSchemaName())
+                .withCatalogName(mappingHelper.getCatalogName())
+                .withSchemaName(mappingHelper.getSchemaName())
                 .withTableName(tableMapping.getTableName())
                 .usingGeneratedKeyColumns(tableMapping.getIdColumnName());
       } else {
         jdbcInsert =
             new SimpleJdbcInsert(jdbcTemplate)
-                .withCatalogName(dbUtils.getCatalogName())
-                .withSchemaName(dbUtils.getSchemaName())
+                .withCatalogName(mappingHelper.getCatalogName())
+                .withSchemaName(mappingHelper.getSchemaName())
                 .withTableName(tableMapping.getTableName());
       }
 
@@ -469,7 +469,7 @@ public class JdbcTemplateMapper {
   public Integer update(Object obj) {
     Assert.notNull(obj, "Object must not be null");
 
-    TableMapping tableMapping = dbUtils.getTableMapping(obj.getClass());
+    TableMapping tableMapping = mappingHelper.getTableMapping(obj.getClass());
 
     UpdateSqlAndParams updateSqlAndParams = updateSqlAndParamsCache.get(obj.getClass().getName());
 
@@ -486,7 +486,7 @@ public class JdbcTemplateMapper {
 
       Set<String> updatePropertyNames = new LinkedHashSet<>();
 
-      for (PropertyInfo propertyInfo : dbUtils.getObjectPropertyInfo(obj)) {
+      for (PropertyInfo propertyInfo : mappingHelper.getObjectPropertyInfo(obj)) {
         // if not a ignore property and has a table column mapping add it to the update property
         // list
         if (!ignoreAttrs.contains(propertyInfo.getPropertyName())
@@ -513,7 +513,7 @@ public class JdbcTemplateMapper {
     Assert.notNull(obj, "Object must not be null");
     Assert.notNull(propertyNames, "propertyNames must not be null");
 
-    TableMapping tableMapping = dbUtils.getTableMapping(obj.getClass());
+    TableMapping tableMapping = mappingHelper.getTableMapping(obj.getClass());
 
     // cachekey ex: className-propertyName1-propertyName2
     String cacheKey = obj.getClass().getName() + "-" + String.join("-", propertyNames);
@@ -592,11 +592,11 @@ public class JdbcTemplateMapper {
   public Integer delete(Object obj) {
     Assert.notNull(obj, "Object must not be null");
 
-    TableMapping tableMapping = dbUtils.getTableMapping(obj.getClass());
+    TableMapping tableMapping = mappingHelper.getTableMapping(obj.getClass());
 
     String sql =
         "delete from "
-            + dbUtils.fullyQualifiedTableName(tableMapping.getTableName())
+            + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName())
             + " where "
             + tableMapping.getIdColumnName()
             + "= ?";
@@ -616,10 +616,10 @@ public class JdbcTemplateMapper {
     Assert.notNull(clazz, "Class must not be null");
     Assert.notNull(id, "id must not be null");
 
-    TableMapping tableMapping = dbUtils.getTableMapping(clazz);
+    TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
     String sql =
         "delete from "
-            + dbUtils.fullyQualifiedTableName(tableMapping.getTableName())
+            + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName())
             + " where "
             + tableMapping.getIdColumnName()
             + " = ?";
@@ -645,11 +645,11 @@ public class JdbcTemplateMapper {
 
     String str = selectColumnsCache.get(tableName + "-" + tableAlias);
     if (str == null) {
-      List<ColumnInfo> tableColumnInfo = dbUtils.getTableColumnInfo(tableName);
-      if (dbUtils.isEmpty(tableColumnInfo)) {
+      List<ColumnInfo> tableColumnInfo = mappingHelper.getTableColumnInfo(tableName);
+      if (mappingHelper.isEmpty(tableColumnInfo)) {
         // try with uppercase table name
-        tableColumnInfo = dbUtils.getTableColumnInfo(tableName.toUpperCase());
-        if (dbUtils.isEmpty(tableColumnInfo)) {
+        tableColumnInfo = mappingHelper.getTableColumnInfo(tableName.toUpperCase());
+        if (mappingHelper.isEmpty(tableColumnInfo)) {
           throw new RuntimeException("Could not get column info for table named " + tableName);
         }
       }
@@ -679,7 +679,7 @@ public class JdbcTemplateMapper {
 
     Set<String> params = new HashSet<>();
     StringBuilder sqlBuilder = new StringBuilder("UPDATE ");
-    sqlBuilder.append(dbUtils.fullyQualifiedTableName(tableMapping.getTableName()));
+    sqlBuilder.append(mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()));
     sqlBuilder.append(" SET ");
 
     String versionColumnName = tableMapping.getColumnName(versionPropertyName);
@@ -778,7 +778,7 @@ public class JdbcTemplateMapper {
       for (SelectMapper selectMapper : selectMappers) {
         resultMap.put(selectMapper.getSqlColumnPrefix(), new LinkedHashMap<>());
       }
-      List<String> resultSetColumnNames = dbUtils.getResultSetColumnNames(rs);
+      List<String> resultSetColumnNames = mappingHelper.getResultSetColumnNames(rs);
       while (rs.next()) {
         for (SelectMapper selectMapper : selectMappers) {
           Object id = rs.getObject(selectMapper.getSqlColumnPrefix() + "id");
@@ -882,9 +882,9 @@ public class JdbcTemplateMapper {
       BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
       // need below for java.sql.Timestamp to java.time.LocalDateTime conversion etc
       bw.setConversionService(defaultConversionService);
-      for (PropertyInfo propertyInfo : dbUtils.getObjectPropertyInfo(obj)) {
-        String columnName = dbUtils.convertCamelToSnakeCase(propertyInfo.getPropertyName());
-        if (dbUtils.isNotEmpty(prefix)) {
+      for (PropertyInfo propertyInfo : mappingHelper.getObjectPropertyInfo(obj)) {
+        String columnName = mappingHelper.convertCamelToSnakeCase(propertyInfo.getPropertyName());
+        if (mappingHelper.isNotEmpty(prefix)) {
           columnName = prefix + columnName;
         }
         int index = resultSetColumnNames.indexOf(columnName.toLowerCase());
