@@ -58,7 +58,11 @@ public class TableMapping {
   
   public String getIdColumnName() {
 	  return getIdPropertyMapping().getColumnName();
-  }  
+  } 
+  
+  public boolean isIdAutoIncrement() {
+	  return getIdPropertyMapping().isAutoIncrement();
+  }
 
   public PropertyMapping getIdPropertyMapping() {
       for (PropertyMapping mapping : propertyMappings) {

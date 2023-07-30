@@ -96,7 +96,8 @@ public class MappingUtils {
                       propertyInfo.getPropertyName(),
                       propertyInfo.getPropertyType(),
                       columnInfo.getColumnName(),
-                      columnInfo.getColumnSqlDataType());
+                      columnInfo.getColumnSqlDataType(),
+                      columnInfo.isAutoIncrement());
             propertyMappings.add(propertyMapping);
             
           }

@@ -5,7 +5,6 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -69,17 +68,20 @@ public class DatabaseUtils {
             JdbcUtils.extractDatabaseMetaData(
                 jdbcTemplate.getDataSource(),
                 new DatabaseMetaDataCallback<List<ColumnInfo>>() {
-                  public List<ColumnInfo> processMetaData(DatabaseMetaData metadata)
+                  public List<ColumnInfo> processMetaData(DatabaseMetaData dbMetadata)
                       throws SQLException, MetaDataAccessException {
                     ResultSet rs = null;
                     try {
                       List<ColumnInfo> columnInfoList = new ArrayList<>();
                       rs =
-                          metadata.getColumns(
+                          dbMetadata.getColumns(
                               catalogName, schemaName, tableName, metaDataColumnNamePattern);
+                      ResultSetMetaData rsMetaData = rs.getMetaData();
+                      int index = 1;// jdbc indexes start at 1
                       while (rs.next()) {
                         columnInfoList.add(
-                            new ColumnInfo(rs.getString("COLUMN_NAME"), rs.getInt("DATA_TYPE")));
+                            new ColumnInfo(rs.getString("COLUMN_NAME"), rs.getInt("DATA_TYPE"), rsMetaData.isAutoIncrement(index)));
+                        index++;
                       }
                       if (CommonUtils.isNotEmpty(columnInfoList)) {
                         tableColumnInfoCache.put(tableName, columnInfoList);
