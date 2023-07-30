@@ -53,7 +53,7 @@ public class JdbcTemplateMapperLongTest {
     product.setName("hat");
     product.setCost(12.25);
 
-    jdbcTemplateMapper.insertWithId(product);
+    jdbcTemplateMapper.insert(product);
 
     product = jdbcTemplateMapper.findById(1000000000001L, ProductLong.class);
     assertNotNull(product.getId());

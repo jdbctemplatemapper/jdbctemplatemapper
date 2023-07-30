@@ -76,12 +76,9 @@ public class DatabaseUtils {
                       rs =
                           dbMetadata.getColumns(
                               catalogName, schemaName, tableName, metaDataColumnNamePattern);
-                      ResultSetMetaData rsMetaData = rs.getMetaData();
-                      int index = 1;// jdbc indexes start at 1
                       while (rs.next()) {
                         columnInfoList.add(
-                            new ColumnInfo(rs.getString("COLUMN_NAME"), rs.getInt("DATA_TYPE"), rsMetaData.isAutoIncrement(index)));
-                        index++;
+                            new ColumnInfo(rs.getString("COLUMN_NAME"), rs.getInt("DATA_TYPE")));
                       }
                       if (CommonUtils.isNotEmpty(columnInfoList)) {
                         tableColumnInfoCache.put(tableName, columnInfoList);

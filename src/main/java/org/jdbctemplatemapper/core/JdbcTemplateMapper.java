@@ -27,22 +27,23 @@ import org.springframework.util.Assert;
 
 /**
  * <pre>
- * Spring's JdbcTemplate gives full control of data access using SQL. Its a is better option for complex
+ * Spring's JdbcTemplate gives full control of data access using SQL. It is a better option for complex
  * enterprise applications than an ORM (ORM magic/nuances get in the way for large and complex
  * applications). Even though JdbcTemplate abstracts away a lot of the boiler plate code needed by JDBC, it is
  * verbose.
  *
  * JdbcTemplateMapper tries to mitigate the verboseness. It is a helper utility for JdbcTemplate (NOT a replacement)
- * It provides simple CRUD one liners and less verbose ways to query relationships. Your project code will be a mix of
+ * It provides simple CRUD one lines. Your project code will be a mix of
  * JdbcTemplate and JdbcTemplateMapper. Use JdbcTemplateMapper's more concise features where appropriate.
  *
  * <pre>
  * Features:
  * 1) Simple CRUD one liners
  * 2) Can be configured for:
- *     a) auto assign created on, updated on.
- *     b) auto assign created by, updated by using an implementation of IRecordOperatorResolver.
- *     c) optimistic locking functionality for updates by configuring a version property.
+ *     *) optimistic locking functionality for updates by configuring a version property.
+ *     *) auto assign created on, updated on.
+ *     *) auto assign created by, updated by using an implementation of IRecordOperatorResolver.
+ *
  * 3) Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases).
  *    Should work with all other relational databases.
  *
@@ -52,10 +53,10 @@ import org.springframework.util.Assert;
  *   first_name/FIRST_NAME and last_name/LAST_NAME in the database table. If you are using a
  *   case sensitive database installation and have mixed case database column names like 'Last_Name' you could
  *   run into problems.
- * 2) The database able columns map to object properties and has no concept of relationships so foriegn keys in your
- *    database will need a corresponding field in your model so there will be an extra property for a relationship.
+ * 2) The database table columns map to object properties and has no concept of relationships so foreign keys in your
+ *    database will need a corresponding field in your model so your model will have to have the extra property for relationships.
  *
- *    So for example if and 'Order" it tied to a 'Customer' you will need to have the customerId as a property on Order.
+ *    So for example if an 'Order" is tied to a 'Customer' you will need to have the customerId as a property in your Order model.
  *
  *
  * Examples of simple CRUD:
@@ -385,11 +386,23 @@ public class JdbcTemplateMapper {
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
 
     Object idValue = bw.getPropertyValue(tableMapping.getIdPropertyName());
-    if (idValue != null) {
-      throw new RuntimeException(
-          "For method insert() the objects "
-              + tableMapping.getIdPropertyName()
-              + " property has to be null since this insert is for an object whose id is autoincrement in database.");
+
+    if (tableMapping.isIdAutoIncrement()) {
+      if (idValue != null) {
+        throw new RuntimeException(
+            "For insert() the object's "
+                + tableMapping.getIdPropertyName()
+                + " property has to be null since this insert is for an object whose id is autoincrement in database.");
+      }
+    } else {
+      if (idValue == null) {
+        throw new RuntimeException(
+            "For insert() "
+                + obj.getClass().getName()
+                + "."
+                + tableMapping.getIdPropertyName()
+                + " property cannot be null");
+      }
     }
 
     LocalDateTime now = LocalDateTime.now();
@@ -421,81 +434,33 @@ public class JdbcTemplateMapper {
 
     SimpleJdbcInsert jdbcInsert = simpleJdbcInsertCache.get(tableMapping.getTableName());
     if (jdbcInsert == null) {
-      jdbcInsert =
+    	if (tableMapping.isIdAutoIncrement()) {
+       jdbcInsert =
           new SimpleJdbcInsert(jdbcTemplate)
               .withCatalogName(dbUtils.getCatalogName())
               .withSchemaName(dbUtils.getSchemaName())
               .withTableName(tableMapping.getTableName())
               .usingGeneratedKeyColumns(tableMapping.getIdColumnName());
-      simpleJdbcInsertCache.put(tableMapping.getTableName(), jdbcInsert);
-    }
-
-    Number idNumber = jdbcInsert.executeAndReturnKey(attributes);
-    bw.setPropertyValue("id", idNumber); // set auto increment id value on object
-  }
-
-  /**
-   * Inserts an object whose id in database is NOT auto increment. In this case the object's 'id'
-   * has to be assigned up front (using a sequence or some other way) and cannot be null.
-   *
-   * <p>Also assigns created by, created on, updated by, updated on, version if these properties
-   * exist for the object and the JdbcTemplateMapper is configured for them.
-   *
-   * @param obj The object to be saved
-   */
-  public void insertWithId(Object obj) {
-    Assert.notNull(obj, "Object must not be null");
-
-    TableMapping tableMapping = mappingUtils.getTableMapping(obj.getClass());
-
-    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
-
-    Object idValue = bw.getPropertyValue(tableMapping.getIdPropertyName());
-    if (idValue == null) {
-      throw new RuntimeException(
-          "For method insertById() "
-              + obj.getClass().getName()
-              + "."
-              + tableMapping.getIdPropertyName()
-              + " property cannot be null.");
-    }
-
-    LocalDateTime now = LocalDateTime.now();
-    if (createdOnPropertyName != null
-        && tableMapping.getColumnName(createdOnPropertyName) != null) {
-      bw.setPropertyValue(createdOnPropertyName, now);
-    }
-    if (createdByPropertyName != null
-        && recordOperatorResolver != null
-        && tableMapping.getColumnName(createdByPropertyName) != null) {
-      bw.setPropertyValue(createdByPropertyName, recordOperatorResolver.getRecordOperator());
-    }
-    if (updatedOnPropertyName != null
-        && tableMapping.getColumnName(updatedOnPropertyName) != null) {
-      bw.setPropertyValue(updatedOnPropertyName, now);
-    }
-    if (updatedByPropertyName != null
-        && recordOperatorResolver != null
-        && tableMapping.getColumnName(updatedByPropertyName) != null) {
-      bw.setPropertyValue(updatedByPropertyName, recordOperatorResolver.getRecordOperator());
-    }
-    if (versionPropertyName != null && tableMapping.getColumnName(versionPropertyName) != null) {
-      bw.setPropertyValue(versionPropertyName, 1);
-    }
-
-    SimpleJdbcInsert jdbcInsert = simpleJdbcInsertCache.get(tableMapping.getTableName());
-    if (jdbcInsert == null) {
-      jdbcInsert =
-          new SimpleJdbcInsert(jdbcTemplate)
+    	}
+    	else {
+      	      jdbcInsert =
+ 	          new SimpleJdbcInsert(jdbcTemplate)
               .withCatalogName(dbUtils.getCatalogName())
               .withSchemaName(dbUtils.getSchemaName())
               .withTableName(tableMapping.getTableName());
-
+    	}
+      
       simpleJdbcInsertCache.put(tableMapping.getTableName(), jdbcInsert);
     }
 
-    Map<String, Object> attributes = CommonUtils.convertToSnakeCaseAttributes(obj);
-    jdbcInsert.execute(attributes);
+    if (tableMapping.isIdAutoIncrement()) {
+      Number idNumber = jdbcInsert.executeAndReturnKey(attributes);
+      bw.setPropertyValue(
+          tableMapping.getIdPropertyName(), idNumber); // set the auto increment id value on object
+    }
+    else {
+    	jdbcInsert.execute(attributes);
+    }
   }
 
   /**
@@ -665,81 +630,7 @@ public class JdbcTemplateMapper {
     return jdbcTemplate.update(sql, id);
   }
 
-  /**
-   * Returns lists for each mapper passed in as an argument. The values in the list are UNIQUE and
-   * in same order as the ResultSet values.
-   *
-   * @param rs The jdbc result set
-   * @param selectMappers An array of sql mappers.
-   * @return Map <pre>
-   *         key: 'sqlColumnPrefix' of each sqlMapper
-   *         value: unique list of objects mapped by the sqlMapper
-   */
-  @SuppressWarnings("all")
-  public Map<String, List> multipleModelMapper(ResultSet rs, SelectMapper... selectMappers) {
-    Assert.notNull(selectMappers, "selectMappers must not be null");
-
-    try {
-      Map<String, LinkedHashMap<Object, Object>> tempMap =
-          multipleModelMapperRaw(rs, selectMappers);
-      Map<String, List> resultMap = new HashMap<>();
-      for (String key : tempMap.keySet()) {
-        resultMap.put(key, new ArrayList<Object>(tempMap.get(key).values()));
-      }
-      return resultMap;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  /**
-   * Returns a LinkedHashmap for each mapper passed in as an argument. The values in the hashmap are
-   * in same order as the ResultSet values.
-   *
-   * @param rs The jdbc result set
-   * @param selectMappers array of sql mappers.
-   * @return Map <pre>
-   *        key: 'sqlColumnPrefix' of each sqlMapper,
-   *        value: LinkedHashMap of objects mapped by sqlMapper.
-   *                   LinkedHashMap key - id of object
-   *                   LinkedHashMap value - the object
-   */
-  @SuppressWarnings("all")
-  private Map<String, LinkedHashMap<Object, Object>> multipleModelMapperRaw(
-      ResultSet rs, SelectMapper... selectMappers) {
-    Assert.notNull(selectMappers, "selectMappers must not be null");
-
-    try {
-      // LinkedHashMap used to retain the order of insertion of records
-      // Map key - SelectMapper's sql column prefix
-      // LinkedHashMap key - id of object
-      // LinkedHashMap value - the object
-      Map<String, LinkedHashMap<Object, Object>> resultMap = new HashMap<>();
-      for (SelectMapper selectMapper : selectMappers) {
-        resultMap.put(selectMapper.getSqlColumnPrefix(), new LinkedHashMap<>());
-      }
-      List<String> resultSetColumnNames = dbUtils.getResultSetColumnNames(rs);
-      while (rs.next()) {
-        for (SelectMapper selectMapper : selectMappers) {
-          Object id = rs.getObject(selectMapper.getSqlColumnPrefix() + "id");
-          if (!rs.wasNull()) {
-            Object obj =
-                constructInstance(
-                    selectMapper.getClazz(),
-                    rs,
-                    selectMapper.getSqlColumnPrefix(),
-                    resultSetColumnNames);
-            resultMap.get(selectMapper.getSqlColumnPrefix()).put(id, obj);
-          }
-        }
-      }
-
-      return resultMap;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
+ 
   /**
    * Generates a string which can be used in a sql select statement with all the columns of the
    * table.
@@ -838,6 +729,82 @@ public class JdbcTemplateMapper {
 
     return updateSqlAndParams;
   }
+  
+  /**
+   * Returns lists for each mapper passed in as an argument. The values in the list are UNIQUE and
+   * in same order as the ResultSet values.
+   *
+   * @param rs The jdbc result set
+   * @param selectMappers An array of sql mappers.
+   * @return Map <pre>
+   *         key: 'sqlColumnPrefix' of each sqlMapper
+   *         value: unique list of objects mapped by the sqlMapper
+   */
+  @SuppressWarnings("all")
+  public Map<String, List> multipleModelMapper(ResultSet rs, SelectMapper... selectMappers) {
+    Assert.notNull(selectMappers, "selectMappers must not be null");
+
+    try {
+      Map<String, LinkedHashMap<Object, Object>> tempMap =
+          multipleModelMapperRaw(rs, selectMappers);
+      Map<String, List> resultMap = new HashMap<>();
+      for (String key : tempMap.keySet()) {
+        resultMap.put(key, new ArrayList<Object>(tempMap.get(key).values()));
+      }
+      return resultMap;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Returns a LinkedHashmap for each mapper passed in as an argument. The values in the hashmap are
+   * in same order as the ResultSet values.
+   *
+   * @param rs The jdbc result set
+   * @param selectMappers array of sql mappers.
+   * @return Map <pre>
+   *        key: 'sqlColumnPrefix' of each sqlMapper,
+   *        value: LinkedHashMap of objects mapped by sqlMapper.
+   *                   LinkedHashMap key - id of object
+   *                   LinkedHashMap value - the object
+   */
+  @SuppressWarnings("all")
+  private Map<String, LinkedHashMap<Object, Object>> multipleModelMapperRaw(
+      ResultSet rs, SelectMapper... selectMappers) {
+    Assert.notNull(selectMappers, "selectMappers must not be null");
+
+    try {
+      // LinkedHashMap used to retain the order of insertion of records
+      // Map key - SelectMapper's sql column prefix
+      // LinkedHashMap key - id of object
+      // LinkedHashMap value - the object
+      Map<String, LinkedHashMap<Object, Object>> resultMap = new HashMap<>();
+      for (SelectMapper selectMapper : selectMappers) {
+        resultMap.put(selectMapper.getSqlColumnPrefix(), new LinkedHashMap<>());
+      }
+      List<String> resultSetColumnNames = dbUtils.getResultSetColumnNames(rs);
+      while (rs.next()) {
+        for (SelectMapper selectMapper : selectMappers) {
+          Object id = rs.getObject(selectMapper.getSqlColumnPrefix() + "id");
+          if (!rs.wasNull()) {
+            Object obj =
+                constructInstance(
+                    selectMapper.getClazz(),
+                    rs,
+                    selectMapper.getSqlColumnPrefix(),
+                    resultSetColumnNames);
+            resultMap.get(selectMapper.getSqlColumnPrefix()).put(id, obj);
+          }
+        }
+      }
+
+      return resultMap;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
 
   private Integer issueUpdate(
       UpdateSqlAndParams updateSqlAndParams, Object obj, TableMapping tableMapping) {

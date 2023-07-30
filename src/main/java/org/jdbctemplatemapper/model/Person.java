@@ -1,7 +1,12 @@
 package org.jdbctemplatemapper.model;
 
+import org.jdbctemplatemapper.annotation.Id;
+import org.jdbctemplatemapper.annotation.IdType;
+
 public class Person {
+  @Id(type = IdType.AUTO_INCREMENT)
   private Integer id;
+
   private String lastName;
   private String firstName;
 

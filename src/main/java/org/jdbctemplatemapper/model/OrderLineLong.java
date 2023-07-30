@@ -1,7 +1,12 @@
 package org.jdbctemplatemapper.model;
 
+import org.jdbctemplatemapper.annotation.Id;
+import org.jdbctemplatemapper.annotation.IdType;
+
 public class OrderLineLong {
+  @Id(type = IdType.AUTO_INCREMENT)
   private Long id;
+
   private Long orderLongId;
   private Long productLongId;
   private Integer numOfUnits;

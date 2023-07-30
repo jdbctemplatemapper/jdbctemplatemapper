@@ -2,8 +2,10 @@ package org.jdbctemplatemapper.model;
 
 import java.time.LocalDateTime;
 
+import org.jdbctemplatemapper.annotation.Id;
+
 public class Product {
-  private Integer id;
+  @Id private Integer id;
   private String name;
   private Double cost;
 

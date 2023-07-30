@@ -2,11 +2,15 @@ package org.jdbctemplatemapper.model;
 
 import java.time.LocalDateTime;
 
+import org.jdbctemplatemapper.annotation.Id;
+import org.jdbctemplatemapper.annotation.IdType;
 import org.jdbctemplatemapper.annotation.Table;
 
 @Table(name = "person")
 public class Person2 {
+  @Id(type = IdType.AUTO_INCREMENT)
   private Integer id;
+
   private String lastName;
   private String firstName;
 

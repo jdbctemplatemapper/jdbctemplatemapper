@@ -10,10 +10,9 @@ public class PropertyMapping {
   private Class<?> propertyType;
   private String columnName;
   private int columnSqlDataType; // see java.sql.Types
-  private boolean autoIncrement = false;
 
   public PropertyMapping(
-      String propertyName, Class<?> propertyType, String columnName, int columnSqlDataType, boolean autoIncrement) {
+      String propertyName, Class<?> propertyType, String columnName, int columnSqlDataType) {
     if (propertyName == null || propertyType == null || columnName == null) {
       throw new IllegalArgumentException("propertyName, propertyType, columnName must not be null");
     }
@@ -21,7 +20,6 @@ public class PropertyMapping {
     this.propertyType = propertyType;
     this.columnName = columnName;
     this.columnSqlDataType = columnSqlDataType;
-    this.autoIncrement = autoIncrement;
   }
 
   public String getPropertyName() {
@@ -39,8 +37,5 @@ public class PropertyMapping {
   public int getColumnSqlDataType() {
     return columnSqlDataType;
   }
-  
-  public boolean isAutoIncrement() {
-	    return autoIncrement;
-}
+
 }

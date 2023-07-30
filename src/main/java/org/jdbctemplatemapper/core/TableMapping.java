@@ -13,6 +13,7 @@ import org.springframework.util.Assert;
 public class TableMapping {
   private String tableName;
   private String idPropertyName;
+  private boolean idAutoIncrement = false;
 
   // object property to database column mapping.
   // Only properties which have corresponding database column will be in this list.
@@ -60,8 +61,11 @@ public class TableMapping {
 	  return getIdPropertyMapping().getColumnName();
   } 
   
+  public void setIdAutoIncrement(boolean val) {
+	  this.idAutoIncrement = val;
+  }
   public boolean isIdAutoIncrement() {
-	  return getIdPropertyMapping().isAutoIncrement();
+	  return idAutoIncrement;
   }
 
   public PropertyMapping getIdPropertyMapping() {

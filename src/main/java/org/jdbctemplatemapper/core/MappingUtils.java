@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.jdbctemplatemapper.annotation.Id;
+import org.jdbctemplatemapper.annotation.IdType;
 import org.jdbctemplatemapper.annotation.Table;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.util.Assert;
@@ -48,10 +49,14 @@ public class MappingUtils {
 
       Id idAnnotation = null;
       String idPropertyName = null;
+      boolean isAutoIncrement = false;
       for (Field field : clazz.getDeclaredFields()) {
         idAnnotation = AnnotationUtils.findAnnotation(field, Id.class);
         if (idAnnotation != null) {
           idPropertyName = field.getName();
+          if (idAnnotation.type() == IdType.AUTO_INCREMENT) {
+        	  isAutoIncrement = true;
+          }
           break;
         }
       }
@@ -96,14 +101,14 @@ public class MappingUtils {
                       propertyInfo.getPropertyName(),
                       propertyInfo.getPropertyType(),
                       columnInfo.getColumnName(),
-                      columnInfo.getColumnSqlDataType(),
-                      columnInfo.isAutoIncrement());
+                      columnInfo.getColumnSqlDataType());
             propertyMappings.add(propertyMapping);
-            
+                        
           }
         }
 
         tableMapping = new TableMapping(tableName, idPropertyName, propertyMappings);
+        tableMapping.setIdAutoIncrement(isAutoIncrement);
 
       } catch (Exception e) {
         throw new RuntimeException(e);

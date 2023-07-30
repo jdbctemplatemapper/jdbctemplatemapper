@@ -1,6 +1,10 @@
 package org.jdbctemplatemapper.model;
 
+import org.jdbctemplatemapper.annotation.Id;
+import org.jdbctemplatemapper.annotation.IdType;
+
 public class CustomerLong {
+	@Id(type=IdType.AUTO_INCREMENT)
   private Long id;
   private String firstName;
   private String lastName;

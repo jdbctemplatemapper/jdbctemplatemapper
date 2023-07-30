@@ -2,8 +2,10 @@ package org.jdbctemplatemapper.model;
 
 import java.time.LocalDateTime;
 
+import org.jdbctemplatemapper.annotation.Id;
+
 public class ProductLong {
-  private Long id;
+  @Id private Long id;
   private String name;
   private Double cost;
   private LocalDateTime createdOn;

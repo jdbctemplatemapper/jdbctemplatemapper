@@ -4,10 +4,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.jdbctemplatemapper.annotation.Id;
+import org.jdbctemplatemapper.annotation.IdType;
 
 public class OrderLong {
-	@Id
+  @Id(type = IdType.AUTO_INCREMENT)
   private Long id;
+
   private LocalDateTime orderDate;
   private Long customerLongId;
   private String status;

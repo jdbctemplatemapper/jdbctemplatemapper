@@ -3,11 +3,15 @@ package org.jdbctemplatemapper.model;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.jdbctemplatemapper.annotation.Id;
+import org.jdbctemplatemapper.annotation.IdType;
 import org.jdbctemplatemapper.annotation.Table;
 
 @Table(name = "orders")
 public class Order {
+  @Id(type = IdType.AUTO_INCREMENT)
   private Integer id;
+
   private LocalDateTime orderDate;
   private Integer customerId;
   private String status;
