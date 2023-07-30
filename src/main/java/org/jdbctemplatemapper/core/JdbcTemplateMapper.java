@@ -132,15 +132,13 @@ import org.springframework.util.Assert;
  * @author ajoseph
  */
 public class JdbcTemplateMapper {
-  private JdbcTemplate jdbcTemplate;
-  private NamedParameterJdbcTemplate npJdbcTemplate;
+  private final JdbcTemplate jdbcTemplate;
+  private final NamedParameterJdbcTemplate npJdbcTemplate;
+
+  private final MappingHelper mappingHelper;
+
   private IRecordOperatorResolver recordOperatorResolver;
 
-  // TONY private String catalogName;
-  // TONY private String schemaName;
-  // this is for the call to databaseMetaData.getColumns() just in case a database needs something
-  // other than null
-  // TONY private String metaDataColumnNamePattern;
   private String createdByPropertyName;
   private String createdOnPropertyName;
   private String updatedByPropertyName;
@@ -164,8 +162,6 @@ public class JdbcTemplateMapper {
   //     value - the selectColumns string
   private Map<String, String> selectColumnsCache = new ConcurrentHashMap<>();
 
-  private MappingHelper mappingHelper;
-
   /**
    * The constructor.
    *
@@ -176,7 +172,7 @@ public class JdbcTemplateMapper {
   }
 
   /**
-   * The constructor.
+   * Constructor.
    *
    * @param dataSource The dataSource for the mapper
    * @param schemaName database schema name.
@@ -185,8 +181,48 @@ public class JdbcTemplateMapper {
     Assert.notNull(jdbcTemplate, "jdbcTemplate must not be null");
     this.jdbcTemplate = jdbcTemplate;
     npJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
-    
+
     mappingHelper = new MappingHelper(jdbcTemplate, schemaName);
+  }
+
+  /**
+   * Constructor.
+   *
+   * @param dataSource The dataSource for the mapper
+   * @param schemaName database schema name.
+   * @param catalogName database catalog name.
+   */
+  public JdbcTemplateMapper(JdbcTemplate jdbcTemplate, String schemaName, String catalogName) {
+    Assert.notNull(jdbcTemplate, "jdbcTemplate must not be null");
+    this.jdbcTemplate = jdbcTemplate;
+
+    npJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
+
+    mappingHelper = new MappingHelper(jdbcTemplate, schemaName, catalogName);
+  }
+
+  /**
+   * Constructor.
+   *
+   * @param dataSource - The dataSource for the mapper
+   * @param schemaName - database schema name.
+   * @param catalogName - database catalog name.
+   * @param metaDataColumnNamePattern - For most jdbc drivers when getting column metadata from database
+   *     the metaDataColumnNamePattern argument of null returns all the columns (which is the default for
+   *     JdbcTemplateMapper). Some jdbc drivers may require to pass something like '%'.
+   */
+  public JdbcTemplateMapper(
+      JdbcTemplate jdbcTemplate,
+      String schemaName,
+      String catalogName,
+      String metaDataColumnNamePattern) {
+    Assert.notNull(jdbcTemplate, "jdbcTemplate must not be null");
+    this.jdbcTemplate = jdbcTemplate;
+
+    npJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
+
+    mappingHelper =
+        new MappingHelper(jdbcTemplate, schemaName, catalogName, metaDataColumnNamePattern);
   }
 
   /**
@@ -283,26 +319,6 @@ public class JdbcTemplateMapper {
   public JdbcTemplateMapper withVersionPropertyName(String propName) {
     this.versionPropertyName = propName;
     return this;
-  }
-
-  /**
-   * For databases which have a catalog set the catalog name
-   *
-   * @param catalogName The catalog
-   */
-  public void setCatalogName(String catalogName) {
-    mappingHelper.setCatalogName(catalogName);
-  }
-
-  /**
-   * For most jdbc drivers when getting column metadata using jdbc, the columnPattern argument null
-   * returns all the columns (which is the default for JdbcTemplateMapper). Some jdbc drivers may
-   * require to pass something like '%'. Use this method to set the column pattern.
-   *
-   * @param metaDataColumnNamePattern
-   */
-  public void setMetaDataColumnNamePattern(String metaDataColumnNamePattern) {
-    mappingHelper.setMetaDataColumnNamePattern(metaDataColumnNamePattern);
   }
 
   /**

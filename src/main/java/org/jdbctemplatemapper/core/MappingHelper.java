@@ -32,7 +32,7 @@ public class MappingHelper {
 
   // Convert camel case to snake case regex pattern. Pattern is thread safe
   private static Pattern TO_SNAKE_CASE_PATTERN = Pattern.compile("(.)(\\p{Upper})");
-  
+
   // Map key - table name,
   //     value - the list of database column names
   private Map<String, List<ColumnInfo>> tableColumnInfoCache = new ConcurrentHashMap<>();
@@ -49,37 +49,44 @@ public class MappingHelper {
   //     value - list of property names
   private Map<String, List<PropertyInfo>> objectPropertyInfoCache = new ConcurrentHashMap<>();
 
-  private JdbcTemplate jdbcTemplate;
-  private String schemaName;
-  private String catalogName = null;
+  private final JdbcTemplate jdbcTemplate;
+  private final String schemaName;
+  private final String catalogName;
 
-  // this is for the call to databaseMetaData.getColumns() just in case a database needs something
-  // other than null
-  private String metaDataColumnNamePattern = null;
+  // For most jdbc drivers when getting column metadata using jdbc, the columnPattern argument null
+  // returns all the columns (which is the default for JdbcTemplateMapper). Some jdbc drivers may
+  // require to pass something like '%'.
+  private final String metaDataColumnNamePattern;
 
   public MappingHelper(JdbcTemplate jdbcTemplate, String schemaName) {
+    this(jdbcTemplate, schemaName, null, null);
+  }
+
+  public MappingHelper(JdbcTemplate jdbcTemplate, String schemaName, String catalogName) {
+    this(jdbcTemplate, schemaName, catalogName, null);
+  }
+
+  public MappingHelper(
+      JdbcTemplate jdbcTemplate,
+      String schemaName,
+      String catalogName,
+      String metaDataColumnNamePattern) {
     this.jdbcTemplate = jdbcTemplate;
     this.schemaName = schemaName;
+    this.catalogName = catalogName;
+    this.metaDataColumnNamePattern = metaDataColumnNamePattern;
   }
 
   public String getSchemaName() {
     return schemaName;
   }
 
-  public void setSchemaName(String schemaName) {
-    this.schemaName = schemaName;
-  }
-
   public String getCatalogName() {
     return catalogName;
   }
 
-  public void setCatalogName(String catalogName) {
-    this.catalogName = catalogName;
-  }
-
-  public void setMetaDataColumnNamePattern(String metaDataColumnNamePattern) {
-    this.metaDataColumnNamePattern = metaDataColumnNamePattern;
+  public String getMetaDataColumnNamePattern() {
+    return metaDataColumnNamePattern;
   }
 
   /**
