@@ -51,11 +51,11 @@ public class MappingHelper {
 
   private JdbcTemplate jdbcTemplate;
   private String schemaName;
-  private String catalogName;
+  private String catalogName = null;
 
   // this is for the call to databaseMetaData.getColumns() just in case a database needs something
   // other than null
-  private String metaDataColumnNamePattern;
+  private String metaDataColumnNamePattern = null;
 
   public MappingHelper(JdbcTemplate jdbcTemplate, String schemaName) {
     this.jdbcTemplate = jdbcTemplate;
@@ -107,13 +107,13 @@ public class MappingHelper {
 
       Id idAnnotation = null;
       String idPropertyName = null;
-      boolean isAutoIncrement = false;
+      boolean isIdAutoIncrement = false;
       for (Field field : clazz.getDeclaredFields()) {
         idAnnotation = AnnotationUtils.findAnnotation(field, Id.class);
         if (idAnnotation != null) {
           idPropertyName = field.getName();
           if (idAnnotation.type() == IdType.AUTO_INCREMENT) {
-            isAutoIncrement = true;
+            isIdAutoIncrement = true;
           }
           break;
         }
@@ -165,7 +165,7 @@ public class MappingHelper {
         }
 
         tableMapping = new TableMapping(tableName, idPropertyName, propertyMappings);
-        tableMapping.setIdAutoIncrement(isAutoIncrement);
+        tableMapping.setIdAutoIncrement(isIdAutoIncrement);
 
       } catch (Exception e) {
         throw new RuntimeException(e);
