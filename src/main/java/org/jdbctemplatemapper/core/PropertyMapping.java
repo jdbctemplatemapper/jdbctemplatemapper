@@ -37,4 +37,5 @@ public class PropertyMapping {
   public int getColumnSqlDataType() {
     return columnSqlDataType;
   }
+
 }

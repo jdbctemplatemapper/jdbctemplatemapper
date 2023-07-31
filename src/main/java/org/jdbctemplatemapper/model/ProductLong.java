@@ -2,8 +2,10 @@ package org.jdbctemplatemapper.model;
 
 import java.time.LocalDateTime;
 
+import org.jdbctemplatemapper.annotation.Id;
+
 public class ProductLong {
-  private Long id;
+  @Id private Long productId;
   private String name;
   private Double cost;
   private LocalDateTime createdOn;
@@ -12,12 +14,12 @@ public class ProductLong {
   private String updatedBy;
   private Integer version;
 
-  public Long getId() {
-    return id;
+  public Long getProductId() {
+    return productId;
   }
 
-  public void setId(Long id) {
-    this.id = id;
+  public void setProductId(Long id) {
+    this.productId = id;
   }
 
   public String getName() {

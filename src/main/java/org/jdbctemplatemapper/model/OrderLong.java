@@ -3,8 +3,13 @@ package org.jdbctemplatemapper.model;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.jdbctemplatemapper.annotation.Id;
+import org.jdbctemplatemapper.annotation.IdType;
+
 public class OrderLong {
-  private Long id;
+  @Id(type = IdType.AUTO_INCREMENT)
+  private Long orderId;
+
   private LocalDateTime orderDate;
   private Long customerLongId;
   private String status;
@@ -18,12 +23,12 @@ public class OrderLong {
   private CustomerLong customer;
   private List<OrderLineLong> orderLines;
 
-  public Long getId() {
-    return id;
+  public Long getOrderId() {
+    return orderId;
   }
 
-  public void setId(Long id) {
-    this.id = id;
+  public void setOrderId(Long id) {
+    this.orderId = id;
   }
 
   public LocalDateTime getOrderDate() {

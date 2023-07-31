@@ -2,8 +2,12 @@ package org.jdbctemplatemapper.model;
 
 import java.time.LocalDateTime;
 
+import org.jdbctemplatemapper.annotation.Id;
+import org.jdbctemplatemapper.annotation.IdType;
+
 public class Customer {
-  private Integer id;
+	@Id(type=IdType.AUTO_INCREMENT)
+  private Integer customerId;
   private String firstName;
   private String lastName;
 
@@ -15,12 +19,12 @@ public class Customer {
   private String updatedBy;
   private String version;
 
-  public Integer getId() {
-    return id;
+  public Integer getCustomerId() {
+    return customerId;
   }
 
-  public void setId(Integer id) {
-    this.id = id;
+  public void setCustomerId(Integer id) {
+    this.customerId = id;
   }
 
   public String getFirstName() {

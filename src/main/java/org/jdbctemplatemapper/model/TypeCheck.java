@@ -4,8 +4,13 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import org.jdbctemplatemapper.annotation.Id;
+import org.jdbctemplatemapper.annotation.IdType;
+
 public class TypeCheck {
+  @Id(type = IdType.AUTO_INCREMENT)
   private Integer id;
+
   private LocalDate localDateData;
   private java.util.Date javaUtilDateData;
   private LocalDateTime localDateTimeData;

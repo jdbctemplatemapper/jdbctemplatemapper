@@ -1,4 +1,4 @@
-package org.jdbctemplatemapper.core;
+package org.jdbctemplatemapper.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

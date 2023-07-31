@@ -1,18 +1,23 @@
 package org.jdbctemplatemapper.model;
 
+import org.jdbctemplatemapper.annotation.Id;
+import org.jdbctemplatemapper.annotation.IdType;
+
 public class Person {
-  private Integer id;
+  @Id(type = IdType.AUTO_INCREMENT)
+  private Integer personId;
+
   private String lastName;
   private String firstName;
 
   private String someNonDatabaseProperty;
 
-  public Integer getId() {
-    return id;
+  public Integer getPersonId() {
+    return personId;
   }
 
-  public void setId(Integer id) {
-    this.id = id;
+  public void setPersonId(Integer id) {
+    this.personId = id;
   }
 
   public String getLastName() {
