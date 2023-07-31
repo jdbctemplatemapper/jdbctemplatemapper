@@ -444,18 +444,6 @@ public class JdbcTemplateMapperTest {
         });
   }
 
-
- 
-
-  @Test
-  public void selectColumns_InvalidTableNameFailureTest() {
-    Assertions.assertThrows(
-        RuntimeException.class,
-        () -> {
-          jdbcTemplateMapper.selectColumns("aaaaaaaaa", "a");
-        });
-  }
-
   @Test
   public void insert_TypeCheckTest() {
     TypeCheck obj = new TypeCheck();

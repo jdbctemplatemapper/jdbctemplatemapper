@@ -24,49 +24,51 @@ import org.springframework.util.Assert;
  * <pre>
  * Spring's JdbcTemplate gives full control of data access using SQL. It is a better option for complex
  * enterprise applications than an ORM (ORM magic/nuances get in the way for large and complex
- * applications). Even though JdbcTemplate abstracts away a lot of the boiler plate code needed by JDBC, it is
- * verbose.
+ * applications). Even though JdbcTemplate abstracts away a lot of the boiler plate code needed by JDBC, it
+ * still remains verbose.
  *
- * JdbcTemplateMapper tries to mitigate the verboseness. It is a helper utility for JdbcTemplate (NOT a replacement)
- * It provides simple CRUD one lines. Your project code will be a mix of
- * JdbcTemplate and JdbcTemplateMapper. Use JdbcTemplateMapper's more concise features where appropriate.
- *
+ * JdbcTemplateMapper makes CRUD with JdbcTemplate simpler. (Its constructor take JdbcTemplate as an argument).
+ * Use it for one line CRUD operations and for other query stuff use JdbcTemplate as you normally would.
  * <pre>
  * Features:
- * 1) Simple CRUD one liners
+ * 1) One liners for CRUD. To keep the library as simple possible it only has 2 annotations.
  * 2) Can be configured for:
- *     *) optimistic locking functionality for updates by configuring a version property.
  *     *) auto assign created on, updated on.
  *     *) auto assign created by, updated by using an implementation of IRecordOperatorResolver.
+ *     *) optimistic locking functionality for updates by configuring a version property.
+ * 3) Thread safe so just needs a single instance (similar to JdbcTemplate)
+ * 4) To log the SQL statements it uses the same logging configurations as JdbcTemplate. See the logging section further below.
+ * 5) Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases).
+ *    Should work with other relational databases. 
  *
- * 3) Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases).
- *    Should work with all other relational databases.
+ * <b>JdbcTemplateMapper is opinionated<b/>.
+ * Projects have to meet the following 2 criteria to use it:
+ * 1) Camel case object property names are mapped to snake case table column names.
+ *    Properties of a model like 'firstName', 'lastName' will be mapped to corresponding columns
+ *    'first_name' and 'last_name' in the database table (If for a model property 
+ *    a column match is not found, those properties are ignored during CRUD operations) 
+ * 2) The table columns map to object properties and have no concept of relationships. So foreign keys in your
+ *    table will need a corresponding extra field in the model.
+ *    For example if an 'Order" is tied to a 'Customer' to match the 'customer_id' column in the 'order' table you 
+ *    will need to have the 'customerId' property in your 'Order' model.
  *
- * <b>JdbcTemplateMapper is opinionated<b/>. Projects have to meet the following 2 criteria to use it:
- * 1)Camel case object property names are mapped to snake case database column names.
- *   Properties of a model like 'firstName', 'lastName' will be mapped to corresponding database columns
- *   first_name/FIRST_NAME and last_name/LAST_NAME in the database table. If you are using a
- *   case sensitive database installation and have mixed case database column names like 'Last_Name' you could
- *   run into problems.
- * 2) The database table columns map to object properties and has no concept of relationships so foreign keys in your
- *    database will need a corresponding field in your model so your model will have to have the extra property for relationships.
+ * Examples of CRUD:
  *
- *    So for example if an 'Order" is tied to a 'Customer' you will need to have the customerId as a property in your Order model.
- *
- *
- * Examples of simple CRUD:
- *
- * // Product class below maps to product/PRODUCT table by default.
- * // Use annotation @Table(name="some_other_tablename") to override the default
+ * // Product class below maps to 'product' table by default.
+ * // Use annotation @Table(name="some_tablename") to override the default
  *
  * public class Product {
- *    @
+ *    // @Id annotation is required.
+ *    // For a auto increment database id use @Id(type=IdType.AUTO_INCREMENT)
+ *    // For a non auto increment id use @Id. In this case you will have to manually set id value before insert.
+ *
+ *    @Id(type=IdType.AUTO_INCREMENT)
  *    private Integer id;
  *    private String productName;
  *    private Double price;
  *    private LocalDateTime availableDate;
  *
- *    // for insert/update/find.. methods will ignore properties which do not
+ *    // insert/update/find.. methods will ignore properties which do not
  *    // have a corresponding snake case columns in database table
  *    private String someNonDatabaseProperty;
  *
@@ -86,8 +88,6 @@ import org.springframework.util.Assert;
  * List<Product> products = jdbcTemplateMapper.findAll(Product.class);
  *
  * jdbcTemplateMapper.delete(product);
- *
- * See methods toOne() and  toMany() for relationship retrieval.
  *
  * Installation:
  * Requires Java8 or above and dependencies are the same as that for Spring's JdbcTemplate
@@ -110,19 +110,32 @@ import org.springframework.util.Assert;
  *  </dependency>
  * }
  *
- * Spring bean configuration for JdbcTemplateMapper will look something like below:
- * (Assuming that org.springframework.jdbc.core.JdbcTemplate is configured as per Spring instructions)
- *
+ * Spring bean configuration for JdbcTemplateMapper:
+ * 1) Configure JdbcTemplate bean as per Spring documentation
+ * 2) Configure the JdbcTemplateMapper bean:
  * &#64;Bean
  * public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
  *
  *   return new JdbcTemplateMapper(jdbcTemplate);
  *
- *   //if the database setup needs a schema name, pass it as argument.
- *   //return new JdbcTemplateMapper(jdbcTemplate, "your_database_schema_name");
+ *   // JdbcTemplateMapper needs to get database metadata to generate the sql statements.
+ *   // Databases may differ on what criteria is needed to retrieve the information. JdbcTemplateMapper
+ *   // has multiple constructors so use the appropriate one. In most cases 'new JdbcTemplateMapper(jdbcTemplate);'
+ *   // will do the job.
  * }
  *
  * </pre>
+ * 
+ * 
+ * Logging:
+ * # log the sql
+ * logging.level.org.springframework.jdbc.core.JdbcTemplate=TRACE
+ * 
+ * # need this for insert statements
+ * logging.level.org.springframework.jdbc.core.simple.SimpleJdbcInsert=TRACE
+ *
+ * # log the parameters of sql statement
+ * logging.level.org.springframework.jdbc.core.StatementCreatorUtils=TRACE
  *
  * @author ajoseph
  */
@@ -150,56 +163,44 @@ public class JdbcTemplateMapper {
   //     value - the update sql
   private Map<String, UpdateSqlAndParams> updateSqlAndParamsCache = new ConcurrentHashMap<>();
 
-  // Map key - tableName-tableAlias
-  //     value - the selectColumns string
-  private Map<String, String> selectColumnsCache = new ConcurrentHashMap<>();
-
   /**
-   * The constructor.
-   *
-   * @param dataSource The dataSource for the mapper
+   * @param jdbcTemplate - The jdbcTemplate
    */
   public JdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
     this(jdbcTemplate, null, null, null);
   }
 
   /**
-   * Constructor.
-   *
-   * @param dataSource The dataSource for the mapper
+   * @param jdbcTemplate - The jdbcTemplate
    * @param schemaName database schema name.
    */
   public JdbcTemplateMapper(JdbcTemplate jdbcTemplate, String schemaName) {
-	  this(jdbcTemplate, schemaName, null, null);
+    this(jdbcTemplate, schemaName, null, null);
   }
 
   /**
-   * Constructor.
-   *
-   * @param dataSource The dataSource for the mapper
+   * @param jdbcTemplate - The jdbcTemplate
    * @param schemaName database schema name.
    * @param catalogName database catalog name.
    */
   public JdbcTemplateMapper(JdbcTemplate jdbcTemplate, String schemaName, String catalogName) {
-	  this(jdbcTemplate, schemaName, catalogName, null);
+    this(jdbcTemplate, schemaName, catalogName, null);
   }
 
   /**
-   * Constructor.
-   *
-   * @param dataSource - The dataSource for the mapper
+   * @param jdbcTemplate - The jdbcTemplate
    * @param schemaName - database schema name.
    * @param catalogName - database catalog name.
    * @param metaDataColumnNamePattern - For most jdbc drivers getting column metadata from database
-   *     the metaDataColumnNamePattern argument of null returns all the columns (which is the default for
-   *     JdbcTemplateMapper). Some jdbc drivers may require to pass something like '%'.
+   *     the metaDataColumnNamePattern argument of null returns all the columns (which is the
+   *     default for JdbcTemplateMapper). Some jdbc drivers may require to pass something like '%'.
    */
   public JdbcTemplateMapper(
       JdbcTemplate jdbcTemplate,
       String schemaName,
       String catalogName,
       String metaDataColumnNamePattern) {
-	  
+
     Assert.notNull(jdbcTemplate, "jdbcTemplate must not be null");
     this.jdbcTemplate = jdbcTemplate;
 
@@ -226,9 +227,9 @@ public class JdbcTemplateMapper {
   public NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {
     return npJdbcTemplate;
   }
-  
+
   public MappingHelper getMappingHelper() {
-	  return mappingHelper;
+    return mappingHelper;
   }
 
   /**
@@ -393,7 +394,7 @@ public class JdbcTemplateMapper {
         throw new RuntimeException(
             "For insert() the object's "
                 + tableMapping.getIdPropertyName()
-                + " property has to be null since this insert is for an object whose id is autoincrement in database.");
+                + " property has to be null since this insert is for an object whose id is auto increment.");
       }
     } else {
       if (idValue == null) {
@@ -628,52 +629,6 @@ public class JdbcTemplateMapper {
             + tableMapping.getIdColumnName()
             + " = ?";
     return jdbcTemplate.update(sql, id);
-  }
-
-  /**
-   * Generates a string which can be used in a sql select statement with all the columns of the
-   * table.
-   *
-   * <pre>
-   * selectColumns("employee", "emp") where "emp" is the alias will return something like:
-   * "emp.id emp_id, emp.last_name emp_last_name, emp.first_name emp_first_name"
-   * </pre>
-   *
-   * @param tableName the Table name
-   * @param tableAlias the alias being used in the sql statement for the table.
-   * @return comma separated select column string
-   */
-  public String selectColumns(String tableName, String tableAlias) {
-    Assert.hasLength(tableName, "tableName must not be empty");
-    Assert.hasLength(tableAlias, "tableAlias must not be empty");
-
-    String str = selectColumnsCache.get(tableName + "-" + tableAlias);
-    if (str == null) {
-      List<ColumnInfo> tableColumnInfo = mappingHelper.getTableColumnInfo(tableName);
-      if (mappingHelper.isEmpty(tableColumnInfo)) {
-        // try with uppercase table name
-        tableColumnInfo = mappingHelper.getTableColumnInfo(tableName.toUpperCase());
-        if (mappingHelper.isEmpty(tableColumnInfo)) {
-          throw new RuntimeException("Could not get column info for table named " + tableName);
-        }
-      }
-      StringBuilder sb = new StringBuilder(" ");
-      for (ColumnInfo colInfo : tableColumnInfo) {
-        sb.append(tableAlias)
-            .append(".")
-            .append(colInfo.getColumnName())
-            .append(" ")
-            .append(tableAlias)
-            .append("_")
-            .append(colInfo.getColumnName())
-            .append(",");
-      }
-      str = sb.toString();
-      // remove the last comma.
-      str = str.substring(0, str.length() - 1) + " ";
-      selectColumnsCache.put(tableName + "-" + tableAlias, str);
-    }
-    return str;
   }
 
   private UpdateSqlAndParams buildUpdateSqlAndParams(
