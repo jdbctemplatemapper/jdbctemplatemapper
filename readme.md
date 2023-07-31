@@ -115,7 +115,7 @@ class Product {
 ```
 After a successful insert() operation the productId property will be populated with the new id.
 
-* ** NON auto incremented id usage**
+* **NON auto incremented id usage**
 
 ```java
 class Customer {
