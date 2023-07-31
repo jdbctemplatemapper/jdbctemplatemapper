@@ -10,7 +10,7 @@ import org.jdbctemplatemapper.annotation.Table;
 @Table(name = "orders")
 public class Order {
   @Id(type = IdType.AUTO_INCREMENT)
-  private Integer id;
+  private Integer orderId;
 
   private LocalDateTime orderDate;
   private Integer customerId;
@@ -29,12 +29,12 @@ public class Order {
 
   // for argument tests
 
-  public Integer getId() {
-    return id;
+  public Integer getOrderId() {
+    return orderId;
   }
 
-  public void setId(Integer id) {
-    this.id = id;
+  public void setOrderId(Integer id) {
+    this.orderId = id;
   }
 
   public LocalDateTime getOrderDate() {

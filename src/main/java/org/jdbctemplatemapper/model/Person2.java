@@ -9,7 +9,7 @@ import org.jdbctemplatemapper.annotation.Table;
 @Table(name = "person")
 public class Person2 {
   @Id(type = IdType.AUTO_INCREMENT)
-  private Integer id;
+  private Integer personId;
 
   private String lastName;
   private String firstName;
@@ -21,12 +21,12 @@ public class Person2 {
 
   private Integer version;
 
-  public Integer getId() {
-    return id;
+  public Integer getPersonId() {
+    return personId;
   }
 
-  public void setId(Integer id) {
-    this.id = id;
+  public void setPersonId(Integer id) {
+    this.personId = id;
   }
 
   public String getLastName() {

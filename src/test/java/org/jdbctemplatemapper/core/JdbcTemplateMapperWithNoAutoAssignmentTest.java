@@ -34,7 +34,7 @@ public class JdbcTemplateMapperWithNoAutoAssignmentTest {
 
     jdbcTemplateMapper.insert(person);
 
-    assertNotNull(person.getId());
+    assertNotNull(person.getPersonId());
   }
 
   @Test

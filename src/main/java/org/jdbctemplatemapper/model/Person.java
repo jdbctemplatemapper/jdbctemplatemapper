@@ -5,19 +5,19 @@ import org.jdbctemplatemapper.annotation.IdType;
 
 public class Person {
   @Id(type = IdType.AUTO_INCREMENT)
-  private Integer id;
+  private Integer personId;
 
   private String lastName;
   private String firstName;
 
   private String someNonDatabaseProperty;
 
-  public Integer getId() {
-    return id;
+  public Integer getPersonId() {
+    return personId;
   }
 
-  public void setId(Integer id) {
-    this.id = id;
+  public void setPersonId(Integer id) {
+    this.personId = id;
   }
 
   public String getLastName() {

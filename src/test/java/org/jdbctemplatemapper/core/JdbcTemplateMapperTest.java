@@ -21,14 +21,11 @@ import org.jdbctemplatemapper.model.Person;
 import org.jdbctemplatemapper.model.Product;
 import org.jdbctemplatemapper.model.TypeCheck;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @SpringBootTest
@@ -56,8 +53,8 @@ public class JdbcTemplateMapperTest {
     assertEquals("tester", order.getUpdatedBy());
     
     // requery and test.
-    order = jdbcTemplateMapper.findById(order.getId(), Order.class);
-    assertNotNull(order.getId());
+    order = jdbcTemplateMapper.findById(order.getOrderId(), Order.class);
+    assertNotNull(order.getOrderId());
     assertNotNull(order.getOrderDate());
     assertNotNull(order.getCreatedOn());
     assertNotNull(order.getUpdatedOn());
@@ -69,7 +66,7 @@ public class JdbcTemplateMapperTest {
   @Test
   public void insert_withNonNullIdFailureTest() {
     Order order = new Order();
-    order.setId(2002);
+    order.setOrderId(2002);
     order.setOrderDate(LocalDateTime.now());
     order.setCustomerId(2);
 
@@ -90,9 +87,9 @@ public class JdbcTemplateMapperTest {
 
     jdbcTemplateMapper.insert(customer);
 
-    Customer customer1 = jdbcTemplateMapper.findById(customer.getId(), Customer.class);
+    Customer customer1 = jdbcTemplateMapper.findById(customer.getCustomerId(), Customer.class);
 
-    assertNotNull(customer1.getId());
+    assertNotNull(customer1.getCustomerId());
     assertEquals("aaa", customer1.getFirstName());
     assertEquals("bbb", customer1.getLastName());
   }
@@ -120,7 +117,7 @@ public class JdbcTemplateMapperTest {
   @Test
   public void insertWithId_Test() {
     Product product = new Product();
-    product.setId(1001);
+    product.setProductId(1001);
     product.setName("hat");
     product.setCost(12.25);
 
@@ -135,7 +132,7 @@ public class JdbcTemplateMapperTest {
     
     // requery and check
     product = jdbcTemplateMapper.findById(1001, Product.class);
-    assertNotNull(product.getId());
+    assertNotNull(product.getProductId());
     assertEquals("hat", product.getName());
     assertEquals(12.25, product.getCost());
     assertNotNull(product.getCreatedOn());
@@ -352,7 +349,7 @@ public class JdbcTemplateMapperTest {
   public void findById_Test() {
     Order order = jdbcTemplateMapper.findById(1, Order.class);
 
-    assertNotNull(order.getId());
+    assertNotNull(order.getOrderId());
     assertNotNull(order.getOrderDate());
     assertNotNull(order.getCreatedBy());
     assertNotNull(order.getCreatedOn());
@@ -367,7 +364,7 @@ public class JdbcTemplateMapperTest {
     assertTrue(orders.size() >= 2);
 
     for (int idx = 0; idx < orders.size(); idx++) {
-      assertNotNull(orders.get(idx).getId());
+      assertNotNull(orders.get(idx).getOrderId());
       assertNotNull(orders.get(idx).getOrderDate());
       assertNotNull(orders.get(idx).getCreatedBy());
       assertNotNull(orders.get(idx).getCreatedOn());
@@ -379,12 +376,12 @@ public class JdbcTemplateMapperTest {
 
   @Test
   public void findAll_WithOrderByClauseTest() {
-    List<Order> orders = jdbcTemplateMapper.findAll(Order.class, "order by id");
+    List<Order> orders = jdbcTemplateMapper.findAll(Order.class, "order by order_id");
 
     assertTrue(orders.size() >= 2);
 
     for (int idx = 0; idx < orders.size(); idx++) {
-      assertNotNull(orders.get(idx).getId());
+      assertNotNull(orders.get(idx).getOrderId());
       assertNotNull(orders.get(idx).getOrderDate());
       assertNotNull(orders.get(idx).getCreatedBy());
       assertNotNull(orders.get(idx).getCreatedOn());

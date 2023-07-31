@@ -5,7 +5,7 @@ import org.jdbctemplatemapper.annotation.IdType;
 
 public class OrderLine {
   @Id(type = IdType.AUTO_INCREMENT)
-  private Integer id;
+  private Integer orderLineId;
 
   private Integer orderId;
   private Integer productId;
@@ -18,12 +18,12 @@ public class OrderLine {
 
   private String status;
 
-  public Integer getId() {
-    return id;
+  public Integer getOrderLineId() {
+    return orderLineId;
   }
 
-  public void setId(Integer id) {
-    this.id = id;
+  public void setOrderLineId(Integer id) {
+    this.orderLineId = id;
   }
 
   public Integer getOrderId() {
