@@ -5,16 +5,16 @@ import org.jdbctemplatemapper.annotation.IdType;
 
 public class CustomerLong {
 	@Id(type=IdType.AUTO_INCREMENT)
-  private Long id;
+  private Long customerId;
   private String firstName;
   private String lastName;
 
-  public Long getId() {
-    return id;
+  public Long getCustomerId() {
+    return customerId;
   }
 
   public void setId(Long id) {
-    this.id = id;
+    this.customerId = id;
   }
 
   public String getFirstName() {

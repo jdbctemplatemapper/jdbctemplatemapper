@@ -5,7 +5,7 @@ import org.jdbctemplatemapper.annotation.IdType;
 
 public class OrderLineLong {
   @Id(type = IdType.AUTO_INCREMENT)
-  private Long id;
+  private Long orderLineId;
 
   private Long orderLongId;
   private Long productLongId;
@@ -16,12 +16,12 @@ public class OrderLineLong {
 
   private ProductLong product;
 
-  public Long getId() {
-    return id;
+  public Long getOrderLineId() {
+    return orderLineId;
   }
 
-  public void setId(Long id) {
-    this.id = id;
+  public void setOrderLineId(Long id) {
+    this.orderLineId= id;
   }
 
   public Long getOrderLongId() {

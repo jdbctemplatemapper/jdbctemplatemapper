@@ -126,10 +126,7 @@ public class MappingHelper {
         }
       }
       if (idAnnotation == null) {
-        throw new RuntimeException("@Id annotation not found for class " + clazz.getName());
-      } else {
-        System.out.println("Annotation @Id FOUND for class" + clazz.getName() + "" + idAnnotation);
-        System.out.println("id field name= " + idPropertyName);
+        throw new RuntimeException("@Id annotation not found in class " + clazz.getName());
       }
 
       List<ColumnInfo> columnInfoList = getTableColumnInfo(tableName);

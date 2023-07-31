@@ -36,7 +36,7 @@ public class JdbcTemplateMapperLongTest {
 
     jdbcTemplateMapper.insert(order);
 
-    assertNotNull(order.getId());
+    assertNotNull(order.getOrderId());
     assertNotNull(order.getCreatedBy());
     assertNotNull(order.getCreatedOn());
     assertNotNull(order.getUpdatedBy());
@@ -49,14 +49,14 @@ public class JdbcTemplateMapperLongTest {
   @Test
   public void insertWithId_Test() {
     ProductLong product = new ProductLong();
-    product.setId(1000000000001L);
+    product.setProductId(1000000000001L);
     product.setName("hat");
     product.setCost(12.25);
 
     jdbcTemplateMapper.insert(product);
 
     product = jdbcTemplateMapper.findById(1000000000001L, ProductLong.class);
-    assertNotNull(product.getId());
+    assertNotNull(product.getProductId());
     assertEquals("hat", product.getName());
     assertEquals(12.25, product.getCost());
     assertNotNull(product.getCreatedBy());
@@ -103,7 +103,7 @@ public class JdbcTemplateMapperLongTest {
   public void findById_LongTest(){
     OrderLong order = jdbcTemplateMapper.findById(1L, OrderLong.class);
 
-    assertNotNull(order.getId());
+    assertNotNull(order.getOrderId());
     assertNotNull(order.getOrderDate());
     assertNotNull(order.getCreatedBy());
     assertNotNull(order.getCreatedOn());
@@ -118,7 +118,7 @@ public class JdbcTemplateMapperLongTest {
     assertTrue(orders.size() >= 2);
 
     for (int idx = 0; idx < orders.size(); idx++) {
-      assertNotNull(orders.get(idx).getId());
+      assertNotNull(orders.get(idx).getOrderId());
       assertNotNull(orders.get(idx).getOrderDate());
       assertNotNull(orders.get(idx).getCreatedBy());
       assertNotNull(orders.get(idx).getCreatedOn());
@@ -130,12 +130,12 @@ public class JdbcTemplateMapperLongTest {
 
   @Test
   public void findAll_WithOrderByClauseLongTest(){
-    List<OrderLong> orders = jdbcTemplateMapper.findAll(OrderLong.class, "order by id");
+    List<OrderLong> orders = jdbcTemplateMapper.findAll(OrderLong.class, "order by order_id");
 
     assertTrue(orders.size() >= 2);
 
     for (int idx = 0; idx < orders.size(); idx++) {
-      assertNotNull(orders.get(idx).getId());
+      assertNotNull(orders.get(idx).getOrderId());
       assertNotNull(orders.get(idx).getOrderDate());
       assertNotNull(orders.get(idx).getCreatedBy());
       assertNotNull(orders.get(idx).getCreatedOn());
