@@ -12,9 +12,9 @@
     <relativePath /> <!-- lookup parent from repository -->
   </parent>
 
-  <groupId>io.github.ajoseph88</groupId>
+  <groupId>io.github.jdbctemplatemapper</groupId>
   <artifactId>jdbctemplatemapper</artifactId>
-  <version>0.5-SNAPSHOT</version>
+  <version>0.5.1-SNAPSHOT</version>
   <name>jdbctemplatemapper</name>
   <description>
     Single line CRUD methods when using Spring's JdbcTemplate
@@ -26,7 +26,7 @@
   </properties>
 
 
-<url>https://github.com/ajoseph88/jdbctemplatemapper</url>
+  <url>https://github.com/jdbctemplatemapper/jdbctemplatemapper</url>
 
   <licenses>
     <license>
@@ -44,9 +44,9 @@
 
 
   <scm>
-    <connection>scm:git:git://github.com/ajoseph88/jdbctemplatemapper.git</connection>
-    <developerConnection>scm:git:git@github.com:ajoseph88/jdbctemplatemapper.git</developerConnection>
-    <url>https://github.com/ajoseph88/jdbctemplatemapper</url>
+    <connection>scm:git:git://github.com/jdbctemplatemapper/jdbctemplatemapper.git</connection>
+    <developerConnection>scm:git:git@github.com:jdbctemplatemapper/jdbctemplatemapper.git</developerConnection>
+    <url>https://github.com/jdbctemplatemapper/jdbctemplatemapper</url>
     <tag>HEAD</tag>
 
   </scm>
@@ -136,7 +136,7 @@
 
       <plugin>
         <!-- the jar file produced should only include the java classes in 
-          org.jdbctemplatemapper.core -->
+          io.github.jdbctemplatemapper.core -->
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <configuration>
@@ -189,7 +189,7 @@
           </execution>
         </executions>
         <configuration>
-          <excludePackageNames>org.jdbctemplatemapper.config:org.jdbctemplatemapper.model</excludePackageNames>
+          <excludePackageNames>io.github.jdbctemplatemapper.config:io.github.jdbctemplatemapper.model</excludePackageNames>
         </configuration>
 
       </plugin>
@@ -205,6 +205,12 @@
             <goals>
               <goal>sign</goal>
             </goals>
+            <configuration>
+              <gpgArguments>
+                <arg>--pinentry-mode</arg>
+                <arg>loopback</arg>
+              </gpgArguments>
+            </configuration>
           </execution>
         </executions>
       </plugin>
@@ -220,9 +226,6 @@
           <autoReleaseAfterClose>false</autoReleaseAfterClose>
         </configuration>
       </plugin>
-
-
-
 
     </plugins>
   </build>
