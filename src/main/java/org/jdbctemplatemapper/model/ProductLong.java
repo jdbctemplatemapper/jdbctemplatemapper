@@ -2,7 +2,7 @@ package org.jdbctemplatemapper.model;
 
 import java.time.LocalDateTime;
 
-import org.jdbctemplatemapper.annotation.Id;
+import org.jdbctemplatemapper.core.Id;
 
 public class ProductLong {
   @Id private Long productId;

@@ -14,9 +14,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
-import org.jdbctemplatemapper.annotation.Id;
-import org.jdbctemplatemapper.annotation.IdType;
-import org.jdbctemplatemapper.annotation.Table;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.core.annotation.AnnotationUtils;

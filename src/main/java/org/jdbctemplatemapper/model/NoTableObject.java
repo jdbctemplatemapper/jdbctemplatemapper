@@ -1,6 +1,6 @@
 package org.jdbctemplatemapper.model;
 
-import org.jdbctemplatemapper.annotation.Id;
+import org.jdbctemplatemapper.core.Id;
 
 public class NoTableObject {
   @Id private Integer id;

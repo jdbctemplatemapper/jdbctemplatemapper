@@ -17,6 +17,7 @@
   <version>1.0</version>
   <name>jdbctemplatemapper</name>
   <description>jdbctemplate mapper</description>
+  <packaging>jar</packaging>
 
   <properties>
     <java.version>1.8</java.version>
@@ -92,14 +93,15 @@
           <classifier>test</classifier>
         </configuration>
       </plugin>
+
       <plugin>
-        <!-- the jar file produced should only include 
-          the java classes in org.jdbctemplatemapper.core  -->
+        <!-- the jar file produced should only include the java classes in 
+          org.jdbctemplatemapper.core -->
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <configuration>
-          <!-- need this to prevent the plugin from creating the unwanted '/maven' 
-            dir in META-INF -->
+          <!-- need this to prevent the plugin from creating the unwanted 
+            '/maven' dir in META-INF -->
           <archive>
             <addMavenDescriptor>false</addMavenDescriptor>
           </archive>
@@ -108,6 +110,44 @@
           </includes>
         </configuration>
       </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <includes>
+            <include>**/core/*</include>
+          </includes>
+        </configuration>
+      </plugin>
+      
+                  <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                        <configuration>
+          <includes>
+            <include>**/core/*</include>
+          </includes>
+        </configuration>
+            </plugin>
+      
+
     </plugins>
   </build>
 </project>

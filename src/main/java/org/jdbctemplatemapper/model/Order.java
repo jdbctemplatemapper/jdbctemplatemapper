@@ -3,9 +3,9 @@ package org.jdbctemplatemapper.model;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.jdbctemplatemapper.annotation.Id;
-import org.jdbctemplatemapper.annotation.IdType;
-import org.jdbctemplatemapper.annotation.Table;
+import org.jdbctemplatemapper.core.Id;
+import org.jdbctemplatemapper.core.IdType;
+import org.jdbctemplatemapper.core.Table;
 
 @Table(name = "orders")
 public class Order {

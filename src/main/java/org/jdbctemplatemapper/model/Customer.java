@@ -2,8 +2,8 @@ package org.jdbctemplatemapper.model;
 
 import java.time.LocalDateTime;
 
-import org.jdbctemplatemapper.annotation.Id;
-import org.jdbctemplatemapper.annotation.IdType;
+import org.jdbctemplatemapper.core.Id;
+import org.jdbctemplatemapper.core.IdType;
 
 public class Customer {
 	@Id(type=IdType.AUTO_INCREMENT)

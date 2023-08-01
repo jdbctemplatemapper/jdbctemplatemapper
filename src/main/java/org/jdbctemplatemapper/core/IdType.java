@@ -1,4 +1,4 @@
-package org.jdbctemplatemapper.annotation;
+package org.jdbctemplatemapper.core;
 
 public enum IdType {   
     AUTO_INCREMENT,   // ids which are auto incremented by the database 

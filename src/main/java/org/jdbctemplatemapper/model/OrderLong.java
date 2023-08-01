@@ -3,8 +3,8 @@ package org.jdbctemplatemapper.model;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.jdbctemplatemapper.annotation.Id;
-import org.jdbctemplatemapper.annotation.IdType;
+import org.jdbctemplatemapper.core.Id;
+import org.jdbctemplatemapper.core.IdType;
 
 public class OrderLong {
   @Id(type = IdType.AUTO_INCREMENT)
