@@ -19,6 +19,7 @@ public class JdbcTemplateMapperConfig {
   @Value("${spring.datasource.driver-class-name}")
   private String jdbcDriver;
 
+  
   @Bean
   @ConfigurationProperties(prefix = "spring.datasource")
   public DataSource sqlDataSource() {

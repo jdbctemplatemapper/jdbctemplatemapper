@@ -3,17 +3,15 @@ package io.github.jdbctemplatemapper.model;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import io.github.jdbctemplatemapper.core.Id;
-import io.github.jdbctemplatemapper.core.IdType;
-import io.github.jdbctemplatemapper.core.Table;
+import io.github.jdbctemplatemapper.annotation.Id;
+import io.github.jdbctemplatemapper.annotation.IdType;
 
-@Table(name = "orders")
-public class Order {
+public class OrderLong {
   @Id(type = IdType.AUTO_INCREMENT)
-  private Integer orderId;
+  private Long orderId;
 
   private LocalDateTime orderDate;
-  private Integer customerId;
+  private Long customerLongId;
   private String status;
   private LocalDateTime createdOn;
   private String createdBy;
@@ -22,18 +20,14 @@ public class Order {
 
   private Integer version;
 
-  /** ************************** */
-  private Customer customer;
+  private CustomerLong customer;
+  private List<OrderLineLong> orderLines;
 
-  private List<OrderLine> orderLines;
-
-  // for argument tests
-
-  public Integer getOrderId() {
+  public Long getOrderId() {
     return orderId;
   }
 
-  public void setOrderId(Integer id) {
+  public void setOrderId(Long id) {
     this.orderId = id;
   }
 
@@ -45,12 +39,12 @@ public class Order {
     this.orderDate = orderDate;
   }
 
-  public Integer getCustomerId() {
-    return customerId;
+  public Long getCustomerLongId() {
+    return customerLongId;
   }
 
-  public void setCustomerId(Integer customerId) {
-    this.customerId = customerId;
+  public void setCustomerLongId(Long customerLongId) {
+    this.customerLongId = customerLongId;
   }
 
   public String getStatus() {
@@ -101,29 +95,19 @@ public class Order {
     this.version = version;
   }
 
-  public Customer getCustomer() {
+  public CustomerLong getCustomer() {
     return customer;
   }
 
-  public void setCustomer(Customer customer) {
+  public void setCustomer(CustomerLong customer) {
     this.customer = customer;
   }
 
-  public List<OrderLine> getOrderLines() {
+  public List<OrderLineLong> getOrderLines() {
     return orderLines;
   }
 
-  public void setOrderLines(List<OrderLine> orderLines) {
+  public void setOrderLines(List<OrderLineLong> orderLines) {
     this.orderLines = orderLines;
   }
-
-  public Person getPerson() {
-    return person;
-  }
-
-  public void setPerson(Person person) {
-    this.person = person;
-  }
-
-  private Person person;
 }

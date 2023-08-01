@@ -1,7 +1,7 @@
 package io.github.jdbctemplatemapper.model;
 
-import io.github.jdbctemplatemapper.core.Id;
-import io.github.jdbctemplatemapper.core.IdType;
+import io.github.jdbctemplatemapper.annotation.Id;
+import io.github.jdbctemplatemapper.annotation.IdType;
 
 public class OrderLineLong {
   @Id(type = IdType.AUTO_INCREMENT)

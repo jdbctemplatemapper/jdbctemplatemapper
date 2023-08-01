@@ -23,6 +23,10 @@ import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.jdbc.support.MetaDataAccessException;
 import org.springframework.util.Assert;
 
+import io.github.jdbctemplatemapper.annotation.Id;
+import io.github.jdbctemplatemapper.annotation.IdType;
+import io.github.jdbctemplatemapper.annotation.Table;
+
 public class MappingHelper {
 
   // Convert camel case to snake case regex pattern. Pattern is thread safe

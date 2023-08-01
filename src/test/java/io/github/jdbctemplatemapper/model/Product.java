@@ -2,45 +2,43 @@ package io.github.jdbctemplatemapper.model;
 
 import java.time.LocalDateTime;
 
-import io.github.jdbctemplatemapper.core.Id;
-import io.github.jdbctemplatemapper.core.IdType;
+import io.github.jdbctemplatemapper.annotation.Id;
 
-public class Customer {
-	@Id(type=IdType.AUTO_INCREMENT)
-  private Integer customerId;
-  private String firstName;
-  private String lastName;
+public class Product {
+  @Id 
+  private Integer productId;
+  
+  private String name;
+  private Double cost;
 
-  // Non table fields below to test out case were database table 'customer'
-  // does NOT have these auto assigned fields.
   private LocalDateTime createdOn;
   private String createdBy;
   private LocalDateTime updatedOn;
   private String updatedBy;
-  private String version;
+  private Integer version;
 
-  public Integer getCustomerId() {
-    return customerId;
+  public Integer getProductId() {
+    return productId;
   }
 
-  public void setCustomerId(Integer id) {
-    this.customerId = id;
+  public void setProductId(Integer id) {
+    this.productId = id;
   }
 
-  public String getFirstName() {
-    return firstName;
+  public String getName() {
+    return name;
   }
 
-  public void setFirstName(String firstName) {
-    this.firstName = firstName;
+  public void setName(String name) {
+    this.name = name;
   }
 
-  public String getLastName() {
-    return lastName;
+  public Double getCost() {
+    return cost;
   }
 
-  public void setLastName(String lastName) {
-    this.lastName = lastName;
+  public void setCost(Double cost) {
+    this.cost = cost;
   }
 
   public LocalDateTime getCreatedOn() {
@@ -75,11 +73,11 @@ public class Customer {
     this.updatedBy = updatedBy;
   }
 
-  public String getVersion() {
+  public Integer getVersion() {
     return version;
   }
 
-  public void setVersion(String version) {
+  public void setVersion(Integer version) {
     this.version = version;
   }
 }

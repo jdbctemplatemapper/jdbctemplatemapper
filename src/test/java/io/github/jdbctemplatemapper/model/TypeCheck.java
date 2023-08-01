@@ -4,8 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import io.github.jdbctemplatemapper.core.Id;
-import io.github.jdbctemplatemapper.core.IdType;
+import io.github.jdbctemplatemapper.annotation.Id;
+import io.github.jdbctemplatemapper.annotation.IdType;
 
 public class TypeCheck {
   @Id(type = IdType.AUTO_INCREMENT)

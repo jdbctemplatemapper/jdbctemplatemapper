@@ -3,15 +3,17 @@ package io.github.jdbctemplatemapper.model;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import io.github.jdbctemplatemapper.core.Id;
-import io.github.jdbctemplatemapper.core.IdType;
+import io.github.jdbctemplatemapper.annotation.Id;
+import io.github.jdbctemplatemapper.annotation.IdType;
+import io.github.jdbctemplatemapper.annotation.Table;
 
-public class OrderLong {
+@Table(name = "orders")
+public class Order {
   @Id(type = IdType.AUTO_INCREMENT)
-  private Long orderId;
+  private Integer orderId;
 
   private LocalDateTime orderDate;
-  private Long customerLongId;
+  private Integer customerId;
   private String status;
   private LocalDateTime createdOn;
   private String createdBy;
@@ -20,14 +22,18 @@ public class OrderLong {
 
   private Integer version;
 
-  private CustomerLong customer;
-  private List<OrderLineLong> orderLines;
+  /** ************************** */
+  private Customer customer;
 
-  public Long getOrderId() {
+  private List<OrderLine> orderLines;
+
+  // for argument tests
+
+  public Integer getOrderId() {
     return orderId;
   }
 
-  public void setOrderId(Long id) {
+  public void setOrderId(Integer id) {
     this.orderId = id;
   }
 
@@ -39,12 +45,12 @@ public class OrderLong {
     this.orderDate = orderDate;
   }
 
-  public Long getCustomerLongId() {
-    return customerLongId;
+  public Integer getCustomerId() {
+    return customerId;
   }
 
-  public void setCustomerLongId(Long customerLongId) {
-    this.customerLongId = customerLongId;
+  public void setCustomerId(Integer customerId) {
+    this.customerId = customerId;
   }
 
   public String getStatus() {
@@ -95,19 +101,29 @@ public class OrderLong {
     this.version = version;
   }
 
-  public CustomerLong getCustomer() {
+  public Customer getCustomer() {
     return customer;
   }
 
-  public void setCustomer(CustomerLong customer) {
+  public void setCustomer(Customer customer) {
     this.customer = customer;
   }
 
-  public List<OrderLineLong> getOrderLines() {
+  public List<OrderLine> getOrderLines() {
     return orderLines;
   }
 
-  public void setOrderLines(List<OrderLineLong> orderLines) {
+  public void setOrderLines(List<OrderLine> orderLines) {
     this.orderLines = orderLines;
   }
+
+  public Person getPerson() {
+    return person;
+  }
+
+  public void setPerson(Person person) {
+    this.person = person;
+  }
+
+  private Person person;
 }

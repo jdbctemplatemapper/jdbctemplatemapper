@@ -142,9 +142,11 @@
           <archive>
             <addMavenDescriptor>false</addMavenDescriptor>
           </archive>
+          <!--
           <includes>
             <include>**/core/*</include>
           </includes>
+          -->
         </configuration>
       </plugin>
 
@@ -167,9 +169,11 @@
             <exclude>application.properties</exclude>
           </excludes>
 
+<!-- 
           <includes>
             <include>**/core/*</include>
           </includes>
+          -->
         </configuration>
       </plugin>
 

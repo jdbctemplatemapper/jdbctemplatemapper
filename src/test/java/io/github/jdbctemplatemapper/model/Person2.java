@@ -2,43 +2,47 @@ package io.github.jdbctemplatemapper.model;
 
 import java.time.LocalDateTime;
 
-import io.github.jdbctemplatemapper.core.Id;
+import io.github.jdbctemplatemapper.annotation.Id;
+import io.github.jdbctemplatemapper.annotation.IdType;
+import io.github.jdbctemplatemapper.annotation.Table;
 
-public class Product {
-  @Id 
-  private Integer productId;
-  
-  private String name;
-  private Double cost;
+@Table(name = "person")
+public class Person2 {
+  @Id(type = IdType.AUTO_INCREMENT)
+  private Integer personId;
+
+  private String lastName;
+  private String firstName;
 
   private LocalDateTime createdOn;
   private String createdBy;
   private LocalDateTime updatedOn;
   private String updatedBy;
+
   private Integer version;
 
-  public Integer getProductId() {
-    return productId;
+  public Integer getPersonId() {
+    return personId;
   }
 
-  public void setProductId(Integer id) {
-    this.productId = id;
+  public void setPersonId(Integer id) {
+    this.personId = id;
   }
 
-  public String getName() {
-    return name;
+  public String getLastName() {
+    return lastName;
   }
 
-  public void setName(String name) {
-    this.name = name;
+  public void setLastName(String lastName) {
+    this.lastName = lastName;
   }
 
-  public Double getCost() {
-    return cost;
+  public String getFirstName() {
+    return firstName;
   }
 
-  public void setCost(Double cost) {
-    this.cost = cost;
+  public void setFirstName(String firstName) {
+    this.firstName = firstName;
   }
 
   public LocalDateTime getCreatedOn() {

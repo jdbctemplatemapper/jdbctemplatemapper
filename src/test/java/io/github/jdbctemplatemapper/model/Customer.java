@@ -2,39 +2,29 @@ package io.github.jdbctemplatemapper.model;
 
 import java.time.LocalDateTime;
 
-import io.github.jdbctemplatemapper.core.Id;
-import io.github.jdbctemplatemapper.core.IdType;
-import io.github.jdbctemplatemapper.core.Table;
+import io.github.jdbctemplatemapper.annotation.Id;
+import io.github.jdbctemplatemapper.annotation.IdType;
 
-@Table(name = "person")
-public class Person2 {
-  @Id(type = IdType.AUTO_INCREMENT)
-  private Integer personId;
-
-  private String lastName;
+public class Customer {
+	@Id(type=IdType.AUTO_INCREMENT)
+  private Integer customerId;
   private String firstName;
+  private String lastName;
 
+  // Non table fields below to test out case were database table 'customer'
+  // does NOT have these auto assigned fields.
   private LocalDateTime createdOn;
   private String createdBy;
   private LocalDateTime updatedOn;
   private String updatedBy;
+  private String version;
 
-  private Integer version;
-
-  public Integer getPersonId() {
-    return personId;
+  public Integer getCustomerId() {
+    return customerId;
   }
 
-  public void setPersonId(Integer id) {
-    this.personId = id;
-  }
-
-  public String getLastName() {
-    return lastName;
-  }
-
-  public void setLastName(String lastName) {
-    this.lastName = lastName;
+  public void setCustomerId(Integer id) {
+    this.customerId = id;
   }
 
   public String getFirstName() {
@@ -43,6 +33,14 @@ public class Person2 {
 
   public void setFirstName(String firstName) {
     this.firstName = firstName;
+  }
+
+  public String getLastName() {
+    return lastName;
+  }
+
+  public void setLastName(String lastName) {
+    this.lastName = lastName;
   }
 
   public LocalDateTime getCreatedOn() {
@@ -77,11 +75,11 @@ public class Person2 {
     this.updatedBy = updatedBy;
   }
 
-  public Integer getVersion() {
+  public String getVersion() {
     return version;
   }
 
-  public void setVersion(Integer version) {
+  public void setVersion(String version) {
     this.version = version;
   }
 }
