@@ -6,16 +6,17 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to map an object to a database table.
+ *<pre>
+ * Annotation to map an object to a database table:
  * 
- * Usage:
- * &#64;Table(name="products")
- * public class Product{
+ * {@literal @}Table(name="products")
+ *  public class Product{
  *    .....
- * }
- * 
+ *  }
+ *
  * Above will map the Product class to the 'products' table
- * 
+ *</pre>
+ *
  * @author ajoseph
  *
  */

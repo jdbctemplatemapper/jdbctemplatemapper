@@ -56,7 +56,7 @@ public class MappingHelper {
   /**
    * Constructor.
    *
-   * @param dataSource - The dataSource for the mapper
+   * @param jdbcTemplate - The jdbcTemplate
    * @param schemaName - database schema name.
    * @param catalogName - database catalog name.
    * @param metaDataColumnNamePattern - For most jdbc drivers getting column metadata from database

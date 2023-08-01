@@ -29,7 +29,7 @@ import org.springframework.util.Assert;
  *
  * JdbcTemplateMapper makes CRUD with JdbcTemplate simpler. (Its constructor take JdbcTemplate as an argument).
  * Use it for one line CRUD operations and for other query stuff use JdbcTemplate as you normally would.
- * <pre>
+ * 
  * Features:
  * 1) One liners for CRUD. To keep the library as simple possible it only has 2 annotations.
  * 2) Can be configured for:
@@ -41,7 +41,7 @@ import org.springframework.util.Assert;
  * 5) Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases).
  *    Should work with other relational databases. 
  *
- * <b>JdbcTemplateMapper is opinionated<b/>.
+ * JdbcTemplateMapper is opinionated.
  * Projects have to meet the following 2 criteria to use it:
  * 1) Camel case object property names are mapped to snake case table column names.
  *    Properties of a model like 'firstName', 'lastName' will be mapped to corresponding columns
@@ -55,14 +55,14 @@ import org.springframework.util.Assert;
  * Examples of CRUD:
  *
  * // Product class below maps to 'product' table by default.
- * // Use annotation @Table(name="some_tablename") to override the default
+ * // Use annotation {@literal @}Table(name="some_tablename") to override the default
  *
  * public class Product {
- *    // @Id annotation is required.
+ *    // {@literal @}Id annotation is required.
  *    // For a auto increment database id use @Id(type=IdType.AUTO_INCREMENT)
  *    // For a non auto increment id use @Id. In this case you will have to manually set id value before insert.
  *
- *    @Id(type=IdType.AUTO_INCREMENT)
+ *    {@literal @}Id(type=IdType.AUTO_INCREMENT)
  *    private Integer id;
  *    private String productName;
  *    private Double price;
@@ -85,7 +85,7 @@ import org.springframework.util.Assert;
  * product.setPrice(11.50);
  * jdbcTemplateMapper.update(product);
  *
- * List<Product> products = jdbcTemplateMapper.findAll(Product.class);
+ * List{@literal <Product>} products = jdbcTemplateMapper.findAll(Product.class);
  *
  * jdbcTemplateMapper.delete(product);
  *
@@ -113,7 +113,7 @@ import org.springframework.util.Assert;
  * Spring bean configuration for JdbcTemplateMapper:
  * 1) Configure JdbcTemplate bean as per Spring documentation
  * 2) Configure the JdbcTemplateMapper bean:
- * &#64;Bean
+ * {@literal @}Bean
  * public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
  *
  *   return new JdbcTemplateMapper(jdbcTemplate);
@@ -613,6 +613,7 @@ public class JdbcTemplateMapper {
   /**
    * Physically Deletes the object from the database by id
    *
+   * @param <T> This describes class type
    * @param id Id of object to be deleted
    * @param clazz Type of object to be deleted.
    * @return number records were deleted (1 or 0)
