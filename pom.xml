@@ -25,7 +25,6 @@
     <java.version>1.8</java.version>
   </properties>
 
-
   <url>https://github.com/jdbctemplatemapper/jdbctemplatemapper</url>
 
   <licenses>
@@ -48,9 +47,7 @@
     <developerConnection>scm:git:git@github.com:jdbctemplatemapper/jdbctemplatemapper.git</developerConnection>
     <url>https://github.com/jdbctemplatemapper/jdbctemplatemapper</url>
     <tag>HEAD</tag>
-
   </scm>
-
 
   <dependencies>
 
