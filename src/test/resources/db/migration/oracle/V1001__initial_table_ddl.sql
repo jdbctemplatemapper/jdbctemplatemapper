@@ -63,6 +63,7 @@ CREATE TABLE jdbctemplatemapper.type_check (
    local_date_time_data timestamp,
    java_util_date_ts_data timestamp,
    big_decimal_data number(10,2)
+   /* oracle has no boolean field */
 );
 
 

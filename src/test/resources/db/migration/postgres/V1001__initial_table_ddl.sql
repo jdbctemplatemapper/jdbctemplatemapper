@@ -61,7 +61,8 @@ CREATE TABLE jdbctemplatemapper.type_check (
    java_util_date_data date,
    local_date_time_data timestamp,
    java_util_date_ts_data timestamp,
-   big_decimal_data numeric(10,2)
+   big_decimal_data numeric(10,2),
+   boolean_val boolean
 );
 
 
