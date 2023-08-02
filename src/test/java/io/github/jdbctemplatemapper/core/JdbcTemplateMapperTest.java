@@ -469,8 +469,6 @@ public class JdbcTemplateMapperTest {
     assertNotNull(tc.getLocalDateData());
     assertNotNull(tc.getJavaUtilDateData());
     assertNotNull(tc.getLocalDateTimeData());
-    System.out.println(tc.getBigDecimalData());
-    System.out.println(obj.getBigDecimalData());
     assertTrue(tc.getBigDecimalData().compareTo(obj.getBigDecimalData()) == 0);
     
     if (jdbcDriver.contains("sqlserver")) {

@@ -62,25 +62,24 @@ JdbcTemplateMapper makes CRUD with JdbcTemplate simpler. Use it for one line CRU
  jdbcTemplateMapper.delete(product);
  ```
  
- ** pom.xml **
- **Maven coordinates:** 
+ **jdbctemplatemapper maven coordinates for pom.xml :** 
+
+ ``` 
+  <dependency>
+    <groupId>io.github.jdbctemplatemapper</groupId>
+    <artifactId>jdbctemplatemapper</artifactId>
+    <version>0.5.1-SNAPSHOT</version>
+ </dependency>
+ ```
  
- * {@code
- *  <dependency>
- *    <groupId>org.springframework.boot</groupId>
- *    <artifactId>spring-boot-starter-jdbc</artifactId>
- * </dependency>
- * }
+ Make sure the following Spring dependency for JdbcTempate is in your pom.xml
  
- 
- *{@code
- *  <dependency>
- *    <groupId>org.springframework.boot</groupId>
- *    <artifactId>spring-boot-starter-jdbc</artifactId>
- * </dependency>
- * }
- 
- 
+ ```
+   <dependency>
+     <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-jdbc</artifactId>
+ </dependency> 
+ ```
  
  **Spring bean configuration for JdbcTemplateMapper:** 
 
@@ -147,10 +146,9 @@ class Customer {
 In this case you will have to manually set the id value before calling insert()
 
 **Configeration for Version (optimistic locking), created on, created by, updated on, updated by**
+ 
 
-If can configure the JdbcTemplateMapper something like below (All are optional); 
-
-    JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate, schemaName);
+    JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate);
     jdbcTemplateMapper
         .withRecordOperatorResolver(new ConcreteImplementationOfIRecordOperatorResolver())
         .withCreatedOnPropertyName("createdOn")
@@ -176,7 +174,7 @@ class Product {
 }
 ```
 
-The following will be done by the jdbcTemplateMapper
+The following will be the effect
 
 For insert()
  * createdOn, updatedOn properties will be set to the current datetime.
@@ -186,7 +184,7 @@ For insert()
  For update()
  * updatedOn property will be set to current time
  * updatedBy property will be set to the value returned by implementation of IRecordOperatorResolver
- * if version is configured the update() will increment the version if successful. If version is stale exception OptimisticLockingException will be thrown
+ * if version is configured the update() will increment the version if successful. If version is stale OptimisticLockingException will be thrown
  
 
 **Logging:**

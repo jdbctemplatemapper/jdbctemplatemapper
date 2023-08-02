@@ -17,7 +17,7 @@ public class Customer {
   private String createdBy;
   private LocalDateTime updatedOn;
   private String updatedBy;
-  private String version;
+  private Integer version;
 
   public Integer getCustomerId() {
     return customerId;
@@ -75,11 +75,11 @@ public class Customer {
     this.updatedBy = updatedBy;
   }
 
-  public String getVersion() {
+  public Integer getVersion() {
     return version;
   }
 
-  public void setVersion(String version) {
+  public void setVersion(Integer version) {
     this.version = version;
   }
 }
