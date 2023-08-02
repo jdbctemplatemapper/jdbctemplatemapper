@@ -2,7 +2,7 @@
 https://www.petefreitag.com/item/886.cfm
 
 *) Start oracle docker image using docker-compose. File at
-/Users/ajoseph/oracle-install/docker-images/OracleDatabase/SingleInstance/dockerfiles/
+$HOME/oracle-install/docker-images/OracleDatabase/SingleInstance/dockerfiles/
 
 docker-compose up
 

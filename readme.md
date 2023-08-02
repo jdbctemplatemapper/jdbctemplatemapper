@@ -205,6 +205,6 @@ Uses the same logging configurations as JdbcTemplate to log the SQL.
  
  **Notes:**
  1. If insert/update fails do not reuse the object since it could be in an inconsistent state.
- 2. Database changes will need a restart of the application since JdbcTemplateMapper caches table metadata.
+ 2. Database changes will require a restart of the application since JdbcTemplateMapper caches table metadata.
   
  

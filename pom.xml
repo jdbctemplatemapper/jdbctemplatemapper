@@ -41,7 +41,6 @@
 		</developer>
 	</developers>
 
-
 	<scm>
 		<connection>scm:git:git://github.com/jdbctemplatemapper/jdbctemplatemapper.git</connection>
 		<developerConnection>scm:git:git@github.com:jdbctemplatemapper/jdbctemplatemapper.git</developerConnection>
@@ -126,7 +125,7 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
 					<!-- Need this to prevent plugin from erroring out on 'No main class 
-						found' on repackging -->
+						found' on repackaging -->
 					<skip>true</skip>
 					<classifier>test</classifier>
 				</configuration>

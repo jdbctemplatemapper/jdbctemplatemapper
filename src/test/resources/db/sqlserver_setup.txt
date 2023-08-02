@@ -1,16 +1,8 @@
-*) Change the application properties like below:
-spring.datasource.jdbc-url=jdbc:sqlserver://localhost:1433;databaseName=JdbcTemplateMapper
-#spring.datasource.username=sa
-#spring.datasource.password=Dockersql123
-spring.datasource.username=mssql
-spring.datasource.password=Mssql123
-spring.datasource.driver-class-name=com.microsoft.sqlserver.jdbc.SQLServerDriver
-
 *) Make sure the the following objects have been created in sqlserver.
 use master;
 
 create schema jdbctemplatemapper;
-create LOGIN mssql WITH PASSWORD = 'Mssql123'; 
+create LOGIN mssql WITH PASSWORD = 'somepassword'; 
 
 CREATE USER mssql FOR LOGIN mssql;
 
