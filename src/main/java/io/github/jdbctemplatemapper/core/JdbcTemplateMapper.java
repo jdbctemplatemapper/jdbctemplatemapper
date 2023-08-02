@@ -93,7 +93,16 @@ import org.springframework.util.Assert;
  * Requires Java8 or above and dependencies are the same as that for Spring's JdbcTemplate
  *
  * pom.xml dependencies
- * For a spring boot application:
+ * 
+ *{@code
+ *  <dependency>
+ *   <groupId>io.github.jdbctemplatemapper</groupId>
+ *   <artifactId>jdbctemplatemapper</artifactId>
+ *   <version>0.5.1-SNAPSHOT</version>
+ * </dependency>
+ * }
+ * 
+ * Make sure to include the following Spring entry for JdbcTemplate
  * {@code
  *  <dependency>
  *    <groupId>org.springframework.boot</groupId>
@@ -101,17 +110,10 @@ import org.springframework.util.Assert;
  * </dependency>
  * }
  *
- * For a regular spring application:
- * {@code
- *  <dependency>
- *   <groupId>org.springframework</groupId>
- *   <artifactId>spring-jdbc</artifactId>
- *   <version>YourVersionOfSpringJdbc</version>
- *  </dependency>
- * }
  *
  * Spring bean configuration for JdbcTemplateMapper:
  * 1) Configure JdbcTemplate bean as per Spring documentation
+ * 
  * 2) Configure the JdbcTemplateMapper bean:
  * {@literal @}Bean
  * public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {

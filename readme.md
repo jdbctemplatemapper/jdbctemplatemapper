@@ -1,13 +1,13 @@
 # JdbcTemplateMapper #
 
-Spring's JdbcTemplate gives full control of data access using SQL. It is a better option for complex enterprise applications than an ORM (ORM magic/nuances get in the way for large and complex applications). Even though JdbcTemplate abstracts away a lot of the boiler plate code needed by JDBC, it still remains verbose.
+Spring's JdbcTemplate provides data access using JDBC/SQL. It is a better option for complex enterprise applications than an ORM (ORM magic/nuances get in the way for large and complex applications). Even though JdbcTemplate abstracts away a lot of the boiler plate code needed by JDBC, it still remains verbose.
  
-JdbcTemplateMapper makes CRUD with JdbcTemplate simpler (Its constructor take JdbcTemplate as an argument). Use it for one line CRUD operations and for other query stuff use JdbcTemplate as you normally would.
+JdbcTemplateMapper makes CRUD with JdbcTemplate simpler. Use it for one line CRUD operations and for the other query stuff use JdbcTemplate as you normally would.
 
 **Features:** 
 
   1. One liners for CRUD. To keep the library as simple possible it only has 2 annotations.
-  2. Can be configured for:
+  2. Can be configured for  (Not required):
       * auto assign created on, updated on.
       * auto assign created by, updated by using an implementation of IRecordOperatorResolver.
       * optimistic locking functionality for updates by configuring a version property.
@@ -23,7 +23,7 @@ JdbcTemplateMapper makes CRUD with JdbcTemplate simpler (Its constructor take Jd
   
   2. The table columns map to object properties and have no concept of relationships. So foreign keys in tables will need a corresponding **extra** property in the model. For example if an 'Order' is tied to a 'Customer', to match the 'customer\_id' column in the 'order' table you will need to have the 'customerId' property in the 'Order' model. 
  
- **Example usage code:** 
+ **Example code:** 
  
   ```java 
  // Product class below maps to 'product' table by default.
@@ -31,8 +31,8 @@ JdbcTemplateMapper makes CRUD with JdbcTemplate simpler (Its constructor take Jd
  
  public class Product {
      // @Id annotation is required.
-     // For a auto increment database id use @Id(type=IdType.AUTO_INCREMENT)
-     // For a non auto increment id use @Id. In this case you will have to manually set id value before insert.
+     // For auto increment database id use @Id(type=IdType.AUTO_INCREMENT)
+     // For non auto increment id use @Id. In this case you will have to manually set id value before invoking insert().
  
      @Id(type=IdType.AUTO_INCREMENT)
      private Integer id;
@@ -62,8 +62,25 @@ JdbcTemplateMapper makes CRUD with JdbcTemplate simpler (Its constructor take Jd
  jdbcTemplateMapper.delete(product);
  ```
  
+ ** pom.xml **
  **Maven coordinates:** 
- TODO
+ 
+ * {@code
+ *  <dependency>
+ *    <groupId>org.springframework.boot</groupId>
+ *    <artifactId>spring-boot-starter-jdbc</artifactId>
+ * </dependency>
+ * }
+ 
+ 
+ *{@code
+ *  <dependency>
+ *    <groupId>org.springframework.boot</groupId>
+ *    <artifactId>spring-boot-starter-jdbc</artifactId>
+ * </dependency>
+ * }
+ 
+ 
  
  **Spring bean configuration for JdbcTemplateMapper:** 
 
@@ -86,7 +103,7 @@ public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
 
 **@Table**
 
-This is a class level annotation. Use it when the class does have a corresponding table. (ie when the camel case class name does not have a corresponding snake case table name in the database) 
+This is a class level annotation. Use it when when the camel case class name does not have a corresponding snake case table name in the database) 
 
 For example if you want to map 'Product' to the 'products' table (note plural) use
 
