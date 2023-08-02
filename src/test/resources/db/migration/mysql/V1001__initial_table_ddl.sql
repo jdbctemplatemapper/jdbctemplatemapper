@@ -62,7 +62,7 @@ CREATE TABLE jdbctemplatemapper.type_check (
    local_date_time_data timestamp,
    java_util_date_ts_data timestamp,
    big_decimal_data numeric(10,2),
-   booleanVal BOOLEAN
+   boolean_val BOOLEAN,
    	CONSTRAINT type_check_pk PRIMARY KEY (id)
 );
 

@@ -88,8 +88,7 @@ public class JdbcTemplateMapperTypeTest {
     jdbcTemplateMapper.insert(obj);
     
   
-    TypeCheck tc = jdbcTemplateMapper.findById(obj.getId(), TypeCheck.class);
-    
+    TypeCheck tc = jdbcTemplateMapper.findById(obj.getId(), TypeCheck.class);    
     TypeCheck tc1 = jdbcTemplateMapper.findById(obj.getId(), TypeCheck.class);
     
     
@@ -105,7 +104,6 @@ public class JdbcTemplateMapperTypeTest {
     tc1.setBigDecimalData(new BigDecimal("11.34"));
     tc1.setBooleanVal(false);
     
-    
     if (jdbcDriver.contains("sqlserver")) {
         tc1.setJavaUtilDateDtData(nextDayDateTime);
       }
@@ -113,8 +111,7 @@ public class JdbcTemplateMapperTypeTest {
       	tc1.setJavaUtilDateTsData(nextDayDateTime);
       }
     
-    jdbcTemplateMapper.update(tc1);
-    
+    jdbcTemplateMapper.update(tc1);  
     
     TypeCheck tc2 = jdbcTemplateMapper.findById(obj.getId(), TypeCheck.class);
    
