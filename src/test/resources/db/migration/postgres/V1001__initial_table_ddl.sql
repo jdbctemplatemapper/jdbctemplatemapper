@@ -1,5 +1,5 @@
 CREATE TABLE jdbctemplatemapper.orders (
-	order_id serial NOT NULL,
+	order_id bigserial NOT NULL,
 	order_date timestamp NULL,
 	customer_id integer NULL,
 	status varchar(100) NULL,
@@ -13,7 +13,7 @@ CREATE TABLE jdbctemplatemapper.orders (
 
 CREATE TABLE jdbctemplatemapper.order_line (
 	order_line_id serial NOT NULL,
-	order_id integer NOT NULL,
+	order_id bigint NOT NULL,
 	product_id integer NOT NULL,
 	num_of_units integer NULL,
 	CONSTRAINT order_line_pk PRIMARY KEY (order_line_id)
@@ -40,7 +40,7 @@ CREATE TABLE jdbctemplatemapper.product (
 
 
 CREATE TABLE jdbctemplatemapper.person (
-	person_id serial NOT NULL,
+	person_id varchar(100) NOT NULL,
 	first_name varchar(100) NOT NULL,
 	last_name varchar(100) NOT NULL,
 	created_on timestamp NULL,

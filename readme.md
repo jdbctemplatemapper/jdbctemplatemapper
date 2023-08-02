@@ -21,7 +21,7 @@ JdbcTemplateMapper makes CRUD with JdbcTemplate simpler. Use it for one line CRU
  
   1. Camel case object property names are mapped to snake case table column names. Properties of a model like 'firstName', 'lastName' will be mapped to corresponding columns 'first\_name' and 'last\_name' in the database table (If for a model property a column match is not found, those properties will be ignored during CRUD operations).
   
-  2. The table columns map to object properties and have no concept of relationships. So foreign keys in tables will need a corresponding **extra** property in the model. For example if an 'Order' is tied to a 'Customer', to match the 'customer\_id' column in the 'order' table you will need to have the 'customerId' property in the 'Order' model. 
+  2. The model properties map to table columns and have no concept of relationships. So foreign keys in tables will need a corresponding **extra** property in the model. For example if an 'Order' is tied to a 'Customer', to match the 'customer\_id' column in the 'order' table you will need to have the 'customerId' property in the 'Order' model. 
  
  **Example code:** 
  

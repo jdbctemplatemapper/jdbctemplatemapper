@@ -1,22 +1,21 @@
 package io.github.jdbctemplatemapper.model;
 
 import io.github.jdbctemplatemapper.annotation.Id;
-import io.github.jdbctemplatemapper.annotation.IdType;
 
 public class Person {
-  @Id(type = IdType.AUTO_INCREMENT)
-  private Integer personId;
+  @Id
+  private String personId;
 
   private String lastName;
   private String firstName;
 
   private String someNonDatabaseProperty;
 
-  public Integer getPersonId() {
+  public String getPersonId() {
     return personId;
   }
 
-  public void setPersonId(Integer id) {
+  public void setPersonId(String id) {
     this.personId = id;
   }
 
