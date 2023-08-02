@@ -230,10 +230,6 @@ public class JdbcTemplateMapper {
     return npJdbcTemplate;
   }
 
-  public MappingHelper getMappingHelper() {
-    return mappingHelper;
-  }
-
   /**
    * Assign this to identify the property name of created on field. This property has to be of type
    * LocalDateTime. When an object is inserted into the database the value of this field will be set
