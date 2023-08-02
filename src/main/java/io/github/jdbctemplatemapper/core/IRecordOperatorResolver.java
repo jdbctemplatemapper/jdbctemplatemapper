@@ -9,10 +9,10 @@ package io.github.jdbctemplatemapper.core;
  */
 public interface IRecordOperatorResolver {
 	/**
-	 * The implementation should return the name or id etc which is used to populate
+	 * The implementation should return the name/id ... which is used to populate
 	 * the created by and updated by properties of the object while inserting/updating
      *
-	 * @return Object - The value (name/id etc) of user who operated on the record.
+	 * @return Object - The value ie name/id ... of user who operated on the record.
 	 */
 	public Object getRecordOperator();
 }

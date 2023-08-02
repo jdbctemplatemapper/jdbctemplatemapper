@@ -22,57 +22,52 @@ import org.springframework.util.Assert;
 
 /**
  * <pre>
- * Spring's JdbcTemplate gives full control of data access using SQL. It is a better option for complex
- * enterprise applications than an ORM (ORM magic/nuances get in the way for large and complex
- * applications). Even though JdbcTemplate abstracts away a lot of the boiler plate code needed by JDBC, it
- * still remains verbose.
- *
- * JdbcTemplateMapper makes CRUD with JdbcTemplate simpler. (Its constructor take JdbcTemplate as an argument).
- * Use it for one line CRUD operations and for other query stuff use JdbcTemplate as you normally would.
+ * Spring's JdbcTemplate provides data access using JDBC/SQL. It is a better option for complex enterprise applications 
+ * than an ORM (ORM magic/nuances get in the way for large/complex applications). Even though JdbcTemplate abstracts 
+ * away a lot of the JDBC boiler plate code, it still is verbose.
  * 
- * Features:
- * 1) One liners for CRUD. To keep the library as simple possible it only has 2 annotations.
- * 2) Can be configured for:
- *     *) auto assign created on, updated on.
- *     *) auto assign created by, updated by using an implementation of IRecordOperatorResolver.
- *     *) optimistic locking functionality for updates by configuring a version property.
- * 3) Thread safe so just needs a single instance (similar to JdbcTemplate)
- * 4) To log the SQL statements it uses the same logging configurations as JdbcTemplate. See the logging section further below.
- * 5) Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases).
- *    Should work with other relational databases. 
+ * JdbcTemplateMapper makes CRUD with JdbcTemplate simpler. Use it for one line CRUD operations and for other database 
+ * access operations use JdbcTemplate as you normally would.
  *
- * JdbcTemplateMapper is opinionated.
+ * 
+ * <strong>Features</strong>
+ * 1. One liners for CRUD. To keep the library as simple possible it only has 2 annotations.
+ * 2. Can be configured for the following (optional):
+ *      auto assign created on, updated on.
+ *      auto assign created by, updated by using an implementation of IRecordOperatorResolver.
+ *     optimistic locking functionality for updates by configuring a version property.
+ * 3. Thread safe so just needs a single instance (similar to JdbcTemplate)
+ * 4. To log the SQL statements it uses the same logging configurations as JdbcTemplate. See the logging section.
+ * 5. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with 
+ *    other relational databases.
+ *
+ * <Strong>JdbcTemplateMapper is opinionated</strong> 
  * Projects have to meet the following 2 criteria to use it:
- * 1) Camel case object property names are mapped to snake case table column names.
- *    Properties of a model like 'firstName', 'lastName' will be mapped to corresponding columns
- *    'first_name' and 'last_name' in the database table (If for a model property 
- *    a column match is not found, those properties are ignored during CRUD operations) 
- * 2) The table columns map to object properties and have no concept of relationships. So foreign keys in your
- *    table will need a corresponding extra field in the model.
- *    For example if an 'Order" is tied to a 'Customer' to match the 'customer_id' column in the 'order' table you 
- *    will need to have the 'customerId' property in your 'Order' model.
+ * 
+ * 1. Camel case object property names are mapped to snake case table column names. Properties of a model like 'firstName',
+ *    'lastName' will be mapped to corresponding columns 'first\_name' and 'last\_name' in the database table
+ *    If for a model property a column match is not found, those properties will be ignored during CRUD operations.  
+ * 2. The model properties map to table columns and have no concept of relationships. So foreign keys in tables will need a corresponding **extra** property in the model. For example if an 'Order' is tied to a 'Customer', to match the 'customer\_id' column in the 'order' table you will need to have the 'customerId' property in the 'Order' model. 
  *
- * Examples of CRUD:
- *
+ * <strong>Examples code</strong>
  * // Product class below maps to 'product' table by default.
  * // Use annotation {@literal @}Table(name="some_tablename") to override the default
- *
  * public class Product {
- *    // {@literal @}Id annotation is required.
+ *    //{@literal @}Id annotation is required.
  *    // For a auto increment database id use @Id(type=IdType.AUTO_INCREMENT)
  *    // For a non auto increment id use @Id. In this case you will have to manually set id value before insert.
  *
  *    {@literal @}Id(type=IdType.AUTO_INCREMENT)
- *    private Integer id;
- *    private String productName;
- *    private Double price;
- *    private LocalDateTime availableDate;
+ *     private Integer id;
+ *     private String productName;
+ *     private Double price;
+ *     private LocalDateTime availableDate;
  *
- *    // insert/update/find.. methods will ignore properties which do not
- *    // have a corresponding snake case columns in database table
- *    private String someNonDatabaseProperty;
+ *     // insert/update/find.. methods will ignore properties which do not
+ *     // have a corresponding snake case columns in database table
+ *     private String someNonDatabaseProperty;
  *
- *    // getters and setters ...
+ *     // getters and setters ...
  * }
  *
  * Product product = new Product();
@@ -89,11 +84,7 @@ import org.springframework.util.Assert;
  *
  * jdbcTemplateMapper.delete(product);
  *
- * Installation:
- * Requires Java8 or above and dependencies are the same as that for Spring's JdbcTemplate
- *
- * pom.xml dependencies
- * 
+ * <strong>Maven coordinates</strong> 
  *{@code
  *  <dependency>
  *   <groupId>io.github.jdbctemplatemapper</groupId>
@@ -101,8 +92,7 @@ import org.springframework.util.Assert;
  *   <version>0.5.1-SNAPSHOT</version>
  * </dependency>
  * }
- * 
- * Make sure to include the following Spring entry for JdbcTemplate
+ * Make sure the Spring dependency for JdbcTempate is in your pom.xml. It will look something like below:
  * {@code
  *  <dependency>
  *    <groupId>org.springframework.boot</groupId>
@@ -110,26 +100,94 @@ import org.springframework.util.Assert;
  * </dependency>
  * }
  *
- *
- * Spring bean configuration for JdbcTemplateMapper:
+ * <strong>Spring bean configuration for JdbcTemplateMapper</strong>
  * 1) Configure JdbcTemplate bean as per Spring documentation
- * 
  * 2) Configure the JdbcTemplateMapper bean:
  * {@literal @}Bean
- * public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
+ *  public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
  *
- *   return new JdbcTemplateMapper(jdbcTemplate);
+ *    return new JdbcTemplateMapper(jdbcTemplate);
  *
- *   // JdbcTemplateMapper needs to get database metadata to generate the sql statements.
- *   // Databases may differ on what criteria is needed to retrieve the information. JdbcTemplateMapper
- *   // has multiple constructors so use the appropriate one. In most cases 'new JdbcTemplateMapper(jdbcTemplate);'
- *   // will do the job.
+ *    // JdbcTemplateMapper needs to get database metadata to generate the SQL statements.
+ *    // Databases may differ on what criteria is needed to retrieve this information. JdbcTemplateMapper
+ *    // has multiple constructors so use the appropriate one. For example if you are using oracle and tables
+ *    // are not aliased the SQL will need schemaName.tableName to access the table. In this case 
+ *    // use the constructor new JdbcTemplateMapper(jdbcTemplate, schemaName);
  * }
  *
- * </pre>
+ * <strong>Annotations:</strong>
+ * {@literal @}Table - This is a class level annotation. Use it when when the camel case class name does not have a corresponding 
+ *  snake case table name in the database
+ *  For example if you want to map 'Product' to the 'products' table (note plural) use
  * 
+ * {@literal @}Table(name="products")
+ *  class Product {
+ *   ...
+ *  }
+ *
+ * {@literal @}Id - This is a required annotation. There are 2 forms of usage for this.
  * 
- * Logging:
+ * auto incremented id usage:
+ *  class Product {
+ * {@literal @}Id(type=IdType.AUTO_INCREMENT)
+ *    private Integer productId;
+ *    ...
+ *  }
+ *
+ * After a successful insert() operation the productId property will be populated with the new id.
+ * 
+ * NON auto incremented id usage:
+ *  class Customer {
+ * {@literal @}Id
+ *    private Integer id;
+ *    ...
+ *  }
+ *
+ * In this case you will have to manually set the id value before calling insert()
+ * 
+ * <strong>Configuration to auto assign created on, created by, updated on, updated by, version (optimistic locking)</strong>
+ *
+ * All these auto assign configurations are optional.
+ *
+ *  JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate);
+ *   jdbcTemplateMapper
+ *       .withRecordOperatorResolver(new ConcreteImplementationOfIRecordOperatorResolver())
+ *       .withCreatedOnPropertyName("createdOn")
+ *       .withCreatedByPropertyName("createdBy")
+ *       .withUpdatedOnPropertyName("updatedOn")
+ *       .withUpdatedByPropertyName("updatedBy")
+ *       .withVersionPropertyName("version");
+ *       
+ * Example model:
+ *
+ * class Product {
+ *  {@literal @}Id(type=IdType.AUTO_INCREMENT)
+ *   private Integer productId;
+ *   ...
+ *   private LocalDateTime createdOn;
+ *   private String createdBy;
+ * 
+ *   private LocalDateTime updatedOn;
+ *   private String updatedBy;
+ *
+ *   private Integer version;
+ * }
+ *
+ * The following will be the effect of the configuration:
+ *
+ * created on:
+ * For insert the matching property value on the model will be set to the current datetime. Property should be of type LocalDateTime
+ * update on:
+ * For update the matching property value on the model will be set to the current datetime. Property should be of type LocalDateTime
+ * created by:
+ * For insert the matching property value on the model will be set to value returned by implementation of IRecordOperatorResolver
+ * updated by:
+ * For update the matching property value on the model will be set to value returned by implementation of IRecordOperatorResolver
+ * version:
+ * For update the matching property value on the model will be incremented if successful. If version is stale, an 
+ * OptimisticLockingException will be thrown. For an insert this value will be set to 1. The version property should be of type Integer.
+ * 
+ * <strong>Logging</strong>
  * # log the sql
  * logging.level.org.springframework.jdbc.core.JdbcTemplate=TRACE
  * 
@@ -138,6 +196,8 @@ import org.springframework.util.Assert;
  *
  * # log the parameters of sql statement
  * logging.level.org.springframework.jdbc.core.StatementCreatorUtils=TRACE
+ *
+ * </pre>
  *
  * @author ajoseph
  */

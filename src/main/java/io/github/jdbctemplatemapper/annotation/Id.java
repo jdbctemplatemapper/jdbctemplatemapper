@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  * <pre>
- * Annotation for Identifier
+ * Annotation for Identifier.
  * 
  * For auto increment id:
  * class Product {
