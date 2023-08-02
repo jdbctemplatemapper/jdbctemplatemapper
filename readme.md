@@ -2,12 +2,12 @@
 
 Spring's JdbcTemplate provides data access using JDBC/SQL. It is a better option for complex enterprise applications than an ORM (ORM magic/nuances get in the way for large/complex applications). Even though JdbcTemplate abstracts away a lot of the JDBC boiler plate code, it still is verbose.
  
-JdbcTemplateMapper makes CRUD with JdbcTemplate simpler. Use it for one line CRUD operations and for the other database access use JdbcTemplate as you normally would.
+JdbcTemplateMapper makes CRUD with JdbcTemplate simpler. Use it for one line CRUD operations and for other database access operations use JdbcTemplate as you normally would.
 
 **Features:** 
 
   1. One liners for CRUD. To keep the library as simple possible it only has 2 annotations.
-  2. Can be configured for  (optional):
+  2. Can be configured for the following (optional):
       * auto assign created on, updated on.
       * auto assign created by, updated by using an implementation of IRecordOperatorResolver.
       * optimistic locking functionality for updates by configuring a version property.
@@ -76,14 +76,14 @@ JdbcTemplateMapper makes CRUD with JdbcTemplate simpler. Use it for one line CRU
  
  ```
    <dependency>
-     <groupId>org.springframework.boot</groupId>
+    <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-jdbc</artifactId>
   </dependency> 
  ```
  
  **Spring bean configuration for JdbcTemplateMapper:** 
 
- 1. Configure JdbcTemplate bean as per Spring documentation
+ 1. Configure the JdbcTemplate bean as per Spring documentation
  2. Configure the JdbcTemplateMapper bean:
  
  ```
@@ -94,8 +94,8 @@ public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
   // JdbcTemplateMapper needs to get database metadata to generate the SQL statements.
   // Databases may differ on what criteria is needed to retrieve this information. JdbcTemplateMapper
   // has multiple constructors so use the appropriate one. For example if you are using oracle and tables
-  // are not aliased the SQL will need schemaName.tableName to access the table. In a case like this
-  // use the constructor  new JdbcTemplateMapper(jdbcTemplate, schemaName);
+  // are not aliased the SQL will need schemaName.tableName to access the table. In this case 
+  // use the constructor new JdbcTemplateMapper(jdbcTemplate, schemaName);
 }
   
   ```
@@ -113,8 +113,6 @@ class Product {
   ...
 }
 ```
-
-If you had not used the annotation JdbcTemplateMapper will try to map to a 'product' table using the default naming convention.
 
 **@Id**
 
@@ -186,12 +184,12 @@ For insert the matching property value on the model will be set to value returne
 * updated by:
 For update the matching property value on the model will be set to value returned by implementation of IRecordOperatorResolver
 * version:
-For update the matching property value on the model will be incremented if successful. If version is stale, an OptimisticLockingException will be thrown. The version property should be of type Integer.
+For update the matching property value on the model will be incremented if successful. If version is stale, an OptimisticLockingException will be thrown. For an insert this value will be set to 1. The version property should be of type Integer.
  
 
 **Logging:**
  
-Uses the same logging configurations as JdbcTemplate for logging the SQL.
+Uses the same logging configurations as JdbcTemplate to log the SQL.
  
  ```
  # log the SQL
