@@ -94,8 +94,9 @@ public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
   
   // JdbcTemplateMapper needs to get database metadata to generate the SQL statements.
   // Databases may differ on what criteria is needed to retrieve this information. JdbcTemplateMapper
-  // has multiple constructors so use the appropriate one. In most cases 'new JdbcTemplateMapper(jdbcTemplate);'
-  // will do the job.
+  // has multiple constructors so use the appropriate one. For example if you are using oracle and tables
+  // are not aliased the SQL will need schemaName.tableName to access the table. In a case like this
+  // use the constructor  new JdbcTemplateMapper(jdbcTemplate, schemaName);
 }
   
   ```
@@ -145,6 +146,48 @@ class Customer {
 
 In this case you will have to manually set the id value before calling insert()
 
+**Configeration for Version (optimistic locking), created on, created by, updated on, updated by**
+
+If can configure the JdbcTemplateMapper something like below (All are optional); 
+
+    JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate, schemaName);
+    jdbcTemplateMapper
+        .withRecordOperatorResolver(new ConcreteImplementationOfIRecordOperatorResolver())
+        .withCreatedOnPropertyName("createdOn")
+        .withCreatedByPropertyName("createdBy")
+        .withUpdatedOnPropertyName("updatedOn")
+        .withUpdatedByPropertyName("updatedBy")
+        .withVersionPropertyName("version");
+        
+ for an object like Product
+ 
+ ```java
+class Product {
+ @Id(type=IdType.AUTO_INCREMENT)
+ private Integer productId;
+ ...
+  private LocalDateTime createdOn;
+  private String createdBy;
+  
+  private LocalDateTime updatedOn;
+  private String updatedBy;
+  
+  private Integer version;
+}
+```
+
+The following will be done by the jdbcTemplateMapper
+
+For insert()
+ * createdOn, updatedOn properties will be set to the current datetime.
+ * createdBy, updatedBy properties will be set to the value returned by implementation of IRecordOperatorResolver
+ * if version is configured the version property will be set to 1
+ 
+ For update()
+ * updatedOn property will be set to current time
+ * updatedBy property will be set to the value returned by implementation of IRecordOperatorResolver
+ * if version is configured the update() will increment the version if successful. If version is stale exception OptimisticLockingException will be thrown
+ 
 
 **Logging:**
  
