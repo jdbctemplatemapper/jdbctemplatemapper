@@ -119,7 +119,6 @@ public class JdbcTemplateMapperTest {
     assertEquals("tester", product.getUpdatedBy());
   }
   
-  
   @Test
   public void insert_withManualStringId() {
 
@@ -137,7 +136,6 @@ public class JdbcTemplateMapperTest {
     assertNotNull(person1);
   }
   
-
   @Test
   public void insert_nullObjectFailureTest() {
     Assertions.assertThrows(
@@ -157,8 +155,6 @@ public class JdbcTemplateMapperTest {
           jdbcTemplateMapper.insert(pojo);
         });
   }
-
-
 
   @Test
   public void insertWithId_withNullIdFailureTest() {
@@ -216,7 +212,35 @@ public class JdbcTemplateMapperTest {
     assertTrue(order.getUpdatedOn().isAfter(prevUpdatedOn));
     assertEquals("tester", order.getUpdatedBy());
   }
+  
+  @Test
+  public void update_withIdOfTypeIntegerTest() {
+	  
+    Product product = jdbcTemplateMapper.findById(4, Product.class);
+    
+    Product product1 = jdbcTemplateMapper.findById(4, Product.class); 
+    
+    product1.setName("xyz");
+    jdbcTemplateMapper.update(product1);
 
+    assertEquals("xyz", product1.getName());
+    assertTrue(product1.getVersion( )> product.getVersion()); // version incremented
+  }
+  
+  
+  @Test
+  public void update_withIdOfTypeStringTest() {
+	  
+    Person person = jdbcTemplateMapper.findById("person101", Person.class);
+    
+    person.setLastName("new name");
+    jdbcTemplateMapper.update(person);
+    
+    Person person1 = jdbcTemplateMapper.findById("person101", Person.class); 
+
+    assertEquals("new name", person1.getLastName());
+  } 
+  
   @Test
   public void update_withNoVersionAndUpdateInfoTest() {
     Customer customer = jdbcTemplateMapper.findById(4, Customer.class);
@@ -273,98 +297,6 @@ public class JdbcTemplateMapperTest {
   }
 
   @Test
-  public void update_byPropertyTest() throws Exception {
-    Order order = jdbcTemplateMapper.findById(2, Order.class);
-
-    Integer prevVersion = order.getVersion();
-
-    LocalDateTime prevUpdatedOn = order.getUpdatedOn();
-    order.setStatus("COMPLETE");
-
-    Thread.sleep(1000); // avoid timing issue.
-    jdbcTemplateMapper.update(order, "status");
-    
-    // check if auto assigned values of object changes
-    assertTrue(order.getVersion() > prevVersion); // version incremented
-    assertTrue(order.getUpdatedOn().isAfter(prevUpdatedOn));
-    assertEquals("tester", order.getUpdatedBy());
-    
-    // requery and check
-    order = jdbcTemplateMapper.findById(2, Order.class); // requery
-    assertEquals("COMPLETE", order.getStatus());
-    assertTrue(order.getVersion() > prevVersion); // version incremented
-    assertTrue(order.getUpdatedOn().isAfter(prevUpdatedOn));
-    assertEquals("tester", order.getUpdatedBy());
-  }
-
-  @Test
-  public void update_byMultiPropertyTest() {
-    Customer customer = jdbcTemplateMapper.findById(3, Customer.class);
-
-    customer.setFirstName("Dan");
-    customer.setLastName("Hughes");
-    jdbcTemplateMapper.update(customer, "lastName", "firstName");
-
-    customer = jdbcTemplateMapper.findById(3, Customer.class); // requery
-    assertEquals("Dan", customer.getFirstName());
-    assertEquals("Hughes", customer.getLastName());
-  }
-
-  @Test
-  public void update_byPropertythrowsOptimisticLockingExceptionTest() {
-    Assertions.assertThrows(
-        OptimisticLockingException.class,
-        () -> {
-          Order order = jdbcTemplateMapper.findById(2, Order.class);
-          order.setVersion(order.getVersion() - 1);
-          order.setStatus("COMPLETE");
-          jdbcTemplateMapper.update(order, "status"); // just update status
-        });
-  }
-
-  @Test
-  public void update_byPropertyNullObjectFailureTest() {
-    Assertions.assertThrows(
-        RuntimeException.class,
-        () -> {
-          jdbcTemplateMapper.update(null, "abc");
-        });
-  }
-
-  @Test
-  public void update_byPropertyNoIdObjectFailureTest() {
-    Assertions.assertThrows(
-        RuntimeException.class,
-        () -> {
-          NoIdObject pojo = new NoIdObject();
-          pojo.setSomething("abc");
-          jdbcTemplateMapper.update(pojo, "something");
-        });
-  }
-
-  @Test
-  public void update_byPropertyAutoAssignFieldFailureTest() {
-    Assertions.assertThrows(
-        RuntimeException.class,
-        () -> {
-          Order order = jdbcTemplateMapper.findById(2, Order.class);
-          order.setStatus("CLOSED");
-          jdbcTemplateMapper.update(order, "status", "updatedOn");
-        });
-  }
-
-  @Test
-  public void update_nonDatabasePropertyFailureTest() {
-    Assertions.assertThrows(
-        RuntimeException.class,
-        () -> {
-          Person person = jdbcTemplateMapper.findById(1, Person.class);
-          person.setSomeNonDatabaseProperty("xyz");
-          jdbcTemplateMapper.update(person, "someNonDatabaseProperty");
-        });
-  }
-
-  @Test
   public void findById_Test() {
     Order order = jdbcTemplateMapper.findById(1, Order.class);
 
@@ -380,23 +312,6 @@ public class JdbcTemplateMapperTest {
   @Test
   public void findAll_Test() {
     List<Order> orders = jdbcTemplateMapper.findAll(Order.class);
-    assertTrue(orders.size() >= 2);
-
-    for (int idx = 0; idx < orders.size(); idx++) {
-      assertNotNull(orders.get(idx).getOrderId());
-      assertNotNull(orders.get(idx).getOrderDate());
-      assertNotNull(orders.get(idx).getCreatedBy());
-      assertNotNull(orders.get(idx).getCreatedOn());
-      assertNotNull(orders.get(idx).getUpdatedBy());
-      assertNotNull(orders.get(idx).getUpdatedOn());
-      assertNotNull(orders.get(idx).getVersion());
-    }
-  }
-
-  @Test
-  public void findAll_WithOrderByClauseTest() {
-    List<Order> orders = jdbcTemplateMapper.findAll(Order.class, "order by order_id");
-
     assertTrue(orders.size() >= 2);
 
     for (int idx = 0; idx < orders.size(); idx++) {
@@ -463,7 +378,4 @@ public class JdbcTemplateMapperTest {
         });
   }
 
-
-  
-  
 }

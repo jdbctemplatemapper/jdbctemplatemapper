@@ -3,7 +3,6 @@ package io.github.jdbctemplatemapper.core;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -194,6 +193,10 @@ import org.springframework.util.Assert;
  *
  * # log the parameters of sql statement
  * logging.level.org.springframework.jdbc.core.StatementCreatorUtils=TRACE
+ * 
+ * <strong>Notes</strong>
+ 1. If insert/update fails do not reuse the object since it could be in an inconsistent state.
+ 2. Database changes will require a restart of the application since JdbcTemplateMapper caches table metadata.
  *
  * </pre>
  *
@@ -214,15 +217,14 @@ public class JdbcTemplateMapper {
 	private String versionPropertyName;
 
 	// update sql cache
-	// Map key - table name or sometimes
-	// tableName-updatePropertyName1-updatePropertyName2...
+	// Map key - object class
 	// value - the update sql details
-	private Map<String, SqlAndParams> updateSqlAndParamsCache = new ConcurrentHashMap<>();
+	private Map<Class<?>, SqlAndParams> updateSqlAndParamsCache = new ConcurrentHashMap<>();
 
 	// insert sql cache
-	// Map key - table name,
+	// Map key - object class name
 	// value - insert sql details
-	private Map<String, SqlAndParams> InsertSqlAndParamsCache = new ConcurrentHashMap<>();
+	private Map<Class<?>, SqlAndParams> insertSqlAndParamsCache = new ConcurrentHashMap<>();
 
 	/**
 	 * @param jdbcTemplate - The jdbcTemplate
@@ -413,25 +415,8 @@ public class JdbcTemplateMapper {
 	}
 
 	/**
-	 * Find all objects and order them using the order by clause passed as argument
-	 *
-	 * @param clazz         Type of object
-	 * @param <T>           the type of the objects
-	 * @param orderByClause The order by sql
-	 * @return List of objects
-	 */
-	public <T> List<T> findAll(Class<T> clazz, String orderByClause) {
-		Assert.notNull(clazz, "Class must not be null");
-
-		String tableName = mappingHelper.getTableMapping(clazz).getTableName();
-		String sql = "SELECT * FROM " + mappingHelper.fullyQualifiedTableName(tableName) + " " + orderByClause;
-		RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
-		return jdbcTemplate.query(sql, mapper);
-	}
-
-	/**
-	 * Inserts an object whose id in database is auto increment. Once inserted the
-	 * object will have the id assigned.
+	 * Inserts an object into the database. If id is of the auto incremented after
+	 * the insert the object id will be assigned.
 	 *
 	 * <p>
 	 * Also assigns created by, created on, updated by, updated on, version if these
@@ -450,19 +435,21 @@ public class JdbcTemplateMapper {
 
 		if (tableMapping.isIdAutoIncrement()) {
 			if (idValue != null) {
-				throw new RuntimeException("For insert() the object's " + tableMapping.getIdPropertyName()
-						+ " property has to be null since this insert is for an object whose id is auto increment.");
+				throw new RuntimeException("For insert() the identifier property " + obj.getClass().getSimpleName()
+						+ "." + tableMapping.getIdPropertyName()
+						+ " has to be null since this insert is for an object whose id is auto increment.");
 			}
 		} else {
 			if (idValue == null) {
-				throw new RuntimeException("For insert() " + obj.getClass().getName() + "."
-						+ tableMapping.getIdPropertyName() + " property cannot be null");
+				throw new RuntimeException("For insert() identifier property " + obj.getClass().getSimpleName() + "."
+						+ tableMapping.getIdPropertyName() + " cannot be null since it is not an auto increment id.");
 			}
 		}
 
-		SqlAndParams insertSqlAndParams = InsertSqlAndParamsCache.get(tableMapping.getTableName());
-		if (insertSqlAndParams == null) {
-			insertSqlAndParams = buildSqlAndParamsForInsert(tableMapping);
+		SqlAndParams sqlAndParams = insertSqlAndParamsCache.get(obj.getClass());
+		if (sqlAndParams == null) {
+			sqlAndParams = buildSqlAndParamsForInsert(tableMapping);
+			insertSqlAndParamsCache.put(obj.getClass(), sqlAndParams);
 		}
 
 		LocalDateTime now = LocalDateTime.now();
@@ -489,58 +476,21 @@ public class JdbcTemplateMapper {
 		KeyHolder holder = new GeneratedKeyHolder();
 
 		MapSqlParameterSource mapSqlParameterSource = new MapSqlParameterSource();
-		for (String paramName : insertSqlAndParams.getParams()) {
+		for (String paramName : sqlAndParams.getParams()) {
 			mapSqlParameterSource.addValue(paramName, bw.getPropertyValue(paramName),
 					tableMapping.getPropertySqlType(paramName));
 		}
 
 		if (tableMapping.isIdAutoIncrement()) {
-			npJdbcTemplate.update(insertSqlAndParams.getSql(), mapSqlParameterSource, holder);
+			npJdbcTemplate.update(sqlAndParams.getSql(), mapSqlParameterSource, holder);
 			bw.setPropertyValue(tableMapping.getIdPropertyName(), holder.getKey());
 		} else {
-			npJdbcTemplate.update(insertSqlAndParams.getSql(), mapSqlParameterSource);
+			npJdbcTemplate.update(sqlAndParams.getSql(), mapSqlParameterSource);
 		}
 
 	}
 
-	private SqlAndParams buildSqlAndParamsForInsert(TableMapping tableMapping) {
-		Assert.notNull(tableMapping, "tableMapping must not be null");
 
-		Set<String> params = new HashSet<>();
-		StringBuilder sqlBuilder = new StringBuilder("INSERT INTO ");
-		sqlBuilder.append(mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()));
-		sqlBuilder.append(" ( ");
-
-		StringBuilder sqlValue = new StringBuilder(" VALUES (");
-
-		boolean first = true;
-		for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
-			if (tableMapping.isIdAutoIncrement()) {
-				if (tableMapping.getIdPropertyName().equals(propMapping.getPropertyName())) {
-					continue;
-				}
-			}
-
-			if (!first) {
-				sqlBuilder.append(", ");
-				sqlValue.append(", ");
-			} else {
-				first = false;
-			}
-
-			sqlBuilder.append(propMapping.getColumnName());
-			sqlValue.append(":" + propMapping.getPropertyName());
-
-			params.add(propMapping.getPropertyName());
-		}
-
-		sqlBuilder.append(") ");
-		sqlValue.append(")");
-
-		sqlBuilder.append(sqlValue);
-
-		return new SqlAndParams(sqlBuilder.toString(), params);
-	}
 
 	/**
 	 * Updates object. Assigns updated by, updated on if these properties exist for
@@ -556,107 +506,55 @@ public class JdbcTemplateMapper {
 
 		TableMapping tableMapping = mappingHelper.getTableMapping(obj.getClass());
 
-		SqlAndParams updateSqlAndParams = updateSqlAndParamsCache.get(obj.getClass().getName());
+		SqlAndParams sqlAndParams = updateSqlAndParamsCache.get(obj.getClass());
 
-		if (updateSqlAndParams == null) {
-			// ignore these attributes when generating the sql 'SET' command
-			List<String> ignoreAttrs = new ArrayList<>();
-			ignoreAttrs.add(tableMapping.getIdPropertyName());
-			if (createdByPropertyName != null) {
-				ignoreAttrs.add(createdByPropertyName);
-			}
-			if (createdOnPropertyName != null) {
-				ignoreAttrs.add(createdOnPropertyName);
-			}
-
-			Set<String> updatePropertyNames = new LinkedHashSet<>();
-
-			for (PropertyInfo propertyInfo : mappingHelper.getObjectPropertyInfo(obj)) {
-				// if not a ignore property and has a table column mapping add it to the update
-				// property
-				// list
-				if (!ignoreAttrs.contains(propertyInfo.getPropertyName())
-						&& tableMapping.getColumnName(propertyInfo.getPropertyName()) != null) {
-					updatePropertyNames.add(propertyInfo.getPropertyName());
-				}
-			}
-			updateSqlAndParams = buildSqlAndParamsForUpdate(tableMapping, updatePropertyNames);
-			updateSqlAndParamsCache.put(obj.getClass().getName(), updateSqlAndParams);
+		if (sqlAndParams == null) {
+			sqlAndParams = buildSqlAndParamsForUpdate(tableMapping);
+			updateSqlAndParamsCache.put(obj.getClass(), sqlAndParams);
 		}
-		return issueUpdate(updateSqlAndParams, obj, tableMapping);
-	}
 
-	/**
-	 * Updates the propertyNames (passed in as args) of the object. Assigns updated
-	 * by, updated on if these properties exist for the object and the
-	 * jdbcTemplateMapper is configured for these fields.
-	 *
-	 * @param obj           object to be updated
-	 * @param propertyNames array of property names that should be updated
-	 * @return number of records updated (1 or 0)
-	 */
-	public Integer update(Object obj, String... propertyNames) {
-		Assert.notNull(obj, "Object must not be null");
-		Assert.notNull(propertyNames, "propertyNames must not be null");
-
-		TableMapping tableMapping = mappingHelper.getTableMapping(obj.getClass());
-
-		// cachekey ex: className-propertyName1-propertyName2
-		String cacheKey = obj.getClass().getName() + "-" + String.join("-", propertyNames);
-		SqlAndParams updateSqlAndParams = updateSqlAndParamsCache.get(cacheKey);
-		if (updateSqlAndParams == null) {
-			// check properties have a corresponding table column
-			for (String propertyName : propertyNames) {
-				if (tableMapping.getColumnName(propertyName) == null) {
-					throw new RuntimeException("property " + propertyName + " is not a property of object "
-							+ obj.getClass().getName() + " or does not have a corresponding column in table "
-							+ tableMapping.getTableName());
-				}
-			}
-
-			// auto assigned cannot be updated by user.
-			List<String> autoAssignedAttrs = new ArrayList<>();
-			autoAssignedAttrs.add(tableMapping.getIdPropertyName());
-			if (versionPropertyName != null && tableMapping.getColumnName(versionPropertyName) != null) {
-				autoAssignedAttrs.add(versionPropertyName);
-			}
-			if (updatedOnPropertyName != null && tableMapping.getColumnName(updatedOnPropertyName) != null) {
-				autoAssignedAttrs.add(updatedOnPropertyName);
-			}
-			if (updatedByPropertyName != null && recordOperatorResolver != null
-					&& tableMapping.getColumnName(updatedByPropertyName) != null) {
-				autoAssignedAttrs.add(updatedByPropertyName);
-			}
-
-			for (String propertyName : propertyNames) {
-				if (autoAssignedAttrs.contains(propertyName)) {
-					throw new RuntimeException("property " + propertyName
-							+ " is an auto assigned property which cannot be manually set in update statement");
-				}
-			}
-
-			// add input properties to the update property list
-			Set<String> updatePropertyNames = new LinkedHashSet<>();
-			for (String propertyName : propertyNames) {
-				updatePropertyNames.add(propertyName);
-			}
-
-			// add the auto assigned properties if configured and have table column mapping
-			if (versionPropertyName != null && tableMapping.getColumnName(versionPropertyName) != null) {
-				updatePropertyNames.add(versionPropertyName);
-			}
-			if (updatedOnPropertyName != null && tableMapping.getColumnName(updatedOnPropertyName) != null) {
-				updatePropertyNames.add(updatedOnPropertyName);
-			}
-			if (updatedByPropertyName != null && recordOperatorResolver != null
-					&& tableMapping.getColumnName(updatedByPropertyName) != null) {
-				updatePropertyNames.add(updatedByPropertyName);
-			}
-
-			updateSqlAndParams = buildSqlAndParamsForUpdate(tableMapping, updatePropertyNames);
-			updateSqlAndParamsCache.put(cacheKey, updateSqlAndParams);
+		BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
+		Set<String> parameters = sqlAndParams.getParams();
+		if (updatedOnPropertyName != null && parameters.contains(updatedOnPropertyName)) {
+			bw.setPropertyValue(updatedOnPropertyName, LocalDateTime.now());
 		}
-		return issueUpdate(updateSqlAndParams, obj, tableMapping);
+		if (updatedByPropertyName != null && recordOperatorResolver != null
+				&& parameters.contains(updatedByPropertyName)) {
+			bw.setPropertyValue(updatedByPropertyName, recordOperatorResolver.getRecordOperator());
+		}
+
+		MapSqlParameterSource mapSqlParameterSource = new MapSqlParameterSource();
+		for (String paramName : parameters) {
+			if (paramName.equals("incrementedVersion")) {
+				Integer versionVal = (Integer) bw.getPropertyValue(versionPropertyName);
+				if (versionVal == null) {
+					throw new RuntimeException(
+							versionPropertyName + " cannot be null when updating " + obj.getClass().getSimpleName());
+				} else {
+					mapSqlParameterSource.addValue("incrementedVersion", versionVal + 1, java.sql.Types.INTEGER);
+				}
+			} else {
+				mapSqlParameterSource.addValue(paramName, bw.getPropertyValue(paramName),
+						tableMapping.getPropertySqlType(paramName));
+			}
+		}
+
+		// if object has property version the version gets incremented on update.
+		// throws OptimisticLockingException when update fails.
+		if (sqlAndParams.getParams().contains("incrementedVersion")) {
+			int cnt = npJdbcTemplate.update(sqlAndParams.getSql(), mapSqlParameterSource);
+			if (cnt == 0) {
+				throw new OptimisticLockingException("Update failed for " + obj.getClass().getSimpleName() + " for "
+						+ tableMapping.getIdPropertyName() + ":" + bw.getPropertyValue(tableMapping.getIdPropertyName())
+						+ " and " + versionPropertyName + ":" + bw.getPropertyValue(versionPropertyName));
+			}
+			// update the version in object with new version
+			bw.setPropertyValue(versionPropertyName, mapSqlParameterSource.getValue("incrementedVersion"));
+			return cnt;
+		} else {
+			return npJdbcTemplate.update(sqlAndParams.getSql(), mapSqlParameterSource);
+		}
+
 	}
 
 	/**
@@ -694,10 +592,54 @@ public class JdbcTemplateMapper {
 				+ tableMapping.getIdColumnName() + " = ?";
 		return jdbcTemplate.update(sql, id);
 	}
-
-	private SqlAndParams buildSqlAndParamsForUpdate(TableMapping tableMapping, Set<String> propertyNames) {
+	
+	private SqlAndParams buildSqlAndParamsForInsert(TableMapping tableMapping) {
 		Assert.notNull(tableMapping, "tableMapping must not be null");
-		Assert.notNull(propertyNames, "propertyNames must not be null");
+
+		Set<String> params = new HashSet<>();
+		StringBuilder sqlIntoPart = new StringBuilder("INSERT INTO ");
+		sqlIntoPart.append(mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()));
+		sqlIntoPart.append(" ( ");
+
+		StringBuilder sqlValuePart = new StringBuilder(" VALUES (");
+
+		boolean first = true;
+		for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
+			if (tableMapping.isIdAutoIncrement()) {
+				if (tableMapping.getIdPropertyName().equals(propMapping.getPropertyName())) {
+					continue;
+				}
+			}
+			if (!first) {
+				sqlIntoPart.append(", ");
+				sqlValuePart.append(", ");
+			} else {
+				first = false;
+			}
+			sqlIntoPart.append(propMapping.getColumnName());
+			sqlValuePart.append(":" + propMapping.getPropertyName());
+
+			params.add(propMapping.getPropertyName());
+		}
+
+		sqlIntoPart.append(") ");
+		sqlValuePart.append(")");
+
+		return new SqlAndParams(sqlIntoPart.toString() + sqlValuePart.toString(), params);
+	}
+
+	private SqlAndParams buildSqlAndParamsForUpdate(TableMapping tableMapping) {
+		Assert.notNull(tableMapping, "tableMapping must not be null");
+
+		// ignore these attributes when generating the sql 'SET' command
+		List<String> ignoreAttrs = new ArrayList<>();
+		ignoreAttrs.add(tableMapping.getIdPropertyName());
+		if (createdByPropertyName != null) {
+			ignoreAttrs.add(createdByPropertyName);
+		}
+		if (createdOnPropertyName != null) {
+			ignoreAttrs.add(createdOnPropertyName);
+		}
 
 		Set<String> params = new HashSet<>();
 		StringBuilder sqlBuilder = new StringBuilder("UPDATE ");
@@ -706,24 +648,24 @@ public class JdbcTemplateMapper {
 
 		String versionColumnName = tableMapping.getColumnName(versionPropertyName);
 		boolean first = true;
-		for (String propertyName : propertyNames) {
-			String columnName = tableMapping.getColumnName(propertyName);
-			if (columnName != null) {
-				if (!first) {
-					sqlBuilder.append(", ");
-				} else {
-					first = false;
-				}
-				sqlBuilder.append(columnName);
-				sqlBuilder.append(" = :");
+		for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
+			if (ignoreAttrs.contains(propMapping.getPropertyName())) {
+				continue;
+			}
+			if (!first) {
+				sqlBuilder.append(", ");
+			} else {
+				first = false;
+			}
+			sqlBuilder.append(propMapping.getColumnName());
+			sqlBuilder.append(" = :");
 
-				if (versionPropertyName != null && columnName.equals(versionColumnName)) {
-					sqlBuilder.append("incrementedVersion");
-					params.add("incrementedVersion");
-				} else {
-					sqlBuilder.append(propertyName);
-					params.add(propertyName);
-				}
+			if (versionPropertyName != null && propMapping.getColumnName().equals(versionColumnName)) {
+				sqlBuilder.append("incrementedVersion");
+				params.add("incrementedVersion");
+			} else {
+				sqlBuilder.append(propMapping.getPropertyName());
+				params.add(propMapping.getPropertyName());
 			}
 		}
 
@@ -740,52 +682,5 @@ public class JdbcTemplateMapper {
 		SqlAndParams updateSqlAndParams = new SqlAndParams(updateSql, params);
 
 		return updateSqlAndParams;
-	}
-
-	private Integer issueUpdate(SqlAndParams updateSqlAndParams, Object obj, TableMapping tableMapping) {
-		Assert.notNull(updateSqlAndParams, "updateSqlAndParams must not be null");
-		Assert.notNull(obj, "Object must not be null");
-
-		BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
-		Set<String> parameters = updateSqlAndParams.getParams();
-		if (updatedOnPropertyName != null && parameters.contains(updatedOnPropertyName)) {
-			bw.setPropertyValue(updatedOnPropertyName, LocalDateTime.now());
-		}
-		if (updatedByPropertyName != null && recordOperatorResolver != null
-				&& parameters.contains(updatedByPropertyName)) {
-			bw.setPropertyValue(updatedByPropertyName, recordOperatorResolver.getRecordOperator());
-		}
-
-		MapSqlParameterSource mapSqlParameterSource = new MapSqlParameterSource();
-		for (String paramName : parameters) {
-			if (paramName.equals("incrementedVersion")) {
-				Integer versionVal = (Integer) bw.getPropertyValue(versionPropertyName);
-				if (versionVal == null) {
-					throw new RuntimeException(
-							versionPropertyName + " cannot be null when updating " + obj.getClass().getSimpleName());
-				} else {
-					mapSqlParameterSource.addValue("incrementedVersion", versionVal + 1, java.sql.Types.INTEGER);
-				}
-			} else {
-				mapSqlParameterSource.addValue(paramName, bw.getPropertyValue(paramName),
-						tableMapping.getPropertySqlType(paramName));
-			}
-		}
-
-		// if object has property version the version gets incremented on update.
-		// throws OptimisticLockingException when update fails.
-		if (updateSqlAndParams.getParams().contains("incrementedVersion")) {
-			int cnt = npJdbcTemplate.update(updateSqlAndParams.getSql(), mapSqlParameterSource);
-			if (cnt == 0) {
-				throw new OptimisticLockingException("Update failed for " + obj.getClass().getSimpleName() + " for "
-						+ tableMapping.getIdPropertyName() + ":" + bw.getPropertyValue(tableMapping.getIdPropertyName())
-						+ " and " + versionPropertyName + ":" + bw.getPropertyValue(versionPropertyName));
-			}
-			// update the version in object with new version
-			bw.setPropertyValue(versionPropertyName, mapSqlParameterSource.getValue("incrementedVersion"));
-			return cnt;
-		} else {
-			return npJdbcTemplate.update(updateSqlAndParams.getSql(), mapSqlParameterSource);
-		}
 	}
 }

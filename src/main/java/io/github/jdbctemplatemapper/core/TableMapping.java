@@ -11,6 +11,7 @@ import org.springframework.util.Assert;
  * @author ajoseph
  */
 public class TableMapping {
+  private Class<?> tableClass;
   private String tableName;
   private String idPropertyName;
   private boolean idAutoIncrement = false;
@@ -20,9 +21,11 @@ public class TableMapping {
   private List<PropertyMapping> propertyMappings = new ArrayList<>();
 
   
-  public TableMapping(String tableName, String idPropertyName, List<PropertyMapping> propertyMappings) {
+  public TableMapping(Class<?> tableClass, String tableName, String idPropertyName, List<PropertyMapping> propertyMappings) {
+	  Assert.notNull(tableClass, "tableClass must not be null");
 	  Assert.notNull(tableName, "tableName must not be null");
 	  Assert.notNull(idPropertyName, "idPropertyName must not be null");
+	  this.tableClass = tableClass;
 	  this.tableName = tableName;
 	  this.idPropertyName = idPropertyName;
 	  this.propertyMappings = propertyMappings;
@@ -47,6 +50,10 @@ public class TableMapping {
       }
     }
     return 0;
+  }
+  
+  public Class<?> getTableClass(){
+	  return tableClass;
   }
 
   public String getTableName() {

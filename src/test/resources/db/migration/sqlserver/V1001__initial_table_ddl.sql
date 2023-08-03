@@ -9,6 +9,7 @@ CREATE TABLE jdbctemplatemapper.orders(
 	updated_on datetime NULL,
 	updated_by varchar(100) NULL,
 	version int NULL,
+	non_model_column varchar(100),
 	CONSTRAINT order_pk PRIMARY KEY (order_id)
 );
 
@@ -17,6 +18,7 @@ CREATE TABLE jdbctemplatemapper.order_line (
 	order_id int NOT NULL,
 	product_id int NOT NULL,
 	num_of_units int NULL,
+	non_model_column varchar(100),
 	CONSTRAINT order_line_pk PRIMARY KEY (order_line_id)
 );
 
@@ -24,6 +26,7 @@ CREATE TABLE jdbctemplatemapper.customer (
 	customer_id int IDENTITY(1,1) NOT NULL,
 	first_name varchar(100) NOT NULL,
 	last_name varchar(100) NOT NULL,
+	non_model_column varchar(100),
 	CONSTRAINT customer_pk PRIMARY KEY (customer_id)
 );
 
@@ -36,6 +39,7 @@ CREATE TABLE jdbctemplatemapper.product (
 	updated_on datetime NULL,
 	updated_by varchar(100) NULL,
 	version int NULL,
+	non_model_column varchar(100),
 	CONSTRAINT product_pk PRIMARY KEY (product_id)
 );
 
@@ -49,6 +53,7 @@ CREATE TABLE jdbctemplatemapper.person (
 	updated_on datetime NULL,
 	updated_by varchar(100) NULL,
 	version int NULL,
+	non_model_column varchar(100),
 	CONSTRAINT person_pk PRIMARY KEY (person_id)
 );
 
@@ -62,7 +67,8 @@ CREATE TABLE jdbctemplatemapper.type_check (
    java_util_date_data date,
    local_date_time_data datetime,
    java_util_date_dt_data datetime,
-   big_decimal_data numeric(10,2)
+   big_decimal_data numeric(10,2),
+   non_model_column varchar(100)
 );
 
 
