@@ -1,15 +1,13 @@
 # JdbcTemplateMapper #
-
-Spring's JdbcTemplate provides data access using JDBC/SQL. It is a better option for complex enterprise applications than an ORM (ORM magic/nuances get in the way for large/complex applications). Even though JdbcTemplate abstracts away a lot of the JDBC boiler plate code, it still is verbose.
  
-JdbcTemplateMapper makes CRUD with JdbcTemplate simpler. Use it for one line CRUD operations and for other database access operations use JdbcTemplate as you normally would.
+ JdbcTemplateMapper makes CRUD with Spring's JdbcTemplate simpler. It provides one line CRUD operations for your models.
 
 ## Features
 
   1. One liners for CRUD. To keep the library as simple possible it only has 2 annotations.
   2. Can be configured for the following (optional):
       * auto assign created on, updated on.
-      * auto assign created by, updated by using an implementation of IRecordOperatorResolver.
+      * auto assign created by, updated by using an implementation of interface IRecordOperatorResolver.
       * optimistic locking functionality for updates by configuring a version property.
   3. Thread safe so just needs a single instance (similar to JdbcTemplate)
   4. To log the SQL statements it uses the same logging configurations as JdbcTemplate. See the logging section.
@@ -22,7 +20,7 @@ JdbcTemplateMapper makes CRUD with JdbcTemplate simpler. Use it for one line CRU
  
   1. Camel case object property names are mapped to snake case table column names. Properties of a model like 'firstName', 'lastName' will be mapped to corresponding columns 'first\_name' and 'last\_name' in the database table (If for a model property a column match is not found, those properties will be ignored during CRUD operations).
   
-  2. The model properties map to table columns and have no concept of relationships. So foreign keys in tables will need a corresponding **extra** property in the model. For example if an 'Order' is tied to a 'Customer', to match the 'customer\_id' column in the 'order' table you will need to have the 'customerId' property in the 'Order' model. 
+  2. The model properties map to table columns and have no concept of relationships. Foreign keys in tables will need a corresponding property in the model. For example if an 'Order' is tied to a 'Customer', to match the 'customer\_id' column in the 'order' table you will need to have the 'customerId' property in the 'Order' model. 
  
 ## Example code
  
