@@ -10,19 +10,21 @@ import java.lang.annotation.Target;
  * Annotation for Identifier.
  * 
  * For auto increment id:
- * class Product {
- *  {@literal @}Id(type=IdType.AUTO_INCREMENT)
- *   private Integer productId;
- *   ...
- * }
+ * {@literal @}Table(name="products")
+ *  class Product {
+ *   {@literal @}Id(type=IdType.AUTO_INCREMENT)
+ *    private Integer productId;
+ *    ...
+ *  }
  * After a successful insert() operation the productId property will be populated with the new id.
  * 
  * For NON auto increment id:
- * class Customer {
- *  {@literal @}Id
- *   private Integer id;
- *   ...
- * }
+ * {@literal @}Table(name="customer")
+ *  class Customer {
+ *   {@literal @}Id
+ *    private Integer id;
+ *    ...
+ *  }
  * In this case you will have to manually set the id value before calling insert()
  * </pre>
  *
