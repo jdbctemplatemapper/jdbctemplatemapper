@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
 import io.github.jdbctemplatemapper.model.Customer;
 import io.github.jdbctemplatemapper.model.NoIdObject;
 import io.github.jdbctemplatemapper.model.NoTableObject;

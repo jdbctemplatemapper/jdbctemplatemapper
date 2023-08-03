@@ -7,14 +7,16 @@ import java.lang.annotation.Target;
 
 /**
  *<pre>
- * Annotation to map an object to a database table:
+ * Annotation to map an object to a database table
+ * 
+ * This is a class level annotation and is required for models. 
+ * It can be any name and should match a table in the database
  * 
  * {@literal @}Table(name="products")
  *  public class Product{
  *    .....
  *  }
  *
- * Above will map the Product class to the 'products' table
  *</pre>
  *
  * @author ajoseph

@@ -6,7 +6,9 @@ import java.time.LocalDateTime;
 
 import io.github.jdbctemplatemapper.annotation.Id;
 import io.github.jdbctemplatemapper.annotation.IdType;
+import io.github.jdbctemplatemapper.annotation.Table;
 
+@Table(name = "type_check")
 public class TypeCheck {
 	@Id(type = IdType.AUTO_INCREMENT)
 	private Integer id;

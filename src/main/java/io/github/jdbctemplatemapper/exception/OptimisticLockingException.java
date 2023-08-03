@@ -1,4 +1,4 @@
-package io.github.jdbctemplatemapper.core;
+package io.github.jdbctemplatemapper.exception;
 
 /**
  * When JdbcTemplateMapper is configured with a property which is used for versioning and the Object

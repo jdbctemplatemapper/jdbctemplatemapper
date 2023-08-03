@@ -3,7 +3,9 @@ package io.github.jdbctemplatemapper.model;
 import java.time.LocalDateTime;
 
 import io.github.jdbctemplatemapper.annotation.Id;
+import io.github.jdbctemplatemapper.annotation.Table;
 
+@Table(name="product")
 public class Product {
   @Id 
   private Integer productId;

@@ -25,6 +25,7 @@ import org.springframework.util.Assert;
 import io.github.jdbctemplatemapper.annotation.Id;
 import io.github.jdbctemplatemapper.annotation.IdType;
 import io.github.jdbctemplatemapper.annotation.Table;
+import io.github.jdbctemplatemapper.exception.MapperException;
 
 public class MappingHelper {
 
@@ -108,13 +109,13 @@ public class MappingHelper {
 		TableMapping tableMapping = objectToTableMappingCache.get(clazz);
 
 		if (tableMapping == null) {
-			String tableName = null;
+			
 			Table tableAnnotation = AnnotationUtils.findAnnotation(clazz, Table.class);
-			if (tableAnnotation != null) {
-				tableName = tableAnnotation.name();
-			} else {
-				tableName = convertCamelToSnakeCase(clazz.getSimpleName());
-			}
+			if (tableAnnotation == null) {
+				throw new MapperException(clazz.getName() + " does not have the @Table annotation");
+			} 
+			
+			String tableName = tableAnnotation.name();
 
 			Id idAnnotation = null;
 			String idPropertyName = null;
@@ -139,7 +140,7 @@ public class MappingHelper {
 				tableName = tableName.toUpperCase();
 				columnInfoList = getTableColumnInfo(tableName);
 				if (isEmpty(columnInfoList)) {
-					throw new RuntimeException("Could not find corresponding table for class " + clazz.getSimpleName());
+					throw new MapperException("Could not find corresponding table for class " + clazz.getSimpleName());
 				}
 			}
 

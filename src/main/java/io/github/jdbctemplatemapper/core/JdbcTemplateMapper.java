@@ -2,6 +2,7 @@ package io.github.jdbctemplatemapper.core;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -16,9 +17,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.util.Assert;
+
+import io.github.jdbctemplatemapper.exception.MapperException;
+import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
 
 /**
  * <pre>
@@ -50,8 +53,9 @@ import org.springframework.util.Assert;
  * 2. The model properties map to table columns and have no concept of relationships. So foreign keys in tables will need a corresponding **extra** property in the model. For example if an 'Order' is tied to a 'Customer', to match the 'customer\_id' column in the 'order' table you will need to have the 'customerId' property in the 'Order' model. 
  *
  * <strong>Examples code</strong>
- * // Product class below maps to 'product' table by default.
- * // Use annotation {@literal @}Table(name="some_tablename") to override the default
+ * //{@literal @}Table annotation is required and should match a table name in database
+ * 
+ * {@literal @}Table(name="product")
  * public class Product {
  *    //{@literal @}Id annotation is required.
  *    // For a auto increment database id use @Id(type=IdType.AUTO_INCREMENT)
@@ -116,11 +120,9 @@ import org.springframework.util.Assert;
  * }
  *
  * <strong>Annotations:</strong>
- * {@literal @}Table - This is a class level annotation. Use it when when the camel case class name does not have a corresponding 
- *  snake case table name in the database
- *  For example if you want to map 'Product' to the 'products' table (note plural) use
+ * {@literal @}Table - This is a class level annotation and is required. It can be any name and should match a table in the database
  * 
- * {@literal @}Table(name="products")
+ * {@literal @}Table(name="product")
  *  class Product {
  *   ...
  *  }
@@ -128,6 +130,7 @@ import org.springframework.util.Assert;
  * {@literal @}Id - This is a required annotation. There are 2 forms of usage for this.
  * 
  * auto incremented id usage:
+ * {@literal @}Table(name="product")
  *  class Product {
  * {@literal @}Id(type=IdType.AUTO_INCREMENT)
  *    private Integer productId;
@@ -137,6 +140,7 @@ import org.springframework.util.Assert;
  * After a successful insert() operation the productId property will be populated with the new id.
  * 
  * NON auto incremented id usage:
+ * {@literal @}Table(name="customer")
  *  class Customer {
  * {@literal @}Id
  *    private Integer id;
@@ -160,6 +164,7 @@ import org.springframework.util.Assert;
  *       
  * Example model:
  *
+ *{@literal @}Table(name="product")
  * class Product {
  *  {@literal @}Id(type=IdType.AUTO_INCREMENT)
  *   private Integer productId;
@@ -191,6 +196,9 @@ import org.springframework.util.Assert;
  * # log the sql
  * logging.level.org.springframework.jdbc.core.JdbcTemplate=TRACE
  *
+ * # need this to log the INSERT statements
+ * logging.level.org.springframework.jdbc.core.simple.SimpleJdbcInsert=TRACE
+ * 
  * # log the parameters of sql statement
  * logging.level.org.springframework.jdbc.core.StatementCreatorUtils=TRACE
  * 
@@ -222,9 +230,9 @@ public class JdbcTemplateMapper {
 	private Map<Class<?>, SqlAndParams> updateSqlAndParamsCache = new ConcurrentHashMap<>();
 
 	// insert sql cache
-	// Map key - object class name
+	// Map key - object class
 	// value - insert sql details
-	private Map<Class<?>, SqlAndParams> insertSqlAndParamsCache = new ConcurrentHashMap<>();
+	private Map<Class<?>, SimpleJdbcInsert> simpleJdbcInsertCache = new ConcurrentHashMap<>();
 
 	/**
 	 * @param jdbcTemplate - The jdbcTemplate
@@ -415,8 +423,8 @@ public class JdbcTemplateMapper {
 	}
 
 	/**
-	 * Inserts an object into the database. If id is of the auto incremented after
-	 * the insert the object id will be assigned.
+	 * Inserts an object whose id in database is auto increment. Once inserted the
+	 * object will have the id assigned.
 	 *
 	 * <p>
 	 * Also assigns created by, created on, updated by, updated on, version if these
@@ -431,25 +439,19 @@ public class JdbcTemplateMapper {
 		TableMapping tableMapping = mappingHelper.getTableMapping(obj.getClass());
 
 		BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
+
 		Object idValue = bw.getPropertyValue(tableMapping.getIdPropertyName());
 
 		if (tableMapping.isIdAutoIncrement()) {
 			if (idValue != null) {
-				throw new RuntimeException("For insert() the identifier property " + obj.getClass().getSimpleName()
-						+ "." + tableMapping.getIdPropertyName()
-						+ " has to be null since this insert is for an object whose id is auto increment.");
+				throw new MapperException("For insert() the object's " + tableMapping.getIdPropertyName()
+						+ " property has to be null since this insert is for an object whose id is auto increment.");
 			}
 		} else {
 			if (idValue == null) {
-				throw new RuntimeException("For insert() identifier property " + obj.getClass().getSimpleName() + "."
-						+ tableMapping.getIdPropertyName() + " cannot be null since it is not an auto increment id.");
+				throw new MapperException("For insert() id property " + obj.getClass().getName() + "."
+						+ tableMapping.getIdPropertyName() + " cannot be null since it is not a auto increment id");
 			}
-		}
-
-		SqlAndParams sqlAndParams = insertSqlAndParamsCache.get(obj.getClass());
-		if (sqlAndParams == null) {
-			sqlAndParams = buildSqlAndParamsForInsert(tableMapping);
-			insertSqlAndParamsCache.put(obj.getClass(), sqlAndParams);
 		}
 
 		LocalDateTime now = LocalDateTime.now();
@@ -473,24 +475,32 @@ public class JdbcTemplateMapper {
 			bw.setPropertyValue(versionPropertyName, 1);
 		}
 
-		KeyHolder holder = new GeneratedKeyHolder();
+		Map<String, Object> attributes = new HashMap<>();
+		for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
+			attributes.put(propMapping.getColumnName(), bw.getPropertyValue(propMapping.getPropertyName()));
+		}
 
-		MapSqlParameterSource mapSqlParameterSource = new MapSqlParameterSource();
-		for (String paramName : sqlAndParams.getParams()) {
-			mapSqlParameterSource.addValue(paramName, bw.getPropertyValue(paramName),
-					tableMapping.getPropertySqlType(paramName));
+		SimpleJdbcInsert jdbcInsert = simpleJdbcInsertCache.get(obj.getClass());
+		if (jdbcInsert == null) {
+			if (tableMapping.isIdAutoIncrement()) {
+				jdbcInsert = new SimpleJdbcInsert(jdbcTemplate).withCatalogName(mappingHelper.getCatalogName())
+						.withSchemaName(mappingHelper.getSchemaName()).withTableName(tableMapping.getTableName())
+						.usingGeneratedKeyColumns(tableMapping.getIdColumnName());
+			} else {
+				jdbcInsert = new SimpleJdbcInsert(jdbcTemplate).withCatalogName(mappingHelper.getCatalogName())
+						.withSchemaName(mappingHelper.getSchemaName()).withTableName(tableMapping.getTableName());
+			}
+			simpleJdbcInsertCache.put(obj.getClass(), jdbcInsert);
 		}
 
 		if (tableMapping.isIdAutoIncrement()) {
-			npJdbcTemplate.update(sqlAndParams.getSql(), mapSqlParameterSource, holder);
-			bw.setPropertyValue(tableMapping.getIdPropertyName(), holder.getKey());
+			Number idNumber = jdbcInsert.executeAndReturnKey(attributes);
+			bw.setPropertyValue(tableMapping.getIdPropertyName(), idNumber); // set the auto increment id value on
+																				// object
 		} else {
-			npJdbcTemplate.update(sqlAndParams.getSql(), mapSqlParameterSource);
+			jdbcInsert.execute(attributes);
 		}
-
 	}
-
-
 
 	/**
 	 * Updates object. Assigns updated by, updated on if these properties exist for
@@ -528,7 +538,7 @@ public class JdbcTemplateMapper {
 			if (paramName.equals("incrementedVersion")) {
 				Integer versionVal = (Integer) bw.getPropertyValue(versionPropertyName);
 				if (versionVal == null) {
-					throw new RuntimeException(
+					throw new MapperException(
 							versionPropertyName + " cannot be null when updating " + obj.getClass().getSimpleName());
 				} else {
 					mapSqlParameterSource.addValue("incrementedVersion", versionVal + 1, java.sql.Types.INTEGER);
@@ -591,41 +601,6 @@ public class JdbcTemplateMapper {
 		String sql = "delete from " + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " where "
 				+ tableMapping.getIdColumnName() + " = ?";
 		return jdbcTemplate.update(sql, id);
-	}
-	
-	private SqlAndParams buildSqlAndParamsForInsert(TableMapping tableMapping) {
-		Assert.notNull(tableMapping, "tableMapping must not be null");
-
-		Set<String> params = new HashSet<>();
-		StringBuilder sqlIntoPart = new StringBuilder("INSERT INTO ");
-		sqlIntoPart.append(mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()));
-		sqlIntoPart.append(" ( ");
-
-		StringBuilder sqlValuePart = new StringBuilder(" VALUES (");
-
-		boolean first = true;
-		for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
-			if (tableMapping.isIdAutoIncrement()) {
-				if (tableMapping.getIdPropertyName().equals(propMapping.getPropertyName())) {
-					continue;
-				}
-			}
-			if (!first) {
-				sqlIntoPart.append(", ");
-				sqlValuePart.append(", ");
-			} else {
-				first = false;
-			}
-			sqlIntoPart.append(propMapping.getColumnName());
-			sqlValuePart.append(":" + propMapping.getPropertyName());
-
-			params.add(propMapping.getPropertyName());
-		}
-
-		sqlIntoPart.append(") ");
-		sqlValuePart.append(")");
-
-		return new SqlAndParams(sqlIntoPart.toString() + sqlValuePart.toString(), params);
 	}
 
 	private SqlAndParams buildSqlAndParamsForUpdate(TableMapping tableMapping) {

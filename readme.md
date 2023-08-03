@@ -27,9 +27,9 @@ JdbcTemplateMapper makes CRUD with JdbcTemplate simpler. Use it for one line CRU
 ##Example code
  
   ```java 
- // Product class below maps to 'product' table by default.
- // Use annotation @Table(name="some_tablename") to override the default
+ //@Table annotation is required and should match a table name in database
  
+ @Table(name="product")
  public class Product {
      // @Id annotation is required.
      // For auto increment database id use @Id(type=IdType.AUTO_INCREMENT)
@@ -104,12 +104,10 @@ public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
 
 **@Table**
 
-This is a class level annotation. Use it when when the camel case class name does not have a corresponding snake case table name in the database
-
-For example if you want to map 'Product' to the 'products' table (note plural) use
+This is a class level annotation and is required. It can be any name and should match a table in the database
 
 ```java
-@Table(name="products")
+@Table(name="product")
 class Product {
   ...
 }
@@ -122,6 +120,7 @@ This is a required annotation. There are 2 forms of usage for this.
 * **auto incremented id usage**
 
 ```java
+@Table(name="product")
 class Product {
  @Id(type=IdType.AUTO_INCREMENT)
  private Integer productId;
@@ -134,6 +133,7 @@ After a successful insert() operation the productId property will be populated w
 * **NON auto incremented id usage**
 
 ```java
+@Table(name="customer")
 class Customer {
  @Id
  private Integer id;
@@ -160,6 +160,7 @@ In this case you will have to manually set the id value before calling insert()
  Example model
  
  ```java
+@Table(name="product")
 class Product {
  @Id(type=IdType.AUTO_INCREMENT)
  private Integer productId;
@@ -195,6 +196,9 @@ Uses the same logging configurations as JdbcTemplate to log the SQL.
  ```
  # log the SQL
  logging.level.org.springframework.jdbc.core.JdbcTemplate=TRACE
+
+ # need this to log the INSERT statements
+ logging.level.org.springframework.jdbc.core.simple.SimpleJdbcInsert=TRACE
 
  # log the parameters of SQL statement
  logging.level.org.springframework.jdbc.core.StatementCreatorUtils=TRACE
