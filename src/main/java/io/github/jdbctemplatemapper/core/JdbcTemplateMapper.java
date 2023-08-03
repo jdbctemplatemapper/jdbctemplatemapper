@@ -93,7 +93,7 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  *  <dependency>
  *   <groupId>io.github.jdbctemplatemapper</groupId>
  *   <artifactId>jdbctemplatemapper</artifactId>
- *   <version>0.5.1-SNAPSHOT</version>
+ *   <version>0.6.2-SNAPSHOT</version>
  * </dependency>
  * }
  * Make sure the Spring dependency for JdbcTempate is in your pom.xml. It will look something like below:
