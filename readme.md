@@ -144,7 +144,7 @@ class Customer {
 
 In this case you will have to manually set the id value before calling insert()
 
-#Configuration to auto assign created on, created by, updated on, updated by, version (optimistic locking)
+##Configuration to auto assign created on, created by, updated on, updated by, version (optimistic locking)
  
  All these auto assign configurations are optional.
 
