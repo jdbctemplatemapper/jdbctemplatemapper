@@ -12,7 +12,7 @@
 
 	<groupId>io.github.jdbctemplatemapper</groupId>
 	<artifactId>jdbctemplatemapper</artifactId>
-	<version>0.6.2-SNAPSHOT</version>
+	<version>0.7.0-SNAPSHOT</version>
 	<name>jdbctemplatemapper</name>
 	<description>
       Single line CRUD methods when using Spring JdbcTemplate

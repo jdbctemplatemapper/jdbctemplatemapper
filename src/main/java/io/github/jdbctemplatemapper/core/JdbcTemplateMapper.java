@@ -26,6 +26,7 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
 /**
  * <pre>
  * JdbcTemplateMapper makes CRUD with Spring's JdbcTemplate simpler. It provides one line CRUD operations for your models.
+ * For other data access access requirements keep using JdbcTemplate.
  *
  * <strong>Features</strong>
  * 1. One liners for CRUD. To keep the library as simple possible it only has 2 annotations.
@@ -36,17 +37,17 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * 3. Thread safe so just needs a single instance (similar to JdbcTemplate)
  * 4. To log the SQL statements it uses the same logging configurations as JdbcTemplate. See the logging section.
  * 5. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with 
- *    other relational databases.
+ *    other relational databases.  
  *
  * <Strong>JdbcTemplateMapper is opinionated</strong> 
- * Projects have to meet the following 2 criteria to use it:
+ * Projects have to meet the following criteria for use:
  * 
- * 1. Camel case object property names are mapped to snake case table column names. Properties of a model like 'firstName',
- *    'lastName' will be mapped to corresponding columns 'first\_name' and 'last\_name' in the database table
- *    If for a model property a column match is not found, those properties will be ignored during CRUD operations.  
- * 2. The model properties map to table columns and have no concept of relationships. Foreign keys in tables will need 
- *    a corresponding property in the model. For example if an 'Order' is tied to a 'Customer', to match the 'customer\_id' column 
- *    in the 'order' table you will need to have the 'customerId' property in the 'Order' model. 
+ * 1. Camel case object property names are mapped to underscore case table column names. Properties of a model like 'firstName', 
+ * 'lastName' will be mapped to corresponding columns 'first\_name' and 'last\_name' in the database table. Properties which 
+ * don't have a column match will be ignored during CRUD operations
+ * 2. The model properties map to table columns and have no concept of relationships. Foreign keys in tables will need a corresponding 
+ * property in the model. For example if an 'Order' is tied to a 'Customer', to match the 'customer\_id' column in the 'order' 
+ * table there should be a 'customerId' property in the 'Order' model. 
  *
  * <strong>Examples code</strong>
  * //{@literal @}Table annotation is required and should match a table name in database
@@ -64,7 +65,7 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  *     private LocalDateTime availableDate;
  *
  *     // insert/update/find.. methods will ignore properties which do not
- *     // have a corresponding snake case columns in database table
+ *     // have a corresponding underscore case columns in database table
  *     private String someNonDatabaseProperty;
  *
  *     // getters and setters ...
@@ -419,8 +420,9 @@ public class JdbcTemplateMapper {
 	}
 
 	/**
-	 * Inserts an object. Objects with auto increment id will have the id set to the new from database.
-	 * For non auto increment ids the id has to be manually set before call insert.
+	 * Inserts an object. Objects with auto increment id will have the id set to the
+	 * new from database. For non auto increment ids the id has to be manually set
+	 * before call insert.
 	 *
 	 * <p>
 	 * Will assign created by, created on, updated by, updated on, version if the
@@ -440,12 +442,13 @@ public class JdbcTemplateMapper {
 
 		if (tableMapping.isIdAutoIncrement()) {
 			if (idValue != null) {
-				throw new MapperException("For insert() the object's " + tableMapping.getIdPropertyName()
-						+ " property has to be null since this insert is for an object whose id is auto increment.");
+				throw new MapperException("For insert() the property " + obj.getClass().getSimpleName() + "."
+						+ tableMapping.getIdPropertyName()
+						+ " has to be null since this insert is for an object whose id is auto increment.");
 			}
 		} else {
 			if (idValue == null) {
-				throw new MapperException("For insert() id property " + obj.getClass().getName() + "."
+				throw new MapperException("For insert() the property " + obj.getClass().getSimpleName() + "."
 						+ tableMapping.getIdPropertyName() + " cannot be null since it is not a auto increment id");
 			}
 		}
@@ -491,20 +494,19 @@ public class JdbcTemplateMapper {
 
 		if (tableMapping.isIdAutoIncrement()) {
 			Number idNumber = jdbcInsert.executeAndReturnKey(attributes);
-			bw.setPropertyValue(tableMapping.getIdPropertyName(), idNumber); // set the auto increment id value on
-																				// object
+			bw.setPropertyValue(tableMapping.getIdPropertyName(), idNumber); // set object id value
 		} else {
 			jdbcInsert.execute(attributes);
 		}
 	}
 
 	/**
-	 * Update the object. 
+	 * Update the object.
 	 * 
-	 * Assigns updated by, updated on if the properties exist for
-	 * the object and the jdbcTemplateMapper is configured for these fields. if
-	 * optimistic locking 'version' property exists for the object an
-	 * OptimisticLockingException will be thrown if object is stale.
+	 * Assigns updated by, updated on if the properties exist for the object and the
+	 * jdbcTemplateMapper is configured for these fields. if optimistic locking
+	 * 'version' property exists for the object an OptimisticLockingException will
+	 * be thrown if object is stale.
 	 *
 	 * @param obj object to be updated
 	 * @return number of records updated
@@ -536,8 +538,8 @@ public class JdbcTemplateMapper {
 			if (paramName.equals("incrementedVersion")) {
 				Integer versionVal = (Integer) bw.getPropertyValue(versionPropertyName);
 				if (versionVal == null) {
-					throw new MapperException(
-							"JdbcTemplateMapper is configured for versioning so " + versionPropertyName + " cannot be null when updating " + obj.getClass().getSimpleName());
+					throw new MapperException("JdbcTemplateMapper is configured for versioning so "
+							+ versionPropertyName + " cannot be null when updating " + obj.getClass().getSimpleName());
 				} else {
 					mapSqlParameterSource.addValue("incrementedVersion", versionVal + 1, java.sql.Types.INTEGER);
 				}
@@ -552,9 +554,10 @@ public class JdbcTemplateMapper {
 		if (sqlAndParams.getParams().contains("incrementedVersion")) {
 			int cnt = npJdbcTemplate.update(sqlAndParams.getSql(), mapSqlParameterSource);
 			if (cnt == 0) {
-				throw new OptimisticLockingException("Update failed for " + obj.getClass().getSimpleName() + " . "
-						+ tableMapping.getIdPropertyName() + ": " + bw.getPropertyValue(tableMapping.getIdPropertyName())
-						+ " and " + versionPropertyName + ": " + bw.getPropertyValue(versionPropertyName));
+				throw new OptimisticLockingException(
+						"Update failed for " + obj.getClass().getSimpleName() + " . " + tableMapping.getIdPropertyName()
+								+ ": " + bw.getPropertyValue(tableMapping.getIdPropertyName()) + " and "
+								+ versionPropertyName + ": " + bw.getPropertyValue(versionPropertyName));
 			}
 			// update the version in object with new version
 			bw.setPropertyValue(versionPropertyName, mapSqlParameterSource.getValue("incrementedVersion"));

@@ -1,6 +1,7 @@
 # JdbcTemplateMapper #
  
  JdbcTemplateMapper makes CRUD with Spring's JdbcTemplate simpler. It provides one line CRUD operations for your models.
+ For other data access access requirements keep using JdbcTemplate.
 
 ## Features
 
@@ -16,11 +17,10 @@
 
 ## JbcTemplateMapper is opinionated
  
- Projects have to meet the following 2 criteria to use it:
+ Projects have to meet the following criteria for use:
  
-  1. Camel case object property names are mapped to snake case table column names. Properties of a model like 'firstName', 'lastName' will be mapped to corresponding columns 'first\_name' and 'last\_name' in the database table (If for a model property a column match is not found, those properties will be ignored during CRUD operations).
-  
-  2. The model properties map to table columns and have no concept of relationships. Foreign keys in tables will need a corresponding property in the model. For example if an 'Order' is tied to a 'Customer', to match the 'customer\_id' column in the 'order' table you will need to have the 'customerId' property in the 'Order' model. 
+  1. Camel case object property names are mapped to underscore case table column names. Properties of a model like 'firstName', 'lastName' will be mapped to corresponding columns 'first\_name' and 'last\_name' in the database table. Properties which don't have a column match will be ignored during CRUD operations
+  2. The model properties map to table columns and have no concept of relationships. Foreign keys in tables will need a corresponding property in the model. For example if an 'Order' is tied to a 'Customer', to match the 'customer\_id' column in the 'order' table there should be a 'customerId' property in the 'Order' model. 
  
 ## Example code
  
@@ -40,7 +40,7 @@
      private LocalDateTime availableDate;
  
      // insert/update/find.. methods will ignore properties which do not
-     // have a corresponding snake case columns in database table
+     // have a corresponding underscore case columns in database table
      private String someNonDatabaseProperty;
  
      // getters and setters ...
