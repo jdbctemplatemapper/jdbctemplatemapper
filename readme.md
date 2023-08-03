@@ -1,7 +1,7 @@
 # JdbcTemplateMapper #
  
- JdbcTemplateMapper makes CRUD with Spring's JdbcTemplate simpler. It provides one line CRUD operations for your models.
- For other data access access requirements keep using JdbcTemplate.
+ JdbcTemplateMapper makes CRUD with Spring's JdbcTemplate simpler. It provides one liners for
+ CRUD. For other data access access requirements keep using JdbcTemplate.
 
 ## Features
 

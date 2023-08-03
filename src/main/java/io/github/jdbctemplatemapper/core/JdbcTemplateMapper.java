@@ -449,7 +449,7 @@ public class JdbcTemplateMapper {
 		} else {
 			if (idValue == null) {
 				throw new MapperException("For insert() the property " + obj.getClass().getSimpleName() + "."
-						+ tableMapping.getIdPropertyName() + " cannot be null since it is not a auto increment id");
+						+ tableMapping.getIdPropertyName() + " cannot be null since it is not an auto increment id");
 			}
 		}
 
