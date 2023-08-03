@@ -1,8 +1,10 @@
 # JdbcTemplateMapper #
  
  JdbcTemplateMapper makes CRUD with Spring's JdbcTemplate simpler. It provides one liners for
- CRUD. For other data access access requirements keep using JdbcTemplate.
+ CRUD.
 
+ [Javadocs](https://jdbctemplatemapper.github.io/jdbctemplatemapper/javadoc/) 
+ 
 ## Features
 
   1. One liners for CRUD. To keep the library as simple possible it only has 2 annotations.
@@ -67,7 +69,7 @@
   <dependency>
     <groupId>io.github.jdbctemplatemapper</groupId>
     <artifactId>jdbctemplatemapper</artifactId>
-    <version>0.5.1-SNAPSHOT</version>
+    <version>1.0.0</version>
  </dependency>
  ```
  
@@ -79,6 +81,8 @@
     <artifactId>spring-boot-starter-jdbc</artifactId>
   </dependency> 
  ```
+ 
+ [Javadoc](https://jdbctemplatemapper.github.io/jdbctemplatemapper/javadoc/) 
  
 ## Spring bean configuration for JdbcTemplateMapper
 

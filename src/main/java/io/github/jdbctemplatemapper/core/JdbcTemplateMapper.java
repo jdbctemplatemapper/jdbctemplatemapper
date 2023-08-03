@@ -25,8 +25,9 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
 
 /**
  * <pre>
- * JdbcTemplateMapper makes CRUD with Spring's JdbcTemplate simpler. It provides one line CRUD operations for your models.
- * For other data access access requirements keep using JdbcTemplate.
+ * JdbcTemplateMapper makes CRUD with Spring's JdbcTemplate simpler. It provides one liners for CRUD.
+ * 
+ * <a href="https://jdbctemplatemapper.github.io/jdbctemplatemapper/javadoc/">Javadocs</a>
  *
  * <strong>Features</strong>
  * 1. One liners for CRUD. To keep the library as simple possible it only has 2 annotations.
@@ -90,7 +91,7 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  *  <dependency>
  *   <groupId>io.github.jdbctemplatemapper</groupId>
  *   <artifactId>jdbctemplatemapper</artifactId>
- *   <version>0.6.2-SNAPSHOT</version>
+ *   <version>1.0.0</version>
  * </dependency>
  * }
  * Make sure the Spring dependency for JdbcTempate is in your pom.xml. It will look something like below:
