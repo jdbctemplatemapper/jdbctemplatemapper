@@ -1,10 +1,10 @@
-# JdbcTemplateMapper xxx #
+# JdbcTemplateMapper #
 
 Spring's JdbcTemplate provides data access using JDBC/SQL. It is a better option for complex enterprise applications than an ORM (ORM magic/nuances get in the way for large/complex applications). Even though JdbcTemplate abstracts away a lot of the JDBC boiler plate code, it still is verbose.
  
 JdbcTemplateMapper makes CRUD with JdbcTemplate simpler. Use it for one line CRUD operations and for other database access operations use JdbcTemplate as you normally would.
 
-##Features
+## Features
 
   1. One liners for CRUD. To keep the library as simple possible it only has 2 annotations.
   2. Can be configured for the following (optional):
@@ -16,7 +16,7 @@ JdbcTemplateMapper makes CRUD with JdbcTemplate simpler. Use it for one line CRU
   5. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with other relational databases. 
 
 
-##JbcTemplateMapper is opinionated
+## JbcTemplateMapper is opinionated
  
  Projects have to meet the following 2 criteria to use it:
  
@@ -24,7 +24,7 @@ JdbcTemplateMapper makes CRUD with JdbcTemplate simpler. Use it for one line CRU
   
   2. The model properties map to table columns and have no concept of relationships. So foreign keys in tables will need a corresponding **extra** property in the model. For example if an 'Order' is tied to a 'Customer', to match the 'customer\_id' column in the 'order' table you will need to have the 'customerId' property in the 'Order' model. 
  
-##Example code
+## Example code
  
   ```java 
  //@Table annotation is required and should match a table name in database
@@ -63,7 +63,7 @@ JdbcTemplateMapper makes CRUD with JdbcTemplate simpler. Use it for one line CRU
  jdbcTemplateMapper.delete(product);
  ```
  
-##Maven coordinates
+## Maven coordinates
 
  ``` 
   <dependency>
@@ -82,7 +82,7 @@ JdbcTemplateMapper makes CRUD with JdbcTemplate simpler. Use it for one line CRU
   </dependency> 
  ```
  
-##Spring bean configuration for JdbcTemplateMapper
+## Spring bean configuration for JdbcTemplateMapper
 
  1. Configure the JdbcTemplate bean as per Spring documentation
  2. Configure the JdbcTemplateMapper bean:
@@ -100,7 +100,7 @@ public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
 }
   
   ```
-##Annotations
+## Annotations
 
 **@Table**
 
@@ -144,7 +144,7 @@ class Customer {
 
 In this case you will have to manually set the id value before calling insert()
 
-##Configuration to auto assign created on, created by, updated on, updated by, version (optimistic locking)
+## Configuration to auto assign created on, created by, updated on, updated by, version (optimistic locking)
  
  All these auto assign configurations are optional.
 
@@ -189,7 +189,7 @@ For update the matching property value on the model will be set to value returne
 For update the matching property value on the model will be incremented if successful. If version is stale, an OptimisticLockingException will be thrown. For an insert this value will be set to 1. The version property should be of type Integer.
  
 
-##Logging
+## Logging
  
 Uses the same logging configurations as JdbcTemplate to log the SQL.
  
@@ -205,7 +205,7 @@ Uses the same logging configurations as JdbcTemplate to log the SQL.
  
  ```
  
-##Notes
+## Notes
  1. If insert/update fails do not reuse the object since it could be in an inconsistent state.
  2. Database changes will require a restart of the application since JdbcTemplateMapper caches table metadata.
   
