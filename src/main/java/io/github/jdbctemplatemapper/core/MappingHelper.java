@@ -8,7 +8,6 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -330,44 +329,5 @@ public class MappingHelper {
     return JdbcUtils.convertUnderscoreNameToPropertyName(str);
   }
 
-  /**
-   * Converts an object to a Map. The map key will be object property name and value with
-   * corresponding object property value.
-   *
-   * @param obj The object to be converted.
-   * @return Map with key: property name, value: object value
-   */
-  public Map<String, Object> convertObjectToMap(Object obj) {
-    Assert.notNull(obj, "Object must not be null");
-    Map<String, Object> camelCaseAttrs = new HashMap<>();
-    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
-    for (PropertyInfo propertyInfo : getObjectPropertyInfo(obj)) {
-      camelCaseAttrs.put(
-          propertyInfo.getPropertyName(), bw.getPropertyValue(propertyInfo.getPropertyName()));
-    }
-    return camelCaseAttrs;
-  }
 
-  /**
-   * Converts an object to a map with key as database column names and values the corresponding
-   * object value. Camel case property names are converted to snake case. For example property name
-   * 'userLastName' will get converted to map key 'user_last_name' and assigned the corresponding
-   * object value.
-   *
-   * @param obj The object to convert
-   * @return A map with keys that are in snake case to match database column names and values
-   *     corresponding to the object property
-   */
-  public Map<String, Object> convertToSnakeCaseAttributes(Object obj) {
-    Assert.notNull(obj, "Object must not be null");
-
-    Map<String, Object> camelCaseAttrs = convertObjectToMap(obj);
-    Map<String, Object> snakeCaseAttrs = new HashMap<>();
-    for (String key : camelCaseAttrs.keySet()) {
-      // ex: lastName will get converted to last_name
-      String snakeCaseKey = convertCamelToSnakeCase(key);
-      snakeCaseAttrs.put(snakeCaseKey, camelCaseAttrs.get(key));
-    }
-    return snakeCaseAttrs;
-  }
 }

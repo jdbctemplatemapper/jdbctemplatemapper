@@ -196,9 +196,6 @@ Uses the same logging configurations as JdbcTemplate to log the SQL.
  # log the SQL
  logging.level.org.springframework.jdbc.core.JdbcTemplate=TRACE
 
- # need this to log the INSERT statements
- logging.level.org.springframework.jdbc.core.simple.SimpleJdbcInsert=TRACE
-
  # log the parameters of SQL statement
  logging.level.org.springframework.jdbc.core.StatementCreatorUtils=TRACE
  
