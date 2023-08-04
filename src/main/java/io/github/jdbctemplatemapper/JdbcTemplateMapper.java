@@ -1,4 +1,4 @@
-package io.github.jdbctemplatemapper.core;
+package io.github.jdbctemplatemapper;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -20,6 +20,11 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.util.Assert;
 
+import io.github.jdbctemplatemapper.core.IRecordOperatorResolver;
+import io.github.jdbctemplatemapper.core.MappingHelper;
+import io.github.jdbctemplatemapper.core.PropertyMapping;
+import io.github.jdbctemplatemapper.core.SqlAndParams;
+import io.github.jdbctemplatemapper.core.TableMapping;
 import io.github.jdbctemplatemapper.exception.MapperException;
 import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
 

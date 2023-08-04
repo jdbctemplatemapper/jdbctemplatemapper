@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import io.github.jdbctemplatemapper.JdbcTemplateMapper;
 import io.github.jdbctemplatemapper.model.TypeCheck;
 
 @SpringBootTest

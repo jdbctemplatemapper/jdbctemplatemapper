@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
-import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
+import io.github.jdbctemplatemapper.JdbcTemplateMapper;
 
 @Component
 public class JdbcTemplateMapperConfig {
