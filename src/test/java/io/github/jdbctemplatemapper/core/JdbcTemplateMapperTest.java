@@ -393,9 +393,7 @@ public class JdbcTemplateMapperTest {
 					
 				}
 				return list;
-
 			}
-
 		};
 		
 		List<Order> orders = jtm.getJdbcTemplate().query(sql, rsExtractor);

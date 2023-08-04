@@ -68,8 +68,10 @@ public class SelectMapper<T> {
 				String columnName = rsMetaData.getColumnName(i);
 				if (columnName.startsWith(colPrefix)) {
 					String propertyName = tableMapping.getProperyName(columnName.substring(colPrefix.length()));
-					bw.setPropertyValue(propertyName,
+					if(propertyName != null) {
+					  bw.setPropertyValue(propertyName,
 							JdbcUtils.getResultSetValue(rs, i, tableMapping.getPropertyType(propertyName)));
+					}
 				}
 			}
 			return clazz.cast(obj);
