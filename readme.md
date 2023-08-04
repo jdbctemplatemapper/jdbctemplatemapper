@@ -1,8 +1,11 @@
 # JdbcTemplateMapper #
  
- JdbcTemplateMapper makes CRUD with Spring's JdbcTemplate simpler. It provides one liners for
- CRUD.
-
+ Spring's JdbcTemplate provides data access using SQL/JDBC for relational databases. 
+ JdbcTemplate is a good option for complex enterprise applications where an ORMs magic/nuances become challenging.
+ Even though JdbcTemplate simplifies the use of JDBC, it still remains verbose.
+ 
+ JdbcTemplateMapper makes CRUD with Spring's JdbcTemplate simpler. It provides one liners for CRUD.
+ 
  [Javadocs](https://jdbctemplatemapper.github.io/jdbctemplatemapper/javadoc/) 
  
 ## Features
@@ -61,6 +64,7 @@
  List<Product> products = jdbcTemplateMapper.findAll(Product.class);
 
  jdbcTemplateMapper.delete(product);
+ jdbcTemplateMapper.delete(1, Product.class); // deleting just using id
  ```
  
 ## Maven coordinates
@@ -69,20 +73,9 @@
   <dependency>
     <groupId>io.github.jdbctemplatemapper</groupId>
     <artifactId>jdbctemplatemapper</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
  </dependency>
  ```
- 
- Make sure the Spring dependency for JdbcTempate is in your pom.xml. It will look something like below:
- 
- ```
-   <dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-jdbc</artifactId>
-  </dependency> 
- ```
- 
- [Javadoc](https://jdbctemplatemapper.github.io/jdbctemplatemapper/javadoc/) 
  
 ## Spring bean configuration for JdbcTemplateMapper
 
@@ -210,5 +203,8 @@ Uses the same logging configurations as JdbcTemplate to log the SQL.
 ## Notes
  1. If insert/update fails do not reuse the object since it could be in an inconsistent state.
  2. Database changes will require a restart of the application since JdbcTemplateMapper caches table metadata.
+ 
+## TroubleShooting
+Make sure you can connect to your database and issue a simple query using JdbcTemplate without the JdbcTemplateMapper.
   
  

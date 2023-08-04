@@ -25,6 +25,10 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
 
 /**
  * <pre>
+ * Spring's JdbcTemplate provides data access using SQL/JDBC for relational databases. 
+ * JdbcTemplate is a good option for complex enterprise applications where an ORMs magic/nuances become challenging.
+ * Even though JdbcTemplate simplifies the use of JDBC, it still remains verbose.
+ *
  * JdbcTemplateMapper makes CRUD with Spring's JdbcTemplate simpler. It provides one liners for CRUD.
  *
  * <strong>Features</strong>
@@ -83,20 +87,15 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * List{@literal <Product>} products = jdbcTemplateMapper.findAll(Product.class);
  *
  * jdbcTemplateMapper.delete(product);
+ * 
+ * jdbcTemplateMapper.delete(5, Product.class); // deleting just using id
  *
  * <strong>Maven coordinates</strong> 
  *{@code
  *  <dependency>
  *   <groupId>io.github.jdbctemplatemapper</groupId>
  *   <artifactId>jdbctemplatemapper</artifactId>
- *   <version>1.0.0</version>
- * </dependency>
- * }
- * Make sure the Spring dependency for JdbcTempate is in your pom.xml. It will look something like below:
- * {@code
- *  <dependency>
- *    <groupId>org.springframework.boot</groupId>
- *    <artifactId>spring-boot-starter-jdbc</artifactId>
+ *   <version>1.0.1</version>
  * </dependency>
  * }
  *
@@ -199,8 +198,12 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * logging.level.org.springframework.jdbc.core.StatementCreatorUtils=TRACE
  * 
  * <strong>Notes</strong>
- 1. If insert/update fails do not reuse the object since it could be in an inconsistent state.
- 2. Database changes will require a restart of the application since JdbcTemplateMapper caches table metadata.
+ * 1. If insert/update fails do not reuse the object since it could be in an inconsistent state.
+ * 2. Database changes will require a restart of the application since JdbcTemplateMapper caches table metadata.
+ * 
+ * <strong>TroubleShooting</strong>
+ * Make sure you can connect to your database and issue a simple query using JdbcTemplate without the JdbcTemplateMapper.
+ * 
  * </pre>
  *
  * @author ajoseph
