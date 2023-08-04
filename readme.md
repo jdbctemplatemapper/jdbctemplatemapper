@@ -64,7 +64,7 @@
  List<Product> products = jdbcTemplateMapper.findAll(Product.class);
 
  jdbcTemplateMapper.delete(product);
- jdbcTemplateMapper.delete(1, Product.class); // deleting just using id
+ jdbcTemplateMapper.delete(5, Product.class); // deleting just using id
  ```
  
 ## Maven coordinates
