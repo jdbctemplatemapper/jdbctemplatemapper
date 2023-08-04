@@ -30,6 +30,7 @@ public class TableMapping {
 	  this.idPropertyName = idPropertyName;
 	  this.propertyMappings = propertyMappings;
   }
+  
   public String getColumnName(String propertyName) {
     if (propertyName != null) {
       for (PropertyMapping mapping : propertyMappings) {
@@ -40,6 +41,29 @@ public class TableMapping {
     }
     return null;
   }
+  
+  public String getProperyName(String columnName) {
+	    if (columnName != null) {
+	      for (PropertyMapping mapping : propertyMappings) {
+	        if (columnName.equals(mapping.getColumnName())) {
+	          return mapping.getPropertyName();
+	        }
+	      }
+	    }
+	    return null;
+	  }
+  
+  public Class<?> getPropertyType(String propertyName) {
+	    if (propertyName != null) {
+	      for (PropertyMapping mapping : propertyMappings) {
+	        if (propertyName.equals(mapping.getPropertyName())) {
+	          return mapping.getPropertyType();
+	        }
+	      }
+	    }
+	    return null;
+	  }
+  
 
   public int getPropertySqlType(String propertyName) {
     if (propertyName != null) {

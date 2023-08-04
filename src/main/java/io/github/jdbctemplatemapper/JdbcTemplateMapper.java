@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
+import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -23,6 +24,7 @@ import org.springframework.util.Assert;
 import io.github.jdbctemplatemapper.core.IRecordOperatorResolver;
 import io.github.jdbctemplatemapper.core.MappingHelper;
 import io.github.jdbctemplatemapper.core.PropertyMapping;
+import io.github.jdbctemplatemapper.core.SelectMapper;
 import io.github.jdbctemplatemapper.core.SqlAndParams;
 import io.github.jdbctemplatemapper.core.TableMapping;
 import io.github.jdbctemplatemapper.exception.MapperException;
@@ -51,10 +53,10 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * Projects have to meet the following criteria for use:
  * 
  * 1. Camel case object property names are mapped to underscore case table column names. Properties of a model like 'firstName', 
- * 'lastName' will be mapped to corresponding columns 'first\_name' and 'last\_name' in the database table. Properties which 
+ * 'lastName' will be mapped to corresponding columns 'first_name' and 'last_name' in the database table. Properties which 
  * don't have a column match will be ignored during CRUD operations
  * 2. The model properties map to table columns and have no concept of relationships. Foreign keys in tables will need a corresponding 
- * property in the model. For example if an 'Order' is tied to a 'Customer', to match the 'customer\_id' column in the 'order' 
+ * property in the model. For example if an 'Order' is tied to a 'Customer', to match the 'customer_id' column in the 'order' 
  * table there should be a 'customerId' property in the 'Order' model. 
  *
  * <strong>Examples code</strong>
@@ -236,6 +238,10 @@ public class JdbcTemplateMapper {
 	// Map key - object class
 	// value - insert sql details
 	private Map<Class<?>, SimpleJdbcInsert> simpleJdbcInsertCache = new ConcurrentHashMap<>();
+
+	// Need this for type conversions like java.sql.Timestamp to
+	// java.time.LocalDateTime etc
+	private DefaultConversionService defaultConversionService = new DefaultConversionService();
 
 	/**
 	 * @param jdbcTemplate - The jdbcTemplate
@@ -608,6 +614,14 @@ public class JdbcTemplateMapper {
 		String sql = "delete from " + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " where "
 				+ tableMapping.getIdColumnName() + " = ?";
 		return jdbcTemplate.update(sql, id);
+	}
+
+	//public <T> SelectMapper<T> getSelectMapper(Class<T> clazz) {
+	//	return new SelectMapper<T>(clazz, mappingHelper, defaultConversionService);
+	//}
+	
+	public <T> SelectMapper<T> getSelectMapper(Class<T> clazz, String tableAlias) {
+		return new SelectMapper<T>(clazz, tableAlias, mappingHelper, defaultConversionService);
 	}
 
 	private SqlAndParams buildSqlAndParamsForUpdate(TableMapping tableMapping) {
