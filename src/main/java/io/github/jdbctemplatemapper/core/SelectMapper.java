@@ -13,7 +13,7 @@ import org.springframework.util.Assert;
  *
  * @author ajoseph
  */
-public class SelectHelper<T> {
+public class SelectMapper<T> {
 	private final MappingHelper mappingHelper;
 
 	private final Class<T> clazz;
@@ -22,7 +22,7 @@ public class SelectHelper<T> {
 
 	private final String alias;
 
-	SelectHelper(Class<T> clazz, String alias, MappingHelper mappingHelper,
+	SelectMapper(Class<T> clazz, String alias, MappingHelper mappingHelper,
 			DefaultConversionService defaultConversionService) {
 		Assert.hasLength(alias, " alias cannot be empty");
 		this.clazz = clazz;
@@ -33,7 +33,6 @@ public class SelectHelper<T> {
 	}
 
 	public String getColumnsSql() {
-
 		String str = "";
 		TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
 		StringBuilder sb = new StringBuilder(" ");

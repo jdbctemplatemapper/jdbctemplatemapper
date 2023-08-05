@@ -22,7 +22,7 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
-import io.github.jdbctemplatemapper.core.SelectHelper;
+import io.github.jdbctemplatemapper.core.SelectMapper;
 import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
 import io.github.jdbctemplatemapper.model.Customer;
 import io.github.jdbctemplatemapper.model.NoIdObject;
@@ -362,20 +362,19 @@ public class JdbcTemplateMapperTest {
 	@Test
 	public void selectMapper_test() {
 
-		SelectHelper<Order> orderSelectMapper = jtm.getSelectMapper(Order.class, "o");
-		SelectHelper<OrderLine> orderLineSelectMapper = jtm.getSelectMapper(OrderLine.class, "ol");
-		SelectHelper<Product> productSelectMapper = jtm.getSelectMapper(Product.class, "p");
+		SelectMapper<Order> orderSelectHelper = jtm.getSelectMapper(Order.class, "o");
+		SelectMapper<OrderLine> orderLineSelectHelper = jtm.getSelectMapper(OrderLine.class, "ol");
+		SelectMapper<Product> productSelectHelper = jtm.getSelectMapper(Product.class, "p");
 
-		String sql = "SELECT " 
-		              + orderSelectMapper.getColumnsSql() 
+		String sql = "select" 
+		              + orderSelectHelper.getColumnsSql() 
 		              + ","
-				      + orderLineSelectMapper.getColumnsSql() 
+				      + orderLineSelectHelper.getColumnsSql() 
 				      + "," 
-		              + productSelectMapper.getColumnsSql()
+		              + productSelectHelper.getColumnsSql()
 				      + " from orders o" 
 				      + " left join order_line ol on o.order_id = ol.order_id"
-				      + " left join product p on p.product_id = ol.product_id" 
-				      + " where o.order_id = 1";
+				      + " join product p on p.product_id = ol.product_id";
 
 		ResultSetExtractor<List<Order>> rsExtractor = new ResultSetExtractor<List<Order>>() {
 			@Override
@@ -384,13 +383,18 @@ public class JdbcTemplateMapperTest {
 				List<Order> list = new ArrayList<>();
 				while (rs.next()) {
 					
-					Order order = orderSelectMapper.buildModel(rs);
-					OrderLine orderLine = orderLineSelectMapper.buildModel(rs);
-					Product product = productSelectMapper.buildModel(rs);
+					Order order = orderSelectHelper.buildModel(rs);
+					OrderLine orderLine = orderLineSelectHelper.buildModel(rs);
+					Product product = productSelectHelper.buildModel(rs);
 					
-					System.out.println(orderLine);
-					System.out.println(product);
 					list.add(order);
+					
+					// stitch the objects. In this case  Order has many OrderLine and an OrderLine has a product
+					
+					
+					
+					
+					
 					
 				}
 				return list;
@@ -399,7 +403,7 @@ public class JdbcTemplateMapperTest {
 		
 		List<Order> orders = jtm.getJdbcTemplate().query(sql, rsExtractor);
 		
-		assertTrue(orders.size() >0);
+		assertTrue(orders.size() > 0);
 
 	}
 

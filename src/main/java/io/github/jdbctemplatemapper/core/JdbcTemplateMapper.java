@@ -614,8 +614,8 @@ public class JdbcTemplateMapper {
 	//	return new SelectMapper<T>(clazz, mappingHelper, defaultConversionService);
 	//}
 	
-	public <T> SelectHelper<T> getSelectMapper(Class<T> clazz, String tableAlias) {
-		return new SelectHelper<T>(clazz, tableAlias, mappingHelper, defaultConversionService);
+	public <T> SelectMapper<T> getSelectMapper(Class<T> clazz, String tableAlias) {
+		return new SelectMapper<T>(clazz, tableAlias, mappingHelper, defaultConversionService);
 	}
 
 	private SqlAndParams buildSqlAndParamsForUpdate(TableMapping tableMapping) {
