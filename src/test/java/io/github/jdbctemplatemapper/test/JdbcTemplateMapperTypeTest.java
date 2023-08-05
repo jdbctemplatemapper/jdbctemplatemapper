@@ -1,4 +1,4 @@
-package io.github.jdbctemplatemapper.core;
+package io.github.jdbctemplatemapper.test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -17,7 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import io.github.jdbctemplatemapper.JdbcTemplateMapper;
+import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
 import io.github.jdbctemplatemapper.model.TypeCheck;
 
 @SpringBootTest

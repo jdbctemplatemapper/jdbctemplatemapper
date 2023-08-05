@@ -1,6 +1,6 @@
 package io.github.jdbctemplatemapper.core;
 
-public class ColumnInfo {
+class ColumnInfo {
   private String columnName;
   private int columnSqlDataType; // see  java.sql.Types
 

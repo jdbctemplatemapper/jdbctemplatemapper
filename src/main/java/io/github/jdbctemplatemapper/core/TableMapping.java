@@ -1,7 +1,9 @@
 package io.github.jdbctemplatemapper.core;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.util.Assert;
 
@@ -10,106 +12,95 @@ import org.springframework.util.Assert;
  *
  * @author ajoseph
  */
-public class TableMapping {
-  private Class<?> tableClass;
-  private String tableName;
-  private String idPropertyName;
-  private boolean idAutoIncrement = false;
+class TableMapping {
+	private Class<?> tableClass;
+	private String tableName;
+	private String idPropertyName;
+	private boolean idAutoIncrement = false;
 
-  // object property to database column mapping.
-  // Only properties which have corresponding database column will be in this list.
-  private List<PropertyMapping> propertyMappings = new ArrayList<>();
+	// object property to database column mapping.
+	// Only properties which have corresponding database column will be in this
+	// list.
+	private List<PropertyMapping> propertyMappings = new ArrayList<>();
 
-  
-  public TableMapping(Class<?> tableClass, String tableName, String idPropertyName, List<PropertyMapping> propertyMappings) {
-	  Assert.notNull(tableClass, "tableClass must not be null");
-	  Assert.notNull(tableName, "tableName must not be null");
-	  Assert.notNull(idPropertyName, "idPropertyName must not be null");
-	  this.tableClass = tableClass;
-	  this.tableName = tableName;
-	  this.idPropertyName = idPropertyName;
-	  this.propertyMappings = propertyMappings;
-  }
-  
-  public String getColumnName(String propertyName) {
-    if (propertyName != null) {
-      for (PropertyMapping mapping : propertyMappings) {
-        if (propertyName.equals(mapping.getPropertyName())) {
-          return mapping.getColumnName();
-        }
-      }
-    }
-    return null;
-  }
-  
-  public String getProperyName(String columnName) {
-	    if (columnName != null) {
-	      for (PropertyMapping mapping : propertyMappings) {
-	        if (columnName.equals(mapping.getColumnName())) {
-	          return mapping.getPropertyName();
-	        }
-	      }
-	    }
-	    return null;
-	  }
-  
-  public Class<?> getPropertyType(String propertyName) {
-	    if (propertyName != null) {
-	      for (PropertyMapping mapping : propertyMappings) {
-	        if (propertyName.equals(mapping.getPropertyName())) {
-	          return mapping.getPropertyType();
-	        }
-	      }
-	    }
-	    return null;
-	  }
-  
+	// these 2 maps used for performance
+	private Map<String, PropertyMapping> columnNameMap = new HashMap<>();
+	private Map<String, PropertyMapping> propertyNameMap = new HashMap<>();
 
-  public int getPropertySqlType(String propertyName) {
-    if (propertyName != null) {
-      for (PropertyMapping mapping : propertyMappings) {
-        if (propertyName.equals(mapping.getPropertyName())) {
-          return mapping.getColumnSqlDataType();
-        }
-      }
-    }
-    return 0;
-  }
-  
-  public Class<?> getTableClass(){
-	  return tableClass;
-  }
+	public TableMapping(Class<?> tableClass, String tableName, String idPropertyName,
+			List<PropertyMapping> propertyMappings) {
+		Assert.notNull(tableClass, "tableClass must not be null");
+		Assert.notNull(tableName, "tableName must not be null");
+		Assert.notNull(idPropertyName, "idPropertyName must not be null");
+		this.tableClass = tableClass;
+		this.tableName = tableName;
+		this.idPropertyName = idPropertyName;
+		this.propertyMappings = propertyMappings;
+		if (propertyMappings != null) {
+			for (PropertyMapping propMapping : propertyMappings) {
+				// these 2 maps used for performance
+				columnNameMap.put(propMapping.getColumnName(), propMapping);
+				propertyNameMap.put(propMapping.getPropertyName(), propMapping);
+			}
+		}
+	}
 
-  public String getTableName() {
-    return tableName;
-  }
+	public String getColumnName(String propertyName) {
+		PropertyMapping propMapping = propertyNameMap.get(propertyName);
+		return propMapping == null ? null : propMapping.getColumnName();
+	}
 
-  public String getIdPropertyName() {
-	  return getIdPropertyMapping().getPropertyName();
-  }
-  
-  public String getIdColumnName() {
-	  return getIdPropertyMapping().getColumnName();
-  } 
-  
-  public void setIdAutoIncrement(boolean val) {
-	  this.idAutoIncrement = val;
-  }
-  public boolean isIdAutoIncrement() {
-	  return idAutoIncrement;
-  }
+	public String getProperyName(String columnName) {
+		PropertyMapping propMapping = columnNameMap.get(columnName);
+		return propMapping == null ? null : propMapping.getPropertyName();
+	}
 
-  public PropertyMapping getIdPropertyMapping() {
-      for (PropertyMapping mapping : propertyMappings) {
-          if (idPropertyName.equals(mapping.getPropertyName())) {
-            return mapping;
-          }
-        }
-      throw new RuntimeException("For @Id property " + idPropertyName + " could not find corresponding column in database table " + tableName);
-  }
+	public Class<?> getPropertyType(String propertyName) {
+		PropertyMapping propMapping = propertyNameMap.get(propertyName);
+		return propMapping == null ? null : propMapping.getPropertyType();
+	}
 
-  public List<PropertyMapping> getPropertyMappings() {
-    return propertyMappings;
-  }
+	public int getPropertySqlType(String propertyName) {
+		PropertyMapping propMapping = propertyNameMap.get(propertyName);
+		return propMapping == null ? 0 : propMapping.getColumnSqlDataType();
+	}
+
+	public Class<?> getTableClass() {
+		return tableClass;
+	}
+
+	public String getTableName() {
+		return tableName;
+	}
+
+	public String getIdPropertyName() {
+		return getIdPropertyMapping().getPropertyName();
+	}
+
+	public String getIdColumnName() {
+		return getIdPropertyMapping().getColumnName();
+	}
+
+	public void setIdAutoIncrement(boolean val) {
+		this.idAutoIncrement = val;
+	}
+
+	public boolean isIdAutoIncrement() {
+		return idAutoIncrement;
+	}
+
+	public PropertyMapping getIdPropertyMapping() {
+		PropertyMapping propMapping = propertyNameMap.get(idPropertyName);
+		if (propMapping != null) {
+			return propMapping;
+		} else {
+			throw new RuntimeException("For @Id property " + idPropertyName
+					+ " could not find corresponding column in database table " + tableName);
+		}
+	}
+
+	public List<PropertyMapping> getPropertyMappings() {
+		return propertyMappings;
+	}
 
 }

@@ -1,4 +1,4 @@
-package io.github.jdbctemplatemapper.core;
+package io.github.jdbctemplatemapper.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -21,7 +21,8 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import io.github.jdbctemplatemapper.JdbcTemplateMapper;
+import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
+import io.github.jdbctemplatemapper.core.SelectHelper;
 import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
 import io.github.jdbctemplatemapper.model.Customer;
 import io.github.jdbctemplatemapper.model.NoIdObject;
@@ -361,9 +362,9 @@ public class JdbcTemplateMapperTest {
 	@Test
 	public void selectMapper_test() {
 
-		SelectMapper<Order> orderSelectMapper = jtm.getSelectMapper(Order.class, "o");
-		SelectMapper<OrderLine> orderLineSelectMapper = jtm.getSelectMapper(OrderLine.class, "ol");
-		SelectMapper<Product> productSelectMapper = jtm.getSelectMapper(Product.class, "p");
+		SelectHelper<Order> orderSelectMapper = jtm.getSelectMapper(Order.class, "o");
+		SelectHelper<OrderLine> orderLineSelectMapper = jtm.getSelectMapper(OrderLine.class, "ol");
+		SelectHelper<Product> productSelectMapper = jtm.getSelectMapper(Product.class, "p");
 
 		String sql = "SELECT " 
 		              + orderSelectMapper.getColumnsSql() 
@@ -383,9 +384,9 @@ public class JdbcTemplateMapperTest {
 				List<Order> list = new ArrayList<>();
 				while (rs.next()) {
 					
-					Order order = orderSelectMapper.getModel(rs);
-					OrderLine orderLine = orderLineSelectMapper.getModel(rs);
-					Product product = productSelectMapper.getModel(rs);
+					Order order = orderSelectMapper.buildModel(rs);
+					OrderLine orderLine = orderLineSelectMapper.buildModel(rs);
+					Product product = productSelectMapper.buildModel(rs);
 					
 					System.out.println(orderLine);
 					System.out.println(product);
@@ -397,13 +398,8 @@ public class JdbcTemplateMapperTest {
 		};
 		
 		List<Order> orders = jtm.getJdbcTemplate().query(sql, rsExtractor);
-
-		System.out.println(sql);
 		
-		System.out.println(orders);
-		
-		
-		assertTrue(sql.length() < 0);
+		assertTrue(orders.size() >0);
 
 	}
 

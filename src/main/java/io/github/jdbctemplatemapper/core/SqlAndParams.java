@@ -9,7 +9,7 @@ import org.springframework.util.ObjectUtils;
  *
  * @author ajoseph
  */
-public class SqlAndParams {
+class SqlAndParams {
   private String sql; // the sql string
   private Set<String> params; // the parameters for the sql
 

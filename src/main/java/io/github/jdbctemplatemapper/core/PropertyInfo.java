@@ -1,11 +1,10 @@
 package io.github.jdbctemplatemapper.core;
 
-public class PropertyInfo {
+class PropertyInfo {
   private String propertyName;
   private Class<?> propertyType;
 
   public PropertyInfo(String propertyName, Class<?> propertyType) {
-    super();
     this.propertyName = propertyName;
     this.propertyType = propertyType;
   }

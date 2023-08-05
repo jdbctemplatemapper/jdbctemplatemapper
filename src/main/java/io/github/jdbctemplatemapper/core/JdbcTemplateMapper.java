@@ -1,4 +1,4 @@
-package io.github.jdbctemplatemapper;
+package io.github.jdbctemplatemapper.core;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -21,12 +21,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.util.Assert;
 
-import io.github.jdbctemplatemapper.core.IRecordOperatorResolver;
-import io.github.jdbctemplatemapper.core.MappingHelper;
-import io.github.jdbctemplatemapper.core.PropertyMapping;
-import io.github.jdbctemplatemapper.core.SelectMapper;
-import io.github.jdbctemplatemapper.core.SqlAndParams;
-import io.github.jdbctemplatemapper.core.TableMapping;
 import io.github.jdbctemplatemapper.exception.MapperException;
 import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
 
@@ -56,8 +50,8 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * 'lastName' will be mapped to corresponding columns 'first_name' and 'last_name' in the database table. Properties which 
  * don't have a column match will be ignored during CRUD operations
  * 2. The model properties map to table columns and have no concept of relationships. Foreign keys in tables will need a corresponding 
- * property in the model. For example if an 'Order' is tied to a 'Customer', to match the 'customer_id' column in the 'order' 
- * table there should be a 'customerId' property in the 'Order' model. 
+ * property in the model. For example if an 'Employee' belongs to a 'Department', to match the 'department_id' column in the 'employee' 
+ * table there should be a 'departmentId' property in the 'Employee' model. 
  *
  * <strong>Examples code</strong>
  * //{@literal @}Table annotation is required and should match a table name in database
@@ -620,8 +614,8 @@ public class JdbcTemplateMapper {
 	//	return new SelectMapper<T>(clazz, mappingHelper, defaultConversionService);
 	//}
 	
-	public <T> SelectMapper<T> getSelectMapper(Class<T> clazz, String tableAlias) {
-		return new SelectMapper<T>(clazz, tableAlias, mappingHelper, defaultConversionService);
+	public <T> SelectHelper<T> getSelectMapper(Class<T> clazz, String tableAlias) {
+		return new SelectHelper<T>(clazz, tableAlias, mappingHelper, defaultConversionService);
 	}
 
 	private SqlAndParams buildSqlAndParamsForUpdate(TableMapping tableMapping) {

@@ -27,7 +27,7 @@ import io.github.jdbctemplatemapper.annotation.IdType;
 import io.github.jdbctemplatemapper.annotation.Table;
 import io.github.jdbctemplatemapper.exception.MapperException;
 
-public class MappingHelper {
+class MappingHelper {
 
 	// Convert camel case to snake case regex pattern. Pattern is thread safe
 	private static Pattern TO_SNAKE_CASE_PATTERN = Pattern.compile("(.)(\\p{Upper})");
