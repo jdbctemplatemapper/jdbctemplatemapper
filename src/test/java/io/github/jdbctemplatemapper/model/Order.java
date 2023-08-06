@@ -1,6 +1,7 @@
 package io.github.jdbctemplatemapper.model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import io.github.jdbctemplatemapper.annotation.Id;
@@ -10,7 +11,7 @@ import io.github.jdbctemplatemapper.annotation.Table;
 @Table(name = "orders")
 public class Order {
   @Id(type = IdType.AUTO_INCREMENT)
-  private Integer orderId;
+  private Long orderId;
 
   private LocalDateTime orderDate;
   private Integer customerId;
@@ -25,15 +26,15 @@ public class Order {
   /** ************************** */
   private Customer customer;
 
-  private List<OrderLine> orderLines;
+  private List<OrderLine> orderLines = new ArrayList<>();
 
   // for argument tests
 
-  public Integer getOrderId() {
+  public Long getOrderId() {
     return orderId;
   }
 
-  public void setOrderId(Integer id) {
+  public void setOrderId(Long id) {
     this.orderId = id;
   }
 
@@ -116,6 +117,11 @@ public class Order {
   public void setOrderLines(List<OrderLine> orderLines) {
     this.orderLines = orderLines;
   }
+  
+  public void addOrderLine(OrderLine orderLine) {
+	  orderLines.add(orderLine);
+  }
+  
 
   public Person getPerson() {
     return person;

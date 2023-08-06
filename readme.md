@@ -57,7 +57,7 @@
  product.setProductName("some product name");
  product.setPrice(10.25);
  product.setAvailableDate(LocalDateTime.now());
- jdbcTemplateMapper.insert(product);
+ jdbcTemplateMapper.insert(product); // because id type is auto increment id value will be set after save.
 
  product = jdbcTemplateMapper.findById(1, Product.class);
  product.setPrice(11.50);
@@ -101,7 +101,7 @@ public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
 
 **@Table**
 
-This is a class level annotation and is required. It can be any name and should match a table in the database
+Required class level annotation. It can be any name and should match a table in the database
 
 ```java
 @Table(name="product")
@@ -112,7 +112,7 @@ class Product {
 
 **@Id**
 
-This is a required annotation. There are 2 forms of usage for this.
+Required field level annotation. There are 2 forms of usage for this.
 
 * **auto incremented id usage**
 
@@ -207,6 +207,10 @@ Uses the same logging configurations as JdbcTemplate to log the SQL.
  2. Database changes will require a restart of the application since JdbcTemplateMapper caches table metadata.
  
 ## TroubleShooting
-Make sure you can connect to your database and issue a simple query using JdbcTemplate without the JdbcTemplateMapper.
+Make sure you can connect to your database and issue a simple query using Spring's JdbcTemplate without the JdbcTemplateMapper.
+
+## Known issues
+1. For Oracle/SqlServer no support for blobs.
+2. Could have issues with old/non standard database drivers.
   
  

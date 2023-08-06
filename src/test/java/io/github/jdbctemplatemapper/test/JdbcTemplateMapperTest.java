@@ -9,7 +9,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -88,7 +91,7 @@ public class JdbcTemplateMapperTest {
 	@Test
 	public void insert_withNonNullIdFailureTest() {
 		Order order = new Order();
-		order.setOrderId(2002);
+		order.setOrderId(2002L);
 		order.setOrderDate(LocalDateTime.now());
 		order.setCustomerId(2);
 
@@ -190,7 +193,7 @@ public class JdbcTemplateMapperTest {
 
 		Thread.sleep(1000); // avoid timing issue.
 
-		order.setStatus("IN PROCESS");
+		order.setStatus("COMPLETE");
 
 		jtm.update(order);
 
@@ -201,7 +204,7 @@ public class JdbcTemplateMapperTest {
 
 		// requery and check
 		order = jtm.findById(1, Order.class);
-		assertEquals("IN PROCESS", order.getStatus());
+		assertEquals("COMPLETE", order.getStatus());
 		assertEquals(2, order.getVersion()); // version incremented
 		assertTrue(order.getUpdatedOn().isAfter(prevUpdatedOn));
 		assertEquals("tester", order.getUpdatedBy());
@@ -362,48 +365,81 @@ public class JdbcTemplateMapperTest {
 	@Test
 	public void selectMapper_test() {
 
-		SelectMapper<Order> orderSelectHelper = jtm.getSelectMapper(Order.class, "o");
-		SelectMapper<OrderLine> orderLineSelectHelper = jtm.getSelectMapper(OrderLine.class, "ol");
-		SelectMapper<Product> productSelectHelper = jtm.getSelectMapper(Product.class, "p");
+		// The second argument to getSelectMapper() is the table alias in the query.
+		// In this query the 'order' tables alias is 'o' 'order o'. If you make a typo
+		// you will get a bad SQL grammar exception. See api documentation for getSelectMapper()
+		// for details
+		SelectMapper<Order> orderSelectMapper = jtm.getSelectMapper(Order.class, "o");
+		SelectMapper<OrderLine> orderLineSelectMapper = jtm.getSelectMapper(OrderLine.class, "ol");
+		SelectMapper<Product> productSelectMapper = jtm.getSelectMapper(Product.class, "p");
 
+		// no need to type all those column names so you can concentrate on where and join clauses :)
 		String sql = "select" 
-		              + orderSelectHelper.getColumnsSql() 
+		              + orderSelectMapper.getColumnsSql() 
 		              + ","
-				      + orderLineSelectHelper.getColumnsSql() 
+				      + orderLineSelectMapper.getColumnsSql() 
 				      + "," 
-		              + productSelectHelper.getColumnsSql()
+		              + productSelectMapper.getColumnsSql()
 				      + " from orders o" 
 				      + " left join order_line ol on o.order_id = ol.order_id"
-				      + " join product p on p.product_id = ol.product_id";
-
+				      + " join product p on p.product_id = ol.product_id"
+				      + " order by o.order_id, ol.order_line_id";
+		
 		ResultSetExtractor<List<Order>> rsExtractor = new ResultSetExtractor<List<Order>>() {
 			@Override
 			public List<Order> extractData(ResultSet rs) throws SQLException, DataAccessException {
-
-				List<Order> list = new ArrayList<>();
+				
+				Map<Long, Order> orderByIdMap = new LinkedHashMap<>(); // LinkedHashMap to retain result order	
+				Map<Integer, Product> productByIdMap = new HashMap<>();
+				
 				while (rs.next()) {
 					
-					Order order = orderSelectHelper.buildModel(rs);
-					OrderLine orderLine = orderLineSelectHelper.buildModel(rs);
-					Product product = productSelectHelper.buildModel(rs);
+					// IMPORTANT thing to know is selectMapper.buildModel(rs) will return the model fully populated from resultSet
 					
-					list.add(order);
+					// the logic here is specific for this use case. Your logic will be different.
+					// I am doing some checks to make sure unwanted objects are not created.
+					// In this use case Order has many OrderLine and an OrderLine has a product
 					
-					// stitch the objects. In this case  Order has many OrderLine and an OrderLine has a product
+					// orderSelectMapper.getResultSetModelIdColumnName() returns the column alias which is 'o_order_id'
+					// for the sql above. 
+					Long orderId = rs.getLong(orderSelectMapper.getResultSetModelIdColumnName());	
 					
-					
-					
-					
-					
+					Order order = orderByIdMap.get(orderId);
+				    if (order == null) {
+				    	order = orderSelectMapper.buildModel(rs);
+				    	orderByIdMap.put(order.getOrderId(), order);
+				    }
+				    
+				    // productSelectMapper.getResultSetModelIdColumnName() returns the column alias which is 'p_product_id'
+				    // for the sql above.
+					Integer productId = rs.getInt(productSelectMapper.getResultSetModelIdColumnName());
+					Product product = productByIdMap.get(productId);
+				    if (product == null) {
+				    	product = productSelectMapper.buildModel(rs);
+				        productByIdMap.put(product.getProductId(), product);
+				    }
+				    
+					OrderLine orderLine = orderLineSelectMapper.buildModel(rs);	
+					if(orderLine != null) {
+					   orderLine.setProduct(product);
+					   order.addOrderLine(orderLine);
+					}
 					
 				}
-				return list;
+				return new ArrayList<Order>(orderByIdMap.values());
 			}
 		};
 		
 		List<Order> orders = jtm.getJdbcTemplate().query(sql, rsExtractor);
 		
-		assertTrue(orders.size() > 0);
+		assertTrue(orders.size() == 2);
+		assertTrue(orders.get(0).getOrderLines().size() == 2);
+		assertEquals("IN PROCESS", orders.get(1).getStatus() );
+		assertTrue(orders.get(1).getOrderLines().size() == 1);
+		assertTrue(orders.get(0).getOrderLines().get(0).getProductId()== 1);
+		assertEquals("shoes", orders.get(0).getOrderLines().get(0).getProduct().getName());
+		assertEquals("socks", orders.get(0).getOrderLines().get(1).getProduct().getName());
+		assertEquals("laces", orders.get(1).getOrderLines().get(0).getProduct().getName());
 
 	}
 

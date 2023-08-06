@@ -1,11 +1,11 @@
 
 INSERT INTO jdbctemplatemapper.orders
-(order_date, customer_id, created_on, created_by, updated_on, updated_by, version)
-VALUES('20200620 00:00:00', 1, '20200620 00:00:00', 'system', '20200620 00:00:00', 'system', 1);
+(order_date, customer_id, status, created_on, created_by, updated_on, updated_by, version)
+VALUES('20200620 00:00:00', 1, 'IN PROCESS', '20200620 00:00:00', 'system', '20200620 00:00:00', 'system', 1);
 
 INSERT INTO jdbctemplatemapper.orders
-(order_date, customer_id, created_on, created_by, updated_on, updated_by,  version)
-VALUES('20200620 00:00:00', 2, '20200620 00:00:00', 'system', '20200620 00:00:00', 'system', 1);
+(order_date, customer_id, status, created_on, created_by, updated_on, updated_by,  version)
+VALUES('20200620 00:00:00', 2, 'IN PROCESS',  '20200620 00:00:00', 'system', '20200620 00:00:00', 'system', 1);
 
 INSERT INTO jdbctemplatemapper.orders
 (order_date, created_on, created_by, updated_on, updated_by,  version)

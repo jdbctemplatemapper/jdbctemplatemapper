@@ -205,6 +205,9 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * <strong>TroubleShooting</strong>
  * Make sure you can connect to your database and issue a simple query using JdbcTemplate without the JdbcTemplateMapper.
  * 
+ * <strong>Known issues</strong>
+ * 1. For Oracle/SqlServer no support for blobs.
+ * 2. Could have issues with old/non standard database drivers.
  * </pre>
  *
  * @author ajoseph

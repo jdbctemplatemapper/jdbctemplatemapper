@@ -10,7 +10,77 @@ import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.util.Assert;
 
 /**
+ * Makes the code to writing and retrieving relationships less verbose. Below
+ * is an example of querying relationships using Spring's ResultSetExtractor.
+ * 
+ * <pre>{@code
+ * // Querying the following relationship: An 'Order' has multiple 'OrderLine' and each 'OrderLine' has one product.  
+ * // The second argument to getSelectMapper() is the table alias in the query.
+ * // In this query the 'order' tables alias is 'o', the 'order_line' table alias is 'ol' and the produdt
+ * // table alias is 'p'.
+ * SelectMapper<Order> orderSelectMapper = jdbcTemplateMapper.getSelectMapper(Order.class, "o");
+ * SelectMapper<OrderLine> orderLineSelectMapper = jdbcTemplateMapper.getSelectMapper(OrderLine.class, "ol");
+ * SelectMapper<Product> productSelectMapper = jdbcTemplateMapper.getSelectMapper(Product.class, "p");
  *
+ * // no need to type all those column names so we can concentrate on where and join clauses
+ * String sql = "select" 
+ *              + orderSelectMapper.getColumnsSql() 
+ *              + ","
+ *              + orderLineSelectMapper.getColumnsSql() 
+ *              + "," 
+ *              + productSelectMapper.getColumnsSql()
+ *              + " from orders o" 
+ *              + " left join order_line ol on o.order_id = ol.order_id"
+ *              + " join product p on p.product_id = ol.product_id"
+ *              + " order by o.order_id, ol.order_line_id";
+ *		
+ * ResultSetExtractor<List<Order>> rsExtractor = new ResultSetExtractor<List<Order>>() {
+ *    {@literal @}Override
+ *    public List<Order> extractData(ResultSet rs) throws SQLException, DataAccessException {	
+ *      Map<Long, Order> orderByIdMap = new LinkedHashMap<>(); // LinkedHashMap to retain result order	
+ *		Map<Integer, Product> productByIdMap = new HashMap<>();
+ *		
+ *      while (rs.next()) {				
+ *        // IMPORTANT thing to know is selectMapper.buildModel(rs) will return the model fully populated from resultSet
+ *					
+ *        // the logic here is specific for this use case. Your logic will be different.
+ *        // Doing some checks to make sure unwanted objects are not created.
+ *        // In this use case Order has many OrderLine and an OrderLine has a product
+ *					
+ *        // orderSelectMapper.getResultSetModelIdColumnName() returns the id column alias which is 'o_order_id'
+ *        // for the sql above. 
+ *        Long orderId = rs.getLong(orderSelectMapper.getResultSetModelIdColumnName());	
+ *					
+ *        Order order = orderByIdMap.get(orderId);
+ *        if (order == null) {
+ *          order = orderSelectMapper.buildModel(rs);
+ *          orderByIdMap.put(order.getOrderId(), order);
+ *        }
+ *				    
+ *        // productSelectMapper.getResultSetModelIdColumnName() returns the id column alias which is 'p_product_id'
+ *        // for the sql above.
+ *        Integer productId = rs.getInt(productSelectMapper.getResultSetModelIdColumnName());
+ *        Product product = productByIdMap.get(productId);
+ *        if (product == null) {
+ *          product = productSelectMapper.buildModel(rs);
+ *          productByIdMap.put(product.getProductId(), product);
+ *        }
+ *				    
+ *        OrderLine orderLine = orderLineSelectMapper.buildModel(rs);	
+ *        if(orderLine != null) {
+ *          orderLine.setProduct(product);
+ *          order.addOrderLine(orderLine);
+ *        }			
+ *     }
+ *     return new ArrayList<Order>(orderByIdMap.values());
+ *   }
+ * };
+ *		
+ * List<Order> orders = jtm.getJdbcTemplate().query(sql, rsExtractor);
+ *
+ * 
+ *}</pre>
+ * 
  * @author ajoseph
  */
 public class SelectMapper<T> {
@@ -20,24 +90,38 @@ public class SelectMapper<T> {
 
 	private final DefaultConversionService defaultConversionService;
 
-	private final String alias;
+	private final String tableAlias;
 
-	SelectMapper(Class<T> clazz, String alias, MappingHelper mappingHelper,
+	SelectMapper(Class<T> clazz, String tableAlias, MappingHelper mappingHelper,
 			DefaultConversionService defaultConversionService) {
-		Assert.hasLength(alias, " alias cannot be empty");
+		Assert.notNull(clazz, " clazz cannot be empty");
+		Assert.hasLength(tableAlias, " tableAlias cannot be empty");
 		this.clazz = clazz;
-		this.alias = alias;
+		this.tableAlias = tableAlias;
 		this.mappingHelper = mappingHelper;
 		this.defaultConversionService = defaultConversionService;
 
 	}
 
+	/**
+	 * Generates a string which can be used in a sql select statement for all the
+	 * properties which have corresponding database columns
+	 *
+	 * <pre>
+	 * SelectMapper selectMapper = jdbcTemplateMapper(Employee, "emp");
+	 * selectMapper.getColumnSql() will return something line below:
+	 * 
+	 * "emp.id emp_id, emp.last_name emp_last_name, emp.first_name emp_first_name"
+	 * </pre>
+	 *
+	 * @return comma separated select column string
+	 */
 	public String getColumnsSql() {
 		String str = "";
 		TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
 		StringBuilder sb = new StringBuilder(" ");
-		String colPrefix = alias + ".";
-		String aliasPrefix = " " + alias + "_";
+		String colPrefix = tableAlias + ".";
+		String aliasPrefix = " " + tableAlias + "_";
 		for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
 			sb.append(colPrefix).append(propMapping.getColumnName()).append(aliasPrefix)
 					.append(propMapping.getColumnName()).append(",");
@@ -50,6 +134,21 @@ public class SelectMapper<T> {
 		return str;
 	}
 
+	/**
+	 * @return the column alias name of the models id in sql statement
+	 */
+	public String getResultSetModelIdColumnName() {
+		TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
+		return tableAlias + "_" + tableMapping.getIdColumnName();
+	}
+
+	/**
+	 * Builds the model from the resultSet
+	 * 
+	 * @param rs The ResultSet from which to build the model.
+	 * @return the model. Will return null if the id property is null (even if other
+	 *         fields have some values)
+	 */
 	public T buildModel(ResultSet rs) {
 		try {
 			Object obj = clazz.newInstance();
@@ -60,25 +159,30 @@ public class SelectMapper<T> {
 			// need below for java.sql.Timestamp to java.time.LocalDateTime conversion etc
 			bw.setConversionService(defaultConversionService);
 
-			String colPrefix = alias + "_";
+			String colPrefix = tableAlias + "_";
 			ResultSetMetaData rsMetaData = rs.getMetaData();
 			int count = rsMetaData.getColumnCount();
 			for (int i = 1; i <= count; i++) {
-				String columnName = rsMetaData.getColumnName(i);
-				if (columnName.startsWith(colPrefix)) {
-					String propertyName = tableMapping.getProperyName(columnName.substring(colPrefix.length()));
-					if(propertyName != null) {
-					  // Using JdbcUtils since it handles different jdbc drivers
-					  bw.setPropertyValue(propertyName,
-							JdbcUtils.getResultSetValue(rs, i, tableMapping.getPropertyType(propertyName)));
+				String columnLabel = rsMetaData.getColumnLabel(i);
+				if (columnLabel.startsWith(colPrefix)) {
+					String propertyName = tableMapping.getProperyName(columnLabel.substring(colPrefix.length()));
+					if (propertyName != null) {
+						// Using JdbcUtils since it handles different jdbc drivers
+						bw.setPropertyValue(propertyName,
+								JdbcUtils.getResultSetValue(rs, i, tableMapping.getPropertyType(propertyName)));
 					}
 				}
 			}
-			return clazz.cast(obj);
+			// if id is is null return null. Does not matter if other fields have values.
+			if (bw.getPropertyValue(tableMapping.getIdPropertyName()) == null) {
+				return null;
+			} else {
+				return clazz.cast(obj);
+			}
+
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-
 	}
 
 }
