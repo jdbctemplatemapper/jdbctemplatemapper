@@ -30,8 +30,8 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * JdbcTemplate is a good option for complex enterprise applications where an ORMs magic/nuances become challenging.
  * JdbcTemplate simplifies the use of JDBC but is verbose.
  *
- * JdbcTemplateMapper makes CRUD with Spring's JdbcTemplate simpler. It provides one liners for CRUD and methods which 
- * make querying of relationships less verbose.
+ * JdbcTemplateMapper makes CRUD with Spring's JdbcTemplate simpler. It provides one liners for CRUD and features which help to make querying of 
+ * relationships less verbose.
  *
  * <strong>Features</strong>
  * 1. One liners for CRUD. To keep the library as simple possible it only has 2 annotations.
