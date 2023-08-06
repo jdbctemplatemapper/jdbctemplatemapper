@@ -22,6 +22,8 @@ public class TypeCheck {
 	private BigDecimal bigDecimalData;
 
 	private Boolean booleanVal;
+	
+	private byte[] image;
 
 	public Integer getId() {
 		return id;
@@ -86,5 +88,15 @@ public class TypeCheck {
 	public void setBooleanVal(Boolean booleanVal) {
 		this.booleanVal = booleanVal;
 	}
+
+	public byte[] getImage() {
+		return image;
+	}
+
+	public void setImage(byte[] image) {
+		this.image = image;
+	}
+	
+	
 
 }

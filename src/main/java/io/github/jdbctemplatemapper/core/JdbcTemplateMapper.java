@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
+import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -27,30 +28,32 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * <pre>
  * Spring's JdbcTemplate provides data access using SQL/JDBC for relational databases. 
  * JdbcTemplate is a good option for complex enterprise applications where an ORMs magic/nuances become challenging.
- * Even though JdbcTemplate simplifies the use of JDBC, it still remains verbose.
+ * JdbcTemplate simplifies the use of JDBC but is verbose.
  *
- * JdbcTemplateMapper makes CRUD with Spring's JdbcTemplate simpler. It provides one liners for CRUD.
+ * JdbcTemplateMapper makes CRUD with Spring's JdbcTemplate simpler. It provides one liners for CRUD and methods which 
+ * make querying of relationships less verbose.
  *
  * <strong>Features</strong>
  * 1. One liners for CRUD. To keep the library as simple possible it only has 2 annotations.
- * 2. Can be configured for the following (optional):
+ * 2. Methods which make querying of relationships less verbose
+ * 3. Can be configured for the following (optional):
  *      auto assign created on, updated on.
  *      auto assign created by, updated by using an implementation of IRecordOperatorResolver.
  *     optimistic locking functionality for updates by configuring a version property.
- * 3. Thread safe so just needs a single instance (similar to JdbcTemplate)
- * 4. To log the SQL statements it uses the same logging configurations as JdbcTemplate. See the logging section.
- * 5. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with 
+ * 4. Thread safe so just needs a single instance (similar to JdbcTemplate)
+ * 5. To log the SQL statements it uses the same logging configurations as JdbcTemplate. See the logging section.
+ * 6. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with 
  *    other relational databases.  
  *
  * <Strong>JdbcTemplateMapper is opinionated</strong> 
  * Projects have to meet the following criteria for use:
  * 
  * 1. Camel case object property names are mapped to underscore case table column names. Properties of a model like 'firstName', 
- * 'lastName' will be mapped to corresponding columns 'first\_name' and 'last\_name' in the database table. Properties which 
+ * 'lastName' will be mapped to corresponding columns 'first_name' and 'last_name' in the database table. Properties which 
  * don't have a column match will be ignored during CRUD operations
  * 2. The model properties map to table columns and have no concept of relationships. Foreign keys in tables will need a corresponding 
- * property in the model. For example if an 'Order' is tied to a 'Customer', to match the 'customer\_id' column in the 'order' 
- * table there should be a 'customerId' property in the 'Order' model. 
+ * property in the model. For example if an 'Employee' belongs to a 'Department', to match the 'department_id' column in the 'employee' 
+ * table there should be a 'departmentId' property in the 'Employee' model. 
  *
  * <strong>Examples code</strong>
  * //{@literal @}Table annotation is required and should match a table name in database
@@ -78,7 +81,7 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * product.setProductName("some product name");
  * product.setPrice(10.25);
  * product.setAvailableDate(LocalDateTime.now());
- * jdbcTemplateMapper.insert(product);
+ * jdbcTemplateMapper.insert(product); // because id type is auto increment id value will be set after insert.
  *
  * product = jdbcTemplateMapper.findById(1, Product.class);
  * product.setPrice(11.50);
@@ -89,6 +92,8 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * jdbcTemplateMapper.delete(product);
  * 
  * jdbcTemplateMapper.delete(5, Product.class); // deleting just using id
+ * 
+ * // for methods which help make querying relationships less verbose @see <a href="SelectMapper.html">SelectMapper</a>
  *
  * <strong>Maven coordinates</strong> 
  *{@code
@@ -188,7 +193,9 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * OptimisticLockingException will be thrown. For an insert this value will be set to 1. The version property should be of type Integer.
  * 
  * <strong>Logging</strong>
- * # log the sql
+ * Uses the same logging configurations as JdbcTemplate to log the SQL. In applications.properties:
+ * 
+ * # log the SQL
  * logging.level.org.springframework.jdbc.core.JdbcTemplate=TRACE
  *
  * # need this to log the INSERT statements
@@ -202,8 +209,11 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * 2. Database changes will require a restart of the application since JdbcTemplateMapper caches table metadata.
  * 
  * <strong>TroubleShooting</strong>
- * Make sure you can connect to your database and issue a simple query using JdbcTemplate without the JdbcTemplateMapper.
+ * Make sure you can connect to your database and issue a simple query using Spring's JdbcTemplate without the JdbcTemplateMapper.
  * 
+ * <strong>Known issues</strong>
+ * 1. For Oracle/SqlServer no support for blobs.
+ * 2. Could have issues with old/non standard jdbc drivers.
  * </pre>
  *
  * @author ajoseph
@@ -231,6 +241,10 @@ public class JdbcTemplateMapper {
 	// Map key - object class
 	// value - insert sql details
 	private Map<Class<?>, SimpleJdbcInsert> simpleJdbcInsertCache = new ConcurrentHashMap<>();
+
+	// Need this for type conversions like java.sql.Timestamp to
+	// java.time.LocalDateTime etc
+	private DefaultConversionService defaultConversionService = new DefaultConversionService();
 
 	/**
 	 * @param jdbcTemplate - The jdbcTemplate
@@ -603,6 +617,17 @@ public class JdbcTemplateMapper {
 		String sql = "delete from " + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " where "
 				+ tableMapping.getIdColumnName() + " = ?";
 		return jdbcTemplate.update(sql, id);
+	}
+    
+	/**
+	 * Returns the SelectMapper 
+	 * @param <T>  the class for the SelectMapper
+	 * @param clazz the class 
+	 * @param tableAlias the table alias used in the query.
+	 * @return the SelectMapper
+	 */
+	public <T> SelectMapper<T> getSelectMapper(Class<T> clazz, String tableAlias) {
+		return new SelectMapper<T>(clazz, tableAlias, mappingHelper, defaultConversionService);
 	}
 
 	private SqlAndParams buildSqlAndParamsForUpdate(TableMapping tableMapping) {

@@ -5,7 +5,7 @@ package io.github.jdbctemplatemapper.core;
  *
  * @author ajoseph
  */
-public class PropertyMapping {
+class PropertyMapping {
   private String propertyName;
   private Class<?> propertyType;
   private String columnName;

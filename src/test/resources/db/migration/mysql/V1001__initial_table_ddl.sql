@@ -68,6 +68,7 @@ CREATE TABLE jdbctemplatemapper.type_check (
    java_util_date_ts_data timestamp,
    big_decimal_data numeric(10,2),
    boolean_val BOOLEAN,
+   image blob,
    non_model_column varchar(100),
    CONSTRAINT type_check_pk PRIMARY KEY (id)
 );

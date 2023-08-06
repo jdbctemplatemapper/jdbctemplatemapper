@@ -1,11 +1,11 @@
 
 INSERT INTO jdbctemplatemapper.orders
-(order_date, customer_id, created_on, created_by, updated_on, updated_by, version)
-VALUES(to_timestamp('2020-06-20 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 1, to_timestamp('2020-06-20 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'system', to_timestamp('2020-06-20 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'system', 1);
+(order_date, customer_id, status, created_on, created_by, updated_on, updated_by, version)
+VALUES(to_timestamp('2020-06-20 00:00:00', 'YYYY-MM-DD HH24:MI:SS'),  1, 'IN PROCESS', to_timestamp('2020-06-20 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'system', to_timestamp('2020-06-20 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'system', 1);
 
 INSERT INTO jdbctemplatemapper.orders
-(order_date, customer_id, created_on, created_by, updated_on, updated_by,  version)
-VALUES(to_timestamp('2020-06-20 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 2, to_timestamp('2020-06-20 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'system', to_timestamp('2020-06-20 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'system', 1);
+(order_date, customer_id, status, created_on, created_by, updated_on, updated_by,  version)
+VALUES(to_timestamp('2020-06-20 00:00:00', 'YYYY-MM-DD HH24:MI:SS'),  2, 'IN PROCESS',to_timestamp('2020-06-20 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'system', to_timestamp('2020-06-20 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'system', 1);
 
 INSERT INTO jdbctemplatemapper.orders
 (order_date, created_on, created_by, updated_on, updated_by,  version)

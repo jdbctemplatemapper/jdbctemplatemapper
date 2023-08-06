@@ -2,7 +2,9 @@ package io.github.jdbctemplatemapper.model;
 
 import io.github.jdbctemplatemapper.annotation.Id;
 import io.github.jdbctemplatemapper.annotation.IdType;
+import io.github.jdbctemplatemapper.annotation.Table;
 
+@Table(name="order_line")
 public class OrderLine {
   @Id(type = IdType.AUTO_INCREMENT)
   private Integer orderLineId;

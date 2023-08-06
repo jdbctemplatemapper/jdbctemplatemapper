@@ -11,7 +11,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Pattern;
 
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
@@ -27,11 +26,7 @@ import io.github.jdbctemplatemapper.annotation.IdType;
 import io.github.jdbctemplatemapper.annotation.Table;
 import io.github.jdbctemplatemapper.exception.MapperException;
 
-public class MappingHelper {
-
-	// Convert camel case to snake case regex pattern. Pattern is thread safe
-	private static Pattern TO_SNAKE_CASE_PATTERN = Pattern.compile("(.)(\\p{Upper})");
-
+class MappingHelper {
 	// Map key - table name,
 	// value - the list of database column names
 	private Map<String, List<ColumnInfo>> tableColumnInfoCache = new ConcurrentHashMap<>();
@@ -40,9 +35,6 @@ public class MappingHelper {
 	// value - the table mapping
 	private Map<Class<?>, TableMapping> objectToTableMappingCache = new ConcurrentHashMap<>();
 
-	// Map key - camel case string,
-	// value - snake case string
-	private Map<String, String> camelToSnakeCache = new ConcurrentHashMap<>();
 
 	// Map key - object class
 	// value - list of property names
@@ -295,24 +287,6 @@ public class MappingHelper {
 			objectPropertyInfoCache.put(obj.getClass(), propertyInfoList);
 		}
 		return propertyInfoList;
-	}
-
-	/**
-	 * Converts camel case to snake case. Ex: userLastName gets converted to
-	 * user_last_name.
-	 *
-	 * @param str camel case String
-	 * @return the snake case string to lower case.
-	 */
-	public String convertCamelToSnakeCase(String str) {
-		String snakeCase = camelToSnakeCache.get(str);
-		if (snakeCase == null) {
-			if (str != null) {
-				snakeCase = TO_SNAKE_CASE_PATTERN.matcher(str).replaceAll("$1_$2").toLowerCase();
-				camelToSnakeCache.put(str, snakeCase);
-			}
-		}
-		return snakeCase;
 	}
 
 	/**
