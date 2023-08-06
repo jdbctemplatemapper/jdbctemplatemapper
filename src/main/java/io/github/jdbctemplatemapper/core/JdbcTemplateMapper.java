@@ -209,7 +209,7 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * 2. Database changes will require a restart of the application since JdbcTemplateMapper caches table metadata.
  * 
  * <strong>TroubleShooting</strong>
- * Make sure you can connect to your database and issue a simple query using JdbcTemplate without the JdbcTemplateMapper.
+ * Make sure you can connect to your database and issue a simple query using Spring's JdbcTemplate without the JdbcTemplateMapper.
  * 
  * <strong>Known issues</strong>
  * 1. For Oracle/SqlServer no support for blobs.
