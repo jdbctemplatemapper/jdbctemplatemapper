@@ -30,7 +30,7 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * JdbcTemplate is a good option for complex enterprise applications where an ORMs magic/nuances become challenging.
  * JdbcTemplate simplifies the use of JDBC but is verbose.
  *
- * JdbcTemplateMapper makes CRUD with Spring's JdbcTemplate simpler. It provides one liners for CRUD and some methods which 
+ * JdbcTemplateMapper makes CRUD with Spring's JdbcTemplate simpler. It provides one liners for CRUD and methods which 
  * make querying of relationships less verbose.
  *
  * <strong>Features</strong>
@@ -93,7 +93,7 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * 
  * jdbcTemplateMapper.delete(5, Product.class); // deleting just using id
  * 
- * // for methods which help make querying relationships less verbose @see <a href="SelectMapper.html">SelectMaper</a>
+ * // for methods which help make querying relationships less verbose @see <a href="SelectMapper.html">SelectMapper</a>
  *
  * <strong>Maven coordinates</strong> 
  *{@code
@@ -624,7 +624,7 @@ public class JdbcTemplateMapper {
 	 * @param <T>  the class for the SelectMapper
 	 * @param clazz the class 
 	 * @param tableAlias the table alias used in the query.
-	 * @return
+	 * @return the SelectMapper
 	 */
 	public <T> SelectMapper<T> getSelectMapper(Class<T> clazz, String tableAlias) {
 		return new SelectMapper<T>(clazz, tableAlias, mappingHelper, defaultConversionService);
