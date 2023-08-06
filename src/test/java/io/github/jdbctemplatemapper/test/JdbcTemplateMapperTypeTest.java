@@ -171,15 +171,12 @@ public class JdbcTemplateMapperTypeTest {
 
 		SelectMapper<TypeCheck> typeCheckMapper = jdbcTemplateMapper.getSelectMapper(TypeCheck.class, "tc");
 
-		String sql = "select" + typeCheckMapper.getColumnsSql() + " from type_check tc" + " where tc.id = "
-				+ obj.getId();
+		String sql = "select" + typeCheckMapper.getColumnsSql() + " from type_check tc" + " where tc.id = ?";
 
 		ResultSetExtractor<List<TypeCheck>> rsExtractor = new ResultSetExtractor<List<TypeCheck>>() {
 			@Override
 			public List<TypeCheck> extractData(ResultSet rs) throws SQLException, DataAccessException {
-
 				List<TypeCheck> list = new ArrayList<>();
-
 				while (rs.next()) {
 					list.add(typeCheckMapper.buildModel(rs));
 				}
@@ -187,7 +184,7 @@ public class JdbcTemplateMapperTypeTest {
 			}
 		};
 
-		List<TypeCheck> list = jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor);
+		List<TypeCheck> list = jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor, obj.getId());
 
 		assertTrue(list.size() == 1);
 

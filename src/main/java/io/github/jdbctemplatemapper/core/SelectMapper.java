@@ -9,11 +9,14 @@ import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.util.Assert;
 
+import io.github.jdbctemplatemapper.exception.MapperException;
+
 /**
- * Makes the code to writing and retrieving relationships less verbose. Below
- * is an example of querying relationships using Spring's ResultSetExtractor.
+ * Makes the code to writing and retrieving relationships less verbose. Below is
+ * an example of querying relationships using Spring's ResultSetExtractor.
  * 
- * <pre>{@code
+ * <pre>
+ * {@code
  * // Querying the following relationship: An 'Order' has many 'OrderLine' and each 'OrderLine' has one product.  
  * // The second argument to getSelectMapper() is the table alias in the query.
  * // For the query belwo the 'order' table alias is 'o', the 'order_line' table alias is 'ol' and the product
@@ -79,7 +82,8 @@ import org.springframework.util.Assert;
  * List<Order> orders = jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor);
  *
  * 
- *}</pre>
+ *}
+ * </pre>
  * 
  * @author ajoseph
  */
@@ -96,6 +100,10 @@ public class SelectMapper<T> {
 			DefaultConversionService defaultConversionService) {
 		Assert.notNull(clazz, " clazz cannot be empty");
 		Assert.hasLength(tableAlias, " tableAlias cannot be empty");
+		if (tableAlias.trim().length() < 1) {
+			throw new MapperException("tableAlias cannot be empty");
+		}
+
 		this.clazz = clazz;
 		this.tableAlias = tableAlias;
 		this.mappingHelper = mappingHelper;
@@ -164,7 +172,8 @@ public class SelectMapper<T> {
 			int count = rsMetaData.getColumnCount();
 			for (int i = 1; i <= count; i++) {
 				String columnLabel = rsMetaData.getColumnLabel(i);
-				if (columnLabel.startsWith(colPrefix)) {
+				// case insensitive prefix match
+				if (colPrefix.regionMatches(true, 0, columnLabel, 0, colPrefix.length())) {
 					String propertyName = tableMapping.getProperyName(columnLabel.substring(colPrefix.length()));
 					if (propertyName != null) {
 						// Using JdbcUtils since it handles different jdbc drivers

@@ -18,7 +18,7 @@ class PropertyMapping {
     }
     this.propertyName = propertyName;
     this.propertyType = propertyType;
-    this.columnName = columnName;
+    this.columnName = columnName.toLowerCase(); // column names stored in lower case always
     this.columnSqlDataType = columnSqlDataType;
   }
 
