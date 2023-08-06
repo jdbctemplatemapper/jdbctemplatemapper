@@ -2,22 +2,23 @@
  
  Spring's JdbcTemplate provides data access using SQL/JDBC for relational databases. 
  JdbcTemplate is a good option for complex enterprise applications where an ORMs magic/nuances become challenging.
- Even though JdbcTemplate simplifies the use of JDBC, it still remains verbose.
+ JdbcTemplate simplifies the use of JDBC but is verbose.
  
- JdbcTemplateMapper makes CRUD with Spring's JdbcTemplate simpler. It provides one liners for CRUD.
+ JdbcTemplateMapper makes CRUD with Spring's JdbcTemplate simpler. It provides one liners for CRUD and some methods which make querying of relationships less verbose.
  
  [Javadocs](https://jdbctemplatemapper.github.io/jdbctemplatemapper/javadoc/) 
  
 ## Features
 
   1. One liners for CRUD. To keep the library as simple possible it only has 2 annotations.
-  2. Can be configured for the following (optional):
+  2. Methods which make querying of relationships less verbose
+  3. Can be configured for the following (optional):
       * auto assign created on, updated on.
       * auto assign created by, updated by using an implementation of interface IRecordOperatorResolver.
       * optimistic locking functionality for updates by configuring a version property.
-  3. Thread safe so just needs a single instance (similar to JdbcTemplate)
-  4. To log the SQL statements it uses the same logging configurations as JdbcTemplate. See the logging section.
-  5. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with other relational databases. 
+  4. Thread safe so just needs a single instance (similar to JdbcTemplate)
+  5. To log the SQL statements it uses the same logging configurations as JdbcTemplate. See the logging section.
+  6. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with other relational databases. 
 
 
 ## JbcTemplateMapper is opinionated
@@ -57,7 +58,7 @@
  product.setProductName("some product name");
  product.setPrice(10.25);
  product.setAvailableDate(LocalDateTime.now());
- jdbcTemplateMapper.insert(product); // because id type is auto increment id value will be set after save.
+ jdbcTemplateMapper.insert(product); // because id type is auto increment id value will be set after insert.
 
  product = jdbcTemplateMapper.findById(1, Product.class);
  product.setPrice(11.50);
@@ -67,6 +68,9 @@
 
  jdbcTemplateMapper.delete(product);
  jdbcTemplateMapper.delete(5, Product.class); // deleting just using id
+ 
+ // for methods which help make querying relationships less verbose see section 'Querying relationships' below
+ 
  ```
  
 ## Maven coordinates
@@ -185,10 +189,79 @@ For update the matching property value on the model will be set to value returne
 * version:
 For update the matching property value on the model will be incremented if successful. If version is stale, an OptimisticLockingException will be thrown. For an insert this value will be set to 1. The version property should be of type Integer.
  
+## Querying relationships
+An example for querying the following relationship: An 'Order' has many 'OrderLine' and each 'OrderLine' has one product.  
+
+```java
+ // The second argument to getSelectMapper() is the table alias in the query.
+ // For the query query below the 'order' table alias is 'o', the 'order_line' table alias is 'ol' and the product
+ // table alias is 'p'.
+ SelectMapper<Order> orderSelectMapper = jdbcTemplateMapper.getSelectMapper(Order.class, "o");
+ SelectMapper<OrderLine> orderLineSelectMapper = jdbcTemplateMapper.getSelectMapper(OrderLine.class, "ol");
+ SelectMapper<Product> productSelectMapper = jdbcTemplateMapper.getSelectMapper(Product.class, "p");
+
+ // no need to type all those column names so we can concentrate on where and join clauses
+ String sql = "select" 
+               + orderSelectMapper.getColumnsSql() 
+               + ","
+               + orderLineSelectMapper.getColumnsSql() 
+               + "," 
+               + productSelectMapper.getColumnsSql()
+               + " from orders o" 
+               + " left join order_line ol on o.order_id = ol.order_id"
+               + " join product p on p.product_id = ol.product_id"
+               + " order by o.order_id, ol.order_line_id";
+               
+ // Using Spring's ResultSetExtractor 		
+ ResultSetExtractor<List<Order>> rsExtractor = new ResultSetExtractor<List<Order>>() {
+     {@literal @}Override
+     public List<Order> extractData(ResultSet rs) throws SQLException, DataAccessException {	
+       Map<Long, Order> orderByIdMap = new LinkedHashMap<>(); // LinkedHashMap to retain result order	
+       Map<Integer, Product> productByIdMap = new HashMap<>();
+ 		
+       while (rs.next()) {				
+         // IMPORTANT thing to know is selectMapper.buildModel(rs) will return the model fully populated from resultSet
+ 					
+         // the logic here is specific for this use case. Your logic will be different.
+         // Doing some checks to make sure unwanted objects are not created.
+         // In this use case Order has many OrderLine and an OrderLine has one product
+ 					
+         // orderSelectMapper.getResultSetModelIdColumnName() returns the id column alias which is 'o_order_id'
+         // for the sql above. 
+         Long orderId = rs.getLong(orderSelectMapper.getResultSetModelIdColumnName());						
+         Order order = orderByIdMap.get(orderId);
+         if (order == null) {
+           order = orderSelectMapper.buildModel(rs);
+           orderByIdMap.put(order.getOrderId(), order);
+         }
+ 				    
+         // productSelectMapper.getResultSetModelIdColumnName() returns the id column alias which is 'p_product_id'
+         // for the sql above.
+         Integer productId = rs.getInt(productSelectMapper.getResultSetModelIdColumnName());
+         Product product = productByIdMap.get(productId);
+         if (product == null) {
+           product = productSelectMapper.buildModel(rs);
+           productByIdMap.put(product.getProductId(), product);
+         }
+ 				    
+         OrderLine orderLine = orderLineSelectMapper.buildModel(rs);	
+         if(orderLine != null) {
+           orderLine.setProduct(product);
+           order.addOrderLine(orderLine);
+         }			
+      }
+      return new ArrayList<Order>(orderByIdMap.values());
+    }
+  };
+ 		
+  List<Order> orders = jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor);
+    
+```
+
 
 ## Logging
  
-Uses the same logging configurations as JdbcTemplate to log the SQL.
+Uses the same logging configurations as JdbcTemplate to log the SQL. In applications.properties:
  
  ```
  # log the SQL
@@ -211,6 +284,6 @@ Make sure you can connect to your database and issue a simple query using Spring
 
 ## Known issues
 1. For Oracle/SqlServer no support for blobs.
-2. Could have issues with old/non standard database drivers.
+2. Could have issues with old/non standard jdbc drivers.
   
  

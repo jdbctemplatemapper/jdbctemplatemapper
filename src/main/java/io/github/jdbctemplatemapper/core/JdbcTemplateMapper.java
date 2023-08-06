@@ -28,19 +28,21 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * <pre>
  * Spring's JdbcTemplate provides data access using SQL/JDBC for relational databases. 
  * JdbcTemplate is a good option for complex enterprise applications where an ORMs magic/nuances become challenging.
- * Even though JdbcTemplate simplifies the use of JDBC, it still remains verbose.
+ * JdbcTemplate simplifies the use of JDBC but is verbose.
  *
- * JdbcTemplateMapper makes CRUD with Spring's JdbcTemplate simpler. It provides one liners for CRUD.
+ * JdbcTemplateMapper makes CRUD with Spring's JdbcTemplate simpler. It provides one liners for CRUD and some methods which 
+ * make querying of relationships less verbose.
  *
  * <strong>Features</strong>
  * 1. One liners for CRUD. To keep the library as simple possible it only has 2 annotations.
- * 2. Can be configured for the following (optional):
+ * 2. Methods which make querying of relationships less verbose
+ * 3. Can be configured for the following (optional):
  *      auto assign created on, updated on.
  *      auto assign created by, updated by using an implementation of IRecordOperatorResolver.
  *     optimistic locking functionality for updates by configuring a version property.
- * 3. Thread safe so just needs a single instance (similar to JdbcTemplate)
- * 4. To log the SQL statements it uses the same logging configurations as JdbcTemplate. See the logging section.
- * 5. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with 
+ * 4. Thread safe so just needs a single instance (similar to JdbcTemplate)
+ * 5. To log the SQL statements it uses the same logging configurations as JdbcTemplate. See the logging section.
+ * 6. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with 
  *    other relational databases.  
  *
  * <Strong>JdbcTemplateMapper is opinionated</strong> 
@@ -79,7 +81,7 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * product.setProductName("some product name");
  * product.setPrice(10.25);
  * product.setAvailableDate(LocalDateTime.now());
- * jdbcTemplateMapper.insert(product);
+ * jdbcTemplateMapper.insert(product); // because id type is auto increment id value will be set after insert.
  *
  * product = jdbcTemplateMapper.findById(1, Product.class);
  * product.setPrice(11.50);
@@ -90,6 +92,8 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * jdbcTemplateMapper.delete(product);
  * 
  * jdbcTemplateMapper.delete(5, Product.class); // deleting just using id
+ * 
+ * // for methods which help make querying relationships less verbose @see <a href="SelectMapper.html">SelectMaper</a>
  *
  * <strong>Maven coordinates</strong> 
  *{@code
@@ -189,7 +193,9 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * OptimisticLockingException will be thrown. For an insert this value will be set to 1. The version property should be of type Integer.
  * 
  * <strong>Logging</strong>
- * # log the sql
+ * Uses the same logging configurations as JdbcTemplate to log the SQL. In applications.properties:
+ * 
+ * # log the SQL
  * logging.level.org.springframework.jdbc.core.JdbcTemplate=TRACE
  *
  * # need this to log the INSERT statements
@@ -207,7 +213,7 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * 
  * <strong>Known issues</strong>
  * 1. For Oracle/SqlServer no support for blobs.
- * 2. Could have issues with old/non standard database drivers.
+ * 2. Could have issues with old/non standard jdbc drivers.
  * </pre>
  *
  * @author ajoseph
@@ -612,11 +618,14 @@ public class JdbcTemplateMapper {
 				+ tableMapping.getIdColumnName() + " = ?";
 		return jdbcTemplate.update(sql, id);
 	}
-
-	//public <T> SelectMapper<T> getSelectMapper(Class<T> clazz) {
-	//	return new SelectMapper<T>(clazz, mappingHelper, defaultConversionService);
-	//}
-	
+    
+	/**
+	 * Returns the SelectMapper 
+	 * @param <T>  the class for the SelectMapper
+	 * @param clazz the class 
+	 * @param tableAlias the table alias used in the query.
+	 * @return
+	 */
 	public <T> SelectMapper<T> getSelectMapper(Class<T> clazz, String tableAlias) {
 		return new SelectMapper<T>(clazz, tableAlias, mappingHelper, defaultConversionService);
 	}

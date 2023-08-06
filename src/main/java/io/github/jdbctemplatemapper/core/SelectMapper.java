@@ -14,9 +14,9 @@ import org.springframework.util.Assert;
  * is an example of querying relationships using Spring's ResultSetExtractor.
  * 
  * <pre>{@code
- * // Querying the following relationship: An 'Order' has multiple 'OrderLine' and each 'OrderLine' has one product.  
+ * // Querying the following relationship: An 'Order' has many 'OrderLine' and each 'OrderLine' has one product.  
  * // The second argument to getSelectMapper() is the table alias in the query.
- * // In this query the 'order' tables alias is 'o', the 'order_line' table alias is 'ol' and the produdt
+ * // For the query belwo the 'order' table alias is 'o', the 'order_line' table alias is 'ol' and the product
  * // table alias is 'p'.
  * SelectMapper<Order> orderSelectMapper = jdbcTemplateMapper.getSelectMapper(Order.class, "o");
  * SelectMapper<OrderLine> orderLineSelectMapper = jdbcTemplateMapper.getSelectMapper(OrderLine.class, "ol");
@@ -33,7 +33,8 @@ import org.springframework.util.Assert;
  *              + " left join order_line ol on o.order_id = ol.order_id"
  *              + " join product p on p.product_id = ol.product_id"
  *              + " order by o.order_id, ol.order_line_id";
- *		
+ *              
+ * // Using Spring's ResultSetExtractor		
  * ResultSetExtractor<List<Order>> rsExtractor = new ResultSetExtractor<List<Order>>() {
  *    {@literal @}Override
  *    public List<Order> extractData(ResultSet rs) throws SQLException, DataAccessException {	
@@ -45,12 +46,11 @@ import org.springframework.util.Assert;
  *					
  *        // the logic here is specific for this use case. Your logic will be different.
  *        // Doing some checks to make sure unwanted objects are not created.
- *        // In this use case Order has many OrderLine and an OrderLine has a product
+ *        // In this use case Order has many OrderLine and an OrderLine has one product
  *					
  *        // orderSelectMapper.getResultSetModelIdColumnName() returns the id column alias which is 'o_order_id'
  *        // for the sql above. 
- *        Long orderId = rs.getLong(orderSelectMapper.getResultSetModelIdColumnName());	
- *					
+ *        Long orderId = rs.getLong(orderSelectMapper.getResultSetModelIdColumnName());					
  *        Order order = orderByIdMap.get(orderId);
  *        if (order == null) {
  *          order = orderSelectMapper.buildModel(rs);
@@ -76,7 +76,7 @@ import org.springframework.util.Assert;
  *   }
  * };
  *		
- * List<Order> orders = jtm.getJdbcTemplate().query(sql, rsExtractor);
+ * List<Order> orders = jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor);
  *
  * 
  *}</pre>
