@@ -51,6 +51,7 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * 1. Camel case object property names are mapped to underscore case table column names. Properties of a model like 'firstName', 
  * 'lastName' will be mapped to corresponding columns 'first_name' and 'last_name' in the database table. Properties which 
  * don't have a column match will be ignored during CRUD operations
+ * 
  * 2. The model properties map to table columns and have no concept of relationships. Foreign keys in tables will need a corresponding 
  * property in the model. For example if an 'Employee' belongs to a 'Department', to match the 'department_id' column in the 'employee' 
  * table there should be a 'departmentId' property in the 'Employee' model. 
@@ -60,17 +61,16 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  *  {@literal @}Id(type
  *   private Integer id;
  *   private String name;
- *
  *   ...
  *   private Integer departmentId; // this property is needed for CRUD because the mapper has no concept of relationships.
  *   private Department department;
+ *   ...
  * }
  *
  * <strong>Example code</strong>
  * //{@literal @}Table annotation is required and should match a table name in database
- * 
  * {@literal @}Table(name="product")
- * public class Product {
+ *  public class Product {
  *    //{@literal @}Id annotation is required.
  *    // For a auto increment database id use @Id(type=IdType.AUTO_INCREMENT)
  *    // For a non auto increment id use @Id. In this case you will have to manually set id value before insert.

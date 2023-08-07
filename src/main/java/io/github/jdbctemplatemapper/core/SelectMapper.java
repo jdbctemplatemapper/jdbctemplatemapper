@@ -12,7 +12,7 @@ import org.springframework.util.Assert;
 import io.github.jdbctemplatemapper.exception.MapperException;
 
 /**
- * 
+ * <pre>
  * Allows generating the select columns string for the model and population of the model from a ResultSet.
  * 
  * selectMapper.getColumnsSql() will provide a string of columns which can be used in the sql Select statement
@@ -22,6 +22,7 @@ import io.github.jdbctemplatemapper.exception.MapperException;
  *
  * An example for querying the following relationship: An 'Order' has many 'OrderLine' and each 'OrderLine' has one product
  * using Spring's ResultSetExtractor  
+ * </pre>
  * 
  * <pre>
  * {@code

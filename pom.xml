@@ -182,7 +182,7 @@
 							<goal>jar</goal>
 						</goals>
 						<configuration>
-						<overview>src/overview.html</overview>
+						<overview>${basedir}/src/overview.html</overview>
 						</configuration>
 					</execution>
 				</executions>
