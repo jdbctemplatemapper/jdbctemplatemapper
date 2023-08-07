@@ -30,12 +30,12 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * JdbcTemplate is a good option for complex enterprise applications where an ORMs magic/nuances become challenging.
  * JdbcTemplate simplifies the use of JDBC but is verbose.
  *
- * JdbcTemplateMapper makes CRUD with Spring's JdbcTemplate simpler. It provides one liners for CRUD and features which help to make querying of 
+ * JdbcTemplateMapper makes CRUD with Spring's JdbcTemplate simpler. It provides one liners for CRUD and features that help querying of 
  * relationships less verbose.
  *
  * <strong>Features</strong>
  * 1. One liners for CRUD. To keep the library as simple possible it only has 2 annotations.
- * 2. Methods which make querying of relationships less verbose
+ * 2. Features that make querying of relationships less verbose
  * 3. Can be configured for the following (optional):
  *      auto assign created on, updated on.
  *      auto assign created by, updated by using an implementation of IRecordOperatorResolver.
@@ -51,15 +51,26 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * 1. Camel case object property names are mapped to underscore case table column names. Properties of a model like 'firstName', 
  * 'lastName' will be mapped to corresponding columns 'first_name' and 'last_name' in the database table. Properties which 
  * don't have a column match will be ignored during CRUD operations
+ * 
  * 2. The model properties map to table columns and have no concept of relationships. Foreign keys in tables will need a corresponding 
  * property in the model. For example if an 'Employee' belongs to a 'Department', to match the 'department_id' column in the 'employee' 
  * table there should be a 'departmentId' property in the 'Employee' model. 
- *
- * <strong>Examples code</strong>
- * //{@literal @}Table annotation is required and should match a table name in database
  * 
+ * {@literal @}Table(name="employee")
+ *  public class Employee {
+ *  {@literal @}Id(type
+ *   private Integer id;
+ *   private String name;
+ *   ...
+ *   private Integer departmentId; // this property is needed for CRUD because the mapper has no concept of relationships.
+ *   private Department department;
+ *   ...
+ * }
+ *
+ * <strong>Example code</strong>
+ * //{@literal @}Table annotation is required and should match a table name in database
  * {@literal @}Table(name="product")
- * public class Product {
+ *  public class Product {
  *    //{@literal @}Id annotation is required.
  *    // For a auto increment database id use @Id(type=IdType.AUTO_INCREMENT)
  *    // For a non auto increment id use @Id. In this case you will have to manually set id value before insert.
@@ -111,12 +122,10 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  *  public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
  *
  *    return new JdbcTemplateMapper(jdbcTemplate);
- *
- *    // JdbcTemplateMapper needs to get database metadata to generate the SQL statements.
- *    // Databases may differ on what criteria is needed to retrieve this information. JdbcTemplateMapper
- *    // has multiple constructors so use the appropriate one. For example if you are using oracle and tables
- *    // are not aliased the SQL will need schemaName.tableName to access the table. In this case 
- *    // use the constructor new JdbcTemplateMapper(jdbcTemplate, schemaName);
+ *    
+ *    // new JdbcTemplateMapper(jdbcTemplate, schemaName);
+ *    // new JdbcTemplateMapper(jdbcTemplate, schemaName, catalogName);
+ *    // see javadocs for all constructors
  * }
  *
  * <strong>Annotations:</strong>
@@ -151,8 +160,11 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * 
  * <strong>Configuration to auto assign created on, created by, updated on, updated by, version (optimistic locking)</strong>
  *
- * All these auto assign configurations are optional.
+ * Auto configuration is optional and each property configuration is optional.
+ * Once configured matching properties of models will get auto assigned (Models don't need to have these properties but if they do they will get auto assigned).
  *
+ *{@literal @}Bean
+ *public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
  *  JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate);
  *   jdbcTemplateMapper
  *       .withRecordOperatorResolver(new ConcreteImplementationOfIRecordOperatorResolver())
@@ -161,7 +173,9 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  *       .withUpdatedOnPropertyName("updatedOn")
  *       .withUpdatedByPropertyName("updatedBy")
  *       .withVersionPropertyName("version");
- *       
+ * 
+ * }
+ * 
  * Example model:
  *
  *{@literal @}Table(name="product")

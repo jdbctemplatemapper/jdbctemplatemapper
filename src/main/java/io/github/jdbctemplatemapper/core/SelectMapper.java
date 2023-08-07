@@ -12,14 +12,23 @@ import org.springframework.util.Assert;
 import io.github.jdbctemplatemapper.exception.MapperException;
 
 /**
- * Makes the code to writing and retrieving relationships less verbose. Below is
- * an example of querying relationships using Spring's ResultSetExtractor.
+ * <pre>
+ * Allows generating the select columns string for the model and population of the model from a ResultSet.
+ * 
+ * selectMapper.getColumnsSql() will provide a string of columns which can be used in the sql Select statement
+ * selectMapper.buildModel(resultSet) will return a model populated from the resultSet data.
+ * 
+ * Makes the code for writing and retrieving relationships less verbose.
+ *
+ * An example for querying the following relationship: An 'Order' has many 'OrderLine' and each 'OrderLine' has one product
+ * using Spring's ResultSetExtractor  
+ * </pre>
  * 
  * <pre>
  * {@code
  * // Querying the following relationship: An 'Order' has many 'OrderLine' and each 'OrderLine' has one product.  
  * // The second argument to getSelectMapper() is the table alias in the query.
- * // For the query belwo the 'order' table alias is 'o', the 'order_line' table alias is 'ol' and the product
+ * // For the query belwo the 'orders' table alias is 'o', the 'order_line' table alias is 'ol' and the product
  * // table alias is 'p'.
  * SelectMapper<Order> orderSelectMapper = jdbcTemplateMapper.getSelectMapper(Order.class, "o");
  * SelectMapper<OrderLine> orderLineSelectMapper = jdbcTemplateMapper.getSelectMapper(OrderLine.class, "ol");
@@ -41,6 +50,7 @@ import io.github.jdbctemplatemapper.exception.MapperException;
  * ResultSetExtractor<List<Order>> rsExtractor = new ResultSetExtractor<List<Order>>() {
  *    {@literal @}Override
  *    public List<Order> extractData(ResultSet rs) throws SQLException, DataAccessException {	
+ *    
  *      Map<Long, Order> orderByIdMap = new LinkedHashMap<>(); // LinkedHashMap to retain result order	
  *		Map<Integer, Product> productByIdMap = new HashMap<>();
  *		
@@ -143,6 +153,7 @@ public class SelectMapper<T> {
 	}
 
 	/**
+	 * gets column alias name of the models id in sql statement
 	 * @return the column alias name of the models id in sql statement
 	 */
 	public String getResultSetModelIdColumnName() {

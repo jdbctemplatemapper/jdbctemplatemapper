@@ -4,14 +4,14 @@
  JdbcTemplate is a good option for complex enterprise applications where an ORMs magic/nuances become challenging.
  JdbcTemplate simplifies the use of JDBC but is verbose.
  
- JdbcTemplateMapper makes CRUD with Spring's JdbcTemplate simpler. It provides one liners for CRUD and features which help to make querying of relationships less verbose.
+ JdbcTemplateMapper makes CRUD with Spring's JdbcTemplate simpler. It provides one liners for CRUD and features that help to make querying of relationships less verbose.
  
  [Javadocs](https://jdbctemplatemapper.github.io/jdbctemplatemapper/javadoc/) 
  
 ## Features
 
   1. One liners for CRUD. To keep the library as simple possible it only has 2 annotations.
-  2. Methods which make querying of relationships less verbose
+  2. Features that help to make querying of relationships less verbose
   3. Can be configured for the following (optional):
       * auto assign created on, updated on.
       * auto assign created by, updated by using an implementation of interface IRecordOperatorResolver.
@@ -26,9 +26,24 @@
  Projects have to meet the following criteria for use:
  
   1. Camel case object property names are mapped to underscore case table column names. Properties of a model like 'firstName', 'lastName' will be mapped to corresponding columns 'first\_name' and 'last\_name' in the database table. Properties which don't have a column match will be ignored during CRUD operations
+  
  2. The model properties map to table columns and have no concept of relationships. Foreign keys in tables will need a corresponding 
  property in the model. For example if an 'Employee' belongs to a 'Department', to match the 'department\_id' column in the 'employee' 
- table there should be a 'departmentId' property in the 'Employee' model.  
+ table there should be a 'departmentId' property in the 'Employee' model. 
+ 
+ 
+ ```
+ @Table(name="employee")
+ public class Employee {
+    @Id
+    private Integer id;
+    private String name;
+    ...
+    private Integer departmentId; // this property is needed for CRUD because the mapper has no concept of the Department relationship
+    private Department department;
+    ...
+ }
+ ```
  
 ## Example code
  
@@ -93,11 +108,9 @@
 public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
   return new JdbcTemplateMapper(jdbcTemplate);
   
-  // JdbcTemplateMapper needs to get database metadata to generate the SQL statements.
-  // Databases may differ on what criteria is needed to retrieve this information. JdbcTemplateMapper
-  // has multiple constructors so use the appropriate one. For example if you are using oracle and tables
-  // are not aliased the SQL will need schemaName.tableName to access the table. In this case 
-  // use the constructor new JdbcTemplateMapper(jdbcTemplate, schemaName);
+ // new JdbcTemplateMapper(jdbcTemplate, schemaName);
+ // new JdbcTemplateMapper(jdbcTemplate, schemaName, catalogName);
+ // see javadocs for all constructors
 }
   
   ```
@@ -147,8 +160,14 @@ In this case you will have to manually set the id value before calling insert()
 
 ## Configuration to auto assign created on, created by, updated on, updated by, version (optimistic locking)
  
- All these auto assign configurations are optional.
-
+ Auto configuration is optional and each property configuration is optional.
+ 
+ Once configured matching properties of models will get auto assigned (Models don't need to have these properties but
+ if they do they will get auto assigned).
+ 
+```
+@Bean
+public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
     JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate);
     jdbcTemplateMapper
         .withRecordOperatorResolver(new ConcreteImplementationOfIRecordOperatorResolver())
@@ -157,10 +176,11 @@ In this case you will have to manually set the id value before calling insert()
         .withUpdatedOnPropertyName("updatedOn")
         .withUpdatedByPropertyName("updatedBy")
         .withVersionPropertyName("version");
-        
- Example model
- 
- ```java
+}
+```
+Example model:
+
+```
 @Table(name="product")
 class Product {
  @Id(type=IdType.AUTO_INCREMENT)
@@ -190,11 +210,20 @@ For update the matching property value on the model will be set to value returne
 For update the matching property value on the model will be incremented if successful. If version is stale, an OptimisticLockingException will be thrown. For an insert this value will be set to 1. The version property should be of type Integer.
  
 ## Querying relationships
-An example for querying the following relationship: An 'Order' has many 'OrderLine' and each 'OrderLine' has one product.  
+
+SelectMapper allows generating the select columns string for the model and population of the model from a ResultSet.
+
+selectMapper.getColumnsSql() will provide a string of columns which can be used in the sql Select statement
+selectMapper.buildModel(resultSet) will return a model populated from the resultSet data.
+
+Makes the code for writing and retrieving relationships less verbose.
+
+An example for querying the following relationship: An 'Order' has many 'OrderLine' and each 'OrderLine' has one product
+using Spring's ResultSetExtractor  
 
 ```java
  // The second argument to getSelectMapper() is the table alias in the query.
- // For the query query below the 'order' table alias is 'o', the 'order_line' table alias is 'ol' and the product
+ // For the query query below the 'orders' table alias is 'o', the 'order_line' table alias is 'ol' and the product
  // table alias is 'p'.
  SelectMapper<Order> orderSelectMapper = jdbcTemplateMapper.getSelectMapper(Order.class, "o");
  SelectMapper<OrderLine> orderLineSelectMapper = jdbcTemplateMapper.getSelectMapper(OrderLine.class, "ol");
@@ -216,6 +245,7 @@ An example for querying the following relationship: An 'Order' has many 'OrderLi
  ResultSetExtractor<List<Order>> rsExtractor = new ResultSetExtractor<List<Order>>() {
      {@literal @}Override
      public List<Order> extractData(ResultSet rs) throws SQLException, DataAccessException {	
+     
        Map<Long, Order> orderByIdMap = new LinkedHashMap<>(); // LinkedHashMap to retain result order	
        Map<Integer, Product> productByIdMap = new HashMap<>();
  		
