@@ -57,7 +57,7 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * 
  * {@literal @}Table(name="employee")
  *  public class Employee {
- *  {@literal @}@Id(type
+ *  {@literal @}Id(type
  *   private Integer id;
  *   private String name;
  *
@@ -66,7 +66,7 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  *   private Department department;
  * }
  *
- * <strong>Examples code</strong>
+ * <strong>Example code</strong>
  * //{@literal @}Table annotation is required and should match a table name in database
  * 
  * {@literal @}Table(name="product")

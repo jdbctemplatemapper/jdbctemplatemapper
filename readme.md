@@ -30,19 +30,18 @@
  property in the model. For example if an 'Employee' belongs to a 'Department', to match the 'department\_id' column in the 'employee' 
  table there should be a 'departmentId' property in the 'Employee' model. 
  
+ 
  ```
  @Table(name="employee")
  public class Employee {
     @Id
     private Integer id;
     private String name;
-
     ...
     private Integer departmentId; // this property is needed for CRUD because the mapper has no concept of the Department relationship
     private Department department;
  }
- 
- ``` 
+ ```
  
 ## Example code
  
