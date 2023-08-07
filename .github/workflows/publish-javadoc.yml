@@ -16,4 +16,5 @@ jobs:
           javadoc-branch: javadoc
           java-version: 17
           target-folder: javadoc # url will be https://<username>.github.io/<repo>/javadoc, This can be left as nothing to generate javadocs in the root folder.
-          project: maven # or gradle
+          project: maven
+          custom-command: javadoc -d javadoc -overview src/overview.html -sourcepath src/main/java -subpackages .
