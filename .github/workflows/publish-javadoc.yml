@@ -3,8 +3,7 @@ name: Deploy Javadoc for JdbcTemplateMapper
 on:
   push:
     branches:
-      - dev_branch
-
+      - master
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -17,4 +16,3 @@ jobs:
           java-version: 17
           target-folder: javadoc # url will be https://<username>.github.io/<repo>/javadoc, This can be left as nothing to generate javadocs in the root folder.
           project: maven
-          custom-command: javadoc -d javadoc -overview src/overview.html -sourcepath src/main/java -subpackages .
