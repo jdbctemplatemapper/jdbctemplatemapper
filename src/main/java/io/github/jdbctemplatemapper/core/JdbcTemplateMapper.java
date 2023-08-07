@@ -55,9 +55,9 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * property in the model. For example if an 'Employee' belongs to a 'Department', to match the 'department_id' column in the 'employee' 
  * table there should be a 'departmentId' property in the 'Employee' model. 
  * 
- * {literal @}Table(name="employee")
+ * {@literal @}Table(name="employee")
  *  public class Employee {
- *  {literal @}@Id(type
+ *  {@literal @}@Id(type
  *   private Integer id;
  *   private String name;
  *
