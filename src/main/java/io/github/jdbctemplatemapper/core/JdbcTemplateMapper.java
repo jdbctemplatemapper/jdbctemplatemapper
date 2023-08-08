@@ -226,7 +226,7 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * Make sure you can connect to your database and issue a simple query using Spring's JdbcTemplate without the JdbcTemplateMapper.
  * 
  * <strong>Known issues</strong>
- * 1. For Oracle/SqlServer no support for blobs.
+ * 1. For Oracle/SqlServer no support for blobs. You will need to use JdbcTemplate with what ever custom code needed to make it work.
  * 2. Could have issues with old/non standard jdbc drivers.
  * </pre>
  *

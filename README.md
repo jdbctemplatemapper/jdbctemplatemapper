@@ -313,7 +313,7 @@ Uses the same logging configurations as JdbcTemplate to log the SQL. In applicat
 Make sure you can connect to your database and issue a simple query using Spring's JdbcTemplate without the JdbcTemplateMapper.
 
 ## Known issues
-1. For Oracle/SqlServer no support for blobs. You will need to JdbcTemplate with what ever custom code needed to make it work.
+1. For Oracle/SqlServer no support for blobs. You will need to use JdbcTemplate with what ever custom code needed to make it work.
 2. Could have issues with old/non standard jdbc drivers.
   
  
