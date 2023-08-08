@@ -224,7 +224,7 @@ using Spring's ResultSetExtractor
 
 ```java
  // The second argument to getSelectMapper() is the table alias used in the query.
- // For the query query below the 'orders' table alias is 'o', the 'order_line' table alias is 'ol' and the product
+ // For the query below the 'orders' table alias is 'o', the 'order_line' table alias is 'ol' and the product
  // table alias is 'p'.
  SelectMapper<Order> orderSelectMapper = jdbcTemplateMapper.getSelectMapper(Order.class, "o");
  SelectMapper<OrderLine> orderLineSelectMapper = jdbcTemplateMapper.getSelectMapper(OrderLine.class, "ol");
