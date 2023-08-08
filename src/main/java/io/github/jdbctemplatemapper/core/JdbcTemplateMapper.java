@@ -58,7 +58,7 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * 
  * {@literal @}Table(name="employee")
  *  public class Employee {
- *  {@literal @}Id(type
+ *  {@literal @}Id
  *   private Integer id;
  *   private String name;
  *   ...
