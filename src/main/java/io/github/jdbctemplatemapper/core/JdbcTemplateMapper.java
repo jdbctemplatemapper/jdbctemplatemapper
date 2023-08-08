@@ -184,13 +184,13 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  *  {@literal @}Id(type=IdType.AUTO_INCREMENT)
  *   private Integer productId;
  *   ...
- *   private LocalDateTime createdOn;
- *   private String createdBy;
+ *   private LocalDateTime createdOn; // type has to be LocalDateTime
+ *   private String createdBy;        // type should match return value of implementation of IRecordOperatorResolver.
  * 
- *   private LocalDateTime updatedOn;
- *   private String updatedBy;
+ *   private LocalDateTime updatedOn; // type has to be LocalDateTime
+ *   private String updatedBy;        // type should match return value of implementation of IRecordOperatorResolver.
  *
- *   private Integer version;
+ *   private Integer version;         // type should be Integer for optimistic locking version
  * }
  *
  * The following will be the effect of the configuration:
