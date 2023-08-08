@@ -1,6 +1,6 @@
 package io.github.jdbctemplatemapper.exception;
 /**
- * Generic MapperException
+ * Generic Mapper Exception
  * 
  * @author ajoseph
  *
