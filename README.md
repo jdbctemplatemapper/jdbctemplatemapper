@@ -51,7 +51,6 @@
  
   ```java 
  //@Table annotation is required and should match a table name in database
- 
  @Table(name="product")
  public class Product {
      // @Id annotation is required.
@@ -188,13 +187,13 @@ class Product {
  @Id(type=IdType.AUTO_INCREMENT)
  private Integer productId;
  ...
-  private LocalDateTime createdOn;
-  private String createdBy;
+  private LocalDateTime createdOn; // type has to be LocalDateTime
+  private String createdBy;        // type should match return value of implementation of IRecordOperatorResolver.
   
-  private LocalDateTime updatedOn;
-  private String updatedBy;
+  private LocalDateTime updatedOn; // type should be LocalDateTime
+  private String updatedBy;        // type should match return value of implementation of IRecordOperatorResolver.
   
-  private Integer version;
+  private Integer version;         // type should be Integer for optimistic locking version
 }
 ```
 
@@ -253,7 +252,7 @@ using Spring's ResultSetExtractor
        Map<Integer, Product> productByIdMap = new HashMap<>();
  		
        while (rs.next()) {				
-         // selectMapper.buildModel(rs) will return the model fully populated from the resultSet
+         // selectMapper.buildModel(rs) will return the model populated from the resultSet
          // Everything below is just logic to populate the relationships
          // Doing some checks to make sure unwanted objects are not created.
          // In this use case Order has many OrderLine and an OrderLine has one product
@@ -310,12 +309,13 @@ Uses the same logging configurations as JdbcTemplate to log the SQL. In applicat
 ## Notes
  1. If insert/update fails do not reuse the object since it could be in an inconsistent state.
  2. Database changes will require a restart of the application since JdbcTemplateMapper caches table metadata.
+ 3. Models will need a default constructor so it can be instantiated and properties set.
  
 ## TroubleShooting
 Make sure you can connect to your database and issue a simple query using Spring's JdbcTemplate without the JdbcTemplateMapper.
 
 ## Known issues
-1. For Oracle/SqlServer no support for blobs. You will need to use JdbcTemplate with what ever custom code needed to make it work.
+1. For Oracle/SqlServer no support for blob/clob. Use JdbcTemplate directly for this with recommended custom code
 2. Could have issues with old/non standard jdbc drivers.
   
  
