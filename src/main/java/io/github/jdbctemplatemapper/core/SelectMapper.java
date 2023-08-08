@@ -28,7 +28,7 @@ import io.github.jdbctemplatemapper.exception.MapperException;
  * {@code
  * // Querying the following relationship: An 'Order' has many 'OrderLine' and each 'OrderLine' has one product.  
  * // The second argument to getSelectMapper() is the table alias in the query.
- * // For the query belwo the 'orders' table alias is 'o', the 'order_line' table alias is 'ol' and the product
+ * // For the query below the 'orders' table alias is 'o', the 'order_line' table alias is 'ol' and the product
  * // table alias is 'p'.
  * SelectMapper<Order> orderSelectMapper = jdbcTemplateMapper.getSelectMapper(Order.class, "o");
  * SelectMapper<OrderLine> orderLineSelectMapper = jdbcTemplateMapper.getSelectMapper(OrderLine.class, "ol");
@@ -55,9 +55,8 @@ import io.github.jdbctemplatemapper.exception.MapperException;
  *		Map<Integer, Product> productByIdMap = new HashMap<>();
  *		
  *      while (rs.next()) {				
- *        // IMPORTANT thing to know is selectMapper.buildModel(rs) will return the model fully populated from resultSet
- *					
- *        // the logic here is specific for this use case. Your logic will be different.
+ *        // selectMapper.buildModel(rs) will return the model fully populated from the resultSet
+ *        // Everything below is just logic to populate the relationships.
  *        // Doing some checks to make sure unwanted objects are not created.
  *        // In this use case Order has many OrderLine and an OrderLine has one product
  *					
