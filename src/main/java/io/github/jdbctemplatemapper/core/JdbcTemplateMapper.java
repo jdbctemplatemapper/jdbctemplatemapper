@@ -222,7 +222,7 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * <strong>Notes</strong>
  * 1. If insert/update fails do not reuse the object since it could be in an inconsistent state.
  * 2. Database changes will require a restart of the application since JdbcTemplateMapper caches table metadata.
- * 3. Models will need a default constructor so it can be instantiated and properties set.
+ * 3. Models will need a no argument constructor so it can be instantiated and properties set.
  * 
  * <strong>TroubleShooting</strong>
  * Make sure you can connect to your database and issue a simple query using Spring's JdbcTemplate without the JdbcTemplateMapper.
