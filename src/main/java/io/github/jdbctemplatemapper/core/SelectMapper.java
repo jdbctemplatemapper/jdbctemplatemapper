@@ -125,7 +125,7 @@ public class SelectMapper<T> {
 	 * properties which have corresponding database columns
 	 *
 	 * <pre>
-	 * SelectMapper selectMapper = jdbcTemplateMapper(Employee, "emp");
+	 * SelectMapper selectMapper = jdbcTemplateMapper.getSelectMapper(Employee.class, "emp");
 	 * selectMapper.getColumnSql() will return something line below:
 	 * 
 	 * "emp.id emp_id, emp.last_name emp_last_name, emp.first_name emp_first_name"
