@@ -39,10 +39,11 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * 3. Can be configured for the following (optional):
  *      auto assign created on, updated on.
  *      auto assign created by, updated by using an implementation of IRecordOperatorResolver.
- *     optimistic locking functionality for updates by configuring a version property.
+ *      optimistic locking functionality for updates by configuring a version property.
  * 4. Thread safe so just needs a single instance (similar to JdbcTemplate)
- * 5. To log the SQL statements it uses the same logging configurations as JdbcTemplate. See the logging section.
- * 6. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with 
+ * 5. For transaction management use Spring transactions since the library uses JdbcTemplate behind the scenes.
+ * 6. To log the SQL statements it uses the same logging configurations as JdbcTemplate. See the logging section.
+ * 7. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with 
  *    other relational databases.  
  *
  * <Strong>JdbcTemplateMapper is opinionated</strong> 
