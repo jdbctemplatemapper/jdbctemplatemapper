@@ -77,7 +77,7 @@
  product.setAvailableDate(LocalDateTime.now());
  jdbcTemplateMapper.insert(product); // because id type is auto increment id value will be set after insert.
 
- product = jdbcTemplateMapper.findById(1, Product.class);
+ product = jdbcTemplateMapper.findById(product.getId(), Product.class);
  product.setPrice(11.50);
  jdbcTemplateMapper.update(product);
  
