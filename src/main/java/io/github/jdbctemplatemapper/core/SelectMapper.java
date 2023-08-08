@@ -55,9 +55,8 @@ import io.github.jdbctemplatemapper.exception.MapperException;
  *		Map<Integer, Product> productByIdMap = new HashMap<>();
  *		
  *      while (rs.next()) {				
- *        // IMPORTANT thing to know is selectMapper.buildModel(rs) will return the model fully populated from resultSet
- *					
- *        // the logic here is specific for this use case. Your logic will be different.
+ *        // selectMapper.buildModel(rs) will return the model fully populated from the resultSet
+ *        // Everything below is just logic to populate the relationships.
  *        // Doing some checks to make sure unwanted objects are not created.
  *        // In this use case Order has many OrderLine and an OrderLine has one product
  *					

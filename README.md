@@ -4,14 +4,15 @@
  JdbcTemplate is a good option for complex enterprise applications where an ORMs magic/nuances become challenging.
  JdbcTemplate simplifies the use of JDBC but is verbose.
  
- JdbcTemplateMapper makes CRUD with Spring's JdbcTemplate simpler. It provides one liners for CRUD and features that help to make querying of relationships less verbose.
+ The goal of JdbcTemplateMapper is to make usage of Spring's JdbcTemplate less verbose for features like CRUD and relationship queries.
+ Use it where appropriate and for other features keep using JdbcTemplate as you normally would.
  
  [Javadocs](https://jdbctemplatemapper.github.io/jdbctemplatemapper/javadoc/) 
  
 ## Features
 
   1. One liners for CRUD. To keep the library as simple possible it only has 2 annotations.
-  2. Features that help to make querying of relationships less verbose
+  2. Features that help to make querying of relationships less verbose.
   3. Can be configured for the following (optional):
       * auto assign created on, updated on.
       * auto assign created by, updated by using an implementation of interface IRecordOperatorResolver.
@@ -32,7 +33,7 @@
  table there should be a 'departmentId' property in the 'Employee' model. 
  
  
- ```
+ ```java
  @Table(name="employee")
  public class Employee {
     @Id
@@ -103,7 +104,7 @@
  1. Configure the JdbcTemplate bean as per Spring documentation
  2. Configure the JdbcTemplateMapper bean:
  
- ```
+ ```java
 @Bean
 public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
   return new JdbcTemplateMapper(jdbcTemplate);
@@ -165,7 +166,7 @@ In this case you will have to manually set the id value before calling insert()
  Once configured matching properties of models will get auto assigned (Models don't need to have these properties but
  if they do they will get auto assigned).
  
-```
+```java
 @Bean
 public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
     JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate);
@@ -180,7 +181,7 @@ public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
 ```
 Example model:
 
-```
+```java
 @Table(name="product")
 class Product {
  @Id(type=IdType.AUTO_INCREMENT)
@@ -222,7 +223,7 @@ An example for querying the following relationship: An 'Order' has many 'OrderLi
 using Spring's ResultSetExtractor  
 
 ```java
- // The second argument to getSelectMapper() is the table alias in the query.
+ // The second argument to getSelectMapper() is the table alias used in the query.
  // For the query query below the 'orders' table alias is 'o', the 'order_line' table alias is 'ol' and the product
  // table alias is 'p'.
  SelectMapper<Order> orderSelectMapper = jdbcTemplateMapper.getSelectMapper(Order.class, "o");
@@ -250,9 +251,8 @@ using Spring's ResultSetExtractor
        Map<Integer, Product> productByIdMap = new HashMap<>();
  		
        while (rs.next()) {				
-         // IMPORTANT thing to know is selectMapper.buildModel(rs) will return the model fully populated from resultSet
- 					
-         // the logic here is specific for this use case. Your logic will be different.
+         // selectMapper.buildModel(rs) will return the model fully populated from the resultSet
+         // Everything below is just logic to populate the relationships
          // Doing some checks to make sure unwanted objects are not created.
          // In this use case Order has many OrderLine and an OrderLine has one product
  					
@@ -313,7 +313,7 @@ Uses the same logging configurations as JdbcTemplate to log the SQL. In applicat
 Make sure you can connect to your database and issue a simple query using Spring's JdbcTemplate without the JdbcTemplateMapper.
 
 ## Known issues
-1. For Oracle/SqlServer no support for blobs.
+1. For Oracle/SqlServer no support for blobs. You will need to JdbcTemplate with what ever custom code needed to make it work.
 2. Could have issues with old/non standard jdbc drivers.
   
  
