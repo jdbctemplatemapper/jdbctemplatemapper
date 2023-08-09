@@ -187,7 +187,7 @@ class Product {
  @Id(type=IdType.AUTO_INCREMENT)
  private Integer productId;
  ...
-  private LocalDateTime createdOn; // type has to be LocalDateTime
+  private LocalDateTime createdOn; // type should be LocalDateTime
   private String createdBy;        // type should match return value of implementation of IRecordOperatorResolver.
   
   private LocalDateTime updatedOn; // type should be LocalDateTime
