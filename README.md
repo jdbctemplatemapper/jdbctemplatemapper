@@ -23,10 +23,7 @@
   7. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with other relational databases. 
 
 
-## JbcTemplateMapper is opinionated
- 
-Projects have to meet the following criteria for use:
- 
+## Project criteria for usage 
 Camel case object property names are mapped to underscore case table column names. Properties of a model like 'firstName', 'lastName' will be mapped to corresponding columns 'first\_name' and 'last\_name' in the database table. Properties which don't have a column match will be ignored during CRUD operations.
   
  
