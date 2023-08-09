@@ -35,7 +35,6 @@ class MappingHelper {
 	// value - the table mapping
 	private Map<Class<?>, TableMapping> objectToTableMappingCache = new ConcurrentHashMap<>();
 
-
 	// Map key - object class
 	// value - list of property names
 	private Map<Class<?>, List<PropertyInfo>> objectPropertyInfoCache = new ConcurrentHashMap<>();
@@ -47,8 +46,7 @@ class MappingHelper {
 	// For most jdbc drivers when getting column metadata using jdbc, the
 	// columnPattern argument null
 	// returns all the columns (which is the default for JdbcTemplateMapper). Some
-	// jdbc drivers may
-	// require to pass something like '%'.
+	// jdbc drivers may require to pass something like '%'.
 	private final String metaDataColumnNamePattern;
 
 	/**
@@ -101,12 +99,12 @@ class MappingHelper {
 		TableMapping tableMapping = objectToTableMappingCache.get(clazz);
 
 		if (tableMapping == null) {
-			
+
 			Table tableAnnotation = AnnotationUtils.findAnnotation(clazz, Table.class);
 			if (tableAnnotation == null) {
 				throw new MapperException(clazz.getName() + " does not have the @Table annotation");
-			} 
-			
+			}
+
 			String tableName = tableAnnotation.name();
 
 			Id idAnnotation = null;
