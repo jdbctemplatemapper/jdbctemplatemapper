@@ -25,32 +25,10 @@
 
 ## JbcTemplateMapper is opinionated
  
- Projects have to meet the following criteria for use:
+Projects have to meet the following criteria for use:
  
-  1. Camel case object property names are mapped to underscore case table column names. Properties of a model like 'firstName', 'lastName' will be mapped to corresponding columns 'first\_name' and 'last\_name' in the database table. Properties which don't have a column match will be ignored during CRUD operations
+Camel case object property names are mapped to underscore case table column names. Properties of a model like 'firstName', 'lastName' will be mapped to corresponding columns 'first\_name' and 'last\_name' in the database table. Properties which don't have a column match will be ignored during CRUD operations.
   
- 2. JdbcTemplateMapper does not have the concept of relationships (Its not an ORM). 
- For example if an 'Employee' belongs to a 'Department'
- 
-```
-  /* employee table will look like: */ 
-  employee_id integer NOT NULL,
-  name varchar(100) NOT NULL,
-  department_id integer NOT NULL /* foreign key to department table */
-  ...
-
- // The corresponding model will look like:
- @Table(name="employee")
- public class Employee {
-    @Id
-    private Integer employeeId;
-    private String name;
-    private Integer departmentId; // this property is needed because the mapper has no concept of the Department relationship
-                                  // below and it needs to populate the department_id in the table during insert/updates
-    private Department department;
-    ...
- }
- ```
  
 ## Example code
  
