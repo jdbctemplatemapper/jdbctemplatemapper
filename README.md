@@ -43,7 +43,7 @@
  @Table(name="employee")
  public class Employee {
     @Id
-    private Integer employee_id;
+    private Integer employeeId;
     private String name;
     private Integer departmentId; // this property is needed because the mapper has no concept of the Department relationship
                                   // below and it needs to populate the department_id in the table during insert/updates
