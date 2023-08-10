@@ -1,18 +1,14 @@
 # JdbcTemplateMapper #
  
- Spring's JdbcTemplate provides data access using SQL/JDBC for relational databases. 
- JdbcTemplate is a good option for complex enterprise applications where an ORMs magic/nuances become challenging.
- JdbcTemplate simplifies the use of JDBC but is verbose.
- 
  The goal of JdbcTemplateMapper is to make usage of Spring's JdbcTemplate less verbose for features like CRUD and relationship queries.
  Use it where appropriate and for other features keep using JdbcTemplate as you normally would.
  
- [Javadocs](https://jdbctemplatemapper.github.io/jdbctemplatemapper/javadoc/) 
+ [Javadoc](https://jdbctemplatemapper.github.io/jdbctemplatemapper/javadoc/) 
  
 ## Features
 
-  1. One liners for CRUD. To keep the library as simple possible it only has 2 annotations.
-  2. Features that help to make querying of relationships less verbose.
+  1. One liners for CRUD.
+  2. Features that help make querying of relationships less verbose.
   3. Can be configured for the following (optional):
       * auto assign created on, updated on.
       * auto assign created by, updated by using an implementation of interface IRecordOperatorResolver.
@@ -24,9 +20,9 @@
 
 
 ## Project criteria for usage 
-Camel case object property names are mapped to underscore case table column names. Properties of a model like 'firstName', 'lastName' will be mapped to corresponding columns 'first\_name' and 'last\_name' in the database table. Properties which don't have a column match will be ignored during CRUD operations.
+  1. The JdbcTemplateMapper has no concept of relationships. When an insert/update is issued, only that model gets inserted/updated.  
+  2. Camel case model properties are mapped to underscore case columns in database table.
   
- 
 ## Example code
  
   ```java 
@@ -204,6 +200,37 @@ An example for querying the following relationship: An 'Order' has many 'OrderLi
 using Spring's ResultSetExtractor  
 
 ```java
+ @Table(name = "orders")
+  public class Order {
+    @Id(type = IdType.AUTO_INCREMENT)
+    private Long orderId;
+    private LocalDateTime orderDate;
+    private String customerName;
+    
+    List<OrderLine> orderLines = new ArrayList<>(); 
+  }
+  
+  @Table(name="order_line")
+  public class OrderLine {
+    @Id(type = IdType.AUTO_INCREMENT)
+    private Integer orderLineId;
+
+    private Integer orderId;
+  
+    private Integer productId;
+    private Product product;
+    
+    private Integer numOfUnits;
+  }
+  
+  @Table(name="product")
+  public class Product {
+    @Id 
+    private Integer productId; 
+    private String name;
+    private Double cost;
+  }
+
  // The second argument to getSelectMapper() is the table alias used in the query.
  // For the query below the 'orders' table alias is 'o', the 'order_line' table alias is 'ol' and the product
  // table alias is 'p'.
@@ -258,13 +285,14 @@ using Spring's ResultSetExtractor
          OrderLine orderLine = orderLineSelectMapper.buildModel(rs);	
          if(orderLine != null) {
            orderLine.setProduct(product);
-           order.addOrderLine(orderLine);
+           order.getOrderLines().add(orderLine);
          }			
       }
       return new ArrayList<Order>(orderByIdMap.values());
     }
   };
- 		
+ 
+  // execute the JdbcTemplae query	
   List<Order> orders = jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor);
     
 ```
@@ -296,6 +324,5 @@ Make sure you can connect to your database and issue a simple query using Spring
 
 ## Known issues
 1. For Oracle/SqlServer no support for blob/clob. Use JdbcTemplate directly for this with recommended custom code
-2. Could have issues with old/non standard jdbc drivers.
   
  
