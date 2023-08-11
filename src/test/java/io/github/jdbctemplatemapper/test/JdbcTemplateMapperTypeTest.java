@@ -63,7 +63,7 @@ public class JdbcTemplateMapperTypeTest {
 		assertNotNull(tc.getLocalDateData());
 		assertNotNull(tc.getJavaUtilDateData());
 		assertNotNull(tc.getLocalDateTimeData());
-//		assertNotNull(tc.getOffsetDateTimeData());
+		assertNotNull(tc.getOffsetDateTimeData());
 		assertTrue(tc.getBigDecimalData().compareTo(obj.getBigDecimalData()) == 0);
 		
 		// oracle and sqlserver need custom processing for blob so no support for blobs
@@ -138,7 +138,7 @@ public class JdbcTemplateMapperTypeTest {
 		assertTrue(tc2.getLocalDateData().isAfter(tc.getLocalDateData()));
 		assertTrue(tc2.getJavaUtilDateData().getTime() > tc.getJavaUtilDateData().getTime());
 		assertTrue(tc2.getLocalDateTimeData().isAfter(tc.getLocalDateTimeData()));
-		//assertTrue(tc2.getOffsetDateTimeData().isAfter(tc.getOffsetDateTimeData()));
+		assertTrue(tc2.getOffsetDateTimeData().isAfter(tc.getOffsetDateTimeData()));
 		
 		assertTrue(tc2.getBigDecimalData().compareTo(new BigDecimal("11.34")) == 0);
 		
@@ -203,7 +203,7 @@ public class JdbcTemplateMapperTypeTest {
 		assertNotNull(tc.getLocalDateData());
 		assertNotNull(tc.getJavaUtilDateData());
 		assertNotNull(tc.getLocalDateTimeData());
-		//assertNotNull(tc.getOffsetDateTimeData());
+		assertNotNull(tc.getOffsetDateTimeData());
 
 		assertTrue(tc.getBigDecimalData().compareTo(obj.getBigDecimalData()) == 0);
 		

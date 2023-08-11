@@ -162,7 +162,7 @@ class MappingHelper {
 				ColumnInfo colInfo = columnNameToColumnInfoMap.get(colName);
 				if (colInfo == null) {
 					throw new MapperException("column " + colName + " not found in table " + tableName
-							+ " for model property" + clazz.getSimpleName() + "."
+							+ " for model property " + clazz.getSimpleName() + "."
 							+ columnNameToPropertyInfoMap.get(colName).getPropertyName());
 				}
 				String propName = columnNameToPropertyInfoMap.get(colName).getPropertyName();
@@ -176,8 +176,7 @@ class MappingHelper {
 						propMapping.setColumnSqlDataType(Types.TIMESTAMP_WITH_TIMEZONE);
 					}
 				}
-				propertyMappings.add(new PropertyMapping(propName, propType, colInfo.getColumnName(),
-						colInfo.getColumnSqlDataType()));
+				propertyMappings.add(propMapping);
 			}
 
 			tableMapping = new TableMapping(clazz, tableName, idPropertyName, propertyMappings);

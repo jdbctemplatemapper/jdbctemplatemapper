@@ -34,7 +34,7 @@ public class TypeCheck {
 	@Column
 	private BigDecimal bigDecimalData;
 	
-	//@Column
+	@Column
 	private OffsetDateTime offsetDateTimeData;
 	
 	@Column
