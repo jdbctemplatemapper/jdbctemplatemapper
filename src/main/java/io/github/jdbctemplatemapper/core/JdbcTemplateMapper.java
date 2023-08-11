@@ -511,6 +511,8 @@ public class JdbcTemplateMapper {
 			}
 		}
 
+		
+		
 		// the where clause
 		sqlBuilder.append(" WHERE " + tableMapping.getIdColumnName() + " = :" + tableMapping.getIdPropertyName());
 		params.add(tableMapping.getIdPropertyName());
