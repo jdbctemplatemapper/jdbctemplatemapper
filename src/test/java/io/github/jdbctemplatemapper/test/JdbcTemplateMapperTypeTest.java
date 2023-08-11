@@ -1,8 +1,8 @@
 package io.github.jdbctemplatemapper.test;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 import java.math.BigDecimal;
 import java.sql.ResultSet;
@@ -10,6 +10,7 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
@@ -48,6 +49,7 @@ public class JdbcTemplateMapperTypeTest {
 		obj.setBigDecimalData(new BigDecimal("10.23"));
 		obj.setBooleanVal(true);
 		obj.setImage(new byte[] { 10 , 20, 30});
+		obj.setOffsetDateTimeData(OffsetDateTime.now());
 
 		if (jdbcDriver.contains("sqlserver")) {
 			obj.setJavaUtilDateDtData(new Date());
@@ -61,6 +63,7 @@ public class JdbcTemplateMapperTypeTest {
 		assertNotNull(tc.getLocalDateData());
 		assertNotNull(tc.getJavaUtilDateData());
 		assertNotNull(tc.getLocalDateTimeData());
+		assertNotNull(tc.getOffsetDateTimeData());
 		assertTrue(tc.getBigDecimalData().compareTo(obj.getBigDecimalData()) == 0);
 		
 		// oracle and sqlserver need custom processing for blob so no support for blobs
@@ -90,6 +93,7 @@ public class JdbcTemplateMapperTypeTest {
 		obj.setBigDecimalData(new BigDecimal("10.23"));
 		obj.setBooleanVal(true);
 		obj.setImage(new byte[] { 10 , 20, 30});
+		obj.setOffsetDateTimeData(OffsetDateTime.now());
 		
 		if (jdbcDriver.contains("sqlserver")) {
 			obj.setJavaUtilDateDtData(new Date());
@@ -111,6 +115,9 @@ public class JdbcTemplateMapperTypeTest {
 		tc1.setLocalDateData(LocalDate.now().plusDays(1));
 		tc1.setJavaUtilDateData(nextDay);
 		tc1.setLocalDateTimeData(LocalDateTime.now().plusDays(1));
+		
+		tc1.setOffsetDateTimeData(OffsetDateTime.now().plusDays(1));
+		
 		tc1.setBigDecimalData(new BigDecimal("11.34"));
 		tc1.setBooleanVal(false);
 		
@@ -131,6 +138,8 @@ public class JdbcTemplateMapperTypeTest {
 		assertTrue(tc2.getLocalDateData().isAfter(tc.getLocalDateData()));
 		assertTrue(tc2.getJavaUtilDateData().getTime() > tc.getJavaUtilDateData().getTime());
 		assertTrue(tc2.getLocalDateTimeData().isAfter(tc.getLocalDateTimeData()));
+		assertTrue(tc2.getOffsetDateTimeData().isAfter(tc.getOffsetDateTimeData()));
+		
 		assertTrue(tc2.getBigDecimalData().compareTo(new BigDecimal("11.34")) == 0);
 		
 		// oracle and sqlserver need custom processing for blob so no support for blobs.
@@ -160,6 +169,7 @@ public class JdbcTemplateMapperTypeTest {
 		obj.setBigDecimalData(new BigDecimal("10.23"));
 		obj.setBooleanVal(true);
 		obj.setImage(new byte[] { 10 , 20, 30});
+		obj.setOffsetDateTimeData(OffsetDateTime.now());
 		
 		if (jdbcDriver.contains("sqlserver")) {
 			obj.setJavaUtilDateDtData(new Date());
@@ -193,6 +203,7 @@ public class JdbcTemplateMapperTypeTest {
 		assertNotNull(tc.getLocalDateData());
 		assertNotNull(tc.getJavaUtilDateData());
 		assertNotNull(tc.getLocalDateTimeData());
+		assertNotNull(tc.getOffsetDateTimeData());
 
 		assertTrue(tc.getBigDecimalData().compareTo(obj.getBigDecimalData()) == 0);
 		

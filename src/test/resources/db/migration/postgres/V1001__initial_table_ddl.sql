@@ -69,7 +69,10 @@ CREATE TABLE jdbctemplatemapper.type_check (
    big_decimal_data numeric(10,2),
    boolean_val boolean,
    image bytea,
+   offset_date_time_data timestamptz,
+   instant_data timestamptz,
    non_model_column varchar(100),
+   non_model_offset_date_time timestamptz,
    CONSTRAINT type_check_pk PRIMARY KEY (id)
 );
 

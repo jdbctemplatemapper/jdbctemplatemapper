@@ -6,7 +6,7 @@ import java.util.StringJoiner;
 
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
-import org.springframework.core.convert.support.DefaultConversionService;
+import org.springframework.core.convert.ConversionService;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.util.Assert;
 
@@ -26,13 +26,13 @@ import io.github.jdbctemplatemapper.exception.MapperException;
 public class SelectMapper<T> {
 	private final MappingHelper mappingHelper;
 	private final Class<T> clazz;
-	private final DefaultConversionService defaultConversionService;
+	private final ConversionService conversionService;
 	private final boolean useColumnLabelForResultSetMetaData;
 	private final String colPrefix; // tableAlias + "."
 	private final String colAliasPrefix; // tableAlias + "_"
 
 	SelectMapper(Class<T> clazz, String tableAlias, MappingHelper mappingHelper,
-			DefaultConversionService defaultConversionService, boolean useColumnLabelForResultSetMetaData) {
+			ConversionService conversionService, boolean useColumnLabelForResultSetMetaData) {
 		Assert.notNull(clazz, " clazz cannot be empty");
 		Assert.hasLength(tableAlias, " tableAlias cannot be empty");
 		if (tableAlias.trim().length() < 1) {
@@ -42,7 +42,7 @@ public class SelectMapper<T> {
 		this.clazz = clazz;
 
 		this.mappingHelper = mappingHelper;
-		this.defaultConversionService = defaultConversionService;
+		this.conversionService = conversionService;
 
 		this.useColumnLabelForResultSetMetaData = useColumnLabelForResultSetMetaData;
 		this.colPrefix = tableAlias + ".";
@@ -95,7 +95,7 @@ public class SelectMapper<T> {
 			TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
 			BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
 			// need below for java.sql.Timestamp to java.time.LocalDateTime conversion etc
-			bw.setConversionService(defaultConversionService);
+			bw.setConversionService(conversionService);
 
 			ResultSetMetaData rsMetaData = rs.getMetaData();
 			int count = rsMetaData.getColumnCount();

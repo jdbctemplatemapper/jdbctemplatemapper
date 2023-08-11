@@ -292,7 +292,7 @@ using Spring's ResultSetExtractor
     }
   };
  
-  // execute the JdbcTemplae query	
+  // execute the JdbcTemplate query	
   List<Order> orders = jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor);
     
 ```

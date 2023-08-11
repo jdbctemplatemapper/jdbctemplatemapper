@@ -1,8 +1,10 @@
 package io.github.jdbctemplatemapper.model;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import io.github.jdbctemplatemapper.annotation.Id;
 import io.github.jdbctemplatemapper.annotation.IdType;
@@ -20,7 +22,8 @@ public class TypeCheck {
 	private java.util.Date javaUtilDateTsData; // postgres/mysql/oracle
 	private java.util.Date javaUtilDateDtData; // SqlServer
 	private BigDecimal bigDecimalData;
-
+	private OffsetDateTime offsetDateTimeData;
+	
 	private Boolean booleanVal;
 	
 	private byte[] image;
@@ -96,7 +99,14 @@ public class TypeCheck {
 	public void setImage(byte[] image) {
 		this.image = image;
 	}
-	
-	
+
+	public OffsetDateTime getOffsetDateTimeData() {
+		return offsetDateTimeData;
+	}
+
+	public void setOffsetDateTimeData(OffsetDateTime offsetDateTimeData) {
+		this.offsetDateTimeData = offsetDateTimeData;
+	}
+
 
 }

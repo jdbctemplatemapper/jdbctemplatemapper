@@ -6,6 +6,8 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Types;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -38,6 +40,10 @@ class MappingHelper {
 	// Map key - object class
 	// value - list of property names
 	private Map<Class<?>, List<PropertyInfo>> objectPropertyInfoCache = new ConcurrentHashMap<>();
+	
+	
+    // workaround for postgres driver bug.
+	private boolean forcePostgresTimestampWithTimezone = false;
 
 	private final JdbcTemplate jdbcTemplate;
 	private final String schemaName;
@@ -69,6 +75,10 @@ class MappingHelper {
 		this.schemaName = schemaName;
 		this.catalogName = catalogName;
 		this.metaDataColumnNamePattern = metaDataColumnNamePattern;
+	}
+	
+	public void forcePostgresTimestampWithTimezone(boolean val) {
+		this.forcePostgresTimestampWithTimezone = val;
 	}
 
 	public String getSchemaName() {
@@ -151,6 +161,14 @@ class MappingHelper {
 						PropertyMapping propertyMapping = new PropertyMapping(propertyInfo.getPropertyName(),
 								propertyInfo.getPropertyType(), columnInfo.getColumnName(),
 								columnInfo.getColumnSqlDataType());
+						// postgres driver bug where the database metadata returns TIMESTAMP instead of TIMESTAMP_WITH_TIMEZONE
+						// for columns timestamptz. 
+						if(forcePostgresTimestampWithTimezone) {
+							if (propertyMapping.getPropertyType() == OffsetDateTime.class
+				&& propertyMapping.getColumnSqlDataType() == Types.TIMESTAMP){
+								propertyMapping.setColumnSqlDataType(Types.TIMESTAMP_WITH_TIMEZONE);
+							}
+						}
 						propertyMappings.add(propertyMapping);
 					}
 				}
@@ -275,7 +293,6 @@ class MappingHelper {
 			PropertyDescriptor[] propertyDescriptors = bw.getPropertyDescriptors();
 			for (PropertyDescriptor pd : propertyDescriptors) {
 				String propName = pd.getName();
-				// log.debug("Property name:{}" + propName);
 				if ("class".equals(propName)) {
 					continue;
 				} else {

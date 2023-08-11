@@ -2,7 +2,6 @@ package io.github.jdbctemplatemapper.core;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +48,7 @@ public class JdbcTemplateMapper {
 	private String updatedOnPropertyName;
 	private String versionPropertyName;
 
+	// used for an attempt to support for old/non standard jdbc drivers.
 	private boolean useColumnLabelForResultSetMetaData = true;
 
 	// update sql cache
@@ -63,7 +63,8 @@ public class JdbcTemplateMapper {
 
 	// Need this for type conversions like java.sql.Timestamp to
 	// java.time.LocalDateTime etc
-	private DefaultConversionService defaultConversionService = new DefaultConversionService();
+	// JdbcTemplate uses this converter for BeanPropertyRowMapper.
+	private DefaultConversionService conversionService = (DefaultConversionService) DefaultConversionService.getSharedInstance();
 
 	/**
 	 * @param jdbcTemplate - The jdbcTemplate
@@ -214,6 +215,17 @@ public class JdbcTemplateMapper {
 		return this;
 	}
 
+    /**
+     * Exposing the conversion service used so if necessary new converters can be added.
+     * DefaultConversionService conversionService = getConversionService()
+     * conversionService.addConverterFactory(SomeImplementation of Springs ConverterFactoryj);
+     * 	
+     * @return the default conversion service.
+     */
+	public DefaultConversionService getConversionService(){
+		return (DefaultConversionService) conversionService;
+	}
+	
 	/**
 	 * Support for old/non standard jdbc drivers. For these drivers
 	 * resultSetMetaData,getcolumnLabel(int) info is in
@@ -225,6 +237,11 @@ public class JdbcTemplateMapper {
 	public void useColumnLabelForResultSetMetaData(boolean val) {
 		this.useColumnLabelForResultSetMetaData = val;
 	}
+	
+	public void forcePostgresTimestampWithTimezone(boolean val) {
+		mappingHelper.forcePostgresTimestampWithTimezone(val);
+	}
+
 
 	/**
 	 * Returns the object by Id. Return null if not found
@@ -241,6 +258,7 @@ public class JdbcTemplateMapper {
 		String sql = "SELECT * FROM " + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " WHERE "
 				+ tableMapping.getIdColumnName() + " = ?";
 		RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
+				
 		try {
 			Object obj = jdbcTemplate.queryForObject(sql, mapper, id);
 			return clazz.cast(obj);
@@ -248,6 +266,34 @@ public class JdbcTemplateMapper {
 			return null;
 		}
 	}
+	
+	/**
+	 * Returns list of object by the property
+	 *
+	 * @param propertyName  the property name
+	 * @param propertyValue the value of property to query by
+	 * @param clazz Class of List of objects returned
+	 * @param <T>   the type of the object
+	 * @return the object of the specific type
+	 */
+	public <T> List<T> findByProperty(String propertyName, Object propertyValue, Class<T> clazz) {
+		Assert.notNull(clazz, "Class must not be null");
+		Assert.notNull(clazz, "propertyName must not be null");
+		
+		TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
+		String columnName = tableMapping.getColumnName(propertyName);
+		if(columnName == null) {
+			throw new MapperException("invalid property name " + propertyName + " for class " + clazz.getSimpleName());
+		}
+		
+		String sql = "SELECT * FROM " + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " WHERE "
+				+ columnName + " = ?";
+		
+		RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
+        
+		return jdbcTemplate.query(sql, mapper, propertyValue);
+	}
+	
 
 	/**
 	 * Find all objects
@@ -319,12 +365,14 @@ public class JdbcTemplateMapper {
 		if (versionPropertyName != null && tableMapping.getColumnName(versionPropertyName) != null) {
 			bw.setPropertyValue(versionPropertyName, 1);
 		}
-
-		Map<String, Object> attributes = new HashMap<>();
+		
+		MapSqlParameterSource mapSqlParameterSource = new MapSqlParameterSource();
 		for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
-			attributes.put(propMapping.getColumnName(), bw.getPropertyValue(propMapping.getPropertyName()));
-		}
+			mapSqlParameterSource.addValue(propMapping.getPropertyName(), bw.getPropertyValue(propMapping.getPropertyName()),
+					tableMapping.getPropertySqlType(propMapping.getPropertyName()));
 
+		}
+				
 		SimpleJdbcInsert jdbcInsert = simpleJdbcInsertCache.get(obj.getClass());
 		if (jdbcInsert == null) {
 			if (tableMapping.isIdAutoIncrement()) {
@@ -339,10 +387,10 @@ public class JdbcTemplateMapper {
 		}
 
 		if (tableMapping.isIdAutoIncrement()) {
-			Number idNumber = jdbcInsert.executeAndReturnKey(attributes);
+			Number idNumber = jdbcInsert.executeAndReturnKey(mapSqlParameterSource);
 			bw.setPropertyValue(tableMapping.getIdPropertyName(), idNumber); // set object id value
 		} else {
-			jdbcInsert.execute(attributes);
+			jdbcInsert.execute(mapSqlParameterSource);
 		}
 	}
 
@@ -459,7 +507,7 @@ public class JdbcTemplateMapper {
 	 * @return the SelectMapper
 	 */
 	public <T> SelectMapper<T> getSelectMapper(Class<T> clazz, String tableAlias) {
-		return new SelectMapper<T>(clazz, tableAlias, mappingHelper, defaultConversionService,
+		return new SelectMapper<T>(clazz, tableAlias, mappingHelper, conversionService,
 				useColumnLabelForResultSetMetaData);
 	}
 
