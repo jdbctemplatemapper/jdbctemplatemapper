@@ -11,6 +11,7 @@ class PropertyMapping {
 	private String columnName;
 	private int columnSqlDataType; // see java.sql.Types
 	
+	private boolean idAnnotation = false;
 	private boolean createdOnAnnotation = false;
 	private boolean updatedOnAnnotation = false;
 	private boolean versionAnnotation = false;
@@ -45,6 +46,14 @@ class PropertyMapping {
 
 	public int getColumnSqlDataType() {
 		return columnSqlDataType;
+	}
+	
+	public boolean isIdAnnotation() {
+		return idAnnotation;
+	}
+
+	public void setIdAnnotation(boolean idAnnotation) {
+		this.idAnnotation = idAnnotation;
 	}
 
 	public boolean isCreatedOnAnnotation() {

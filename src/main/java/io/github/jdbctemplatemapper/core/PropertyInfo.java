@@ -4,6 +4,7 @@ class PropertyInfo {
 	private String propertyName;
 	private Class<?> propertyType;
 
+	private boolean idAnnotation = false;
 	private boolean createdOnAnnotation = false;
 	private boolean updatedOnAnnotation = false;
 	private boolean versionAnnotation = false;
@@ -21,6 +22,14 @@ class PropertyInfo {
 
 	public Class<?> getPropertyType() {
 		return propertyType;
+	}
+
+	public boolean isIdAnnotation() {
+		return idAnnotation;
+	}
+
+	public void setIdAnnotation(boolean idAnnotation) {
+		this.idAnnotation = idAnnotation;
 	}
 
 	public boolean isCreatedOnAnnotation() {

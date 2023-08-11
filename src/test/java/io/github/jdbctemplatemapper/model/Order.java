@@ -44,9 +44,8 @@ public class Order {
 	private Integer version;
 
 	private Customer customer;
+	
 	private List<OrderLine> orderLines = new ArrayList<>();
-
-	// for argument tests
 
 	public Long getOrderId() {
 		return orderId;
