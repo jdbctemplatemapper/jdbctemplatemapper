@@ -33,20 +33,13 @@
      // For non auto increment id use @Id. In this case you will have to manually set id value before invoking insert().
  
      @Id(type=IdType.AUTO_INCREMENT)
-     private Integer id;
-     
+     private Integer id;     
      @Column(name="product_name")   // will map product_name column in table
      private String name;
-     
-     @Column                        
-     private String productDescription;  // will map to product_description column by default if @Column annotation has no 'name' assiged.
-     
+     @Column
+     private LocalDateTime availableDate; // will map to column available_date by default   
      @Column
      private Double price;
-     
-     @Column
-     private LocalDateTime availableDate;
- 
      private String someNonDatabaseProperty;
  
      ...
@@ -54,7 +47,6 @@
  
  Product product = new Product();
  product.setName("some product name");
- product.setProductDescription("some description");
  product.setPrice(10.25);
  product.setAvailableDate(LocalDateTime.now());
  jdbcTemplateMapper.insert(product); // because id type is auto increment id value will be set after insert.
@@ -147,27 +139,19 @@ Example of the annotations:
 @Table(name="product")
 class Product {
  @Id(type=IdType.AUTO_INCREMENT)
- private Integer productId;
- 
+ private Integer productId; 
  @Column(name="product_name")
- private String name;
- 
+ private String name; 
  @Column
- private String productDescription // defaults to column name 'product_description'
- 
+ private String productDescription // defaults to column name 'product_description' 
  @CreatedOn 
-  private LocalDateTime createdOn; // property type should be LocalDateTime
-  
+  private LocalDateTime createdOn; // property type should be LocalDateTime  
   @CreatedBy
-  private String createdBy;        // type should match return value of implementation of IRecordOperatorResolver.
-  
-  
+  private String createdBy;        // type should match return value of implementation of IRecordOperatorResolver.  
   @UpdatedOn
-  private LocalDateTime updatedOn; // property type should be LocalDateTime
-  
+  private LocalDateTime updatedOn; // property type should be LocalDateTime  
   @UpdatedBy
-  private String updatedBy;        // type should match return value of implementation of IRecordOperatorResolver.
-  
+  private String updatedBy;        // type should match return value of implementation of IRecordOperatorResolver. 
   @Version
   private Integer version;         // property type should be Integer. Used for optimistic locking
 }
@@ -201,15 +185,12 @@ using Spring's ResultSetExtractor
  @Table(name = "orders")
   public class Order {
     @Id(type = IdType.AUTO_INCREMENT)
-    private Long orderId;
-    
+    private Long orderId;  
     @Column
     private LocalDateTime orderDate;
-    
     @Column
     private String customerName;
-    
-    List<OrderLine> orderLines = new ArrayList<>(); 
+    List<OrderLine> orderLines = new ArrayList<>(); // No mapping annotations for relationships
   }
   
   @Table(name="order_line")
@@ -225,7 +206,7 @@ using Spring's ResultSetExtractor
     @Column
     private Integer productId;
     
-    private Product product;
+    private Product product; // no mapping annotations for relationships
     
     @Column
     private Integer numOfUnits;
@@ -276,9 +257,9 @@ using Spring's ResultSetExtractor
          // Doing some checks to make sure unwanted objects are not created.
          // In this use case Order has many OrderLine and an OrderLine has one product
  					
-         // orderSelectMapper.getResultSetModelIdColumnName() returns the id column alias which is 'o_order_id'
+         // orderSelectMapper.getResultSetModelIdColumnLabel() returns the id column alias which is 'o_order_id'
          // for the sql above. 
-         Long orderId = rs.getLong(orderSelectMapper.getResultSetModelIdColumnName());						
+         Long orderId = rs.getLong(orderSelectMapper.getResultSetModelIdColumnLabel());						
          Order order = orderByIdMap.get(orderId);
          if (order == null) {
            order = orderSelectMapper.buildModel(rs);
@@ -287,7 +268,7 @@ using Spring's ResultSetExtractor
  				    
          // productSelectMapper.getResultSetModelIdColumnName() returns the id column alias which is 'p_product_id'
          // for the sql above.
-         Integer productId = rs.getInt(productSelectMapper.getResultSetModelIdColumnName());
+         Integer productId = rs.getInt(productSelectMapper.getResultSetModelIdColumnLabel());
          Product product = productByIdMap.get(productId);
          if (product == null) {
            product = productSelectMapper.buildModel(rs);
@@ -308,7 +289,6 @@ using Spring's ResultSetExtractor
   List<Order> orders = jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor);
     
 ```
-
 
 ## Logging
  

@@ -402,7 +402,7 @@ public class JdbcTemplateMapperTest {
 					
 					// orderSelectMapper.getResultSetModelIdColumnName() returns the column alias which is 'o_order_id'
 					// for the sql above. 
-					Long orderId = rs.getLong(orderSelectMapper.getResultSetModelIdColumnName());	
+					Long orderId = rs.getLong(orderSelectMapper.getResultSetModelIdColumnLabel());	
 					
 					Order order = orderByIdMap.get(orderId);
 				    if (order == null) {
@@ -412,7 +412,7 @@ public class JdbcTemplateMapperTest {
 				    
 				    // productSelectMapper.getResultSetModelIdColumnName() returns the column alias which is 'p_product_id'
 				    // for the sql above.
-					Integer productId = rs.getInt(productSelectMapper.getResultSetModelIdColumnName());
+					Integer productId = rs.getInt(productSelectMapper.getResultSetModelIdColumnLabel());
 					Product product = productByIdMap.get(productId);
 				    if (product == null) {
 				    	product = productSelectMapper.buildModel(rs);

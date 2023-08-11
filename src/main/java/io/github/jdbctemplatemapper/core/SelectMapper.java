@@ -73,11 +73,11 @@ public class SelectMapper<T> {
 	}
 
 	/**
-	 * gets column alias name of the models id in sql statement
+	 * gets column alias of the models id in sql statement
 	 * 
-	 * @return the column alias name of the models id in sql statement
+	 * @return the column alias of the models id in sql statement
 	 */
-	public String getResultSetModelIdColumnName() {
+	public String getResultSetModelIdColumnLabel() {
 		TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
 		return colAliasPrefix + tableMapping.getIdColumnName();
 	}
