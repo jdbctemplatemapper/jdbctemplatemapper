@@ -31,13 +31,13 @@ import io.github.jdbctemplatemapper.model.TypeCheck;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
-public class JdbcTemplateMapperTypeTest {
+public class TypeTest {
 
 	@Value("${spring.datasource.driver-class-name}")
 	private String jdbcDriver;
 
 	@Autowired
-	private JdbcTemplateMapper jdbcTemplateMapper;
+	private JdbcTemplateMapper jtm;
 
 	@Test
 	public void insert_TypeCheckTest() {
@@ -57,9 +57,9 @@ public class JdbcTemplateMapperTypeTest {
 			obj.setJavaUtilDateTsData(new Date());
 		}
 
-		jdbcTemplateMapper.insert(obj);
+		jtm.insert(obj);
 
-		TypeCheck tc = jdbcTemplateMapper.findById(obj.getId(), TypeCheck.class);
+		TypeCheck tc = jtm.findById(obj.getId(), TypeCheck.class);
 		assertNotNull(tc.getLocalDateData());
 		assertNotNull(tc.getJavaUtilDateData());
 		assertNotNull(tc.getLocalDateTimeData());
@@ -101,10 +101,10 @@ public class JdbcTemplateMapperTypeTest {
 			obj.setJavaUtilDateTsData(new Date());
 		}
 
-		jdbcTemplateMapper.insert(obj);
+		jtm.insert(obj);
 
-		TypeCheck tc = jdbcTemplateMapper.findById(obj.getId(), TypeCheck.class);
-		TypeCheck tc1 = jdbcTemplateMapper.findById(obj.getId(), TypeCheck.class);
+		TypeCheck tc = jtm.findById(obj.getId(), TypeCheck.class);
+		TypeCheck tc1 = jtm.findById(obj.getId(), TypeCheck.class);
 
 		Instant instant = LocalDate.now().plusDays(1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant();
 		java.util.Date nextDay = Date.from(instant);
@@ -131,9 +131,9 @@ public class JdbcTemplateMapperTypeTest {
 			tc1.setJavaUtilDateTsData(nextDayDateTime);
 		}
 
-		jdbcTemplateMapper.update(tc1);
+		jtm.update(tc1);
 
-		TypeCheck tc2 = jdbcTemplateMapper.findById(obj.getId(), TypeCheck.class);
+		TypeCheck tc2 = jtm.findById(obj.getId(), TypeCheck.class);
 
 		assertTrue(tc2.getLocalDateData().isAfter(tc.getLocalDateData()));
 		assertTrue(tc2.getJavaUtilDateData().getTime() > tc.getJavaUtilDateData().getTime());
@@ -177,9 +177,9 @@ public class JdbcTemplateMapperTypeTest {
 			obj.setJavaUtilDateTsData(new Date());
 		}
 
-		jdbcTemplateMapper.insert(obj);
+		jtm.insert(obj);
 
-		SelectMapper<TypeCheck> typeCheckMapper = jdbcTemplateMapper.getSelectMapper(TypeCheck.class, "tc");
+		SelectMapper<TypeCheck> typeCheckMapper = jtm.getSelectMapper(TypeCheck.class, "tc");
 
 		String sql = "select" + typeCheckMapper.getColumnsSql() + " from type_check tc" + " where tc.id = ?";
 
@@ -194,7 +194,7 @@ public class JdbcTemplateMapperTypeTest {
 			}
 		};
 
-		List<TypeCheck> list = jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor, obj.getId());
+		List<TypeCheck> list = jtm.getJdbcTemplate().query(sql, rsExtractor, obj.getId());
 
 		assertTrue(list.size() == 1);
 
@@ -211,8 +211,7 @@ public class JdbcTemplateMapperTypeTest {
 		if (jdbcDriver.contains("mysql") || jdbcDriver.contains("postgres")) {
 			assertArrayEquals(obj.getImage(),tc.getImage());
 		}
-		
-
+	
 		// oracle and sqlserver do not support boolean
 		if (jdbcDriver.contains("mysql") || jdbcDriver.contains("postgres")) {
 			assertTrue(tc.getBooleanVal());

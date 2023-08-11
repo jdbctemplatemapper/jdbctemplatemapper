@@ -8,7 +8,6 @@ import java.sql.Types;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -112,7 +111,7 @@ class MappingHelper {
 		if (tableMapping == null) {
 			Table tableAnnotation = AnnotationUtils.findAnnotation(clazz, Table.class);
 			if (tableAnnotation == null) {
-				throw new MapperException(clazz.getName() + " does not have the @Table annotation");
+				throw new AnnotationException(clazz.getName() + " does not have the @Table annotation");
 			}
 			String tableName = tableAnnotation.name();
 			Id idAnnotation = null;
@@ -129,17 +128,17 @@ class MappingHelper {
 				}
 			}
 			if (idAnnotation == null) {
-				throw new RuntimeException("@Id annotation not found in class " + clazz.getName());
+				throw new AnnotationException("@Id annotation not found in class " + clazz.getSimpleName());
 			}
 
 			// Code reaches here model has @Table and @Id annotations		
 			List<ColumnInfo> columnInfoList = getTableColumnInfo(tableName);
-			if (isEmpty(columnInfoList)) {
+			if (AppUtils.isEmpty(columnInfoList)) {
 				// try again with upper case table name
 				tableName = tableName.toUpperCase();
 				columnInfoList = getTableColumnInfo(tableName);
-				if (isEmpty(columnInfoList)) {
-					throw new MapperException("Could not find corresponding table for class " + clazz.getSimpleName());
+				if (AppUtils.isEmpty(columnInfoList)) {
+					throw new AnnotationException("Could not find table " + tableName + " for class " + clazz.getSimpleName());
 				}
 			}
 
@@ -154,7 +153,7 @@ class MappingHelper {
 				if (colAnnotation != null) {
 					String colName = colAnnotation.name();
 					if ("[DEFAULT]".equals(colName)) {
-						colName = AppUtils.convertPropertyNameToUnderscoreName(propertyName);
+						colName = AppUtils.toUnderscoreName(propertyName);
 					}
 					if (!columnNameToColumnInfo.containsKey(colName)) {
 						throw new MapperException("column " + colName + " not found in table " + tableName
@@ -276,7 +275,7 @@ class MappingHelper {
 									columnInfoList
 											.add(new ColumnInfo(rs.getString("COLUMN_NAME"), rs.getInt("DATA_TYPE")));
 								}
-								if (isNotEmpty(columnInfoList)) {
+								if (AppUtils.isNotEmpty(columnInfoList)) {
 									tableColumnInfoCache.put(tableName, columnInfoList);
 								}
 								return columnInfoList;
@@ -299,35 +298,15 @@ class MappingHelper {
 	 */
 	public String fullyQualifiedTableName(String tableName) {
 		Assert.hasLength(tableName, "tableName must not be empty");
-		if (isNotEmpty(getSchemaName())) {
+		if (AppUtils.isNotEmpty(getSchemaName())) {
 			return getSchemaName() + "." + tableName;
 		}
 		return tableName;
 	}
-
-	public boolean isEmpty(String str) {
-		return str == null || str.length() == 0;
-	}
-
-	public boolean isNotEmpty(String str) {
-		return !isEmpty(str);
-	}
-
-	@SuppressWarnings("all")
-	public boolean isEmpty(Collection coll) {
-		return (coll == null || coll.isEmpty());
-	}
-
-	@SuppressWarnings("all")
-	public boolean isNotEmpty(Collection coll) {
-		return !isEmpty(coll);
-	}
-
-
 	
 	private PropertyMapping getPropertyMapping(Field field, String tableName, Map<String, ColumnInfo>columnNameToColumnInfo) {
 		String propertyName = field.getName();
-		String colName = AppUtils.convertPropertyNameToUnderscoreName(field.getName());
+		String colName = AppUtils.toUnderscoreName(field.getName());
 		if (!columnNameToColumnInfo.containsKey(colName)) {
 			throw new MapperException("column " + colName + " not found in table " + tableName
 					+ " for model property " + field.getDeclaringClass().getSimpleName() + "." + field.getName());

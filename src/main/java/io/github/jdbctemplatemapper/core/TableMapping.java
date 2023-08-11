@@ -71,7 +71,7 @@ class TableMapping {
 	}
 
 	public String getProperyName(String columnName) {
-		PropertyMapping propMapping = columnNameMap.get(columnName.toLowerCase());
+		PropertyMapping propMapping = columnNameMap.get(AppUtils.toLowerCase(columnName));
 		return propMapping == null ? null : propMapping.getPropertyName();
 	}
 

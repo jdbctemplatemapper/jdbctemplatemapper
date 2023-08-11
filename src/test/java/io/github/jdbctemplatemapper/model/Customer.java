@@ -16,8 +16,6 @@ public class Customer {
 	@Column
 	private String lastName;
 
-	// Non table fields below to test out case were database table 'customer'
-	// does NOT have these auto assigned fields.
 	private LocalDateTime createdOn;
 	private String createdBy;
 	private LocalDateTime updatedOn;

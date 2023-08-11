@@ -1,34 +1,73 @@
 package io.github.jdbctemplatemapper.core;
 
-import java.util.regex.Pattern;
+import java.util.Collection;
+import java.util.Locale;
 
 import org.springframework.jdbc.support.JdbcUtils;
 
-public class AppUtils {
-	// Convert camel case to underscore case regex pattern. Pattern is thread safe
-	private static Pattern TO_UNDERSCORE_NAME_PATTERN = Pattern.compile("(.)(\\p{Upper})");
-
-	
+public class AppUtils {	
 	/**
 	 * Converts underscore case to camel case. Ex: user_last_name gets converted to
 	 * userLastName.
 	 *
-	 * @param str snake case string
+	 * @param str underscore case string
 	 * @return the camel case string
 	 */
-	public static String convertSnakeToCamelCase(String str) {
+	public static String toCamelCaseName(String str) {
 		return JdbcUtils.convertUnderscoreNameToPropertyName(str);
 	}
 
 	/**
 	 * Converts camel case to underscore case. Ex: userLastName gets converted to
-	 * user_last_name.
+	 * user_last_name. Copy of code from Spring BeanPropertyRowMapper
 	 *
 	 * @param str underscore case string
 	 * @return the camel case string
 	 */
-	public static String convertPropertyNameToUnderscoreName(String str) {
-		return TO_UNDERSCORE_NAME_PATTERN.matcher(str).replaceAll("$1_$2").toLowerCase();
+	public static String toUnderscoreName(String str) {
+		if (isEmpty(str)) {
+			return "";
+		}
+
+		StringBuilder result = new StringBuilder();
+		result.append(Character.toLowerCase(str.charAt(0)));
+		for (int i = 1; i < str.length(); i++) {
+			char c = str.charAt(i);
+			if (Character.isUpperCase(c)) {
+				result.append('_').append(Character.toLowerCase(c));
+			}
+			else {
+				result.append(c);
+			}
+		}
+		return result.toString();
+	}
+	
+	public static boolean isEmpty(String str) {
+		return str == null || str.length() == 0;
 	}
 
+	public static boolean isNotEmpty(String str) {
+		return !isEmpty(str);
+	}
+
+	@SuppressWarnings("all")
+	public static boolean isEmpty(Collection coll) {
+		return (coll == null || coll.isEmpty());
+	}
+
+	@SuppressWarnings("all")
+	public static boolean isNotEmpty(Collection coll) {
+		return !isEmpty(coll);
+	}
+
+	/**
+	 * Convert the given name to lower case.
+	 * By default, conversions will happen within the US locale.
+	 * @param name the original name
+	 * @return the converted name
+	 */
+	public static String toLowerCase(String str) {
+		return str != null ? str.toLowerCase(Locale.US) : null;
+	}
 }

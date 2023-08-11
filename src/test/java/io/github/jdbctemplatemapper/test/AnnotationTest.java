@@ -17,6 +17,8 @@ import io.github.jdbctemplatemapper.annotation.model.DuplicateUpdatedOn;
 import io.github.jdbctemplatemapper.annotation.model.DuplicateVersion;
 import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
 import io.github.jdbctemplatemapper.exception.AnnotationException;
+import io.github.jdbctemplatemapper.model.NoIdObject;
+import io.github.jdbctemplatemapper.model.NoTableObject;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
@@ -27,6 +29,35 @@ public class AnnotationTest {
 
 	@Autowired
 	private JdbcTemplateMapper jtm;
+	
+	@Test
+	public void insert_noIdObjectFailureTest() {
+		Assertions.assertThrows(AnnotationException.class, () -> {
+			NoIdObject pojo = new NoIdObject();
+			pojo.setSomething("abc");
+			jtm.insert(pojo);
+		});
+	}
+	
+
+	@Test
+	public void update_noTableObjectFailureTest() {
+		Assertions.assertThrows(AnnotationException.class, () -> {
+			NoTableObject pojo = new NoTableObject();
+			pojo.setSomething("abc");
+			jtm.update(pojo);
+		});
+	}
+	
+	@Test
+	public void delete_noIdObjectFailureTest() {
+		Assertions.assertThrows(RuntimeException.class, () -> {
+			NoIdObject pojo = new NoIdObject();
+			pojo.setSomething("abc");
+			jtm.delete(pojo);
+		});
+	}
+	
 
 	@Test
 	public void duplicateIdAnnotation_Test() {

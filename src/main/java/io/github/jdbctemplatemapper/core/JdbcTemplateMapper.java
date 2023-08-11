@@ -509,9 +509,7 @@ public class JdbcTemplateMapper {
 				sqlBuilder.append(propMapping.getPropertyName());
 				params.add(propMapping.getPropertyName());
 			}
-		}
-
-		
+		}		
 		
 		// the where clause
 		sqlBuilder.append(" WHERE " + tableMapping.getIdColumnName() + " = :" + tableMapping.getIdPropertyName());
@@ -534,7 +532,7 @@ public class JdbcTemplateMapper {
 			StringJoiner sj = new StringJoiner(", ", " ", " ");
 			for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
 				sj.add(DEFAULT_TABLE_ALIAS + "." + propMapping.getColumnName() + " AS "
-						+ AppUtils.convertPropertyNameToUnderscoreName(propMapping.getPropertyName()));
+						+ AppUtils.toUnderscoreName(propMapping.getPropertyName()));
 			}
 			columnsSql = sj.toString();
 			findColumnsSqlCache.put(clazz, columnsSql);
