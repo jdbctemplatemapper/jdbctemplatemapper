@@ -9,7 +9,7 @@
 
   1. One liners for CRUD.
   2. Features that help make querying of relationships less verbose.
-  3. Can be configured for the following (optional):
+  3. Auto assign properties for models:
       * auto assign created on, updated on.
       * auto assign created by, updated by using an implementation of interface IRecordOperatorResolver.
       * optimistic locking functionality for updates by configuring a version property.
@@ -20,8 +20,7 @@
 
 
 ## Project criteria for usage 
-  1. The JdbcTemplateMapper has no concept of relationships. When an insert/update is issued, only that model gets inserted/updated.  
-  2. Camel case model properties are mapped to underscore case columns in database table.
+  1. The JdbcTemplateMapper has no concept of relationships. When an insert/update/query is issued, only that model gets inserted/updated/queried
   
 ## Example code
  
@@ -35,19 +34,27 @@
  
      @Id(type=IdType.AUTO_INCREMENT)
      private Integer id;
-     private String productName;
+     
+     @Column(name="product_name")   // will map product_name column in table
+     private String name;
+     
+     @Column                        
+     private String productDescription;  // will map to product_description column by default if @Column annotation has no 'name' assiged.
+     
+     @Column
      private Double price;
+     
+     @Column
      private LocalDateTime availableDate;
  
-     // insert/update/find.. methods will ignore properties which do not
-     // have a corresponding underscore case columns in database table
      private String someNonDatabaseProperty;
  
-     // getters and setters ...
+     ...
  }
  
  Product product = new Product();
- product.setProductName("some product name");
+ product.setName("some product name");
+ product.setProductDescription("some description");
  product.setPrice(10.25);
  product.setAvailableDate(LocalDateTime.now());
  jdbcTemplateMapper.insert(product); // because id type is auto increment id value will be set after insert.
@@ -89,8 +96,8 @@ public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
  // new JdbcTemplateMapper(jdbcTemplate, schemaName, catalogName);
  // see javadocs for all constructors
 }
-  
-  ```
+```
+
 ## Annotations
 
 **@Table**
@@ -130,17 +137,43 @@ class Customer {
  private Integer id;
   ...
 }
-
 ```
-
 In this case you will have to manually set the id value before calling insert()
 
-## Configuration to auto assign created on, created by, updated on, updated by, version (optimistic locking)
+
+Example of the annotations:
+
+```java
+@Table(name="product")
+class Product {
+ @Id(type=IdType.AUTO_INCREMENT)
+ private Integer productId;
  
- Auto configuration is optional and each property configuration is optional.
+ @Column(name="product_name")
+ private String name;
  
- Once configured matching properties of models will get auto assigned (Models don't need to have these properties but
- if they do they will get auto assigned).
+ @Column
+ private String productDescription // defaults to column name 'product_description'
+ 
+ @CreatedOn 
+  private LocalDateTime createdOn; // property type should be LocalDateTime
+  
+  @CreatedBy
+  private String createdBy;        // type should match return value of implementation of IRecordOperatorResolver.
+  
+  
+  @UpdatedOn
+  private LocalDateTime updatedOn; // property type should be LocalDateTime
+  
+  @UpdatedBy
+  private String updatedBy;        // type should match return value of implementation of IRecordOperatorResolver.
+  
+  @Version
+  private Integer version;         // property type should be Integer. Used for optimistic locking
+}
+
+## Configuration to auto assign created on, created by
+ properties marked by @Createdy and @UpdateBy will be set to values retured by concrete implementation of interface IRecordOperatorResolver. If this is not configured those properties will not be set.
  
 ```java
 @Bean
@@ -148,43 +181,8 @@ public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
     JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate);
     jdbcTemplateMapper
         .withRecordOperatorResolver(new ConcreteImplementationOfIRecordOperatorResolver())
-        .withCreatedOnPropertyName("createdOn")
-        .withCreatedByPropertyName("createdBy")
-        .withUpdatedOnPropertyName("updatedOn")
-        .withUpdatedByPropertyName("updatedBy")
-        .withVersionPropertyName("version");
 }
 ```
-Example model:
-
-```java
-@Table(name="product")
-class Product {
- @Id(type=IdType.AUTO_INCREMENT)
- private Integer productId;
- ...
-  private LocalDateTime createdOn; // type should be LocalDateTime
-  private String createdBy;        // type should match return value of implementation of IRecordOperatorResolver.
-  
-  private LocalDateTime updatedOn; // type should be LocalDateTime
-  private String updatedBy;        // type should match return value of implementation of IRecordOperatorResolver.
-  
-  private Integer version;         // type should be Integer for optimistic locking version
-}
-```
-
-The following will be the effect of the configuration:
-
-* created on:
-For insert the matching property value on the model will be set to the current datetime. Property should be of type LocalDateTime
-* update on:
-For update the matching property value on the model will be set to the current datetime. Property should be of type LocalDateTime
-* created by:
-For insert the matching property value on the model will be set to value returned by implementation of IRecordOperatorResolver
-* updated by:
-For update the matching property value on the model will be set to value returned by implementation of IRecordOperatorResolver
-* version:
-For update the matching property value on the model will be incremented if successful. If version is stale, an OptimisticLockingException will be thrown. For an insert this value will be set to 1. The version property should be of type Integer.
  
 ## Querying relationships
 
@@ -204,7 +202,11 @@ using Spring's ResultSetExtractor
   public class Order {
     @Id(type = IdType.AUTO_INCREMENT)
     private Long orderId;
+    
+    @Column
     private LocalDateTime orderDate;
+    
+    @Column
     private String customerName;
     
     List<OrderLine> orderLines = new ArrayList<>(); 
@@ -213,13 +215,19 @@ using Spring's ResultSetExtractor
   @Table(name="order_line")
   public class OrderLine {
     @Id(type = IdType.AUTO_INCREMENT)
+    
+    @Column
     private Integer orderLineId;
 
+    @Column
     private Integer orderId;
   
+    @Column
     private Integer productId;
+    
     private Product product;
     
+    @Column
     private Integer numOfUnits;
   }
   
@@ -227,8 +235,12 @@ using Spring's ResultSetExtractor
   public class Product {
     @Id 
     private Integer productId; 
+    
+    @Column
     private String name;
-    private Double cost;
+    
+    @Column
+    private Double price;
   }
 
  // The second argument to getSelectMapper() is the table alias used in the query.
