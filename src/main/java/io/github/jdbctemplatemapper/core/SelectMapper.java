@@ -28,11 +28,12 @@ public class SelectMapper<T> {
 	private final Class<T> clazz;
 	private final ConversionService conversionService;
 	private final boolean useColumnLabelForResultSetMetaData;
-	private final String colPrefix; // tableAlias + "."
-	private final String colAliasPrefix; // tableAlias + "_"
+	private String tableAlias;
+	private String colPrefix; // tableAlias + "."
+	private String colAliasPrefix; // tableAlias + "_"
 
-	SelectMapper(Class<T> clazz, String tableAlias, MappingHelper mappingHelper,
-			ConversionService conversionService, boolean useColumnLabelForResultSetMetaData) {
+	SelectMapper(Class<T> clazz, String tableAlias, MappingHelper mappingHelper, ConversionService conversionService,
+			boolean useColumnLabelForResultSetMetaData) {
 		Assert.notNull(clazz, " clazz cannot be empty");
 		Assert.hasLength(tableAlias, " tableAlias cannot be empty");
 		if (tableAlias.trim().length() < 1) {
@@ -40,14 +41,13 @@ public class SelectMapper<T> {
 		}
 
 		this.clazz = clazz;
-
 		this.mappingHelper = mappingHelper;
 		this.conversionService = conversionService;
 
 		this.useColumnLabelForResultSetMetaData = useColumnLabelForResultSetMetaData;
+		this.tableAlias = tableAlias;
 		this.colPrefix = tableAlias + ".";
 		this.colAliasPrefix = tableAlias + "_";
-
 	}
 
 	/**
@@ -67,9 +67,13 @@ public class SelectMapper<T> {
 		StringJoiner sj = new StringJoiner(", ", " ", " ");
 		TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
 		for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
-			sj.add(colPrefix + propMapping.getColumnName() + " " + colAliasPrefix + propMapping.getColumnName());
+			sj.add(colPrefix + propMapping.getColumnName() + " as " + colAliasPrefix + propMapping.getColumnName());
 		}
 		return sj.toString();
+	}
+
+	String getTableAlias() {
+		return this.tableAlias;
 	}
 
 	/**

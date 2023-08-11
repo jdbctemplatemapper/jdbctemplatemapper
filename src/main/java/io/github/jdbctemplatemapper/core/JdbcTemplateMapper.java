@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.BeanWrapper;
@@ -54,11 +55,18 @@ public class JdbcTemplateMapper {
 	// value - insert sql details
 	private Map<Class<?>, SimpleJdbcInsert> simpleJdbcInsertCache = new ConcurrentHashMap<>();
 
+	// Map key - object class
+	// value - the column string for all properties which can be be used in a select
+	// statement
+	private Map<Class<?>, String> findColumnsSqlCache = new ConcurrentHashMap<>();
+
 	// Need this for type conversions like java.sql.Timestamp to
 	// java.time.LocalDateTime etc
 	// JdbcTemplate uses this converter for BeanPropertyRowMapper.
 	private DefaultConversionService conversionService = (DefaultConversionService) DefaultConversionService
 			.getSharedInstance();
+
+	final static String DEFAULT_TABLE_ALIAS = "t";
 
 	/**
 	 * @param jdbcTemplate - The jdbcTemplate
@@ -179,8 +187,12 @@ public class JdbcTemplateMapper {
 		Assert.notNull(clazz, "Class must not be null");
 
 		TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
-		String sql = "SELECT * FROM " + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " WHERE "
-				+ tableMapping.getIdColumnName() + " = ?";
+		String columnsSql = getFindColumnsSql(tableMapping, clazz);
+
+		String sql = "SELECT " + columnsSql + " FROM "
+				+ mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " " + DEFAULT_TABLE_ALIAS
+				+ " WHERE " + DEFAULT_TABLE_ALIAS + "." + tableMapping.getIdColumnName() + " = ?";
+
 		RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
 
 		try {
@@ -207,11 +219,14 @@ public class JdbcTemplateMapper {
 		TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
 		String columnName = tableMapping.getColumnName(propertyName);
 		if (columnName == null) {
-			throw new MapperException("invalid property name " + propertyName + " for class " + clazz.getSimpleName());
+			throw new MapperException("property " + clazz.getSimpleName() + "." + propertyName
+					+ " is either invalid or invalid does not have a corresponding column in database.");
 		}
-
-		String sql = "SELECT * FROM " + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " WHERE "
-				+ columnName + " = ?";
+		
+		String columnsSql = getFindColumnsSql(tableMapping, clazz);
+		String sql = "SELECT " + columnsSql + " FROM "
+				+ mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " " + DEFAULT_TABLE_ALIAS
+				+ " WHERE " + DEFAULT_TABLE_ALIAS + "." + columnName + " = ?";
 
 		RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
 
@@ -228,8 +243,12 @@ public class JdbcTemplateMapper {
 	public <T> List<T> findAll(Class<T> clazz) {
 		Assert.notNull(clazz, "Class must not be null");
 
-		String tableName = mappingHelper.getTableMapping(clazz).getTableName();
-		String sql = "SELECT * FROM " + mappingHelper.fullyQualifiedTableName(tableName);
+		TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
+		String columnsSql = getFindColumnsSql(tableMapping, clazz);
+
+		String sql = "SELECT " + columnsSql + " FROM "
+				+ mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " " + DEFAULT_TABLE_ALIAS;
+		
 		RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
 		return jdbcTemplate.query(sql, mapper);
 	}
@@ -269,17 +288,17 @@ public class JdbcTemplateMapper {
 		}
 
 		LocalDateTime now = LocalDateTime.now();
-		
+
 		PropertyMapping createdOnPropMapping = tableMapping.getCreatedOnPropertyMapping();
 		if (createdOnPropMapping != null) {
 			bw.setPropertyValue(createdOnPropMapping.getPropertyName(), now);
 		}
-		
+
 		PropertyMapping updatedOnPropMapping = tableMapping.getUpdatedOnPropertyMapping();
 		if (updatedOnPropMapping != null) {
 			bw.setPropertyValue(updatedOnPropMapping.getPropertyName(), now);
 		}
-		
+
 		PropertyMapping createdByPropMapping = tableMapping.getCreatedByPropertyMapping();
 		if (createdByPropMapping != null && recordOperatorResolver != null) {
 			bw.setPropertyValue(createdByPropMapping.getPropertyName(), recordOperatorResolver.getRecordOperator());
@@ -297,7 +316,7 @@ public class JdbcTemplateMapper {
 
 		MapSqlParameterSource mapSqlParameterSource = new MapSqlParameterSource();
 		for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
-			mapSqlParameterSource.addValue(propMapping.getPropertyName(),
+			mapSqlParameterSource.addValue(propMapping.getColumnName(),
 					bw.getPropertyValue(propMapping.getPropertyName()),
 					tableMapping.getPropertySqlType(propMapping.getPropertyName()));
 
@@ -348,14 +367,14 @@ public class JdbcTemplateMapper {
 
 		BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
 		Set<String> parameters = sqlAndParams.getParams();
-		
+
 		PropertyMapping updatedByPropMapping = tableMapping.getUpdatedByPropertyMapping();
 		if (updatedByPropMapping != null && recordOperatorResolver != null
 				&& parameters.contains(updatedByPropMapping.getPropertyName())) {
 			bw.setPropertyValue(updatedByPropMapping.getPropertyName(), recordOperatorResolver.getRecordOperator());
 		}
-		
-		PropertyMapping updatedOnPropMapping = tableMapping.getUpdatedOnPropertyMapping(); 
+
+		PropertyMapping updatedOnPropMapping = tableMapping.getUpdatedOnPropertyMapping();
 		if (updatedOnPropMapping != null && parameters.contains(updatedOnPropMapping.getPropertyName())) {
 			bw.setPropertyValue(updatedOnPropMapping.getPropertyName(), LocalDateTime.now());
 		}
@@ -384,7 +403,7 @@ public class JdbcTemplateMapper {
 			int cnt = npJdbcTemplate.update(sqlAndParams.getSql(), mapSqlParameterSource);
 			if (cnt == 0) {
 				throw new OptimisticLockingException(
-						"Update failed for " + obj.getClass().getSimpleName() + " . " + tableMapping.getIdPropertyName()
+						"update failed for " + obj.getClass().getSimpleName() + " . " + tableMapping.getIdPropertyName()
 								+ ": " + bw.getPropertyValue(tableMapping.getIdPropertyName()) + " and "
 								+ tableMapping.getVersionPropertyMapping().getPropertyName() + ": "
 								+ bw.getPropertyValue(tableMapping.getVersionPropertyMapping().getPropertyName()));
@@ -410,7 +429,7 @@ public class JdbcTemplateMapper {
 
 		TableMapping tableMapping = mappingHelper.getTableMapping(obj.getClass());
 
-		String sql = "delete from " + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " where "
+		String sql = "DELETE FROM " + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " WHERE "
 				+ tableMapping.getIdColumnName() + "= ?";
 		BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
 		Object id = bw.getPropertyValue(tableMapping.getIdPropertyName());
@@ -430,7 +449,7 @@ public class JdbcTemplateMapper {
 		Assert.notNull(id, "id must not be null");
 
 		TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
-		String sql = "delete from " + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " where "
+		String sql = "DELETE FROM " + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " WHERE "
 				+ tableMapping.getIdColumnName() + " = ?";
 		return jdbcTemplate.update(sql, id);
 	}
@@ -462,7 +481,7 @@ public class JdbcTemplateMapper {
 		if (createdByPropMapping != null) {
 			ignoreAttrs.add(createdByPropMapping.getPropertyName());
 		}
-		
+
 		Set<String> params = new HashSet<>();
 		StringBuilder sqlBuilder = new StringBuilder("UPDATE ");
 		sqlBuilder.append(mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()));
@@ -506,4 +525,19 @@ public class JdbcTemplateMapper {
 
 		return updateSqlAndParams;
 	}
+
+	private <T> String getFindColumnsSql(TableMapping tableMapping, Class<T> clazz) {
+		String columnsSql = findColumnsSqlCache.get(clazz);
+		if (columnsSql == null) {
+			StringJoiner sj = new StringJoiner(", ", " ", " ");
+			for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
+				sj.add(DEFAULT_TABLE_ALIAS + "." + propMapping.getColumnName() + " AS "
+						+ AppUtils.convertPropertyNameToUnderscoreName(propMapping.getPropertyName()));
+			}
+			columnsSql = sj.toString();
+			findColumnsSqlCache.put(clazz, columnsSql);
+		}
+		return columnsSql;
+	}
+
 }

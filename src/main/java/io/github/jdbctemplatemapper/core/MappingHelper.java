@@ -13,7 +13,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.springframework.core.annotation.AnnotationUtils;
@@ -32,22 +31,19 @@ import io.github.jdbctemplatemapper.annotation.Table;
 import io.github.jdbctemplatemapper.annotation.UpdatedBy;
 import io.github.jdbctemplatemapper.annotation.UpdatedOn;
 import io.github.jdbctemplatemapper.annotation.Version;
+import io.github.jdbctemplatemapper.exception.AnnotationException;
 import io.github.jdbctemplatemapper.exception.MapperException;
 
 class MappingHelper {
-
-	// Convert camel case to underscore case regex pattern. Pattern is thread safe
-	private static Pattern TO_UNDERSCORE_NAME_PATTERN = Pattern.compile("(.)(\\p{Upper})");
-
 	// Map key - table name,
 	// value - the list of database column names
 	private Map<String, List<ColumnInfo>> tableColumnInfoCache = new ConcurrentHashMap<>();
 
 	// Map key - object class
 	// value - the table mapping
-	private Map<Class<?>, TableMapping> objectToTableMappingCache = new ConcurrentHashMap<>();
+	private Map<Class<?>, TableMapping> objectToTableMappingCache = new ConcurrentHashMap<>();	
 
-	// workaround for postgres driver bug.
+	// workaround for postgres driver bug for ResultSetMetaData
 	private boolean forcePostgresTimestampWithTimezone = false;
 
 	private final JdbcTemplate jdbcTemplate;
@@ -153,11 +149,12 @@ class MappingHelper {
 			Map<String, PropertyMapping> propNameToPropertyMapping = new LinkedHashMap<>();
 			for (Field field : clazz.getDeclaredFields()) {
 				String propertyName = field.getName();
+				
 				Column colAnnotation = AnnotationUtils.findAnnotation(field, Column.class);
 				if (colAnnotation != null) {
 					String colName = colAnnotation.name();
 					if ("[DEFAULT]".equals(colName)) {
-						colName = convertPropertyNameToUnderscoreName(propertyName);
+						colName = AppUtils.convertPropertyNameToUnderscoreName(propertyName);
 					}
 					if (!columnNameToColumnInfo.containsKey(colName)) {
 						throw new MapperException("column " + colName + " not found in table " + tableName
@@ -171,9 +168,7 @@ class MappingHelper {
 				if (idAnno != null) {
 					PropertyMapping propMapping = propNameToPropertyMapping.get(propertyName);
 					if (propMapping == null) {
-						String colName = convertPropertyNameToUnderscoreName(propertyName);
-						propMapping = new PropertyMapping(propertyName, field.getType(), colName,
-								columnNameToColumnInfo.get(colName).getColumnSqlDataType());
+                        propMapping = getPropertyMapping(field, tableName, columnNameToColumnInfo);
 						propMapping.setIdAnnotation(true);
 						propNameToPropertyMapping.put(propertyName, propMapping);
 					}
@@ -186,17 +181,11 @@ class MappingHelper {
 				if (versionAnnotation != null) {
 					PropertyMapping propMapping = propNameToPropertyMapping.get(propertyName);
 					if (propMapping == null) {
-						String colName = convertPropertyNameToUnderscoreName(propertyName);
-						propMapping = new PropertyMapping(propertyName, field.getType(), colName,
-								columnNameToColumnInfo.get(colName).getColumnSqlDataType());
+						propMapping = getPropertyMapping(field, tableName, columnNameToColumnInfo);
 						propMapping.setVersionAnnotation(true);
 						propNameToPropertyMapping.put(propertyName, propMapping);
 					} else {
 						propMapping.setVersionAnnotation(true);
-					}
-					if (Integer.class != propMapping.getPropertyType()) {
-						throw new MapperException("@Version requires the type of property " + clazz.getSimpleName()
-								+ "." + propertyName + " to be Integer");
 					}
 				}
 
@@ -204,44 +193,31 @@ class MappingHelper {
 				if (createdOnAnnotation != null) {
 					PropertyMapping propMapping = propNameToPropertyMapping.get(propertyName);
 					if (propMapping == null) {
-						String colName = convertPropertyNameToUnderscoreName(propertyName);
-						propMapping = new PropertyMapping(propertyName, field.getType(), colName,
-								columnNameToColumnInfo.get(colName).getColumnSqlDataType());
+						propMapping = getPropertyMapping(field, tableName, columnNameToColumnInfo);
 						propMapping.setCreatedOnAnnotation(true);
 						propNameToPropertyMapping.put(propertyName, propMapping);
 					} else {
 						propMapping.setCreatedOnAnnotation(true);
 					}
-					if (LocalDateTime.class != propMapping.getPropertyType()) {
-						throw new MapperException("@CreatedOn requires the type of property " + clazz.getSimpleName()
-								+ "." + propertyName + " to be LocalDateTime");
-					}
+
 				}
 				UpdatedOn updatedOnAnnotation = AnnotationUtils.findAnnotation(field, UpdatedOn.class);
 				if (updatedOnAnnotation != null) {
 					PropertyMapping propMapping = propNameToPropertyMapping.get(propertyName);
 					if (propMapping == null) {
-						String colName = convertPropertyNameToUnderscoreName(propertyName);
-						propMapping = new PropertyMapping(propertyName, field.getType(), colName,
-								columnNameToColumnInfo.get(colName).getColumnSqlDataType());
+						propMapping = getPropertyMapping(field, tableName, columnNameToColumnInfo);
 						propMapping.setUpdatedOnAnnotation(true);
 						propNameToPropertyMapping.put(propertyName, propMapping);
 					} else {
 						propMapping.setUpdatedOnAnnotation(true);
 					}
-					if (LocalDateTime.class != propMapping.getPropertyType()) {
-						throw new MapperException("@UpdatedOn requires the type of property " + clazz.getSimpleName()
-								+ "." + propertyName + " to be LocalDateTime");
-					}
 				}
 
 				CreatedBy createdByAnnotation = AnnotationUtils.findAnnotation(field, CreatedBy.class);
 				if (createdByAnnotation != null) {
-					PropertyMapping propMapping = propNameToPropertyMapping.get(propertyName);
+					PropertyMapping propMapping = propNameToPropertyMapping.get(propertyName);		
 					if (propMapping == null) {
-						String colName = convertPropertyNameToUnderscoreName(propertyName);
-						propMapping = new PropertyMapping(propertyName, field.getType(), colName,
-								columnNameToColumnInfo.get(colName).getColumnSqlDataType());
+						propMapping = getPropertyMapping(field, tableName, columnNameToColumnInfo);
 						propMapping.setCreatedByAnnotation(true);
 						propNameToPropertyMapping.put(propertyName, propMapping);
 					} else {
@@ -252,9 +228,7 @@ class MappingHelper {
 				if (updatedByAnnotation != null) {
 					PropertyMapping propMapping = propNameToPropertyMapping.get(propertyName);
 					if (propMapping == null) {
-						String colName = convertPropertyNameToUnderscoreName(propertyName);
-						propMapping = new PropertyMapping(propertyName, field.getType(), colName,
-								columnNameToColumnInfo.get(colName).getColumnSqlDataType());
+						propMapping = getPropertyMapping(field, tableName, columnNameToColumnInfo);
 						propMapping.setUpdatedByAnnotation(true);
 						propNameToPropertyMapping.put(propertyName, propMapping);
 					} else {
@@ -349,26 +323,19 @@ class MappingHelper {
 		return !isEmpty(coll);
 	}
 
-	/**
-	 * Converts underscore case to camel case. Ex: user_last_name gets converted to
-	 * userLastName.
-	 *
-	 * @param str snake case string
-	 * @return the camel case string
-	 */
-	public String convertSnakeToCamelCase(String str) {
-		return JdbcUtils.convertUnderscoreNameToPropertyName(str);
-	}
 
-	/**
-	 * Converts camel case to underscore case. Ex: userLastName gets converted to
-	 * user_last_name.
-	 *
-	 * @param str underscore case string
-	 * @return the camel case string
-	 */
-	public String convertPropertyNameToUnderscoreName(String str) {
-		return TO_UNDERSCORE_NAME_PATTERN.matcher(str).replaceAll("$1_$2").toLowerCase();
+	
+	private PropertyMapping getPropertyMapping(Field field, String tableName, Map<String, ColumnInfo>columnNameToColumnInfo) {
+		String propertyName = field.getName();
+		String colName = AppUtils.convertPropertyNameToUnderscoreName(field.getName());
+		if (!columnNameToColumnInfo.containsKey(colName)) {
+			throw new MapperException("column " + colName + " not found in table " + tableName
+					+ " for model property " + field.getDeclaringClass().getSimpleName() + "." + field.getName());
+		}
+		
+		 return  new PropertyMapping(propertyName, field.getType(), colName,
+				columnNameToColumnInfo.get(colName).getColumnSqlDataType());
+		
 	}
 	
 	private void validateAnnotations(List<PropertyMapping> propertyMappings, Class<?> clazz) {
@@ -397,25 +364,43 @@ class MappingHelper {
 			if (propMapping.isUpdatedByAnnotation()) {
 				updatedByCnt++;
 			}
+			
+			if (propMapping.isVersionAnnotation() && Integer.class != propMapping.getPropertyType()) {
+				throw new AnnotationException("@Version requires the type of property " + clazz.getSimpleName()
+						+ "." + propMapping.getPropertyName() + " to be Integer");
+			}
+			
+			if (propMapping.isCreatedOnAnnotation() && LocalDateTime.class != propMapping.getPropertyType()) {
+				throw new AnnotationException("@CreatedOn requires the type of property " + clazz.getSimpleName()
+						+ "." + propMapping.getPropertyName() + " to be LocalDateTime");
+			}
+			
+			if (propMapping.isUpdatedOnAnnotation() && LocalDateTime.class != propMapping.getPropertyType()) {
+				throw new AnnotationException("@UpdatedOn requires the type of property " + clazz.getSimpleName()
+						+ "." + propMapping.getPropertyName() + " to be LocalDateTime");
+			}
 		}
 		if(idCnt > 1) {
-			throw new MapperException(" model " + clazz.getSimpleName() + " has multiple @Id annotations");
+			throw new AnnotationException(" model " + clazz.getSimpleName() + " has multiple @Id annotations");
 		}
 		if(versionCnt > 1) {
-			throw new MapperException(" model " + clazz.getSimpleName() + " has multiple @Version annotations");
+			throw new AnnotationException(" model " + clazz.getSimpleName() + " has multiple @Version annotations");
 		}
 		if(createdOnCnt > 1) {
-			throw new MapperException(" model " + clazz.getSimpleName() + " has multiple @CreatedOn annotations");
+			throw new AnnotationException(" model " + clazz.getSimpleName() + " has multiple @CreatedOn annotations");
 		}
 		if(createdByCnt > 1) {
-			throw new MapperException(" model " + clazz.getSimpleName() + " has multiple @CreatedBy annotations");
+			throw new AnnotationException(" model " + clazz.getSimpleName() + " has multiple @CreatedBy annotations");
 		}
 		if(updatedOnCnt > 1) {
-			throw new MapperException(" model " + clazz.getSimpleName() + " has multiple @UpdatedOn annotations");
+			throw new AnnotationException(" model " + clazz.getSimpleName() + " has multiple @UpdatedOn annotations");
 		}
 		if(updatedByCnt > 1) {
-			throw new MapperException(" model " + clazz.getSimpleName() + " has multiple @UpdatedBy annotations");
+			throw new AnnotationException(" model " + clazz.getSimpleName() + " has multiple @UpdatedBy annotations");
 		}
+		
+
+		
 	}
 
 }
