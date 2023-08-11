@@ -1,21 +1,20 @@
 package io.github.jdbctemplatemapper.core;
 
-import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.DatabaseMetaDataCallback;
@@ -23,12 +22,17 @@ import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.jdbc.support.MetaDataAccessException;
 import org.springframework.util.Assert;
 
+import io.github.jdbctemplatemapper.annotation.Column;
 import io.github.jdbctemplatemapper.annotation.Id;
 import io.github.jdbctemplatemapper.annotation.IdType;
 import io.github.jdbctemplatemapper.annotation.Table;
 import io.github.jdbctemplatemapper.exception.MapperException;
 
 class MappingHelper {
+
+	// Convert camel case to snake case regex pattern. Pattern is thread safe
+	private static Pattern TO_UNDERSCORE_NAME_PATTERN = Pattern.compile("(.)(\\p{Upper})");
+
 	// Map key - table name,
 	// value - the list of database column names
 	private Map<String, List<ColumnInfo>> tableColumnInfoCache = new ConcurrentHashMap<>();
@@ -37,12 +41,7 @@ class MappingHelper {
 	// value - the table mapping
 	private Map<Class<?>, TableMapping> objectToTableMappingCache = new ConcurrentHashMap<>();
 
-	// Map key - object class
-	// value - list of property names
-	private Map<Class<?>, List<PropertyInfo>> objectPropertyInfoCache = new ConcurrentHashMap<>();
-	
-	
-    // workaround for postgres driver bug.
+	// workaround for postgres driver bug.
 	private boolean forcePostgresTimestampWithTimezone = false;
 
 	private final JdbcTemplate jdbcTemplate;
@@ -76,7 +75,7 @@ class MappingHelper {
 		this.catalogName = catalogName;
 		this.metaDataColumnNamePattern = metaDataColumnNamePattern;
 	}
-	
+
 	public void forcePostgresTimestampWithTimezone(boolean val) {
 		this.forcePostgresTimestampWithTimezone = val;
 	}
@@ -109,14 +108,11 @@ class MappingHelper {
 		TableMapping tableMapping = objectToTableMappingCache.get(clazz);
 
 		if (tableMapping == null) {
-
 			Table tableAnnotation = AnnotationUtils.findAnnotation(clazz, Table.class);
 			if (tableAnnotation == null) {
 				throw new MapperException(clazz.getName() + " does not have the @Table annotation");
 			}
-
 			String tableName = tableAnnotation.name();
-
 			Id idAnnotation = null;
 			String idPropertyName = null;
 			boolean isIdAutoIncrement = false;
@@ -144,41 +140,48 @@ class MappingHelper {
 				}
 			}
 
-			// if code reaches here table exists and class has @Id annotation
-			try {
-				List<PropertyInfo> propertyInfoList = getObjectPropertyInfo(clazz.newInstance());
-				List<PropertyMapping> propertyMappings = new ArrayList<>();
-				// Match database table columns to the Object properties
-				for (ColumnInfo columnInfo : columnInfoList) {
-					// property name corresponding to column name
-					String propertyName = convertSnakeToCamelCase(columnInfo.getColumnName());
-					// check if the property exists for the Object
-					PropertyInfo propertyInfo = propertyInfoList.stream()
-							.filter(pi -> propertyName.equals(pi.getPropertyName())).findAny().orElse(null);
+			Map<String, ColumnInfo> columnNameToColumnInfoMap = columnInfoList.stream()
+					.collect(Collectors.toMap(o -> o.getColumnName(), o -> o));
+			Map<String, PropertyInfo> columnNameToPropertyInfoMap = new LinkedHashMap<>();
 
-					// add matched object property info and table column info to mappings
-					if (propertyInfo != null) {
-						PropertyMapping propertyMapping = new PropertyMapping(propertyInfo.getPropertyName(),
-								propertyInfo.getPropertyType(), columnInfo.getColumnName(),
-								columnInfo.getColumnSqlDataType());
-						// postgres driver bug where the database metadata returns TIMESTAMP instead of TIMESTAMP_WITH_TIMEZONE
-						// for columns timestamptz. 
-						if(forcePostgresTimestampWithTimezone) {
-							if (propertyMapping.getPropertyType() == OffsetDateTime.class
-				&& propertyMapping.getColumnSqlDataType() == Types.TIMESTAMP){
-								propertyMapping.setColumnSqlDataType(Types.TIMESTAMP_WITH_TIMEZONE);
-							}
-						}
-						propertyMappings.add(propertyMapping);
+			for (Field field : clazz.getDeclaredFields()) {
+				Column colAnnotation = AnnotationUtils.findAnnotation(field, Column.class);
+				if (colAnnotation != null) {
+					String propertyName = field.getName();
+					String colName = colAnnotation.name();
+					if ("[DEFAULT]".equals(colName)) {
+						colName = convertPropertyNameToUnderscoreName(propertyName);
+					}
+					columnNameToPropertyInfoMap.put(colName, new PropertyInfo(propertyName, field.getType()));
+				}
+			}
+
+			List<PropertyMapping> propertyMappings = new ArrayList<>();
+
+			for (String colName : columnNameToPropertyInfoMap.keySet()) {
+				ColumnInfo colInfo = columnNameToColumnInfoMap.get(colName);
+				if (colInfo == null) {
+					throw new MapperException("column " + colName + " not found in table " + tableName
+							+ " for model property" + clazz.getSimpleName() + "."
+							+ columnNameToPropertyInfoMap.get(colName).getPropertyName());
+				}
+				String propName = columnNameToPropertyInfoMap.get(colName).getPropertyName();
+				Class<?> propType = columnNameToPropertyInfoMap.get(colName).getPropertyType();
+				PropertyMapping propMapping = new PropertyMapping(propName, propType, colInfo.getColumnName(),
+						colInfo.getColumnSqlDataType());
+				// postgres driver bug where the database metadata returns TIMESTAMP instead of
+				// TIMESTAMP_WITH_TIMEZONE for columns timestamptz.
+				if (forcePostgresTimestampWithTimezone) {
+					if (propType == OffsetDateTime.class && propMapping.getColumnSqlDataType() == Types.TIMESTAMP) {
+						propMapping.setColumnSqlDataType(Types.TIMESTAMP_WITH_TIMEZONE);
 					}
 				}
-
-				tableMapping = new TableMapping(clazz, tableName, idPropertyName, propertyMappings);
-				tableMapping.setIdAutoIncrement(isIdAutoIncrement);
-
-			} catch (Exception e) {
-				throw new RuntimeException(e);
+				propertyMappings.add(new PropertyMapping(propName, propType, colInfo.getColumnName(),
+						colInfo.getColumnSqlDataType()));
 			}
+
+			tableMapping = new TableMapping(clazz, tableName, idPropertyName, propertyMappings);
+			tableMapping.setIdAutoIncrement(isIdAutoIncrement);
 		}
 
 		objectToTableMappingCache.put(clazz, tableMapping);
@@ -188,60 +191,31 @@ class MappingHelper {
 	public List<ColumnInfo> getTableColumnInfo(String tableName) {
 		Assert.hasLength(tableName, "tableName must not be empty");
 		try {
-			List<ColumnInfo> columnInfos = tableColumnInfoCache.get(tableName);
-			if (isEmpty(columnInfos)) {
-				// Using Spring JdbcUtils.extractDatabaseMetaData() since it has some robust
-				// processing for
-				// connection access
-				columnInfos = JdbcUtils.extractDatabaseMetaData(jdbcTemplate.getDataSource(),
-						new DatabaseMetaDataCallback<List<ColumnInfo>>() {
-							public List<ColumnInfo> processMetaData(DatabaseMetaData dbMetadata)
-									throws SQLException, MetaDataAccessException {
-								ResultSet rs = null;
-								try {
-									List<ColumnInfo> columnInfoList = new ArrayList<>();
-									rs = dbMetadata.getColumns(catalogName, schemaName, tableName,
-											metaDataColumnNamePattern);
-									while (rs.next()) {
-										columnInfoList.add(
-												new ColumnInfo(rs.getString("COLUMN_NAME"), rs.getInt("DATA_TYPE")));
-									}
-									if (isNotEmpty(columnInfoList)) {
-										tableColumnInfoCache.put(tableName, columnInfoList);
-									}
-									return columnInfoList;
-								} finally {
-									JdbcUtils.closeResultSet(rs);
+			return JdbcUtils.extractDatabaseMetaData(jdbcTemplate.getDataSource(),
+					new DatabaseMetaDataCallback<List<ColumnInfo>>() {
+						public List<ColumnInfo> processMetaData(DatabaseMetaData dbMetadata)
+								throws SQLException, MetaDataAccessException {
+							ResultSet rs = null;
+							try {
+								List<ColumnInfo> columnInfoList = new ArrayList<>();
+								rs = dbMetadata.getColumns(catalogName, schemaName, tableName,
+										metaDataColumnNamePattern);
+								while (rs.next()) {
+									columnInfoList
+											.add(new ColumnInfo(rs.getString("COLUMN_NAME"), rs.getInt("DATA_TYPE")));
 								}
+								if (isNotEmpty(columnInfoList)) {
+									tableColumnInfoCache.put(tableName, columnInfoList);
+								}
+								return columnInfoList;
+							} finally {
+								JdbcUtils.closeResultSet(rs);
 							}
-						});
-			}
-			return columnInfos;
+						}
+					});
 		} catch (Exception e) {
 			throw new RuntimeException();
 		}
-	}
-
-	/**
-	 * Gets the resultSet lower case column names ie the column names in the
-	 * 'select' statement of the sql
-	 *
-	 * @param rs The jdbc ResultSet
-	 * @return List of select column names in lower case
-	 */
-	public List<String> getResultSetColumnNames(ResultSet rs) {
-		List<String> rsColNames = new ArrayList<>();
-		try {
-			ResultSetMetaData rsmd = rs.getMetaData();
-			int numberOfColumns = rsmd.getColumnCount();
-			// jdbc indexes start at 1
-			for (int i = 1; i <= numberOfColumns; i++) {
-				rsColNames.add(rsmd.getColumnLabel(i).toLowerCase());
-			}
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-		return rsColNames;
 	}
 
 	/**
@@ -278,33 +252,6 @@ class MappingHelper {
 	}
 
 	/**
-	 * Get property information of an object. The property infos are cached by the
-	 * object class name
-	 *
-	 * @param obj The object
-	 * @return List of PropertyInfo
-	 */
-	public List<PropertyInfo> getObjectPropertyInfo(Object obj) {
-		Assert.notNull(obj, "Object must not be null");
-		List<PropertyInfo> propertyInfoList = objectPropertyInfoCache.get(obj.getClass());
-		if (propertyInfoList == null) {
-			BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
-			propertyInfoList = new ArrayList<>();
-			PropertyDescriptor[] propertyDescriptors = bw.getPropertyDescriptors();
-			for (PropertyDescriptor pd : propertyDescriptors) {
-				String propName = pd.getName();
-				if ("class".equals(propName)) {
-					continue;
-				} else {
-					propertyInfoList.add(new PropertyInfo(propName, pd.getPropertyType()));
-				}
-			}
-			objectPropertyInfoCache.put(obj.getClass(), propertyInfoList);
-		}
-		return propertyInfoList;
-	}
-
-	/**
 	 * Converts snake case to camel case. Ex: user_last_name gets converted to
 	 * userLastName.
 	 *
@@ -313,6 +260,10 @@ class MappingHelper {
 	 */
 	public String convertSnakeToCamelCase(String str) {
 		return JdbcUtils.convertUnderscoreNameToPropertyName(str);
+	}
+
+	public String convertPropertyNameToUnderscoreName(String str) {
+		return TO_UNDERSCORE_NAME_PATTERN.matcher(str).replaceAll("$1_$2").toLowerCase();
 	}
 
 }
