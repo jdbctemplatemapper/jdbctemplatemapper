@@ -23,14 +23,19 @@ import org.springframework.jdbc.support.MetaDataAccessException;
 import org.springframework.util.Assert;
 
 import io.github.jdbctemplatemapper.annotation.Column;
+import io.github.jdbctemplatemapper.annotation.CreatedBy;
+import io.github.jdbctemplatemapper.annotation.CreatedOn;
 import io.github.jdbctemplatemapper.annotation.Id;
 import io.github.jdbctemplatemapper.annotation.IdType;
 import io.github.jdbctemplatemapper.annotation.Table;
+import io.github.jdbctemplatemapper.annotation.UpdatedBy;
+import io.github.jdbctemplatemapper.annotation.UpdatedOn;
+import io.github.jdbctemplatemapper.annotation.Version;
 import io.github.jdbctemplatemapper.exception.MapperException;
 
 class MappingHelper {
 
-	// Convert camel case to snake case regex pattern. Pattern is thread safe
+	// Convert camel case to underscore case regex pattern. Pattern is thread safe
 	private static Pattern TO_UNDERSCORE_NAME_PATTERN = Pattern.compile("(.)(\\p{Upper})");
 
 	// Map key - table name,
@@ -97,8 +102,8 @@ class MappingHelper {
 	 * and and object property to database column mapping.
 	 *
 	 * <p>
-	 * Table name is either from the @Tabel annotation or the snake case conversion
-	 * of the Object name.
+	 * Table name is either from the @Tabel annotation or the underscore case
+	 * conversion of the Object name.
 	 *
 	 * @param clazz The object class
 	 * @return The table mapping.
@@ -140,46 +145,124 @@ class MappingHelper {
 				}
 			}
 
-			Map<String, ColumnInfo> columnNameToColumnInfoMap = columnInfoList.stream()
+			Map<String, ColumnInfo> columnNameToColumnInfo = columnInfoList.stream()
 					.collect(Collectors.toMap(o -> o.getColumnName(), o -> o));
-			Map<String, PropertyInfo> columnNameToPropertyInfoMap = new LinkedHashMap<>();
 
+			Map<String, PropertyMapping> propNameToPropertyMapping = new LinkedHashMap<>();
 			for (Field field : clazz.getDeclaredFields()) {
+				String propertyName = field.getName();
 				Column colAnnotation = AnnotationUtils.findAnnotation(field, Column.class);
 				if (colAnnotation != null) {
-					String propertyName = field.getName();
 					String colName = colAnnotation.name();
 					if ("[DEFAULT]".equals(colName)) {
 						colName = convertPropertyNameToUnderscoreName(propertyName);
 					}
-					columnNameToPropertyInfoMap.put(colName, new PropertyInfo(propertyName, field.getType()));
+					if (!columnNameToColumnInfo.containsKey(colName)) {
+						throw new MapperException("column " + colName + " not found in table " + tableName
+								+ " for model property " + clazz.getSimpleName() + "." + propertyName);
+					}
+					propNameToPropertyMapping.put(propertyName, new PropertyMapping(propertyName, field.getType(),
+							colName, columnNameToColumnInfo.get(colName).getColumnSqlDataType()));
 				}
-			}
 
-			List<PropertyMapping> propertyMappings = new ArrayList<>();
-
-			for (String colName : columnNameToPropertyInfoMap.keySet()) {
-				ColumnInfo colInfo = columnNameToColumnInfoMap.get(colName);
-				if (colInfo == null) {
-					throw new MapperException("column " + colName + " not found in table " + tableName
-							+ " for model property " + clazz.getSimpleName() + "."
-							+ columnNameToPropertyInfoMap.get(colName).getPropertyName());
+				Id idAnno = AnnotationUtils.findAnnotation(field, Id.class);
+				if (idAnno != null) {
+					if (propNameToPropertyMapping.get(propertyName) == null) {
+						String colName = convertPropertyNameToUnderscoreName(propertyName);
+						PropertyMapping propMapping = new PropertyMapping(propertyName, field.getType(), colName,
+								columnNameToColumnInfo.get(colName).getColumnSqlDataType());
+						propNameToPropertyMapping.put(propertyName, propMapping);
+					}
 				}
-				String propName = columnNameToPropertyInfoMap.get(colName).getPropertyName();
-				Class<?> propType = columnNameToPropertyInfoMap.get(colName).getPropertyType();
-				PropertyMapping propMapping = new PropertyMapping(propName, propType, colInfo.getColumnName(),
-						colInfo.getColumnSqlDataType());
+
+				Version versionAnnotation = AnnotationUtils.findAnnotation(field, Version.class);
+				if (versionAnnotation != null) {
+					PropertyMapping propMapping = propNameToPropertyMapping.get(propertyName);
+					if (propMapping == null) {
+						String colName = convertPropertyNameToUnderscoreName(propertyName);
+						propMapping = new PropertyMapping(propertyName, field.getType(), colName,
+								columnNameToColumnInfo.get(colName).getColumnSqlDataType());
+						propMapping.setVersionAnnotation(true);
+						propNameToPropertyMapping.put(propertyName, propMapping);
+					}
+					else {
+						propMapping.setVersionAnnotation(true);
+					}
+				}
+
+				CreatedOn createdOnAnnotation = AnnotationUtils.findAnnotation(field, CreatedOn.class);
+				if (createdOnAnnotation != null) {
+					PropertyMapping propMapping = propNameToPropertyMapping.get(propertyName);
+					if (propMapping == null) {
+						String colName = convertPropertyNameToUnderscoreName(propertyName);
+						propMapping = new PropertyMapping(propertyName, field.getType(), colName,
+								columnNameToColumnInfo.get(colName).getColumnSqlDataType());
+						propMapping.setCreatedOnAnnotation(true);
+						propNameToPropertyMapping.put(propertyName, propMapping);
+					}
+					else {
+						propMapping.setCreatedOnAnnotation(true);
+					}
+				}
+				UpdatedOn updatedOnAnnotation = AnnotationUtils.findAnnotation(field, UpdatedOn.class);
+				if (updatedOnAnnotation != null) {
+					PropertyMapping propMapping = propNameToPropertyMapping.get(propertyName);
+					if (propMapping == null) {
+						String colName = convertPropertyNameToUnderscoreName(propertyName);
+						propMapping = new PropertyMapping(propertyName, field.getType(), colName,
+								columnNameToColumnInfo.get(colName).getColumnSqlDataType());
+						propMapping.setUpdatedOnAnnotation(true);
+						propNameToPropertyMapping.put(propertyName, propMapping);
+					}
+					else {
+						propMapping.setUpdatedOnAnnotation(true);
+					}
+				}
+
+				CreatedBy createdByAnnotation = AnnotationUtils.findAnnotation(field, CreatedBy.class);
+				if (createdByAnnotation != null) {
+					PropertyMapping propMapping = propNameToPropertyMapping.get(propertyName);
+					if (propMapping == null) {
+						String colName = convertPropertyNameToUnderscoreName(propertyName);
+						propMapping = new PropertyMapping(propertyName, field.getType(), colName,
+								columnNameToColumnInfo.get(colName).getColumnSqlDataType());
+						propMapping.setCreatedByAnnotation(true);
+						propNameToPropertyMapping.put(propertyName, propMapping);
+					}
+					else {
+						propMapping.setCreatedByAnnotation(true);
+					}
+				}
+				UpdatedBy updatedByAnnotation = AnnotationUtils.findAnnotation(field, UpdatedBy.class);
+				if (updatedByAnnotation != null) {
+					PropertyMapping propMapping = propNameToPropertyMapping.get(propertyName);
+					if (propMapping == null) {
+						String colName = convertPropertyNameToUnderscoreName(propertyName);
+						propMapping = new PropertyMapping(propertyName, field.getType(), colName,
+								columnNameToColumnInfo.get(colName).getColumnSqlDataType());
+						propMapping.setUpdatedByAnnotation(true);
+						propNameToPropertyMapping.put(propertyName, propMapping);
+					}
+					else {
+						propMapping.setUpdatedByAnnotation(true);
+					}
+				}
+
 				// postgres driver bug where the database metadata returns TIMESTAMP instead of
 				// TIMESTAMP_WITH_TIMEZONE for columns timestamptz.
 				if (forcePostgresTimestampWithTimezone) {
-					if (propType == OffsetDateTime.class && propMapping.getColumnSqlDataType() == Types.TIMESTAMP) {
-						propMapping.setColumnSqlDataType(Types.TIMESTAMP_WITH_TIMEZONE);
+					PropertyMapping propMapping = propNameToPropertyMapping.get(propertyName);
+					if (propMapping != null) {
+						if (OffsetDateTime.class == propMapping.getPropertyType()
+								&& propMapping.getColumnSqlDataType() == Types.TIMESTAMP) {
+							propMapping.setColumnSqlDataType(Types.TIMESTAMP_WITH_TIMEZONE);
+						}
 					}
 				}
-				propertyMappings.add(propMapping);
 			}
 
-			tableMapping = new TableMapping(clazz, tableName, idPropertyName, propertyMappings);
+			tableMapping = new TableMapping(clazz, tableName, idPropertyName,
+					new ArrayList<PropertyMapping>(propNameToPropertyMapping.values()));
 			tableMapping.setIdAutoIncrement(isIdAutoIncrement);
 		}
 
@@ -251,7 +334,7 @@ class MappingHelper {
 	}
 
 	/**
-	 * Converts snake case to camel case. Ex: user_last_name gets converted to
+	 * Converts underscore case to camel case. Ex: user_last_name gets converted to
 	 * userLastName.
 	 *
 	 * @param str snake case string
@@ -261,6 +344,13 @@ class MappingHelper {
 		return JdbcUtils.convertUnderscoreNameToPropertyName(str);
 	}
 
+	/**
+	 * Converts camel case to underscore case. Ex: userLastName gets converted to
+	 * user_last_name.
+	 *
+	 * @param str underscore case string
+	 * @return the camel case string
+	 */
 	public String convertPropertyNameToUnderscoreName(String str) {
 		return TO_UNDERSCORE_NAME_PATTERN.matcher(str).replaceAll("$1_$2").toLowerCase();
 	}

@@ -33,14 +33,8 @@ public class JdbcTemplateMapperConfig {
     String schemaName = getSchemaName();
     JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate, schemaName);
     jdbcTemplateMapper
-        .withRecordOperatorResolver(new RecordOperatorResolver())
-        .withCreatedOnPropertyName("createdOn")
-        .withCreatedByPropertyName("createdBy")
-        .withUpdatedOnPropertyName("updatedOn")
-        .withUpdatedByPropertyName("updatedBy")
-        .withVersionPropertyName("version");
-    
-    
+        .withRecordOperatorResolver(new RecordOperatorResolver());
+        
     // postgres driver bug where database meta data returns TIMESTAMP instead of TIMESTAMP_WITH_TIME_ZONE for timestamptz field.
     // THis flag forces fixs that for now. 
     if (jdbcDriver.contains("postgres")) {

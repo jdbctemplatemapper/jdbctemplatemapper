@@ -5,30 +5,42 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.github.jdbctemplatemapper.annotation.Column;
+import io.github.jdbctemplatemapper.annotation.CreatedBy;
+import io.github.jdbctemplatemapper.annotation.CreatedOn;
 import io.github.jdbctemplatemapper.annotation.Id;
 import io.github.jdbctemplatemapper.annotation.IdType;
 import io.github.jdbctemplatemapper.annotation.Table;
+import io.github.jdbctemplatemapper.annotation.UpdatedBy;
+import io.github.jdbctemplatemapper.annotation.UpdatedOn;
+import io.github.jdbctemplatemapper.annotation.Version;
 
 @Table(name = "orders")
 public class Order {
 	@Id(type = IdType.AUTO_INCREMENT)
-	@Column
 	private Long orderId;
+	
 	@Column
 	private LocalDateTime orderDate;
+	
 	@Column
 	private Integer customerId;
+	
 	@Column
 	private String status;
-	@Column
+	
+	@CreatedOn
 	private LocalDateTime createdOn;
-	@Column
+	
+	@CreatedBy
 	private String createdBy;
-	@Column
+	
+	@UpdatedOn
 	private LocalDateTime updatedOn;
-	@Column
+	
+	@UpdatedBy
 	private String updatedBy;
-	@Column
+	
+	@Version
 	private Integer version;
 
 	private Customer customer;

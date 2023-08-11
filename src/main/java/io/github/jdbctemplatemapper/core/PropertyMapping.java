@@ -10,6 +10,12 @@ class PropertyMapping {
 	private Class<?> propertyType;
 	private String columnName;
 	private int columnSqlDataType; // see java.sql.Types
+	
+	private boolean createdOnAnnotation = false;
+	private boolean updatedOnAnnotation = false;
+	private boolean versionAnnotation = false;
+	private boolean createdByAnnotation = false;
+	private boolean updatedByAnnotation = false;
 
 	public PropertyMapping(String propertyName, Class<?> propertyType, String columnName, int columnSqlDataType) {
 		if (propertyName == null || propertyType == null || columnName == null) {
@@ -41,4 +47,43 @@ class PropertyMapping {
 		return columnSqlDataType;
 	}
 
+	public boolean isCreatedOnAnnotation() {
+		return createdOnAnnotation;
+	}
+
+	public void setCreatedOnAnnotation(boolean createdOnAnnotation) {
+		this.createdOnAnnotation = createdOnAnnotation;
+	}
+
+	public boolean isUpdatedOnAnnotation() {
+		return updatedOnAnnotation;
+	}
+
+	public void setUpdatedOnAnnotation(boolean updatedOnAnnotation) {
+		this.updatedOnAnnotation = updatedOnAnnotation;
+	}
+
+	public boolean isVersionAnnotation() {
+		return versionAnnotation;
+	}
+
+	public void setVersionAnnotation(boolean versionAnnotation) {
+		this.versionAnnotation = versionAnnotation;
+	}
+
+	public boolean isCreatedByAnnotation() {
+		return createdByAnnotation;
+	}
+
+	public void setCreatedByAnnotation(boolean createdByAnnotation) {
+		this.createdByAnnotation = createdByAnnotation;
+	}
+
+	public boolean isUpdatedByAnnotation() {
+		return updatedByAnnotation;
+	}
+
+	public void setUpdatedByAnnotation(boolean updatedByAnnotation) {
+		this.updatedByAnnotation = updatedByAnnotation;
+	}	
 }

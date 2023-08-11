@@ -13,7 +13,6 @@ import io.github.jdbctemplatemapper.annotation.Table;
 @Table(name = "type_check")
 public class TypeCheck {
 	@Id(type = IdType.AUTO_INCREMENT)
-	@Column
 	private Integer id;
 	
 	@Column
@@ -122,6 +121,4 @@ public class TypeCheck {
 	public void setOffsetDateTimeData(OffsetDateTime offsetDateTimeData) {
 		this.offsetDateTimeData = offsetDateTimeData;
 	}
-
-
 }

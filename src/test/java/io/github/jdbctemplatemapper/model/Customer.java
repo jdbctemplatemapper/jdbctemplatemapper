@@ -10,7 +10,6 @@ import io.github.jdbctemplatemapper.annotation.Table;
 @Table(name = "customer")
 public class Customer {
 	@Id(type = IdType.AUTO_INCREMENT)
-	@Column
 	private Integer customerId;
 	@Column
 	private String firstName;

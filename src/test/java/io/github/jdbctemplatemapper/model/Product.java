@@ -3,27 +3,36 @@ package io.github.jdbctemplatemapper.model;
 import java.time.LocalDateTime;
 
 import io.github.jdbctemplatemapper.annotation.Column;
+import io.github.jdbctemplatemapper.annotation.CreatedBy;
+import io.github.jdbctemplatemapper.annotation.CreatedOn;
 import io.github.jdbctemplatemapper.annotation.Id;
 import io.github.jdbctemplatemapper.annotation.Table;
+import io.github.jdbctemplatemapper.annotation.UpdatedBy;
+import io.github.jdbctemplatemapper.annotation.UpdatedOn;
+import io.github.jdbctemplatemapper.annotation.Version;
 
 @Table(name = "product")
 public class Product {
 	@Id
-	@Column
 	private Integer productId;
 	@Column
 	private String name;
 	@Column
 	private Double cost;
-	@Column
+	
+	@CreatedOn
 	private LocalDateTime createdOn;
-	@Column
+	
+	@CreatedBy
 	private String createdBy;
-	@Column
+	
+	@UpdatedOn
 	private LocalDateTime updatedOn;
-	@Column
+
+	@UpdatedBy
 	private String updatedBy;
-	@Column
+	
+	@Version
 	private Integer version;
 
 	public Integer getProductId() {

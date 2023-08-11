@@ -7,7 +7,6 @@ import io.github.jdbctemplatemapper.annotation.Table;
 @Table(name = "person")
 public class Person {
 	@Id
-	@Column
 	private String personId;
 	@Column
 	private String lastName;

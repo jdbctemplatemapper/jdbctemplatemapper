@@ -8,7 +8,6 @@ import io.github.jdbctemplatemapper.annotation.Table;
 @Table(name = "order_line")
 public class OrderLine {
 	@Id(type = IdType.AUTO_INCREMENT)
-	@Column
 	private Integer orderLineId;
 	@Column
 	private Integer orderId;
