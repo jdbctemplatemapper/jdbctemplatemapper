@@ -34,18 +34,34 @@ public class NonDefaultNamingModelTest {
 
 	@Test
 	public void findById_Test() {
-		NonDefaultNamingProduct product = jtm.findById(1, NonDefaultNamingProduct.class);
+		NonDefaultNamingProduct prod = jtm.findById(1, NonDefaultNamingProduct.class);
 		
+		assertEquals(1, prod.getId());
+		assertEquals("shoes", prod.getProductName());
+		assertEquals("system", prod.getWhoCreated());
+		assertEquals("system", prod.getWhoUpdated());
+		assertEquals(1, prod.getLock());
+		assertNotNull(prod.getCreatedAt());
+		assertNotNull(prod.getUpdatedAt());
 	}
 
 	@Test
 	public void insert_Test() {
-		NonDefaultNamingProduct product = new NonDefaultNamingProduct();
-		product.setId(1005);
-		product.setProductName("hat");
-		product.setCost(12.25);
+		NonDefaultNamingProduct prod = new NonDefaultNamingProduct();
+		prod.setId(1005);
+		prod.setProductName("hat");
+		prod.setCost(12.25);
 
-		jtm.insert(product);
+		jtm.insert(prod);
+		
+		NonDefaultNamingProduct prod2 = jtm.findById(1005, NonDefaultNamingProduct.class);
+		
+		assertEquals(1005, prod2.getId());
+		assertEquals("hat", prod2.getProductName());
+		assertEquals(12.25, prod2.getCost());
+		assertEquals(1, prod2.getLock());
+		
+		
 	}
 
 	@Test
@@ -57,11 +73,17 @@ public class NonDefaultNamingModelTest {
 
 		jtm.insert(product);
 
-		NonDefaultNamingProduct product1 = jtm.findById(product.getId(), NonDefaultNamingProduct.class);
+		NonDefaultNamingProduct prod1 = jtm.findById(product.getId(), NonDefaultNamingProduct.class);
 
-		product1.setProductName("cap");
-		jtm.update(product1);
-
+		prod1.setProductName("cap");
+		jtm.update(prod1);
+		
+		NonDefaultNamingProduct prod2 = jtm.findById(prod1.getId(), NonDefaultNamingProduct.class);
+		
+		assertEquals(1010, prod2.getId());
+		assertEquals("cap", prod2.getProductName());
+		assertTrue(product.getLock() < prod2.getLock());
+		
 	}
 
 	@Test

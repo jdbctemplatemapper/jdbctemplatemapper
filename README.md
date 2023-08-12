@@ -17,10 +17,6 @@
   5. For transaction management use Spring transactions since the library uses JdbcTemplate behind the scenes.
   6. To log the SQL statements it uses the same logging configurations as JdbcTemplate. See the logging section.
   7. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with other relational databases. 
-
-
-## Project criteria for usage 
-  1. The JdbcTemplateMapper has no concept of relationships. When an insert/update/query is issued, only that model gets inserted/updated/queried
   
 ## Example code
  
@@ -44,7 +40,7 @@
      @Column
      private Double price;                // will map to price column
      
-     private String someNonDatabaseProperty; // No mapping so would not be included queries/inserts/updates
+     private String someNonDatabaseProperty; // No annotations so excluded from inserts/updates/queries
  
      ...
  }
@@ -138,7 +134,14 @@ class Customer {
 In this case you will have to manually set the id value before calling insert()
 
 **@Column**
-Properties that need be persisted to the database will need @Column annotation unless the property is already annotated with one of the other annotations (@Id, @Version, @CreatedOn @CreatedBy @UpdatedOn @UpdatedBY. @Column can be used with all other annotations to map to a different database column.
+Properties that need be persisted to the database will need @Column annotation unless the property is already annotated with one of the other annotations (@Id, @Version, @CreatedOn @CreatedBy @UpdatedOn @UpdatedBy). @Column can be used with the other annotations to map to a different column.
+
+The two ways to use it:
+
+@Column 
+This will map property to a column using the default naming convention of camelCase to underscore name.
+
+@Column(name="some_colum_name) will map the property to the column specified by name attribute. 
 
 ```java
 @Table(name="customer")
@@ -148,12 +151,13 @@ class Customer {
  private Integer id;
  
  @Column
- private String customerName;  // will map to custmer_name by default
+ private String customerName;  // will map to custmer_name column by default
  
  @Column(name="type")
- private String customerType;  // will map to type in database
+ private String customerType;  // will map to type column in database
  
- private String something;     // This will not be persisted because it does not have a @Column annotation
+ private String something;     // This will not be persisted because it has no annotations
+ 
 }
 ```
 
@@ -185,7 +189,7 @@ class Product {
  private Integer productId; 
  
  @Column(name="product_name")
- private String name;              // will map to product_name table
+ private String name;              // will map to product_name column
  
  @Column
  private String productDescription // defaults to column name 'product_description' 
