@@ -24,23 +24,23 @@ public class TypeCheck {
 	@Column
 	private LocalDateTime localDateTimeData;
 
-	//@Column
+	@Column
 	private java.util.Date javaUtilDateTsData; // postgres/mysql/oracle
 	
-	@Column
+	//@Column
 	private java.util.Date javaUtilDateDtData; // SqlServer
 	
 	@Column
 	private BigDecimal bigDecimalData;
 	
-	//@Column
+	@Column
 	private OffsetDateTime offsetDateTimeData; //mysql/oracle/and postgres with flag to get around driver bug
 	
-	//@Column
+	@Column
 	private Boolean booleanVal; // postgres/mysql
 	
-	//@Column
-	private byte[] image;
+	@Column
+	private byte[] image;  //postgres/mysql
 
 	public Integer getId() {
 		return id;
