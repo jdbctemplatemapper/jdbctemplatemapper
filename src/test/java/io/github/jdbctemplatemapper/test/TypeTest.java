@@ -48,7 +48,7 @@ public class TypeTest {
 		obj.setLocalDateTimeData(LocalDateTime.now());
 		obj.setBigDecimalData(new BigDecimal("10.23"));
 		obj.setBooleanVal(true);
-		obj.setImage(new byte[] { 10 , 20, 30});
+		obj.setImage(new byte[] { 10, 20, 30 });
 		obj.setOffsetDateTimeData(OffsetDateTime.now());
 
 		if (jdbcDriver.contains("sqlserver")) {
@@ -63,14 +63,18 @@ public class TypeTest {
 		assertNotNull(tc.getLocalDateData());
 		assertNotNull(tc.getJavaUtilDateData());
 		assertNotNull(tc.getLocalDateTimeData());
-		assertNotNull(tc.getOffsetDateTimeData());
+
 		assertTrue(tc.getBigDecimalData().compareTo(obj.getBigDecimalData()) == 0);
-		
+
+		if (!jdbcDriver.contains("sqlserver")) {
+			assertNotNull(tc.getOffsetDateTimeData());
+		}
+
 		// oracle and sqlserver need custom processing for blob so no support for blobs
 		if (jdbcDriver.contains("mysql") || jdbcDriver.contains("postgres")) {
-			assertArrayEquals(obj.getImage(),tc.getImage());
+			assertArrayEquals(obj.getImage(), tc.getImage());
 		}
-		
+
 		// oracle and sqlserver do not support boolean
 		if (jdbcDriver.contains("mysql") || jdbcDriver.contains("postgres")) {
 			assertTrue(tc.getBooleanVal());
@@ -92,9 +96,9 @@ public class TypeTest {
 		obj.setLocalDateTimeData(LocalDateTime.now());
 		obj.setBigDecimalData(new BigDecimal("10.23"));
 		obj.setBooleanVal(true);
-		obj.setImage(new byte[] { 10 , 20, 30});
+		obj.setImage(new byte[] { 10, 20, 30 });
 		obj.setOffsetDateTimeData(OffsetDateTime.now());
-		
+
 		if (jdbcDriver.contains("sqlserver")) {
 			obj.setJavaUtilDateDtData(new Date());
 		} else {
@@ -115,15 +119,14 @@ public class TypeTest {
 		tc1.setLocalDateData(LocalDate.now().plusDays(1));
 		tc1.setJavaUtilDateData(nextDay);
 		tc1.setLocalDateTimeData(LocalDateTime.now().plusDays(1));
-		
+
 		tc1.setOffsetDateTimeData(OffsetDateTime.now().plusDays(1));
-		
+
 		tc1.setBigDecimalData(new BigDecimal("11.34"));
 		tc1.setBooleanVal(false);
-		
-		byte[] newImageVal = new byte[] {5};
+
+		byte[] newImageVal = new byte[] { 5 };
 		tc1.setImage(newImageVal);
-		
 
 		if (jdbcDriver.contains("sqlserver")) {
 			tc1.setJavaUtilDateDtData(nextDayDateTime);
@@ -138,13 +141,16 @@ public class TypeTest {
 		assertTrue(tc2.getLocalDateData().isAfter(tc.getLocalDateData()));
 		assertTrue(tc2.getJavaUtilDateData().getTime() > tc.getJavaUtilDateData().getTime());
 		assertTrue(tc2.getLocalDateTimeData().isAfter(tc.getLocalDateTimeData()));
-		assertTrue(tc2.getOffsetDateTimeData().isAfter(tc.getOffsetDateTimeData()));
-		
+
+		if (!jdbcDriver.contains("sqlserver")) {
+			assertTrue(tc2.getOffsetDateTimeData().isAfter(tc.getOffsetDateTimeData()));
+		}
+
 		assertTrue(tc2.getBigDecimalData().compareTo(new BigDecimal("11.34")) == 0);
-		
+
 		// oracle and sqlserver need custom processing for blob so no support for blobs.
 		if (jdbcDriver.contains("mysql") || jdbcDriver.contains("postgres")) {
-			assertArrayEquals(newImageVal,tc2.getImage());
+			assertArrayEquals(newImageVal, tc2.getImage());
 		}
 
 		// oracle and sqlserver do not support boolean
@@ -168,9 +174,9 @@ public class TypeTest {
 		obj.setLocalDateTimeData(LocalDateTime.now());
 		obj.setBigDecimalData(new BigDecimal("10.23"));
 		obj.setBooleanVal(true);
-		obj.setImage(new byte[] { 10 , 20, 30});
+		obj.setImage(new byte[] { 10, 20, 30 });
 		obj.setOffsetDateTimeData(OffsetDateTime.now());
-		
+
 		if (jdbcDriver.contains("sqlserver")) {
 			obj.setJavaUtilDateDtData(new Date());
 		} else {
@@ -203,15 +209,17 @@ public class TypeTest {
 		assertNotNull(tc.getLocalDateData());
 		assertNotNull(tc.getJavaUtilDateData());
 		assertNotNull(tc.getLocalDateTimeData());
-		assertNotNull(tc.getOffsetDateTimeData());
 
+		if (!jdbcDriver.contains("sqlserver")) {
+			assertNotNull(tc.getOffsetDateTimeData());
+		}
 		assertTrue(tc.getBigDecimalData().compareTo(obj.getBigDecimalData()) == 0);
-		
+
 		// oracle and sqlserver do not support boolean
 		if (jdbcDriver.contains("mysql") || jdbcDriver.contains("postgres")) {
-			assertArrayEquals(obj.getImage(),tc.getImage());
+			assertArrayEquals(obj.getImage(), tc.getImage());
 		}
-	
+
 		// oracle and sqlserver do not support boolean
 		if (jdbcDriver.contains("mysql") || jdbcDriver.contains("postgres")) {
 			assertTrue(tc.getBooleanVal());

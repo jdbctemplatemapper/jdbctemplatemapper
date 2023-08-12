@@ -42,7 +42,7 @@ public class NonDefaultNamingProduct {
 
 	@Version
 	@Column(name="version")
-	private Integer lock;
+	private Integer optiLock;
 
 	public Integer getId() {
 		return id;
@@ -100,11 +100,12 @@ public class NonDefaultNamingProduct {
 		this.whoUpdated = whoUpdated;
 	}
 
-	public Integer getLock() {
-		return lock;
+	public Integer getOptiLock() {
+		return optiLock;
 	}
 
-	public void setLock(Integer lock) {
-		this.lock = lock;
+	public void setOptiLock(Integer optiLock) {
+		this.optiLock = optiLock;
 	}
+
 }

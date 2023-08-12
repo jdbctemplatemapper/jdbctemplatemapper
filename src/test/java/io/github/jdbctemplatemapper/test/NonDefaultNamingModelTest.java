@@ -40,7 +40,7 @@ public class NonDefaultNamingModelTest {
 		assertEquals("shoes", prod.getProductName());
 		assertEquals("system", prod.getWhoCreated());
 		assertEquals("system", prod.getWhoUpdated());
-		assertEquals(1, prod.getLock());
+		assertEquals(1, prod.getOptiLock());
 		assertNotNull(prod.getCreatedAt());
 		assertNotNull(prod.getUpdatedAt());
 	}
@@ -59,7 +59,7 @@ public class NonDefaultNamingModelTest {
 		assertEquals(1005, prod2.getId());
 		assertEquals("hat", prod2.getProductName());
 		assertEquals(12.25, prod2.getCost());
-		assertEquals(1, prod2.getLock());
+		assertEquals(1, prod2.getOptiLock());
 		
 		
 	}
@@ -82,7 +82,7 @@ public class NonDefaultNamingModelTest {
 		
 		assertEquals(1010, prod2.getId());
 		assertEquals("cap", prod2.getProductName());
-		assertTrue(product.getLock() < prod2.getLock());
+		assertTrue(product.getOptiLock() < prod2.getOptiLock());
 		
 	}
 
@@ -120,7 +120,7 @@ public class NonDefaultNamingModelTest {
 		assertEquals(product.getProductName(), prod.getProductName());
 		assertEquals("tester", prod.getWhoCreated());
 		assertEquals("tester", prod.getWhoUpdated());
-		assertEquals(1, prod.getLock());
+		assertEquals(1, prod.getOptiLock());
 		assertNotNull(prod.getCreatedAt());
 		assertNotNull(prod.getUpdatedAt());
 
