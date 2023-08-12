@@ -9,19 +9,23 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import io.github.jdbctemplatemapper.annotation.model.ConflictAnnotation;
-import io.github.jdbctemplatemapper.annotation.model.ConflictAnnotation2;
-import io.github.jdbctemplatemapper.annotation.model.ConflictAnnotation3;
-import io.github.jdbctemplatemapper.annotation.model.DuplicateCreatedByAnnotaition;
-import io.github.jdbctemplatemapper.annotation.model.DuplicateCreatedOnAnnotation;
-import io.github.jdbctemplatemapper.annotation.model.DuplicateIdAnnotion;
-import io.github.jdbctemplatemapper.annotation.model.DuplicateUpdatedByAnnotation;
-import io.github.jdbctemplatemapper.annotation.model.DuplicateUpdatedOnAnnotation;
-import io.github.jdbctemplatemapper.annotation.model.DuplicateVersionAnnotation;
 import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
 import io.github.jdbctemplatemapper.exception.AnnotationException;
+import io.github.jdbctemplatemapper.model.BlankTableObject;
+import io.github.jdbctemplatemapper.model.ConflictAnnotation;
+import io.github.jdbctemplatemapper.model.ConflictAnnotation2;
+import io.github.jdbctemplatemapper.model.ConflictAnnotation3;
+import io.github.jdbctemplatemapper.model.DuplicateCreatedByAnnotaition;
+import io.github.jdbctemplatemapper.model.DuplicateCreatedOnAnnotation;
+import io.github.jdbctemplatemapper.model.DuplicateIdAnnotion;
+import io.github.jdbctemplatemapper.model.DuplicateUpdatedByAnnotation;
+import io.github.jdbctemplatemapper.model.DuplicateUpdatedOnAnnotation;
+import io.github.jdbctemplatemapper.model.DuplicateVersionAnnotation;
+import io.github.jdbctemplatemapper.model.InvalidTableObject;
 import io.github.jdbctemplatemapper.model.NoIdObject;
-import io.github.jdbctemplatemapper.model.NoTableObject;
+import io.github.jdbctemplatemapper.model.NoMatchingColumn;
+import io.github.jdbctemplatemapper.model.NoMatchingColumn2;
+import io.github.jdbctemplatemapper.model.NoTableAnnotationModel;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
@@ -33,31 +37,46 @@ public class AnnotationTest {
 	@Autowired
 	private JdbcTemplateMapper jtm;
 	
-	@Test
-	public void insert_noIdObjectFailureTest() {
-		Assertions.assertThrows(AnnotationException.class, () -> {
-			NoIdObject pojo = new NoIdObject();
-			pojo.setSomething("abc");
-			jtm.insert(pojo);
-		});
-	}
 	
-
 	@Test
-	public void update_noTableObjectFailureTest() {
+	public void noTableAnnotation_Test() {
 		Assertions.assertThrows(AnnotationException.class, () -> {
-			NoTableObject pojo = new NoTableObject();
-			pojo.setSomething("abc");
-			jtm.update(pojo);
+			jtm.findById(1, NoTableAnnotationModel.class);
 		});
 	}
 	
 	@Test
-	public void delete_noIdObjectFailureTest() {
-		Assertions.assertThrows(RuntimeException.class, () -> {
-			NoIdObject pojo = new NoIdObject();
-			pojo.setSomething("abc");
-			jtm.delete(pojo);
+	public void invalidTable_Test() {
+		Assertions.assertThrows(AnnotationException.class, () -> {
+			jtm.findById(1, InvalidTableObject.class);
+		});
+	}
+	
+	@Test
+	public void blankTable_Test() {
+		Assertions.assertThrows(AnnotationException.class, () -> {
+			jtm.findById(1, BlankTableObject.class);
+		});
+	}
+	
+	@Test
+	public void noIdObject_Test() {
+		Assertions.assertThrows(AnnotationException.class, () -> {
+			jtm.findById(1, NoIdObject.class);
+		});
+	}
+	
+	@Test
+	public void noMatchingColumn_Test() {
+		Assertions.assertThrows(AnnotationException.class, () -> {
+			jtm.findById(1, NoMatchingColumn.class);
+		});
+	}
+	
+	@Test
+	public void noMatchingColumn2_Test() {
+		Assertions.assertThrows(AnnotationException.class, () -> {
+			jtm.findById(1, NoMatchingColumn2.class);
 		});
 	}
 	

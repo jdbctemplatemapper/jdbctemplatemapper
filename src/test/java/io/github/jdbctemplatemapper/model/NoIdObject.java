@@ -7,12 +7,4 @@ import io.github.jdbctemplatemapper.annotation.Table;
 public class NoIdObject {
   @Column
   private String something;
-
-  public String getSomething() {
-    return something;
-  }
-
-  public void setSomething(String something) {
-    this.something = something;
-  }
 }

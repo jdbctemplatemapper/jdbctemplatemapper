@@ -466,6 +466,17 @@ public class JdbcTemplateMapper {
 		return new SelectMapper<T>(clazz, tableAlias, mappingHelper, conversionService,
 				useColumnLabelForResultSetMetaData);
 	}
+	
+	/**
+	 * This loads the mapping for a class. Could be used during Spring application startup
+	 * so you know early if all the mappings are working.
+	 * 
+	 * @param <T>        the class for the model
+	 * @param clazz      the class
+	 */
+	public <T> void loadMapping(Class<T> clazz) {
+		mappingHelper.getTableMapping(clazz);
+	}
 
 	private SqlAndParams buildSqlAndParamsForUpdate(TableMapping tableMapping) {
 		Assert.notNull(tableMapping, "tableMapping must not be null");

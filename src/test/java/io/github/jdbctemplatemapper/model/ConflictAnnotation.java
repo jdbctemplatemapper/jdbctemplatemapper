@@ -1,21 +1,16 @@
-package io.github.jdbctemplatemapper.annotation.model;
+package io.github.jdbctemplatemapper.model;
 
 import io.github.jdbctemplatemapper.annotation.Column;
-import io.github.jdbctemplatemapper.annotation.CreatedBy;
 import io.github.jdbctemplatemapper.annotation.Id;
 import io.github.jdbctemplatemapper.annotation.IdType;
 import io.github.jdbctemplatemapper.annotation.Table;
+import io.github.jdbctemplatemapper.annotation.Version;
 
 @Table(name = "annotation_check")
-public class DuplicateCreatedByAnnotaition {
+public class ConflictAnnotation {
 	@Id(type = IdType.AUTO_INCREMENT)
+	@Version
 	private Integer id;
-
-	@CreatedBy
-	private String createdBy1;
-
-	@CreatedBy
-	private String createdBy2;
 
 	@Column
 	private String something;

@@ -35,6 +35,7 @@ public class NonDefaultNamingModelTest {
 	@Test
 	public void findById_Test() {
 		NonDefaultNamingProduct product = jtm.findById(1, NonDefaultNamingProduct.class);
+		
 	}
 
 	@Test

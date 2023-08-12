@@ -1,4 +1,4 @@
-package io.github.jdbctemplatemapper.annotation.model;
+package io.github.jdbctemplatemapper.model;
 
 import java.time.LocalDateTime;
 

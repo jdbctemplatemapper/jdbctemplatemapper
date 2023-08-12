@@ -57,9 +57,6 @@ CREATE TABLE jdbctemplatemapper.person (
 	CONSTRAINT person_pk PRIMARY KEY (person_id)
 );
 
-CREATE TABLE jdbctemplatemapper.no_id_object (
-	something varchar(100)
-);
 
 CREATE TABLE jdbctemplatemapper.type_check (
    	id int IDENTITY(1,1) NOT NULL,

@@ -31,12 +31,11 @@ import io.github.jdbctemplatemapper.annotation.UpdatedBy;
 import io.github.jdbctemplatemapper.annotation.UpdatedOn;
 import io.github.jdbctemplatemapper.annotation.Version;
 import io.github.jdbctemplatemapper.exception.AnnotationException;
-import io.github.jdbctemplatemapper.exception.MapperException;
 
 class MappingHelper {
 	// Map key - object class
 	// value - the table mapping
-	private Map<Class<?>, TableMapping> objectToTableMappingCache = new ConcurrentHashMap<>();	
+	private Map<Class<?>, TableMapping> objectToTableMappingCache = new ConcurrentHashMap<>();
 
 	// workaround for postgres driver bug for ResultSetMetaData
 	private boolean forcePostgresTimestampWithTimezone = false;
@@ -102,49 +101,23 @@ class MappingHelper {
 	 */
 	public TableMapping getTableMapping(Class<?> clazz) {
 		Assert.notNull(clazz, "clazz must not be null");
+		
 		TableMapping tableMapping = objectToTableMappingCache.get(clazz);
-
 		if (tableMapping == null) {
-			Table tableAnnotation = AnnotationUtils.findAnnotation(clazz, Table.class);
-			if (tableAnnotation == null) {
-				throw new AnnotationException(clazz.getName() + " does not have the @Table annotation");
-			}
-			String tableName = tableAnnotation.name();
-			Id idAnnotation = null;
-			String idPropertyName = null;
-			boolean isIdAutoIncrement = false;
-			for (Field field : clazz.getDeclaredFields()) {
-				idAnnotation = AnnotationUtils.findAnnotation(field, Id.class);
-				if (idAnnotation != null) {
-					idPropertyName = field.getName();
-					if (idAnnotation.type() == IdType.AUTO_INCREMENT) {
-						isIdAutoIncrement = true;
-					}
-					break;
-				}
-			}
-			if (idAnnotation == null) {
-				throw new AnnotationException("@Id annotation not found in class " + clazz.getSimpleName());
-			}
-
-			// Code reaches here model has @Table and @Id annotations		
-			List<ColumnInfo> columnInfoList = getTableColumnInfo(tableName);
-			if (AppUtils.isEmpty(columnInfoList)) {
-				// try again with upper case table name
-				tableName = tableName.toUpperCase();
-				columnInfoList = getTableColumnInfo(tableName);
-				if (AppUtils.isEmpty(columnInfoList)) {
-					throw new AnnotationException("Could not find table " + tableName + " for class " + clazz.getSimpleName());
-				}
-			}
-
-			Map<String, ColumnInfo> columnNameToColumnInfo = columnInfoList.stream()
+			TableColumnInfo tableColumnInfo = getTableColumnInfo(clazz);			
+			String tableName = tableColumnInfo.getTableName();
+			
+            IdPropertyInfo idPropertyInfo = getIdPropertyInfo(clazz);
+					
+			// key:column name, value: ColumnInfo
+			Map<String, ColumnInfo> columnNameToColumnInfo = tableColumnInfo.getColumnInfos().stream()
 					.collect(Collectors.toMap(o -> o.getColumnName(), o -> o));
 
+			// key:propertyName, value:PropertyMapping. LinkedHashMap to ma
 			Map<String, PropertyMapping> propNameToPropertyMapping = new LinkedHashMap<>();
 			for (Field field : clazz.getDeclaredFields()) {
 				String propertyName = field.getName();
-				
+
 				Column colAnnotation = AnnotationUtils.findAnnotation(field, Column.class);
 				if (colAnnotation != null) {
 					String colName = colAnnotation.name();
@@ -153,7 +126,7 @@ class MappingHelper {
 					}
 					colName = AppUtils.toLowerCase(colName);
 					if (!columnNameToColumnInfo.containsKey(colName)) {
-						throw new MapperException("column " + colName + " not found in table " + tableName
+						throw new AnnotationException("column " + colName + " not found in table " + tableName
 								+ " for model property " + clazz.getSimpleName() + "." + propertyName);
 					}
 					propNameToPropertyMapping.put(propertyName, new PropertyMapping(propertyName, field.getType(),
@@ -164,11 +137,10 @@ class MappingHelper {
 				if (idAnno != null) {
 					PropertyMapping propMapping = propNameToPropertyMapping.get(propertyName);
 					if (propMapping == null) {
-                        propMapping = getPropertyMapping(field, tableName, columnNameToColumnInfo);
+						propMapping = getPropertyMapping(field, tableName, columnNameToColumnInfo);
 						propMapping.setIdAnnotation(true);
 						propNameToPropertyMapping.put(propertyName, propMapping);
-					}
-					else {
+					} else {
 						propMapping.setIdAnnotation(true);
 					}
 				}
@@ -211,7 +183,7 @@ class MappingHelper {
 
 				CreatedBy createdByAnnotation = AnnotationUtils.findAnnotation(field, CreatedBy.class);
 				if (createdByAnnotation != null) {
-					PropertyMapping propMapping = propNameToPropertyMapping.get(propertyName);		
+					PropertyMapping propMapping = propNameToPropertyMapping.get(propertyName);
 					if (propMapping == null) {
 						propMapping = getPropertyMapping(field, tableName, columnNameToColumnInfo);
 						propMapping.setCreatedByAnnotation(true);
@@ -244,19 +216,67 @@ class MappingHelper {
 					}
 				}
 			}
-			
-			List<PropertyMapping> propertyMappings = new ArrayList<>(propNameToPropertyMapping.values());			
-			validateAnnotations(propertyMappings, clazz);			
 
-			tableMapping = new TableMapping(clazz, tableName, idPropertyName, propertyMappings);
-			tableMapping.setIdAutoIncrement(isIdAutoIncrement);
+			List<PropertyMapping> propertyMappings = new ArrayList<>(propNameToPropertyMapping.values());
+			validateAnnotations(propertyMappings, clazz);
+
+			tableMapping = new TableMapping(clazz, tableName, idPropertyInfo.getPropertyName(), propertyMappings);
+			tableMapping.setIdAutoIncrement(idPropertyInfo.isIdAutoIncrement());
 		}
 
 		objectToTableMappingCache.put(clazz, tableMapping);
 		return tableMapping;
 	}
+	
+	private IdPropertyInfo getIdPropertyInfo(Class<?> clazz) {
+		Id idAnnotation = null;
+		String idPropertyName = null;
+		boolean isIdAutoIncrement = false;
+		for (Field field : clazz.getDeclaredFields()) {
+			idAnnotation = AnnotationUtils.findAnnotation(field, Id.class);
+			if (idAnnotation != null) {
+				idPropertyName = field.getName();
+				if (idAnnotation.type() == IdType.AUTO_INCREMENT) {
+					isIdAutoIncrement = true;
+				}
+				break;
+			}
+		}
+		if (idAnnotation == null) {
+			throw new AnnotationException(
+					"@Id annotation not found in class " + clazz.getSimpleName() + " . It is required");
+		}
+		return new IdPropertyInfo(clazz, idPropertyName,isIdAutoIncrement);
+	}
 
-	public List<ColumnInfo> getTableColumnInfo(String tableName) {
+	private TableColumnInfo getTableColumnInfo(Class<?> clazz) {
+		Table tableAnnotation = AnnotationUtils.findAnnotation(clazz, Table.class);
+		validateTableAnnotation(tableAnnotation, clazz);
+		
+		String annotationTableName = tableAnnotation.name();
+		String tableName = annotationTableName;
+		List<ColumnInfo> columnInfoList = getColumnInfoFromDatabaseMetadata(tableName);
+		if (AppUtils.isEmpty(columnInfoList)) {
+			tableName = tableName.toUpperCase();
+			// try again with upper case table name
+			columnInfoList = getColumnInfoFromDatabaseMetadata(tableName);
+
+			if (AppUtils.isEmpty(columnInfoList)) {
+				tableName = tableName.toLowerCase();
+				// try again with lower case table name
+				columnInfoList = getColumnInfoFromDatabaseMetadata(tableName);
+
+				if (AppUtils.isEmpty(columnInfoList)) {
+					throw new AnnotationException(
+							"Could not find table " + annotationTableName + " for class " + clazz.getSimpleName());
+				}		
+		    }
+		}
+		
+		return new TableColumnInfo(tableName, columnInfoList);
+	}
+
+	private List<ColumnInfo> getColumnInfoFromDatabaseMetadata(String tableName) {
 		Assert.hasLength(tableName, "tableName must not be empty");
 		try {
 			return JdbcUtils.extractDatabaseMetaData(jdbcTemplate.getDataSource(),
@@ -297,20 +317,31 @@ class MappingHelper {
 		}
 		return tableName;
 	}
-	
-	private PropertyMapping getPropertyMapping(Field field, String tableName, Map<String, ColumnInfo>columnNameToColumnInfo) {
+
+	private PropertyMapping getPropertyMapping(Field field, String tableName,
+			Map<String, ColumnInfo> columnNameToColumnInfo) {
 		String propertyName = field.getName();
 		String colName = AppUtils.toUnderscoreName(field.getName());
 		if (!columnNameToColumnInfo.containsKey(colName)) {
-			throw new MapperException("column " + colName + " not found in table " + tableName
+			throw new AnnotationException("column " + colName + " not found in table " + tableName
 					+ " for model property " + field.getDeclaringClass().getSimpleName() + "." + field.getName());
 		}
-		
-		 return  new PropertyMapping(propertyName, field.getType(), colName,
+		return new PropertyMapping(propertyName, field.getType(), colName,
 				columnNameToColumnInfo.get(colName).getColumnSqlDataType());
-		
+
 	}
-	
+
+	private void validateTableAnnotation(Table tableAnnotation, Class<?> clazz) {
+		if (tableAnnotation == null) {
+			throw new AnnotationException(
+					clazz.getSimpleName() + " does not have the @Table annotation. It is required");
+		}
+
+		if (AppUtils.isEmpty(tableAnnotation.name().trim())) {
+			throw new AnnotationException("For " + clazz.getSimpleName() + " the @Table annotation has a blank name");
+		}
+	}
+
 	private void validateAnnotations(List<PropertyMapping> propertyMappings, Class<?> clazz) {
 		int idCnt = 0;
 		int versionCnt = 0;
@@ -318,11 +349,10 @@ class MappingHelper {
 		int createdOnCnt = 0;
 		int updatedOnCnt = 0;
 		int updatedByCnt = 0;
-		
 
-		for(PropertyMapping propMapping : propertyMappings) {
+		for (PropertyMapping propMapping : propertyMappings) {
 			int conflictCnt = 0;
-			
+
 			if (propMapping.isIdAnnotation()) {
 				idCnt++;
 				conflictCnt++;
@@ -347,46 +377,47 @@ class MappingHelper {
 				updatedByCnt++;
 				conflictCnt++;
 			}
-			
+
 			if (propMapping.isVersionAnnotation() && Integer.class != propMapping.getPropertyType()) {
-				throw new AnnotationException("@Version requires the type of property " + clazz.getSimpleName()
-						+ "." + propMapping.getPropertyName() + " to be Integer");
+				throw new AnnotationException("@Version requires the type of property " + clazz.getSimpleName() + "."
+						+ propMapping.getPropertyName() + " to be Integer");
 			}
-			
+
 			if (propMapping.isCreatedOnAnnotation() && LocalDateTime.class != propMapping.getPropertyType()) {
-				throw new AnnotationException("@CreatedOn requires the type of property " + clazz.getSimpleName()
-						+ "." + propMapping.getPropertyName() + " to be LocalDateTime");
+				throw new AnnotationException("@CreatedOn requires the type of property " + clazz.getSimpleName() + "."
+						+ propMapping.getPropertyName() + " to be LocalDateTime");
 			}
-			
+
 			if (propMapping.isUpdatedOnAnnotation() && LocalDateTime.class != propMapping.getPropertyType()) {
-				throw new AnnotationException("@UpdatedOn requires the type of property " + clazz.getSimpleName()
-						+ "." + propMapping.getPropertyName() + " to be LocalDateTime");
+				throw new AnnotationException("@UpdatedOn requires the type of property " + clazz.getSimpleName() + "."
+						+ propMapping.getPropertyName() + " to be LocalDateTime");
 			}
-			
-			if(conflictCnt > 1) {
-				throw new AnnotationException(clazz.getSimpleName() + "." + propMapping.getPropertyName() + " has multiple annotations that conflict");
+
+			if (conflictCnt > 1) {
+				throw new AnnotationException(clazz.getSimpleName() + "." + propMapping.getPropertyName()
+						+ " has multiple annotations that conflict");
 			}
-			
+
 		}
-		
-		if(idCnt > 1) {
+
+		if (idCnt > 1) {
 			throw new AnnotationException(" model " + clazz.getSimpleName() + " has multiple @Id annotations");
 		}
-		if(versionCnt > 1) {
+		if (versionCnt > 1) {
 			throw new AnnotationException(" model " + clazz.getSimpleName() + " has multiple @Version annotations");
 		}
-		if(createdOnCnt > 1) {
+		if (createdOnCnt > 1) {
 			throw new AnnotationException(" model " + clazz.getSimpleName() + " has multiple @CreatedOn annotations");
 		}
-		if(createdByCnt > 1) {
+		if (createdByCnt > 1) {
 			throw new AnnotationException(" model " + clazz.getSimpleName() + " has multiple @CreatedBy annotations");
 		}
-		if(updatedOnCnt > 1) {
+		if (updatedOnCnt > 1) {
 			throw new AnnotationException(" model " + clazz.getSimpleName() + " has multiple @UpdatedOn annotations");
 		}
-		if(updatedByCnt > 1) {
+		if (updatedByCnt > 1) {
 			throw new AnnotationException(" model " + clazz.getSimpleName() + " has multiple @UpdatedBy annotations");
-		}		
+		}
 	}
 
 }
