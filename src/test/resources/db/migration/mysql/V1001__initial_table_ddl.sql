@@ -56,9 +56,6 @@ CREATE TABLE jdbctemplatemapper.person (
 	CONSTRAINT person_pk PRIMARY KEY (person_id)
 );
 
-CREATE TABLE jdbctemplatemapper.no_id_object (
-	something varchar(100)
-);
 
 CREATE TABLE jdbctemplatemapper.type_check (
    id integer NOT NULL AUTO_INCREMENT,
@@ -69,6 +66,7 @@ CREATE TABLE jdbctemplatemapper.type_check (
    big_decimal_data numeric(10,2),
    boolean_val BOOLEAN,
    image blob,
+   offset_date_time_data timestamp,
    non_model_column varchar(100),
    CONSTRAINT type_check_pk PRIMARY KEY (id)
 );

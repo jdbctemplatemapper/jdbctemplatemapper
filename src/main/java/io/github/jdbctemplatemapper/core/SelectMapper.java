@@ -6,7 +6,7 @@ import java.util.StringJoiner;
 
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
-import org.springframework.core.convert.support.DefaultConversionService;
+import org.springframework.core.convert.ConversionService;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.util.Assert;
 
@@ -26,13 +26,14 @@ import io.github.jdbctemplatemapper.exception.MapperException;
 public class SelectMapper<T> {
 	private final MappingHelper mappingHelper;
 	private final Class<T> clazz;
-	private final DefaultConversionService defaultConversionService;
+	private final ConversionService conversionService;
 	private final boolean useColumnLabelForResultSetMetaData;
-	private final String colPrefix; // tableAlias + "."
-	private final String colAliasPrefix; // tableAlias + "_"
+	private String tableAlias;
+	private String colPrefix; // tableAlias + "."
+	private String colAliasPrefix; // tableAlias + "_"
 
-	SelectMapper(Class<T> clazz, String tableAlias, MappingHelper mappingHelper,
-			DefaultConversionService defaultConversionService, boolean useColumnLabelForResultSetMetaData) {
+	SelectMapper(Class<T> clazz, String tableAlias, MappingHelper mappingHelper, ConversionService conversionService,
+			boolean useColumnLabelForResultSetMetaData) {
 		Assert.notNull(clazz, " clazz cannot be empty");
 		Assert.hasLength(tableAlias, " tableAlias cannot be empty");
 		if (tableAlias.trim().length() < 1) {
@@ -40,14 +41,13 @@ public class SelectMapper<T> {
 		}
 
 		this.clazz = clazz;
-
 		this.mappingHelper = mappingHelper;
-		this.defaultConversionService = defaultConversionService;
+		this.conversionService = conversionService;
 
 		this.useColumnLabelForResultSetMetaData = useColumnLabelForResultSetMetaData;
+		this.tableAlias = tableAlias;
 		this.colPrefix = tableAlias + ".";
-		this.colAliasPrefix = tableAlias + "_";
-
+		this.colAliasPrefix = AppUtils.toLowerCase(tableAlias + "_");
 	}
 
 	/**
@@ -58,7 +58,7 @@ public class SelectMapper<T> {
 	 * SelectMapper selectMapper = jdbcTemplateMapper.getSelectMapper(Employee.class, "emp");
 	 * selectMapper.getColumnSql() will return something like below:
 	 * 
-	 * "emp.id emp_id, emp.last_name emp_last_name, emp.first_name emp_first_name"
+	 * "emp.id as emp_id, emp.last_name as emp_last_name, emp.first_name as emp_first_name"
 	 * </pre>
 	 *
 	 * @return comma separated select column string
@@ -67,17 +67,21 @@ public class SelectMapper<T> {
 		StringJoiner sj = new StringJoiner(", ", " ", " ");
 		TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
 		for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
-			sj.add(colPrefix + propMapping.getColumnName() + " " + colAliasPrefix + propMapping.getColumnName());
+			sj.add(colPrefix + propMapping.getColumnName() + " as " + colAliasPrefix + propMapping.getColumnName());
 		}
 		return sj.toString();
 	}
 
+	String getTableAlias() {
+		return this.tableAlias;
+	}
+
 	/**
-	 * gets column alias name of the models id in sql statement
+	 * gets column alias of the models id in sql statement
 	 * 
-	 * @return the column alias name of the models id in sql statement
+	 * @return the column alias of the models id in sql statement
 	 */
-	public String getResultSetModelIdColumnName() {
+	public String getResultSetModelIdColumnLabel() {
 		TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
 		return colAliasPrefix + tableMapping.getIdColumnName();
 	}
@@ -95,7 +99,7 @@ public class SelectMapper<T> {
 			TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
 			BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
 			// need below for java.sql.Timestamp to java.time.LocalDateTime conversion etc
-			bw.setConversionService(defaultConversionService);
+			bw.setConversionService(conversionService);
 
 			ResultSetMetaData rsMetaData = rs.getMetaData();
 			int count = rsMetaData.getColumnCount();
@@ -103,12 +107,15 @@ public class SelectMapper<T> {
 				// support for older drivers
 				String columnLabel = useColumnLabelForResultSetMetaData ? rsMetaData.getColumnLabel(i)
 						: rsMetaData.getColumnName(i);
-				// case insensitive prefix match
-				if (colAliasPrefix.regionMatches(true, 0, columnLabel, 0, colAliasPrefix.length())) {
-					String propertyName = tableMapping.getProperyName(columnLabel.substring(colAliasPrefix.length()));
-					if (propertyName != null) {
-						bw.setPropertyValue(propertyName,
-								JdbcUtils.getResultSetValue(rs, i, tableMapping.getPropertyType(propertyName)));
+				if (columnLabel != null) {
+					columnLabel = AppUtils.toLowerCase(columnLabel);
+					if (columnLabel.startsWith(colAliasPrefix)) {
+						String propertyName = tableMapping
+								.getProperyName(columnLabel.substring(colAliasPrefix.length()));
+						if (propertyName != null) {
+							bw.setPropertyValue(propertyName,
+									JdbcUtils.getResultSetValue(rs, i, tableMapping.getPropertyType(propertyName)));
+						}
 					}
 				}
 			}

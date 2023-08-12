@@ -57,9 +57,6 @@ CREATE TABLE jdbctemplatemapper.person (
 	CONSTRAINT person_pk PRIMARY KEY (person_id)
 );
 
-CREATE TABLE jdbctemplatemapper.no_id_object (
-	something varchar(100)
-);
 
 CREATE TABLE jdbctemplatemapper.type_check (
    	id int IDENTITY(1,1) NOT NULL,
@@ -68,7 +65,8 @@ CREATE TABLE jdbctemplatemapper.type_check (
    local_date_time_data datetime,
    java_util_date_dt_data datetime,
    big_decimal_data numeric(10,2),
-   non_model_column varchar(100)
+   non_model_column varchar(100),
+   offset_date_time_data varchar(100)
 );
 
 

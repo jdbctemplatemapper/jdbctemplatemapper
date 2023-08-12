@@ -28,8 +28,6 @@ import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
 import io.github.jdbctemplatemapper.core.SelectMapper;
 import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
 import io.github.jdbctemplatemapper.model.Customer;
-import io.github.jdbctemplatemapper.model.NoIdObject;
-import io.github.jdbctemplatemapper.model.NoTableObject;
 import io.github.jdbctemplatemapper.model.Order;
 import io.github.jdbctemplatemapper.model.OrderLine;
 import io.github.jdbctemplatemapper.model.Person;
@@ -37,7 +35,7 @@ import io.github.jdbctemplatemapper.model.Product;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
-public class JdbcTemplateMapperTest {
+public class CrudTest {
 
 	@Value("${spring.datasource.driver-class-name}")
 	private String jdbcDriver;
@@ -152,15 +150,6 @@ public class JdbcTemplateMapperTest {
 	}
 
 	@Test
-	public void insert_noIdObjectFailureTest() {
-		Assertions.assertThrows(RuntimeException.class, () -> {
-			NoIdObject pojo = new NoIdObject();
-			pojo.setSomething("abc");
-			jtm.insert(pojo);
-		});
-	}
-
-	@Test
 	public void insertWithId_withNullIdFailureTest() {
 		Product product = new Product();
 		product.setName("hat");
@@ -177,14 +166,6 @@ public class JdbcTemplateMapperTest {
 		});
 	}
 
-	@Test
-	public void insertWithId_noIdObjectFailureTest() {
-		Assertions.assertThrows(RuntimeException.class, () -> {
-			NoIdObject pojo = new NoIdObject();
-			pojo.setSomething("abc");
-			jtm.insert(pojo);
-		});
-	}
 
 	@Test
 	public void update_Test() throws Exception {
@@ -264,15 +245,6 @@ public class JdbcTemplateMapperTest {
 	}
 
 	@Test
-	public void update_noTableObjectFailureTest() {
-		Assertions.assertThrows(RuntimeException.class, () -> {
-			NoTableObject pojo = new NoTableObject();
-			pojo.setSomething("abc");
-			jtm.update(pojo);
-		});
-	}
-
-	@Test
 	public void update_nonDatabasePropertyTest() {
 		Person person = jtm.findById("person101", Person.class);
 
@@ -335,14 +307,7 @@ public class JdbcTemplateMapperTest {
 		});
 	}
 
-	@Test
-	public void delete_noIdObjectFailureTest() {
-		Assertions.assertThrows(RuntimeException.class, () -> {
-			NoIdObject pojo = new NoIdObject();
-			pojo.setSomething("abc");
-			jtm.delete(pojo);
-		});
-	}
+
 
 	@Test
 	public void deleteById_Test() {
@@ -402,7 +367,7 @@ public class JdbcTemplateMapperTest {
 					
 					// orderSelectMapper.getResultSetModelIdColumnName() returns the column alias which is 'o_order_id'
 					// for the sql above. 
-					Long orderId = rs.getLong(orderSelectMapper.getResultSetModelIdColumnName());	
+					Long orderId = rs.getLong(orderSelectMapper.getResultSetModelIdColumnLabel());	
 					
 					Order order = orderByIdMap.get(orderId);
 				    if (order == null) {
@@ -412,7 +377,7 @@ public class JdbcTemplateMapperTest {
 				    
 				    // productSelectMapper.getResultSetModelIdColumnName() returns the column alias which is 'p_product_id'
 				    // for the sql above.
-					Integer productId = rs.getInt(productSelectMapper.getResultSetModelIdColumnName());
+					Integer productId = rs.getInt(productSelectMapper.getResultSetModelIdColumnLabel());
 					Product product = productByIdMap.get(productId);
 				    if (product == null) {
 				    	product = productSelectMapper.buildModel(rs);

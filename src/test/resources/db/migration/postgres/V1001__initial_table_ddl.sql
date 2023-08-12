@@ -56,10 +56,6 @@ CREATE TABLE jdbctemplatemapper.person (
 	CONSTRAINT person_pk PRIMARY KEY (person_id)
 );
 
-CREATE TABLE jdbctemplatemapper.no_id_object (
-	something varchar(100)
-);
-
 CREATE TABLE jdbctemplatemapper.type_check (
    id serial NOT NULL,
    local_date_data date,
@@ -69,8 +65,30 @@ CREATE TABLE jdbctemplatemapper.type_check (
    big_decimal_data numeric(10,2),
    boolean_val boolean,
    image bytea,
+   offset_date_time_data timestamptz,
+   instant_data timestamptz,
    non_model_column varchar(100),
+   non_model_offset_date_time timestamptz,
    CONSTRAINT type_check_pk PRIMARY KEY (id)
+);
+
+
+CREATE TABLE jdbctemplatemapper.annotation_check (
+   id serial NOT NULL,  
+   id2 integer,
+   something varchar(100),
+   created_on1 timestamp,
+   created_on2 timestamp,
+   created_by1 varchar(100),
+   created_by2 varchar(100),
+   updated_on1 timestamp,
+   updated_on2 timestamp,
+   updated_by1 varchar(100),
+   updated_by2 varchar(100),
+   version1 integer,
+   version2 integer,
+
+   CONSTRAINT annotation_check_pk PRIMARY KEY (id)
 );
 
 

@@ -3,7 +3,9 @@ package io.github.jdbctemplatemapper.model;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
+import io.github.jdbctemplatemapper.annotation.Column;
 import io.github.jdbctemplatemapper.annotation.Id;
 import io.github.jdbctemplatemapper.annotation.IdType;
 import io.github.jdbctemplatemapper.annotation.Table;
@@ -12,17 +14,32 @@ import io.github.jdbctemplatemapper.annotation.Table;
 public class TypeCheck {
 	@Id(type = IdType.AUTO_INCREMENT)
 	private Integer id;
-
+	
+	@Column
 	private LocalDate localDateData;
+	
+	@Column
 	private java.util.Date javaUtilDateData;
+	
+	@Column
 	private LocalDateTime localDateTimeData;
 
+	//@Column
 	private java.util.Date javaUtilDateTsData; // postgres/mysql/oracle
-	private java.util.Date javaUtilDateDtData; // SqlServer
-	private BigDecimal bigDecimalData;
-
-	private Boolean booleanVal;
 	
+	@Column
+	private java.util.Date javaUtilDateDtData; // SqlServer
+	
+	@Column
+	private BigDecimal bigDecimalData;
+	
+	//@Column
+	private OffsetDateTime offsetDateTimeData; //mysql/oracle/and postgres with flag to get around driver bug
+	
+	//@Column
+	private Boolean booleanVal; // postgres/mysql
+	
+	//@Column
 	private byte[] image;
 
 	public Integer getId() {
@@ -96,7 +113,12 @@ public class TypeCheck {
 	public void setImage(byte[] image) {
 		this.image = image;
 	}
-	
-	
 
+	public OffsetDateTime getOffsetDateTimeData() {
+		return offsetDateTimeData;
+	}
+
+	public void setOffsetDateTimeData(OffsetDateTime offsetDateTimeData) {
+		this.offsetDateTimeData = offsetDateTimeData;
+	}
 }

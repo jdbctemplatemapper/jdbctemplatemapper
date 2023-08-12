@@ -17,10 +17,13 @@ class TableMapping {
 	private String tableName;
 	private String idPropertyName;
 	private boolean idAutoIncrement = false;
+	private String versionPropertyName = null;
+	private String createdOnPropertyName = null;
+	private String createdByPropertyName = null;
+	private String updatedOnPropertyName = null;
+	private String updatedByPropertyName = null;
 
 	// object property to database column mapping.
-	// Only properties which have corresponding database column will be in this
-	// list.
 	private List<PropertyMapping> propertyMappings = new ArrayList<>();
 
 	// these 2 maps used for performance
@@ -38,6 +41,21 @@ class TableMapping {
 		this.propertyMappings = propertyMappings;
 		if (propertyMappings != null) {
 			for (PropertyMapping propMapping : propertyMappings) {
+				if(propMapping.isVersionAnnotation()) {
+					versionPropertyName = propMapping.getPropertyName();
+				}
+				if(propMapping.isCreatedOnAnnotation()) {
+					createdOnPropertyName = propMapping.getPropertyName();
+				}
+				if(propMapping.isCreatedByAnnotation()) {
+					createdByPropertyName = propMapping.getPropertyName();
+				}
+				if(propMapping.isUpdatedOnAnnotation()) {
+					updatedOnPropertyName = propMapping.getPropertyName();
+				}
+				if(propMapping.isUpdatedByAnnotation()) {
+				    updatedByPropertyName = propMapping.getPropertyName();
+				}
 				// these 2 maps used for performance
 				columnNameMap.put(propMapping.getColumnName(), propMapping);
 				propertyNameMap.put(propMapping.getPropertyName(), propMapping);
@@ -51,7 +69,7 @@ class TableMapping {
 	}
 
 	public String getProperyName(String columnName) {
-		PropertyMapping propMapping = columnNameMap.get(columnName.toLowerCase());
+		PropertyMapping propMapping = columnNameMap.get(columnName);
 		return propMapping == null ? null : propMapping.getPropertyName();
 	}
 
@@ -102,5 +120,22 @@ class TableMapping {
 	public List<PropertyMapping> getPropertyMappings() {
 		return propertyMappings;
 	}
+	
+	public PropertyMapping getVersionPropertyMapping() {
+		return versionPropertyName != null ? propertyNameMap.get(versionPropertyName) : null;
+	}
+	public PropertyMapping getCreatedOnPropertyMapping() {
+		return createdOnPropertyName != null ? propertyNameMap.get(createdOnPropertyName) : null;
+	}
+	public PropertyMapping getCreatedByPropertyMapping() {
+		return createdByPropertyName != null ? propertyNameMap.get(createdByPropertyName) : null;
+	}
+	public PropertyMapping getUpdatedOnPropertyMapping() {
+		return updatedOnPropertyName != null ? propertyNameMap.get(updatedOnPropertyName) : null;
+	}
+	public PropertyMapping getUpdatedByPropertyMapping() {
+		return updatedByPropertyName != null ? propertyNameMap.get(updatedByPropertyName) : null;
+	}
+
 
 }
