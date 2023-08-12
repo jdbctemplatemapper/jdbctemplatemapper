@@ -61,12 +61,6 @@ public class AppUtils {
 		return !isEmpty(coll);
 	}
 
-	/**
-	 * Convert the given name to lower case.
-	 * By default, conversions will happen within the US locale.
-	 * @param name the original name
-	 * @return the converted name
-	 */
 	public static String toLowerCase(String str) {
 		return str != null ? str.toLowerCase(Locale.US) : null;
 	}
