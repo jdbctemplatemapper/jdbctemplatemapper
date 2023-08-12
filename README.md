@@ -138,10 +138,10 @@ Properties that need be persisted to the database will need @Column annotation u
 
 The two ways to use it:
 
-@Column 
+@Column
 This will map property to a column using the default naming convention of camelCase to underscore name.
 
-@Column(name="some_colum_name) 
+@Column(name="some_colum_name)
 This will map the property to the column specified by name attribute. 
 
 ```java
