@@ -105,7 +105,7 @@ class Product {
 
 **@Id**
 
-Required field level annotation. There are 2 forms of usage for this.
+Required field level annotation. There are 2 forms of usage for this. @Column annotation can be used with this to map to a different database column.
 
 * **auto incremented id usage**
 
@@ -130,34 +130,81 @@ class Customer {
   ...
 }
 ```
+
 In this case you will have to manually set the id value before calling insert()
 
+**@Column**
+Properties that need be persisted to the database will need @Column annotation unless the property is already annotated with one of the other annotations (@Id, @Version, @CreatedOn @CreatedBy @UpdatedOn @UpdatedBY. @Column can be used with all other annotations to map to a different database column.
+
+```java
+@Table(name="customer")
+class Customer {
+ @Id
+ @Column(name = "customer_id")   // this will map id property to customer_id in database table.
+ private Integer id;
+ 
+ @Column
+ private String customerName;  // will map to custmer_name by default
+ 
+ @Column(name="type")
+ private String customerType;  // will map to type in database
+ 
+ private String something;     // This will not be persisted because it does not have a @Column annotation
+}
+```
+
+
+**@Version**
+This annotation is used for optimistic locking. It has to be of type Integer.
+Will be set to 1 when record is created and will incremented on updates. If the version is stale an OptimisticLockingException will be thrown.  @Column annotation can be used with this to map to a different database column.
+
+**@CreatedOn**
+When record is created the property will be set. It has to be of type LocalDateTime. @Column annotation can be used with this to map to a different database column.
+
+**@UpdatedOn**
+On updates  the property will be set. It has to be of type LocalDateTime. @Column annotation can be used with this to map to a different database column.
+
+**@CreatedBy**
+If IRecordOperatorResolver is implemented and configured with JdbcTemplateMapper the value will be set to value returned by implementation when the record is created. Without configuration no values will be set. The type returned should match the type of the property. @Column annotation can be used with this to map to a different database column.
+
+**@UpdatedBy**
+If IRecordOperatorResolver is implemented and configured with JdbcTemplateMapper the value will be set to value returned by implementation when the record is updated. Without configuration no values will be set. The type returned should match the type of the property. @Column annotation can be used with this to map to a different database column.
+  
 
 Example of the annotations:
 
 ```java
 @Table(name="product")
 class Product {
+
  @Id(type=IdType.AUTO_INCREMENT)
  private Integer productId; 
+ 
  @Column(name="product_name")
- private String name; 
+ private String name;              // will map to product_name table
+ 
  @Column
  private String productDescription // defaults to column name 'product_description' 
+ 
  @CreatedOn 
-  private LocalDateTime createdOn; // property type should be LocalDateTime  
-  @CreatedBy
-  private String createdBy;        // type should match return value of implementation of IRecordOperatorResolver.  
-  @UpdatedOn
-  private LocalDateTime updatedOn; // property type should be LocalDateTime  
+ private LocalDateTime createdOn;  // property type should be LocalDateTime 
+  
+ @CreatedBy
+ private String createdBy;         // type should match return value of implementation of IRecordOperatorResolver.  
+  
+ @UpdatedOn
+ private LocalDateTime updatedOn;  // property type should be LocalDateTime  
+ 
   @UpdatedBy
-  private String updatedBy;        // type should match return value of implementation of IRecordOperatorResolver. 
+  private String updatedBy;        // type should match return value of implementation of IRecordOperatorResolver.
+   
   @Version
   private Integer version;         // property type should be Integer. Used for optimistic locking
+  
 }
+```
 
-## Configuration to auto assign created on, created by
- properties marked by @Createdy and @UpdateBy will be set to values retured by concrete implementation of interface IRecordOperatorResolver. If this is not configured those properties will not be set.
+## Configuration for auto assigning @CreatedBy and @UpdateBy
  
 ```java
 @Bean

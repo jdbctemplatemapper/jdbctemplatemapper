@@ -1,18 +1,12 @@
 package io.github.jdbctemplatemapper.test;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -27,8 +21,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
 import io.github.jdbctemplatemapper.core.SelectMapper;
 import io.github.jdbctemplatemapper.model.NonDefaultNamingProduct;
-import io.github.jdbctemplatemapper.model.Order;
-import io.github.jdbctemplatemapper.model.TypeCheck;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
@@ -39,11 +31,10 @@ public class NonDefaultNamingModelTest {
 
 	@Autowired
 	private JdbcTemplateMapper jtm;
-	
-	
+
 	@Test
 	public void findById_Test() {
-		NonDefaultNamingProduct product = jtm.findById(1, NonDefaultNamingProduct.class); 
+		NonDefaultNamingProduct product = jtm.findById(1, NonDefaultNamingProduct.class);
 	}
 
 	@Test
@@ -55,7 +46,7 @@ public class NonDefaultNamingModelTest {
 
 		jtm.insert(product);
 	}
-	
+
 	@Test
 	public void update_Test() throws Exception {
 		NonDefaultNamingProduct product = new NonDefaultNamingProduct();
@@ -65,13 +56,13 @@ public class NonDefaultNamingModelTest {
 
 		jtm.insert(product);
 
-		NonDefaultNamingProduct product1 = jtm.findById(product.getId(), NonDefaultNamingProduct.class); 
-		
+		NonDefaultNamingProduct product1 = jtm.findById(product.getId(), NonDefaultNamingProduct.class);
+
 		product1.setProductName("cap");
 		jtm.update(product1);
 
 	}
-	
+
 	@Test
 	public void selectMapper_test() {
 
@@ -99,19 +90,17 @@ public class NonDefaultNamingModelTest {
 
 		List<NonDefaultNamingProduct> list = jtm.getJdbcTemplate().query(sql, rsExtractor, product.getId());
 
-        
 		assertTrue(list.size() == 1);
-		
+
 		NonDefaultNamingProduct prod = list.get(0);
 		assertEquals(product.getId(), prod.getId());
-        assertEquals(product.getProductName(), prod.getProductName());	
-        assertEquals("tester", prod.getWhoCreated());
-        assertEquals("tester", prod.getWhoUpdated());
-        assertEquals(1, prod.getLock());
-        assertNotNull(prod.getCreatedAt());
-        assertNotNull(prod.getUpdatedAt());
-        
-        
+		assertEquals(product.getProductName(), prod.getProductName());
+		assertEquals("tester", prod.getWhoCreated());
+		assertEquals("tester", prod.getWhoUpdated());
+		assertEquals(1, prod.getLock());
+		assertNotNull(prod.getCreatedAt());
+		assertNotNull(prod.getUpdatedAt());
+
 	}
-	
+
 }
