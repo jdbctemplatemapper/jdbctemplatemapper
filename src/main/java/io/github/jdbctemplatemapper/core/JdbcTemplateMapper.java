@@ -204,36 +204,6 @@ public class JdbcTemplateMapper {
 	}
 
 	/**
-	 * Returns list of object by the property
-	 *
-	 * @param propertyName  the property name
-	 * @param propertyValue the value of property to query by
-	 * @param clazz         Class of List of objects returned
-	 * @param <T>           the type of the object
-	 * @return the object of the specific type
-	 */
-	public <T> List<T> findByProperty(String propertyName, Object propertyValue, Class<T> clazz) {
-		Assert.notNull(clazz, "Class must not be null");
-		Assert.notNull(clazz, "propertyName must not be null");
-
-		TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
-		String columnName = tableMapping.getColumnName(propertyName);
-		if (columnName == null) {
-			throw new MapperException("property " + clazz.getSimpleName() + "." + propertyName
-					+ " is either invalid or invalid does not have a corresponding column in database.");
-		}
-		
-		String columnsSql = getFindColumnsSql(tableMapping, clazz);
-		String sql = "SELECT " + columnsSql + " FROM "
-				+ mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " " + DEFAULT_TABLE_ALIAS
-				+ " WHERE " + DEFAULT_TABLE_ALIAS + "." + columnName + " = ?";
-
-		RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
-
-		return jdbcTemplate.query(sql, mapper, propertyValue);
-	}
-
-	/**
 	 * Find all objects
 	 *
 	 * @param clazz Type of object
