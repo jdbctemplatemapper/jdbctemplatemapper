@@ -13,15 +13,14 @@
       * auto assign created on, updated on.
       * auto assign created by, updated by using an implementation of interface IRecordOperatorResolver.
       * optimistic locking functionality for updates by configuring a version property.
-  4. Thread safe so just needs a single instance (similar to JdbcTemplate).
-  5. For transaction management use Spring transactions since the library uses JdbcTemplate behind the scenes.
-  6. To log the SQL statements it uses the same logging configurations as JdbcTemplate. See the logging section.
-  7. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with other relational databases. 
+  4. For transaction management use Spring transactions since the library uses JdbcTemplate behind the scenes.
+  5. To log the SQL statements it uses the same logging configurations as JdbcTemplate. See the logging section.
+  6. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with other relational databases. 
   
 ## Example code
  
   ```java 
- //@Table annotation is required and should match a table name in database
+ //@Table annotation is required
  @Table(name="product")
  public class Product {
      // @Id annotation is required.
@@ -105,7 +104,7 @@ class Product {
 
 **@Id**
 
-Required field level annotation. There are 2 forms of usage for this. @Column annotation can be used with this to map to a different database column.
+There are 2 forms of usage for this.
 
 * **auto incremented id usage**
 
@@ -134,21 +133,23 @@ class Customer {
 In this case you will have to manually set the id value before calling insert()
 
 **@Column**
-Properties that need be persisted to the database will need @Column annotation unless the property is already annotated with one of the other annotations (@Id, @Version, @CreatedOn @CreatedBy @UpdatedOn @UpdatedBy). @Column can be used with the other annotations to map to a different column.
+
+Properties that need be persisted to the database will need @Column annotation unless the property is already annotated with one of the other annotations (@Id, @Version, @CreatedOn @CreatedBy @UpdatedOn @UpdatedBy). @Column can be used with the other annotations to map to a different column name.
 
 The two ways to use it:
 
 @Column 
 This will map property to a column using the default naming convention of camelCase to underscore name.
 
-@Column(name="some_colum_name) will map the property to the column specified by name attribute. 
+@Column(name="some_colum_name) 
+This will map the property to the column specified by name attribute. 
 
 ```java
 @Table(name="customer")
 class Customer {
  @Id
- @Column(name = "customer_id")   // this will map id property to customer_id in database table.
- private Integer id;
+ @Column(name = "customer_id")   
+ private Integer id;           // this will map id property to customer_id in database table.
  
  @Column
  private String customerName;  // will map to custmer_name column by default
@@ -163,20 +164,25 @@ class Customer {
 
 
 **@Version**
+
 This annotation is used for optimistic locking. It has to be of type Integer.
-Will be set to 1 when record is created and will incremented on updates. If the version is stale an OptimisticLockingException will be thrown.  @Column annotation can be used with this to map to a different database column.
+Will be set to 1 when record is created and will incremented on updates. If the version is stale an OptimisticLockingException will be thrown.  @Column annotation can be used with this to map to a different column name.
 
 **@CreatedOn**
-When record is created the property will be set. It has to be of type LocalDateTime. @Column annotation can be used with this to map to a different database column.
+
+When record is created the property will be set. It has to be of type LocalDateTime. @Column annotation can be used with this to map to a different column name.
 
 **@UpdatedOn**
-On updates  the property will be set. It has to be of type LocalDateTime. @Column annotation can be used with this to map to a different database column.
+
+On updates  the property will be set. It has to be of type LocalDateTime. @Column annotation can be used with this to map to a different column name.
 
 **@CreatedBy**
-If IRecordOperatorResolver is implemented and configured with JdbcTemplateMapper the value will be set to value returned by implementation when the record is created. Without configuration no values will be set. The type returned should match the type of the property. @Column annotation can be used with this to map to a different database column.
+
+If IRecordOperatorResolver is implemented and configured with JdbcTemplateMapper the value will be set to value returned by implementation when the record is created. Without configuration no values will be set. The type returned should match the type of the property. @Column annotation can be used with this to map to a different column name.
 
 **@UpdatedBy**
-If IRecordOperatorResolver is implemented and configured with JdbcTemplateMapper the value will be set to value returned by implementation when the record is updated. Without configuration no values will be set. The type returned should match the type of the property. @Column annotation can be used with this to map to a different database column.
+
+If IRecordOperatorResolver is implemented and configured with JdbcTemplateMapper the value will be set to value returned by implementation when the record is updated. Without configuration no values will be set. The type returned should match the type of the property. @Column annotation can be used with this to map to a different column name.
   
 
 Example of the annotations:
