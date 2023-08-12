@@ -47,7 +47,7 @@ public class SelectMapper<T> {
 		this.useColumnLabelForResultSetMetaData = useColumnLabelForResultSetMetaData;
 		this.tableAlias = tableAlias;
 		this.colPrefix = tableAlias + ".";
-		this.colAliasPrefix = tableAlias + "_";
+		this.colAliasPrefix = AppUtils.toLowerCase(tableAlias + "_");
 	}
 
 	/**
@@ -58,7 +58,7 @@ public class SelectMapper<T> {
 	 * SelectMapper selectMapper = jdbcTemplateMapper.getSelectMapper(Employee.class, "emp");
 	 * selectMapper.getColumnSql() will return something like below:
 	 * 
-	 * "emp.id emp_id, emp.last_name emp_last_name, emp.first_name emp_first_name"
+	 * "emp.id as emp_id, emp.last_name as emp_last_name, emp.first_name as emp_first_name"
 	 * </pre>
 	 *
 	 * @return comma separated select column string
@@ -107,12 +107,15 @@ public class SelectMapper<T> {
 				// support for older drivers
 				String columnLabel = useColumnLabelForResultSetMetaData ? rsMetaData.getColumnLabel(i)
 						: rsMetaData.getColumnName(i);
-				// case insensitive prefix match
-				if (colAliasPrefix.regionMatches(true, 0, columnLabel, 0, colAliasPrefix.length())) {
-					String propertyName = tableMapping.getProperyName(columnLabel.substring(colAliasPrefix.length()));
-					if (propertyName != null) {
-						bw.setPropertyValue(propertyName,
-								JdbcUtils.getResultSetValue(rs, i, tableMapping.getPropertyType(propertyName)));
+				if (columnLabel != null) {
+					columnLabel = AppUtils.toLowerCase(columnLabel);
+					if (columnLabel.startsWith(colAliasPrefix)) {
+						String propertyName = tableMapping
+								.getProperyName(columnLabel.substring(colAliasPrefix.length()));
+						if (propertyName != null) {
+							bw.setPropertyValue(propertyName,
+									JdbcUtils.getResultSetValue(rs, i, tableMapping.getPropertyType(propertyName)));
+						}
 					}
 				}
 			}

@@ -24,8 +24,6 @@ class TableMapping {
 	private String updatedByPropertyName = null;
 
 	// object property to database column mapping.
-	// Only properties which have corresponding database column will be in this
-	// list.
 	private List<PropertyMapping> propertyMappings = new ArrayList<>();
 
 	// these 2 maps used for performance
@@ -71,7 +69,7 @@ class TableMapping {
 	}
 
 	public String getProperyName(String columnName) {
-		PropertyMapping propMapping = columnNameMap.get(AppUtils.toLowerCase(columnName));
+		PropertyMapping propMapping = columnNameMap.get(columnName);
 		return propMapping == null ? null : propMapping.getPropertyName();
 	}
 

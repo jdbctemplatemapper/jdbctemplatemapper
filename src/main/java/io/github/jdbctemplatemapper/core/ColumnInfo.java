@@ -5,7 +5,7 @@ class ColumnInfo {
   private int columnSqlDataType; // see  java.sql.Types
 
   public ColumnInfo(String columnName, int columnSqlDataType) {
-    this.columnName = columnName;
+    this.columnName =AppUtils.toLowerCase(columnName);
     this.columnSqlDataType = columnSqlDataType;
   }
 

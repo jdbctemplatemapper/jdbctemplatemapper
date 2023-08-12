@@ -34,10 +34,6 @@ import io.github.jdbctemplatemapper.exception.AnnotationException;
 import io.github.jdbctemplatemapper.exception.MapperException;
 
 class MappingHelper {
-	// Map key - table name,
-	// value - the list of database column names
-	private Map<String, List<ColumnInfo>> tableColumnInfoCache = new ConcurrentHashMap<>();
-
 	// Map key - object class
 	// value - the table mapping
 	private Map<Class<?>, TableMapping> objectToTableMappingCache = new ConcurrentHashMap<>();	
@@ -155,6 +151,7 @@ class MappingHelper {
 					if ("[DEFAULT]".equals(colName)) {
 						colName = AppUtils.toUnderscoreName(propertyName);
 					}
+					colName = AppUtils.toLowerCase(colName);
 					if (!columnNameToColumnInfo.containsKey(colName)) {
 						throw new MapperException("column " + colName + " not found in table " + tableName
 								+ " for model property " + clazz.getSimpleName() + "." + propertyName);
@@ -248,8 +245,8 @@ class MappingHelper {
 				}
 			}
 			
-			List<PropertyMapping> propertyMappings = new ArrayList<>(propNameToPropertyMapping.values());
-			validateAnnotations(propertyMappings, clazz);
+			List<PropertyMapping> propertyMappings = new ArrayList<>(propNameToPropertyMapping.values());			
+			validateAnnotations(propertyMappings, clazz);			
 
 			tableMapping = new TableMapping(clazz, tableName, idPropertyName, propertyMappings);
 			tableMapping.setIdAutoIncrement(isIdAutoIncrement);
@@ -274,9 +271,6 @@ class MappingHelper {
 								while (rs.next()) {
 									columnInfoList
 											.add(new ColumnInfo(rs.getString("COLUMN_NAME"), rs.getInt("DATA_TYPE")));
-								}
-								if (AppUtils.isNotEmpty(columnInfoList)) {
-									tableColumnInfoCache.put(tableName, columnInfoList);
 								}
 								return columnInfoList;
 							} finally {
@@ -324,24 +318,34 @@ class MappingHelper {
 		int createdOnCnt = 0;
 		int updatedOnCnt = 0;
 		int updatedByCnt = 0;
+		
+
 		for(PropertyMapping propMapping : propertyMappings) {
+			int conflictCnt = 0;
+			
 			if (propMapping.isIdAnnotation()) {
 				idCnt++;
+				conflictCnt++;
 			}
 			if (propMapping.isVersionAnnotation()) {
 				versionCnt++;
+				conflictCnt++;
 			}
 			if (propMapping.isCreatedOnAnnotation()) {
 				createdOnCnt++;
+				conflictCnt++;
 			}
 			if (propMapping.isCreatedByAnnotation()) {
 				createdByCnt++;
+				conflictCnt++;
 			}
 			if (propMapping.isUpdatedOnAnnotation()) {
 				updatedOnCnt++;
+				conflictCnt++;
 			}
 			if (propMapping.isUpdatedByAnnotation()) {
 				updatedByCnt++;
+				conflictCnt++;
 			}
 			
 			if (propMapping.isVersionAnnotation() && Integer.class != propMapping.getPropertyType()) {
@@ -358,7 +362,13 @@ class MappingHelper {
 				throw new AnnotationException("@UpdatedOn requires the type of property " + clazz.getSimpleName()
 						+ "." + propMapping.getPropertyName() + " to be LocalDateTime");
 			}
+			
+			if(conflictCnt > 1) {
+				throw new AnnotationException(clazz.getSimpleName() + "." + propMapping.getPropertyName() + " has multiple annotations that conflict");
+			}
+			
 		}
+		
 		if(idCnt > 1) {
 			throw new AnnotationException(" model " + clazz.getSimpleName() + " has multiple @Id annotations");
 		}
@@ -376,10 +386,7 @@ class MappingHelper {
 		}
 		if(updatedByCnt > 1) {
 			throw new AnnotationException(" model " + clazz.getSimpleName() + " has multiple @UpdatedBy annotations");
-		}
-		
-
-		
+		}		
 	}
 
 }

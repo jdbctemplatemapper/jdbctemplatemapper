@@ -42,9 +42,6 @@ public class JdbcTemplateMapper {
 	private final MappingHelper mappingHelper;
 	private IRecordOperatorResolver recordOperatorResolver;
 
-	// used for an attempt to support for old/non standard jdbc drivers.
-	private boolean useColumnLabelForResultSetMetaData = true;
-
 	// update sql cache
 	// Map key - object class
 	// value - the update sql details
@@ -57,7 +54,7 @@ public class JdbcTemplateMapper {
 
 	// Map key - object class
 	// value - the column string for all properties which can be be used in a select
-	// statement
+	// statement for the find methods
 	private Map<Class<?>, String> findColumnsSqlCache = new ConcurrentHashMap<>();
 
 	// Need this for type conversions like java.sql.Timestamp to
@@ -67,6 +64,9 @@ public class JdbcTemplateMapper {
 			.getSharedInstance();
 
 	final static String DEFAULT_TABLE_ALIAS = "t";
+	
+	// used for an attempt to support for old/non standard jdbc drivers.
+	private boolean useColumnLabelForResultSetMetaData = true;
 
 	/**
 	 * @param jdbcTemplate - The jdbcTemplate
@@ -531,7 +531,7 @@ public class JdbcTemplateMapper {
 		if (columnsSql == null) {
 			StringJoiner sj = new StringJoiner(", ", " ", " ");
 			for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
-				sj.add(DEFAULT_TABLE_ALIAS + "." + propMapping.getColumnName() + " AS "
+				sj.add(DEFAULT_TABLE_ALIAS + "." + propMapping.getColumnName() + " as "
 						+ AppUtils.toUnderscoreName(propMapping.getPropertyName()));
 			}
 			columnsSql = sj.toString();

@@ -9,12 +9,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import io.github.jdbctemplatemapper.annotation.model.DuplicateCreatedBy;
-import io.github.jdbctemplatemapper.annotation.model.DuplicateCreatedOn;
-import io.github.jdbctemplatemapper.annotation.model.DuplicateId;
-import io.github.jdbctemplatemapper.annotation.model.DuplicateUpdatedBy;
-import io.github.jdbctemplatemapper.annotation.model.DuplicateUpdatedOn;
-import io.github.jdbctemplatemapper.annotation.model.DuplicateVersion;
+import io.github.jdbctemplatemapper.annotation.model.ConflictAnnotation;
+import io.github.jdbctemplatemapper.annotation.model.ConflictAnnotation2;
+import io.github.jdbctemplatemapper.annotation.model.ConflictAnnotation3;
+import io.github.jdbctemplatemapper.annotation.model.DuplicateCreatedByAnnotaition;
+import io.github.jdbctemplatemapper.annotation.model.DuplicateCreatedOnAnnotation;
+import io.github.jdbctemplatemapper.annotation.model.DuplicateIdAnnotion;
+import io.github.jdbctemplatemapper.annotation.model.DuplicateUpdatedByAnnotation;
+import io.github.jdbctemplatemapper.annotation.model.DuplicateUpdatedOnAnnotation;
+import io.github.jdbctemplatemapper.annotation.model.DuplicateVersionAnnotation;
 import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
 import io.github.jdbctemplatemapper.exception.AnnotationException;
 import io.github.jdbctemplatemapper.model.NoIdObject;
@@ -62,44 +65,60 @@ public class AnnotationTest {
 	@Test
 	public void duplicateIdAnnotation_Test() {
 		Assertions.assertThrows(AnnotationException.class, () -> {
-			jtm.findById(1, DuplicateId.class);
+			jtm.findById(1, DuplicateIdAnnotion.class);
 		});
 	}
 	
 	@Test
 	public void duplicateVersionAnnotation_Test() {
 		Assertions.assertThrows(AnnotationException.class, () -> {
-			jtm.findById(1, DuplicateVersion.class);
+			jtm.findById(1, DuplicateVersionAnnotation.class);
 		});
 	}
 	
 	@Test
 	public void duplicateCreatedOnAnnotation_Test() {
 		Assertions.assertThrows(AnnotationException.class, () -> {
-			jtm.findById(1, DuplicateCreatedOn.class);
+			jtm.findById(1, DuplicateCreatedOnAnnotation.class);
 		});
 	}
 	
 	@Test
 	public void duplicateCreatedByAnnotation_Test() {
 		Assertions.assertThrows(AnnotationException.class, () -> {
-			jtm.findById(1, DuplicateCreatedBy.class);
+			jtm.findById(1, DuplicateCreatedByAnnotaition.class);
 		});
 	}
 	
 	@Test
 	public void duplicateUpdatedOnAnnotation_Test() {
 		Assertions.assertThrows(AnnotationException.class, () -> {
-			jtm.findById(1, DuplicateUpdatedOn.class);
+			jtm.findById(1, DuplicateUpdatedOnAnnotation.class);
 		});
 	}
 	
 	@Test
 	public void duplicateUpdatedByAnnotation_Test() {
 		Assertions.assertThrows(AnnotationException.class, () -> {
-			jtm.findById(1, DuplicateUpdatedBy.class);
+			jtm.findById(1, DuplicateUpdatedByAnnotation.class);
 		});
 	}
 	
+	@Test void conflictingAnnotations_Test() {
+		Assertions.assertThrows(AnnotationException.class, () -> {
+			jtm.findById(1, ConflictAnnotation.class);
+		});
+	}
 	
+	@Test void conflictingAnnotations2_Test() {
+		Assertions.assertThrows(AnnotationException.class, () -> {
+			jtm.findById(1, ConflictAnnotation2.class);
+		});
+	}
+	
+	@Test void conflictingAnnotations3_Test() {
+		Assertions.assertThrows(AnnotationException.class, () -> {
+			jtm.findById(1, ConflictAnnotation3.class);
+		});
+	}
 }

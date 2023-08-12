@@ -14,10 +14,10 @@ import io.github.jdbctemplatemapper.annotation.Version;
 @Table(name = "product")
 public class NonDefaultNamingProduct {
 	@Id
-	@Column(name="product_id")
+	@Column(name="PRODUCT_id")
 	private Integer id;
 	
-	@Column(name="name")
+	@Column(name="naME")
 	private String productName;
 	
 	@Column

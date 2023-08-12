@@ -1,6 +1,6 @@
 # JdbcTemplateMapper #
  
- The goal of JdbcTemplateMapper is to make usage of Spring's JdbcTemplate less verbose for features like CRUD and relationship queries.
+ The goal of JdbcTemplateMapper is to the make usage of Spring's JdbcTemplate less verbose for features like CRUD and relationship queries.
  Use it where appropriate and for other features keep using JdbcTemplate as you normally would.
  
  [Javadoc](https://jdbctemplatemapper.github.io/jdbctemplatemapper/javadoc/) 
@@ -33,14 +33,18 @@
      // For non auto increment id use @Id. In this case you will have to manually set id value before invoking insert().
  
      @Id(type=IdType.AUTO_INCREMENT)
-     private Integer id;     
+     private Integer id;   
+       
      @Column(name="product_name")   // will map product_name column in table
      private String name;
+     
      @Column
-     private LocalDateTime availableDate; // will map to column available_date by default   
+     private LocalDateTime availableDate; // will map to column available_date by default 
+       
      @Column
-     private Double price;
-     private String someNonDatabaseProperty;
+     private Double price;                // will map to price column
+     
+     private String someNonDatabaseProperty; // No mapping so would not be included queries/inserts/updates
  
      ...
  }

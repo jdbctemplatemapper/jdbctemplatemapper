@@ -7,7 +7,7 @@ import io.github.jdbctemplatemapper.annotation.IdType;
 import io.github.jdbctemplatemapper.annotation.Table;
 
 @Table(name = "annotation_check")
-public class DuplicateCreatedBy {
+public class DuplicateCreatedByAnnotaition {
 	@Id(type = IdType.AUTO_INCREMENT)
 	private Integer id;
 
