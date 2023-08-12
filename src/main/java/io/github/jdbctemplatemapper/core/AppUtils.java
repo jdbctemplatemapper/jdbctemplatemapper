@@ -5,7 +5,7 @@ import java.util.Locale;
 
 import org.springframework.jdbc.support.JdbcUtils;
 
-public class AppUtils {	
+class AppUtils {	
 	/**
 	 * Converts underscore case to camel case. Ex: user_last_name gets converted to
 	 * userLastName.

@@ -1,6 +1,6 @@
 package io.github.jdbctemplatemapper.core;
 
-public class IdPropertyInfo {
+class IdPropertyInfo {
 	private Class<?> parentClazz;
 	private String propertyName;
 	private boolean isIdAutoIncrement=false; 
