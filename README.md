@@ -30,14 +30,14 @@
      @Id(type=IdType.AUTO_INCREMENT)
      private Integer id;   
        
-     @Column(name="product_name")   // will map product_name column in table
-     private String name;
+     @Column(name="product_name")   
+     private String name;                    // will map to product_name column in table
      
      @Column
-     private LocalDateTime availableDate; // will map to column available_date by default 
+     private LocalDateTime availableDate;    // will map to column available_date by default 
        
      @Column
-     private Double price;                // will map to price column
+     private Double price;                   // will map to price column
      
      private String someNonDatabaseProperty; // No annotations so excluded from inserts/updates/queries
  
@@ -50,14 +50,14 @@
  product.setAvailableDate(LocalDateTime.now());
  jdbcTemplateMapper.insert(product); // because id type is auto increment id value will be set after insert.
 
- product = jdbcTemplateMapper.findById(product.getId(), Product.class);
+ product = jdbcTemplateMapper.findById(Product.class,product.getId());
  product.setPrice(11.50);
  jdbcTemplateMapper.update(product);
  
  List<Product> products = jdbcTemplateMapper.findAll(Product.class);
 
  jdbcTemplateMapper.delete(product);
- jdbcTemplateMapper.delete(5, Product.class); // deleting just using id
+ jdbcTemplateMapper.delete(Product.class, 5); // deleting just using id
  
  // for methods which help make querying relationships less verbose see section 'Querying relationships' below
  
@@ -69,7 +69,7 @@
   <dependency>
     <groupId>io.github.jdbctemplatemapper</groupId>
     <artifactId>jdbctemplatemapper</artifactId>
-    <version>1.2.0</version>
+    <version>1.3.0</version>
  </dependency>
  ```
  
@@ -195,25 +195,30 @@ class Product {
  private Integer productId; 
  
  @Column(name="product_name")
- private String name;              // will map to product_name column
+ private String name;              // maps to product_name column
  
  @Column
- private String productDescription // defaults to column name 'product_description' 
+ private String productDescription // defaults to column product_description 
  
+ @Column(name="created_timestamp")
  @CreatedOn 
- private LocalDateTime createdOn;  // property type should be LocalDateTime 
+ private LocalDateTime createdAt;  // maps to column created_timestamp. Property type should be LocalDateTime 
   
  @CreatedBy
- private String createdBy;         // type should match return value of implementation of IRecordOperatorResolver.  
+ private String createdByUser;     // defaults to column created_by_user. 
+                                   // Property type should match return value of implementation of IRecordOperatorResolver.  
   
  @UpdatedOn
- private LocalDateTime updatedOn;  // property type should be LocalDateTime  
+ private LocalDateTime updatedAt;  // defaults to column updated_at. Property type should be LocalDateTime  
  
-  @UpdatedBy
-  private String updatedBy;        // type should match return value of implementation of IRecordOperatorResolver.
+ @Column(name="last_update_user")
+ @UpdatedBy
+ private String updatedBy;         // maps to column last_update_user. 
+                                   // Property type should match return value of implementation of IRecordOperatorResolver.
    
-  @Version
-  private Integer version;         // property type should be Integer. Used for optimistic locking
+ @Version
+ private Integer version;          // defaults to column version, 
+                                   // Property type should be Integer. Used for optimistic locking
   
 }
 ```

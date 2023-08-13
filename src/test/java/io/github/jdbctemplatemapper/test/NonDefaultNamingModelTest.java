@@ -34,7 +34,7 @@ public class NonDefaultNamingModelTest {
 
 	@Test
 	public void findById_Test() {
-		NonDefaultNamingProduct prod = jtm.findById(1, NonDefaultNamingProduct.class);
+		NonDefaultNamingProduct prod = jtm.findById(NonDefaultNamingProduct.class,1);
 		
 		assertEquals(1, prod.getId());
 		assertEquals("shoes", prod.getProductName());
@@ -44,6 +44,34 @@ public class NonDefaultNamingModelTest {
 		assertNotNull(prod.getCreatedAt());
 		assertNotNull(prod.getUpdatedAt());
 	}
+	
+	@Test
+	public void findByProperty_Test() {
+		List<NonDefaultNamingProduct> list = jtm.findByProperty( NonDefaultNamingProduct.class, "productName", "socks");
+		
+		NonDefaultNamingProduct prod = list.get(0);
+		
+		assertEquals(2, prod.getId());
+		assertEquals("socks", prod.getProductName());
+		assertEquals("system", prod.getWhoCreated());
+		assertEquals("system", prod.getWhoUpdated());
+		assertEquals(1, prod.getOptiLock());
+		assertNotNull(prod.getCreatedAt());
+		assertNotNull(prod.getUpdatedAt());
+	}
+	
+	@Test
+	public void findAll_Test() {
+		List<NonDefaultNamingProduct> list = jtm.findAll(NonDefaultNamingProduct.class);
+		
+		NonDefaultNamingProduct prod = list.get(0);
+		
+		assertNotNull(prod.getProductName());
+		assertNotNull(prod.getWhoCreated());
+		assertNotNull(prod.getCreatedAt());
+		assertNotNull(prod.getUpdatedAt());
+	}
+	
 
 	@Test
 	public void insert_Test() {
@@ -54,7 +82,7 @@ public class NonDefaultNamingModelTest {
 
 		jtm.insert(prod);
 		
-		NonDefaultNamingProduct prod2 = jtm.findById(1005, NonDefaultNamingProduct.class);
+		NonDefaultNamingProduct prod2 = jtm.findById(NonDefaultNamingProduct.class,1005);
 		
 		assertEquals(1005, prod2.getId());
 		assertEquals("hat", prod2.getProductName());
@@ -73,17 +101,23 @@ public class NonDefaultNamingModelTest {
 
 		jtm.insert(product);
 
-		NonDefaultNamingProduct prod1 = jtm.findById(product.getId(), NonDefaultNamingProduct.class);
+		NonDefaultNamingProduct prod1 = jtm.findById(NonDefaultNamingProduct.class,product.getId());
 
 		prod1.setProductName("cap");
 		jtm.update(prod1);
 		
-		NonDefaultNamingProduct prod2 = jtm.findById(prod1.getId(), NonDefaultNamingProduct.class);
+		NonDefaultNamingProduct prod2 = jtm.findById(NonDefaultNamingProduct.class,prod1.getId() );
 		
 		assertEquals(1010, prod2.getId());
 		assertEquals("cap", prod2.getProductName());
 		assertTrue(product.getOptiLock() < prod2.getOptiLock());
 		
+	}
+	
+	@Test
+	public void getColumnName_Test() {
+		String columnName = jtm.getColumnName(NonDefaultNamingProduct.class, "id");
+		assertEquals("product_id", columnName);
 	}
 
 	@Test

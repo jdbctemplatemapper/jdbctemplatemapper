@@ -63,8 +63,6 @@ public class JdbcTemplateMapper {
 	private DefaultConversionService conversionService = (DefaultConversionService) DefaultConversionService
 			.getSharedInstance();
 
-	final static String DEFAULT_TABLE_ALIAS = "t";
-	
 	// used for an attempt to support for old/non standard jdbc drivers.
 	private boolean useColumnLabelForResultSetMetaData = true;
 
@@ -177,21 +175,21 @@ public class JdbcTemplateMapper {
 
 	/**
 	 * Returns the object by Id. Return null if not found
-	 *
-	 * @param id    Id of object
+	 * 
+	 * @param <T>   the type
 	 * @param clazz Class of object
-	 * @param <T>   the type of the object
+	 * @param id    Id of object
 	 * @return the object of the specific type
 	 */
-	public <T> T findById(Object id, Class<T> clazz) {
+	public <T> T findById(Class<T> clazz, Object id) {
 		Assert.notNull(clazz, "Class must not be null");
 
 		TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
 		String columnsSql = getFindColumnsSql(tableMapping, clazz);
 
 		String sql = "SELECT " + columnsSql + " FROM "
-				+ mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " " + DEFAULT_TABLE_ALIAS
-				+ " WHERE " + DEFAULT_TABLE_ALIAS + "." + tableMapping.getIdColumnName() + " = ?";
+				+ mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " WHERE "
+				+ tableMapping.getIdColumnName() + " = ?";
 
 		RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
 
@@ -204,21 +202,105 @@ public class JdbcTemplateMapper {
 	}
 
 	/**
-	 * Find all objects
+	 * Returns list of objects which match the property value.
 	 *
+	 * @param <T>           the type
+	 * @param clazz         Class of List of objects returned
+	 * @param propertyName  the property name
+	 * @param propertyValue the value of property to query by
+	 * @return the object of the specific type
+	 */
+	public <T> List<T> findByProperty(Class<T> clazz, String propertyName, Object propertyValue ) {
+		return findByProperty(clazz, propertyName, propertyValue, null);
+	}
+
+	/**
+	 * Returns list of objects which match the propertyValue ordered by the orderedByProperty ascending.
+	 *
+	 * @param <T>           the type
+	 * @param clazz         Class of List of objects returned
+	 * @param propertyName  the property name
+	 * @param propertyValue the value of property to query by
+	 * @param orderByPropertyName the order by property name
+	 * @return the object of the specific type
+	 */
+	
+	public <T> List<T> findByProperty(Class<T> clazz, String propertyName, Object propertyValue, String orderByPropertyName
+			) {
+		Assert.notNull(clazz, "Class must not be null");
+		Assert.notNull(propertyName, "propertyName must not be null");
+
+		TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
+		String propColumnName = tableMapping.getColumnName(propertyName);
+		if (propColumnName == null) {
+			throw new MapperException("property " + clazz.getSimpleName() + "." + propertyName
+					+ " is either invalid or does not have a corresponding column in database.");
+		}
+
+		String columnsSql = getFindColumnsSql(tableMapping, clazz);
+		String sql = "SELECT " + columnsSql + " FROM "
+				+ mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " WHERE " + propColumnName
+				+ " = ?";
+
+		String orderByColumnName = null;
+		if (orderByPropertyName != null) {
+			orderByColumnName = tableMapping.getColumnName(orderByPropertyName);
+			if (orderByColumnName == null) {
+				throw new MapperException("orderByPropertyName " + clazz.getSimpleName() + "." + orderByPropertyName
+						+ " is either invalid or does not have a corresponding column in database.");
+			}
+		}
+
+		if (orderByColumnName != null) {
+			sql = sql + " ORDER BY " + orderByColumnName + " ASC";
+		}
+
+		RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
+
+		return jdbcTemplate.query(sql, mapper, propertyValue);
+	}
+
+	
+	/**
+	 * Find all objects
+	 * 
+	 * @param <T>   the type
 	 * @param clazz Type of object
-	 * @param <T>   the type of the objects
 	 * @return List of objects
 	 */
 	public <T> List<T> findAll(Class<T> clazz) {
+	   return findAll(clazz, null);
+	}
+	/**
+	 * Find all objects ordered by orderByPropertyName ascending
+	 *
+	 * @param <T>   the type
+	 * @param clazz Type of object
+	 * @param orderByPropertyName the order by property
+	 * @return List of objects
+	 */
+	public <T> List<T> findAll(Class<T> clazz, String orderByPropertyName) {
 		Assert.notNull(clazz, "Class must not be null");
 
 		TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
 		String columnsSql = getFindColumnsSql(tableMapping, clazz);
-
-		String sql = "SELECT " + columnsSql + " FROM "
-				+ mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " " + DEFAULT_TABLE_ALIAS;
+	
+		String orderByColumnName = null;
+		if(orderByPropertyName != null) {
+			orderByColumnName = tableMapping.getColumnName(orderByPropertyName);
+			if (orderByColumnName == null) {
+				throw new MapperException("orderByPropertyName " + clazz.getSimpleName() + "." + orderByPropertyName
+						+ " is either invalid or does not have a corresponding column in database.");
+			}
+		}
 		
+		String sql = "SELECT " + columnsSql + " FROM "
+				+ mappingHelper.fullyQualifiedTableName(tableMapping.getTableName());
+		
+		if (orderByColumnName != null) {
+			sql = sql + " ORDER BY " + orderByColumnName + " ASC";
+		}
+
 		RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
 		return jdbcTemplate.query(sql, mapper);
 	}
@@ -240,7 +322,7 @@ public class JdbcTemplateMapper {
 
 		TableMapping tableMapping = mappingHelper.getTableMapping(obj.getClass());
 
-		BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
+		BeanWrapper bw = getBeanWrapper(obj);
 
 		Object idValue = bw.getPropertyValue(tableMapping.getIdPropertyName());
 
@@ -335,7 +417,7 @@ public class JdbcTemplateMapper {
 			updateSqlAndParamsCache.put(obj.getClass(), sqlAndParams);
 		}
 
-		BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
+		BeanWrapper bw = getBeanWrapper(obj);
 		Set<String> parameters = sqlAndParams.getParams();
 
 		PropertyMapping updatedByPropMapping = tableMapping.getUpdatedByPropertyMapping();
@@ -401,7 +483,7 @@ public class JdbcTemplateMapper {
 
 		String sql = "DELETE FROM " + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " WHERE "
 				+ tableMapping.getIdColumnName() + "= ?";
-		BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
+		BeanWrapper bw = getBeanWrapper(obj);
 		Object id = bw.getPropertyValue(tableMapping.getIdPropertyName());
 		return jdbcTemplate.update(sql, id);
 	}
@@ -409,12 +491,12 @@ public class JdbcTemplateMapper {
 	/**
 	 * Physically Deletes the object from the database by id
 	 *
-	 * @param <T>   This describes class type
-	 * @param id    Id of object to be deleted
+	 * @param <T>   the type
 	 * @param clazz Type of object to be deleted.
+	 * @param id    Id of object to be deleted
 	 * @return number records were deleted (1 or 0)
 	 */
-	public <T> Integer deleteById(Object id, Class<T> clazz) {
+	public <T> Integer deleteById(Class<T> clazz, Object id) {
 		Assert.notNull(clazz, "Class must not be null");
 		Assert.notNull(id, "id must not be null");
 
@@ -427,7 +509,7 @@ public class JdbcTemplateMapper {
 	/**
 	 * Returns the SelectMapper
 	 * 
-	 * @param <T>        the class for the SelectMapper
+	 * @param <T>        the type for the SelectMapper
 	 * @param clazz      the class
 	 * @param tableAlias the table alias used in the query.
 	 * @return the SelectMapper
@@ -436,13 +518,46 @@ public class JdbcTemplateMapper {
 		return new SelectMapper<T>(clazz, tableAlias, mappingHelper, conversionService,
 				useColumnLabelForResultSetMetaData);
 	}
-	
+
 	/**
-	 * This loads the mapping for a class. Could be used during Spring application startup
-	 * so you know early if all the mappings are working.
+	 * Get the column name of a property of the Model. Will return null if there is no
+	 * corresponding column for the property.
 	 * 
-	 * @param <T>        the class for the model
-	 * @param clazz      the class
+	 * @param <T> the type
+	 * @param clazz the class
+	 * @param propertyName the property name
+	 * @return the column name
+	 */
+	public <T> String getColumnName(Class<T> clazz, String propertyName) {
+		return mappingHelper.getTableMapping(clazz).getColumnName(propertyName);
+	}
+
+	/**
+	 * returns a string which can be used in a sql select statement with all the
+	 * properties which have corresponding database columns. the alias will be the
+	 * underscore name of propertyName.
+	 * 
+	 * Works well when using JdbcTemplate's BeanPropertyRowMapper when writing
+	 * custom where clauses. Will return something like
+	 * 
+	 * <pre>
+	 * "id as id, last_name as last_name"
+	 * </pre>
+	 * 
+	 * @param <T> the type
+	 * @param clazz the class
+	 * @return comma separated select column string
+	 */
+	public <T> String getColumnsSql(Class<T> clazz) {
+		return getFindColumnsSql(mappingHelper.getTableMapping(clazz), clazz);
+	}
+
+	/**
+	 * This loads the mapping for a class. Could be used during Spring application
+	 * startup to know early if all the mappings are valid
+	 * 
+	 * @param <T>   the type
+	 * @param clazz the class
 	 */
 	public <T> void loadMapping(Class<T> clazz) {
 		mappingHelper.getTableMapping(clazz);
@@ -490,8 +605,8 @@ public class JdbcTemplateMapper {
 				sqlBuilder.append(propMapping.getPropertyName());
 				params.add(propMapping.getPropertyName());
 			}
-		}		
-		
+		}
+
 		// the where clause
 		sqlBuilder.append(" WHERE " + tableMapping.getIdColumnName() + " = :" + tableMapping.getIdPropertyName());
 		params.add(tableMapping.getIdPropertyName());
@@ -512,13 +627,18 @@ public class JdbcTemplateMapper {
 		if (columnsSql == null) {
 			StringJoiner sj = new StringJoiner(", ", " ", " ");
 			for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
-				sj.add(DEFAULT_TABLE_ALIAS + "." + propMapping.getColumnName() + " as "
-						+ AppUtils.toUnderscoreName(propMapping.getPropertyName()));
+				sj.add(propMapping.getColumnName() + " as " + AppUtils.toUnderscoreName(propMapping.getPropertyName()));
 			}
 			columnsSql = sj.toString();
 			findColumnsSqlCache.put(clazz, columnsSql);
 		}
 		return columnsSql;
+	}
+
+	private BeanWrapper getBeanWrapper(Object obj) {
+		BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
+		bw.setConversionService(conversionService);
+		return bw;
 	}
 
 }

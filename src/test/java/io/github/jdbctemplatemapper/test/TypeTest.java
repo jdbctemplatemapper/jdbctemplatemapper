@@ -59,7 +59,7 @@ public class TypeTest {
 
 		jtm.insert(obj);
 
-		TypeCheck tc = jtm.findById(obj.getId(), TypeCheck.class);
+		TypeCheck tc = jtm.findById(TypeCheck.class,obj.getId() );
 		assertNotNull(tc.getLocalDateData());
 		assertNotNull(tc.getJavaUtilDateData());
 		assertNotNull(tc.getLocalDateTimeData());
@@ -107,8 +107,8 @@ public class TypeTest {
 
 		jtm.insert(obj);
 
-		TypeCheck tc = jtm.findById(obj.getId(), TypeCheck.class);
-		TypeCheck tc1 = jtm.findById(obj.getId(), TypeCheck.class);
+		TypeCheck tc = jtm.findById(TypeCheck.class,obj.getId() );
+		TypeCheck tc1 = jtm.findById(TypeCheck.class,obj.getId());
 
 		Instant instant = LocalDate.now().plusDays(1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant();
 		java.util.Date nextDay = Date.from(instant);
@@ -136,7 +136,7 @@ public class TypeTest {
 
 		jtm.update(tc1);
 
-		TypeCheck tc2 = jtm.findById(obj.getId(), TypeCheck.class);
+		TypeCheck tc2 = jtm.findById(TypeCheck.class,obj.getId());
 
 		assertTrue(tc2.getLocalDateData().isAfter(tc.getLocalDateData()));
 		assertTrue(tc2.getJavaUtilDateData().getTime() > tc.getJavaUtilDateData().getTime());

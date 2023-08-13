@@ -41,42 +41,42 @@ public class AnnotationTest {
 	@Test
 	public void noTableAnnotation_Test() {
 		Assertions.assertThrows(AnnotationException.class, () -> {
-			jtm.findById(1, NoTableAnnotationModel.class);
+			jtm.findById(NoTableAnnotationModel.class, 1);
 		});
 	}
 	
 	@Test
 	public void invalidTable_Test() {
 		Assertions.assertThrows(AnnotationException.class, () -> {
-			jtm.findById(1, InvalidTableObject.class);
+			jtm.findById(InvalidTableObject.class,1);
 		});
 	}
 	
 	@Test
 	public void blankTable_Test() {
 		Assertions.assertThrows(AnnotationException.class, () -> {
-			jtm.findById(1, BlankTableObject.class);
+			jtm.findById(BlankTableObject.class, 1 );
 		});
 	}
 	
 	@Test
 	public void noIdObject_Test() {
 		Assertions.assertThrows(AnnotationException.class, () -> {
-			jtm.findById(1, NoIdObject.class);
+			jtm.findById(NoIdObject.class,1);
 		});
 	}
 	
 	@Test
 	public void noMatchingColumn_Test() {
 		Assertions.assertThrows(AnnotationException.class, () -> {
-			jtm.findById(1, NoMatchingColumn.class);
+			jtm.findById(NoMatchingColumn.class,1);
 		});
 	}
 	
 	@Test
 	public void noMatchingColumn2_Test() {
 		Assertions.assertThrows(AnnotationException.class, () -> {
-			jtm.findById(1, NoMatchingColumn2.class);
+			jtm.findById(NoMatchingColumn2.class,1);
 		});
 	}
 	
@@ -84,60 +84,60 @@ public class AnnotationTest {
 	@Test
 	public void duplicateIdAnnotation_Test() {
 		Assertions.assertThrows(AnnotationException.class, () -> {
-			jtm.findById(1, DuplicateIdAnnotion.class);
+			jtm.findById(DuplicateIdAnnotion.class,1 );
 		});
 	}
 	
 	@Test
 	public void duplicateVersionAnnotation_Test() {
 		Assertions.assertThrows(AnnotationException.class, () -> {
-			jtm.findById(1, DuplicateVersionAnnotation.class);
+			jtm.findById(DuplicateVersionAnnotation.class,1 );
 		});
 	}
 	
 	@Test
 	public void duplicateCreatedOnAnnotation_Test() {
 		Assertions.assertThrows(AnnotationException.class, () -> {
-			jtm.findById(1, DuplicateCreatedOnAnnotation.class);
+			jtm.findById(DuplicateCreatedOnAnnotation.class,1);
 		});
 	}
 	
 	@Test
 	public void duplicateCreatedByAnnotation_Test() {
 		Assertions.assertThrows(AnnotationException.class, () -> {
-			jtm.findById(1, DuplicateCreatedByAnnotaition.class);
+			jtm.findById(DuplicateCreatedByAnnotaition.class,1);
 		});
 	}
 	
 	@Test
 	public void duplicateUpdatedOnAnnotation_Test() {
 		Assertions.assertThrows(AnnotationException.class, () -> {
-			jtm.findById(1, DuplicateUpdatedOnAnnotation.class);
+			jtm.findById(DuplicateUpdatedOnAnnotation.class,1 );
 		});
 	}
 	
 	@Test
 	public void duplicateUpdatedByAnnotation_Test() {
 		Assertions.assertThrows(AnnotationException.class, () -> {
-			jtm.findById(1, DuplicateUpdatedByAnnotation.class);
+			jtm.findById(DuplicateUpdatedByAnnotation.class,1);
 		});
 	}
 	
 	@Test void conflictingAnnotations_Test() {
 		Assertions.assertThrows(AnnotationException.class, () -> {
-			jtm.findById(1, ConflictAnnotation.class);
+			jtm.findById(ConflictAnnotation.class,1);
 		});
 	}
 	
 	@Test void conflictingAnnotations2_Test() {
 		Assertions.assertThrows(AnnotationException.class, () -> {
-			jtm.findById(1, ConflictAnnotation2.class);
+			jtm.findById(ConflictAnnotation2.class,1);
 		});
 	}
 	
 	@Test void conflictingAnnotations3_Test() {
 		Assertions.assertThrows(AnnotationException.class, () -> {
-			jtm.findById(1, ConflictAnnotation3.class);
+			jtm.findById(ConflictAnnotation3.class,1);
 		});
 	}
 }

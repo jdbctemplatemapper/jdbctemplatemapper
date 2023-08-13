@@ -51,8 +51,9 @@ public class SelectMapper<T> {
 	}
 
 	/**
-	 * Generates a string which can be used in a sql select statement for all the
-	 * properties which have corresponding database columns
+	 * returns a string which can be used in a sql select statement with all the
+	 * properties which have corresponding database columns. The column aliases will have a prefix of tableAlias 
+	 * concatenated with "_"
 	 *
 	 * <pre>
 	 * SelectMapper selectMapper = jdbcTemplateMapper.getSelectMapper(Employee.class, "emp");
@@ -73,7 +74,7 @@ public class SelectMapper<T> {
 	}
 
 	String getTableAlias() {
-		return this.tableAlias;
+		return tableAlias;
 	}
 
 	/**
