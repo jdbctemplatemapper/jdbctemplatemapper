@@ -169,8 +169,9 @@ public class JdbcTemplateMapper {
 
 	/**
 	 * Some postgres drivers seem to not return the correct meta data for TIMESTAMP WITH TIMEZONE fields.
-	 * This will force system to use this sqlType if the property is of type OffsetDateTime
-	 * @param val
+	 * This will force system to use this sqlType if the property is of type OffsetDateTime. Set this value to false
+	 * if this is the case.
+	 * @param val false/true
 	 */
 	public void forcePostgresTimestampWithTimezone(boolean val) {
 		mappingHelper.forcePostgresTimestampWithTimezone(val);
