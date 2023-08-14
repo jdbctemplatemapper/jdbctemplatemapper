@@ -52,14 +52,12 @@ public class JdbcTemplateMapper {
 	// value - insert sql details
 	private Map<Class<?>, SimpleJdbcInsert> simpleJdbcInsertCache = new ConcurrentHashMap<>();
 
+	// the column sql string with column aliases for all properties of model for find methods
 	// Map key - object class
-	// value - the column string for all properties which can be be used in a select
-	// statement for the find methods
+	// value - the column sql string
 	private Map<Class<?>, String> findColumnsSqlCache = new ConcurrentHashMap<>();
 
-	// Need this for type conversions like java.sql.Timestamp to
-	// java.time.LocalDateTime etc
-	// JdbcTemplate uses this converter for BeanPropertyRowMapper.
+	// JdbcTemplate uses this as its converter so use the same
 	private DefaultConversionService conversionService = (DefaultConversionService) DefaultConversionService
 			.getSharedInstance();
 
@@ -158,7 +156,7 @@ public class JdbcTemplateMapper {
 	}
 
 	/**
-	 * Support for old/non standard jdbc drivers. For these drivers
+	 * Attempted Support for old/non standard jdbc drivers. For these drivers
 	 * resultSetMetaData,getcolumnLabel(int) info is in
 	 * resultSetMetaData.getColumnName(int). When this is the case set this value to
 	 * false. default is true
@@ -169,6 +167,11 @@ public class JdbcTemplateMapper {
 		this.useColumnLabelForResultSetMetaData = val;
 	}
 
+	/**
+	 * Some postgres drivers seem to not return the correct meta data for TIMESTAMP WIT TIMEZONE fields.
+	 * This will force system to use this sqlType if the property is of type OffsetDateTime
+	 * @param val
+	 */
 	public void forcePostgresTimestampWithTimezone(boolean val) {
 		mappingHelper.forcePostgresTimestampWithTimezone(val);
 	}
@@ -307,14 +310,16 @@ public class JdbcTemplateMapper {
 
 	/**
 	 * Inserts an object. Objects with auto increment id will have the id set to the
-	 * new from database. For non auto increment ids the id has to be manually set
-	 * before call insert.
-	 *
-	 * <p>
-	 * Will assign created by, created on, updated by, updated on, version if the
-	 * properties exist for the object and the JdbcTemplateMapper is configured for
-	 * them.
-	 *
+	 * new id from database. For non auto increment id the id has to be manually set
+	 * before invoking insert().
+	 * <pre>
+	 * Will handle the following annotations:
+	 * &#64;CreatedOn property will be assigned current date and time 
+	 * &#64;CreatedBy if IRecordOperaterrResolver is configured with JdbcTemplateMapper the property will be assigned that value
+	 * &#64;UpdatedOn property will be assigned current date and time 
+	 * &#64;UpdatedBy if IRecordOperaterrResolver is configured with JdbcTemplateMapper the property will be assigned that value
+	 * &#64;Version property will be set to 1. Used for optimistic locking.
+	 * </pre>
 	 * @param obj The object to be saved
 	 */
 	public void insert(Object obj) {
@@ -397,12 +402,12 @@ public class JdbcTemplateMapper {
 
 	/**
 	 * Update the object.
-	 * 
-	 * Assigns updated by, updated on if the properties exist for the object and the
-	 * jdbcTemplateMapper is configured for these fields. if optimistic locking
-	 * 'version' property exists for the object an OptimisticLockingException will
-	 * be thrown if object is stale.
-	 *
+	 * <pre>
+	 * Will handle the following annotations:
+	 * &#64;UpdatedOn property will be assigned current date and time 
+	 * &#64;UpdatedBy if IRecordOperaterrResolver is configured with JdbcTemplateMapper the property will be assigned that value
+	 * &#64;Version property will be incremented on a successful update. An OptimisticLockingException will be thrown if object is stale.
+	 * </pre>
 	 * @param obj object to be updated
 	 * @return number of records updated
 	 */
@@ -537,7 +542,7 @@ public class JdbcTemplateMapper {
 	 * properties which have corresponding database columns. the alias will be the
 	 * underscore name of propertyName.
 	 * 
-	 * Works well when using JdbcTemplate's BeanPropertyRowMapper when writing
+	 * Works well when using JdbcTemplate's BeanPropertyRowMapper for writing
 	 * custom where clauses. Will return something like
 	 * 
 	 * <pre>
@@ -553,8 +558,9 @@ public class JdbcTemplateMapper {
 	}
 
 	/**
-	 * This loads the mapping for a class. Could be used during Spring application
-	 * startup to know early if all the mappings are valid
+	 * This loads the mapping for a class. Model mappings are loaded when they are used for the first time.
+	 * This method is provided so that the mappings can be loaded during Spring application
+	 * startup so any mapping issues can be known at startup.
 	 * 
 	 * @param <T>   the type
 	 * @param clazz the class
