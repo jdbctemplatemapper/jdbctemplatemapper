@@ -168,7 +168,7 @@ public class JdbcTemplateMapper {
 	}
 
 	/**
-	 * Some postgres drivers seem to not return the correct meta data for TIMESTAMP WIT TIMEZONE fields.
+	 * Some postgres drivers seem to not return the correct meta data for TIMESTAMP WITH TIMEZONE fields.
 	 * This will force system to use this sqlType if the property is of type OffsetDateTime
 	 * @param val
 	 */
