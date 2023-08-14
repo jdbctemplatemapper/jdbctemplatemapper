@@ -146,9 +146,7 @@ public class JdbcTemplateMapper {
 
 	/**
 	 * Exposing the conversion service used so if necessary new converters can be
-	 * added. DefaultConversionService conversionService = getConversionService()
-	 * conversionService.addConverterFactory(SomeImplementation of Springs
-	 * ConverterFactoryj);
+	 * added
 	 * 
 	 * @return the default conversion service.
 	 */
