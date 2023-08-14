@@ -21,8 +21,8 @@ class AppUtils {
 	 * Converts camel case to underscore case. Ex: userLastName gets converted to
 	 * user_last_name. Copy of code from Spring BeanPropertyRowMapper
 	 *
-	 * @param str underscore case string
-	 * @return the camel case string
+	 * @param str camel case string
+	 * @return the underscore case string
 	 */
 	public static String toUnderscoreName(String str) {
 		if (isEmpty(str)) {

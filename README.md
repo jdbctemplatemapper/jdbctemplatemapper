@@ -166,7 +166,7 @@ class Customer {
 **@Version**
 
 This annotation is used for optimistic locking. It has to be of type Integer.
-Will be set to 1 when record is created and will incremented on updates. If the version is stale an OptimisticLockingException will be thrown.  @Column annotation can be used with this to map to a different column name.
+Will be set to 1 when record is created and will incremented on updates. On updates if the version is stale an OptimisticLockingException will be thrown.  @Column annotation can be used with this to map to a different column name.
 
 **@CreatedOn**
 
