@@ -52,7 +52,8 @@ public class JdbcTemplateMapper {
 	// value - insert sql details
 	private Map<Class<?>, SimpleJdbcInsert> simpleJdbcInsertCache = new ConcurrentHashMap<>();
 
-	// the column sql string with column aliases for all properties of model for find methods
+	// the column sql string with column aliases for all properties of model for
+	// find methods
 	// Map key - object class
 	// value - the column sql string
 	private Map<Class<?>, String> findColumnsSqlCache = new ConcurrentHashMap<>();
@@ -168,10 +169,11 @@ public class JdbcTemplateMapper {
 	}
 
 	/**
-	 * Some postgres drivers seem to not return the correct meta data for TIMESTAMP WITH TIMEZONE fields.
-	 * This will force system to use this sqlType if the property is of type OffsetDateTime. Set this value to false
-	 * if this is the case.
-	 * @param val false/true
+	 * Some postgres drivers seem to not return the correct meta data for TIMESTAMP
+	 * WITH TIMEZONE fields. If this value is set to true it will force system to use
+	 * java.sql.Types.TIMESTAMP_WITH_TIMEZONE for properties of models which are of type OffsetDateTime.
+	 * 
+	 * @param val boolean value
 	 */
 	public void forcePostgresTimestampWithTimezone(boolean val) {
 		mappingHelper.forcePostgresTimestampWithTimezone(val);
@@ -214,23 +216,24 @@ public class JdbcTemplateMapper {
 	 * @param propertyValue the value of property to query by
 	 * @return the object of the specific type
 	 */
-	public <T> List<T> findByProperty(Class<T> clazz, String propertyName, Object propertyValue ) {
+	public <T> List<T> findByProperty(Class<T> clazz, String propertyName, Object propertyValue) {
 		return findByProperty(clazz, propertyName, propertyValue, null);
 	}
 
 	/**
-	 * Returns list of objects which match the propertyValue ordered by the orderedByProperty ascending.
+	 * Returns list of objects which match the propertyValue ordered by the
+	 * orderedByProperty ascending.
 	 *
-	 * @param <T>           the type
-	 * @param clazz         Class of List of objects returned
-	 * @param propertyName  the property name
-	 * @param propertyValue the value of property to query by
+	 * @param <T>                 the type
+	 * @param clazz               Class of List of objects returned
+	 * @param propertyName        the property name
+	 * @param propertyValue       the value of property to query by
 	 * @param orderByPropertyName the order by property name
 	 * @return the object of the specific type
 	 */
-	
-	public <T> List<T> findByProperty(Class<T> clazz, String propertyName, Object propertyValue, String orderByPropertyName
-			) {
+
+	public <T> List<T> findByProperty(Class<T> clazz, String propertyName, Object propertyValue,
+			String orderByPropertyName) {
 		Assert.notNull(clazz, "Class must not be null");
 		Assert.notNull(propertyName, "propertyName must not be null");
 
@@ -264,7 +267,6 @@ public class JdbcTemplateMapper {
 		return jdbcTemplate.query(sql, mapper, propertyValue);
 	}
 
-	
 	/**
 	 * Find all objects
 	 * 
@@ -273,13 +275,14 @@ public class JdbcTemplateMapper {
 	 * @return List of objects
 	 */
 	public <T> List<T> findAll(Class<T> clazz) {
-	   return findAll(clazz, null);
+		return findAll(clazz, null);
 	}
+
 	/**
 	 * Find all objects ordered by orderByPropertyName ascending
 	 *
-	 * @param <T>   the type
-	 * @param clazz Type of object
+	 * @param <T>                 the type
+	 * @param clazz               Type of object
 	 * @param orderByPropertyName the order by property
 	 * @return List of objects
 	 */
@@ -288,19 +291,19 @@ public class JdbcTemplateMapper {
 
 		TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
 		String columnsSql = getFindColumnsSql(tableMapping, clazz);
-	
+
 		String orderByColumnName = null;
-		if(orderByPropertyName != null) {
+		if (orderByPropertyName != null) {
 			orderByColumnName = tableMapping.getColumnName(orderByPropertyName);
 			if (orderByColumnName == null) {
 				throw new MapperException("orderByPropertyName " + clazz.getSimpleName() + "." + orderByPropertyName
 						+ " is either invalid or does not have a corresponding column in database.");
 			}
 		}
-		
+
 		String sql = "SELECT " + columnsSql + " FROM "
 				+ mappingHelper.fullyQualifiedTableName(tableMapping.getTableName());
-		
+
 		if (orderByColumnName != null) {
 			sql = sql + " ORDER BY " + orderByColumnName + " ASC";
 		}
@@ -313,6 +316,7 @@ public class JdbcTemplateMapper {
 	 * Inserts an object. Objects with auto increment id will have the id set to the
 	 * new id from database. For non auto increment id the id has to be manually set
 	 * before invoking insert().
+	 * 
 	 * <pre>
 	 * Will handle the following annotations:
 	 * &#64;CreatedOn property will be assigned current date and time 
@@ -321,6 +325,7 @@ public class JdbcTemplateMapper {
 	 * &#64;UpdatedBy if IRecordOperaterrResolver is configured with JdbcTemplateMapper the property will be assigned that value
 	 * &#64;Version property will be set to 1. Used for optimistic locking.
 	 * </pre>
+	 * 
 	 * @param obj The object to be saved
 	 */
 	public void insert(Object obj) {
@@ -403,12 +408,14 @@ public class JdbcTemplateMapper {
 
 	/**
 	 * Update the object.
+	 * 
 	 * <pre>
 	 * Will handle the following annotations:
 	 * &#64;UpdatedOn property will be assigned current date and time 
 	 * &#64;UpdatedBy if IRecordOperaterrResolver is configured with JdbcTemplateMapper the property will be assigned that value
 	 * &#64;Version property will be incremented on a successful update. An OptimisticLockingException will be thrown if object is stale.
 	 * </pre>
+	 * 
 	 * @param obj object to be updated
 	 * @return number of records updated
 	 */
@@ -526,11 +533,11 @@ public class JdbcTemplateMapper {
 	}
 
 	/**
-	 * Get the column name of a property of the Model. Will return null if there is no
-	 * corresponding column for the property.
+	 * Get the column name of a property of the Model. Will return null if there is
+	 * no corresponding column for the property.
 	 * 
-	 * @param <T> the type
-	 * @param clazz the class
+	 * @param <T>          the type
+	 * @param clazz        the class
 	 * @param propertyName the property name
 	 * @return the column name
 	 */
@@ -543,14 +550,14 @@ public class JdbcTemplateMapper {
 	 * properties which have corresponding database columns. the alias will be the
 	 * underscore name of propertyName.
 	 * 
-	 * Works well when using JdbcTemplate's BeanPropertyRowMapper for writing
-	 * custom where clauses. Will return something like
+	 * Works well when using JdbcTemplate's BeanPropertyRowMapper for writing custom
+	 * where clauses. Will return something like
 	 * 
 	 * <pre>
 	 * "id as id, last_name as last_name"
 	 * </pre>
 	 * 
-	 * @param <T> the type
+	 * @param <T>   the type
 	 * @param clazz the class
 	 * @return comma separated select column string
 	 */
@@ -559,9 +566,10 @@ public class JdbcTemplateMapper {
 	}
 
 	/**
-	 * This loads the mapping for a class. Model mappings are loaded when they are used for the first time.
-	 * This method is provided so that the mappings can be loaded during Spring application
-	 * startup so any mapping issues can be known at startup.
+	 * This loads the mapping for a class. Model mappings are loaded when they are
+	 * used for the first time. This method is provided so that the mappings can be
+	 * loaded during Spring application startup so any mapping issues can be known
+	 * at startup.
 	 * 
 	 * @param <T>   the type
 	 * @param clazz the class
