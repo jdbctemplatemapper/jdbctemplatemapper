@@ -131,10 +131,9 @@ public class JdbcTemplateMapper {
 	}
 
 	/**
-	 * An implementation of IRecordOperatorResolver is used to populate the created
-	 * by and updated by fields. Assign this while initializing the
-	 * jdbcTemplateMapper
-	 *
+	 * An implementation of IRecordOperatorResolver is used to populate the &#64;CreatedBy and &#64;UpdatedBy
+	 * annotated properties. 
+	 * 
 	 * @param recordOperatorResolver The implement for interface
 	 *                               IRecordOperatorResolver
 	 * @return The jdbcTemplateMapper The jdbcTemplateMapper

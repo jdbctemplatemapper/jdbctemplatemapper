@@ -48,7 +48,7 @@
  product.setName("some product name");
  product.setPrice(10.25);
  product.setAvailableDate(LocalDateTime.now());
- jdbcTemplateMapper.insert(product); // because id type is auto increment id value will be set after insert.
+ jdbcTemplateMapper.insert(product); // because id type is auto increment, id value will be set after insert.
 
  product = jdbcTemplateMapper.findById(Product.class,product.getId());
  product.setPrice(11.50);
@@ -236,10 +236,12 @@ public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
  
 ## Querying relationships
 
+For querying complex relationships using SelectMapper with Spring's ResultSetExtractor
+works well.
+
 SelectMapper allows generating the select columns string for the model and population of the model from a ResultSet.
 
-selectMapper.getColumnsSql() will provide a string of columns which can be used in the sql select statement.
-
+selectMapper.getColumnsSql() will provide a string of columns which can be used in the sql select statement. 
 selectMapper.buildModel(resultSet) will return a model populated from the resultSet data.
 
 Makes the code for writing and retrieving relationships less verbose.
@@ -290,9 +292,12 @@ using Spring's ResultSetExtractor
     private Double price;
   }
 
- // The second argument to getSelectMapper() is the table alias used in the query.
+ // The second argument to getSelectMapper() below is the table alias used in the query.
  // For the query below the 'orders' table alias is 'o', the 'order_line' table alias is 'ol' and the product
- // table alias is 'p'.
+ // table alias is 'p'. SelectMapper.getColumnsSql() aliases the columns with the prefix; table alias + "_" so that there are 
+ // no conflicts in sql when different models have same property names like for example id. SelectMapper.buildModel(rs) uses 
+ // the column alias prefix to identify and populate the pertinent models from the ResultSet.
+ 
  SelectMapper<Order> orderSelectMapper = jdbcTemplateMapper.getSelectMapper(Order.class, "o");
  SelectMapper<OrderLine> orderLineSelectMapper = jdbcTemplateMapper.getSelectMapper(OrderLine.class, "ol");
  SelectMapper<Product> productSelectMapper = jdbcTemplateMapper.getSelectMapper(Product.class, "p");
@@ -308,14 +313,14 @@ using Spring's ResultSetExtractor
                + " left join order_line ol on o.order_id = ol.order_id"
                + " join product p on p.product_id = ol.product_id"
                + " order by o.order_id, ol.order_line_id";
-               
+                            
  // Using Spring's ResultSetExtractor 		
  ResultSetExtractor<List<Order>> rsExtractor = new ResultSetExtractor<List<Order>>() {
      @Override
      public List<Order> extractData(ResultSet rs) throws SQLException, DataAccessException {	
      
-       Map<Long, Order> orderByIdMap = new LinkedHashMap<>(); // LinkedHashMap to retain result order	
-       Map<Integer, Product> productByIdMap = new HashMap<>();
+       Map<Long, Order> idOrderMap = new LinkedHashMap<>(); // LinkedHashMap to retain result order	
+       Map<Integer, Product> IdProductMap = new HashMap<>();
  		
        while (rs.next()) {				
          // selectMapper.buildModel(rs) will return the model populated from the resultSet
@@ -326,19 +331,19 @@ using Spring's ResultSetExtractor
          // orderSelectMapper.getResultSetModelIdColumnLabel() returns the id column alias which is 'o_order_id'
          // for the sql above. 
          Long orderId = rs.getLong(orderSelectMapper.getResultSetModelIdColumnLabel());						
-         Order order = orderByIdMap.get(orderId);
+         Order order = idOrderMap.get(orderId);
          if (order == null) {
            order = orderSelectMapper.buildModel(rs);
-           orderByIdMap.put(order.getOrderId(), order);
+           idOrderMap.put(order.getOrderId(), order);
          }
  				    
          // productSelectMapper.getResultSetModelIdColumnName() returns the id column alias which is 'p_product_id'
          // for the sql above.
          Integer productId = rs.getInt(productSelectMapper.getResultSetModelIdColumnLabel());
-         Product product = productByIdMap.get(productId);
+         Product product = IdProductMap.get(productId);
          if (product == null) {
            product = productSelectMapper.buildModel(rs);
-           productByIdMap.put(product.getProductId(), product);
+           IdProductMap.put(product.getProductId(), product);
          }
  				    
          OrderLine orderLine = orderLineSelectMapper.buildModel(rs);	
@@ -347,7 +352,7 @@ using Spring's ResultSetExtractor
            order.getOrderLines().add(orderLine);
          }			
       }
-      return new ArrayList<Order>(orderByIdMap.values());
+      return new ArrayList<Order>(idOrderMap.values());
     }
   };
  
