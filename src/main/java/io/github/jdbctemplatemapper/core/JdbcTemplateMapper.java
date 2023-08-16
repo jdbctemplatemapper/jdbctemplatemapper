@@ -189,7 +189,6 @@ public class JdbcTemplateMapper {
 
 		TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
 		String columnsSql = getFindColumnsSql(tableMapping, clazz);
-
 		String sql = "SELECT " + columnsSql + " FROM "
 				+ mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " WHERE "
 				+ tableMapping.getIdColumnName() + " = ?";
@@ -329,11 +328,8 @@ public class JdbcTemplateMapper {
 		Assert.notNull(obj, "Object must not be null");
 
 		TableMapping tableMapping = mappingHelper.getTableMapping(obj.getClass());
-
 		BeanWrapper bw = getBeanWrapper(obj);
-
 		Object idValue = bw.getPropertyValue(tableMapping.getIdPropertyName());
-
 		if (tableMapping.isIdAutoIncrement()) {
 			if (idValue != null) {
 				throw new MapperException("For insert() the property " + obj.getClass().getSimpleName() + "."
@@ -421,7 +417,6 @@ public class JdbcTemplateMapper {
 
 		TableMapping tableMapping = mappingHelper.getTableMapping(obj.getClass());
 		SqlAndParams sqlAndParams = updateSqlAndParamsCache.get(obj.getClass());
-
 		if (sqlAndParams == null) {
 			sqlAndParams = buildSqlAndParamsForUpdate(tableMapping);
 			updateSqlAndParamsCache.put(obj.getClass(), sqlAndParams);
@@ -429,7 +424,6 @@ public class JdbcTemplateMapper {
 
 		BeanWrapper bw = getBeanWrapper(obj);
 		Set<String> parameters = sqlAndParams.getParams();
-
 		PropertyMapping updatedByPropMapping = tableMapping.getUpdatedByPropertyMapping();
 		if (updatedByPropMapping != null && recordOperatorResolver != null
 				&& parameters.contains(updatedByPropMapping.getPropertyName())) {

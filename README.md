@@ -139,7 +139,7 @@ Properties that need be persisted to the database will need @Column annotation u
 The two ways to use it:
 
 @Column  
-This will map property to a column using the default naming convention of camelCase to underscore name.
+This will map property to a column using the default naming convention of camel case to underscore name.
 
 @Column(name="some_colum_name")  
 This will map the property to the column specified by name attribute. 
@@ -333,7 +333,7 @@ using Spring's ResultSetExtractor
          Long orderId = rs.getLong(orderSelectMapper.getResultSetModelIdColumnLabel());						
          Order order = idOrderMap.get(orderId);
          if (order == null) {
-           order = orderSelectMapper.buildModel(rs);
+           order = orderSelectMapper.buildModel(rs); // populates Order model from resultSet
            idOrderMap.put(order.getOrderId(), order);
          }
  				    
@@ -342,13 +342,14 @@ using Spring's ResultSetExtractor
          Integer productId = rs.getInt(productSelectMapper.getResultSetModelIdColumnLabel());
          Product product = IdProductMap.get(productId);
          if (product == null) {
-           product = productSelectMapper.buildModel(rs);
+           product = productSelectMapper.buildModel(rs); // populates Product model from resultSet
            IdProductMap.put(product.getProductId(), product);
          }
  				    
-         OrderLine orderLine = orderLineSelectMapper.buildModel(rs);	
+         OrderLine orderLine = orderLineSelectMapper.buildModel(rs); // populated OrderLine model from resultSet
          if(orderLine != null) {
-           orderLine.setProduct(product);
+           // wire up the relationships
+           orderLine.setProduct(product); 
            order.getOrderLines().add(orderLine);
          }			
       }
@@ -363,7 +364,7 @@ using Spring's ResultSetExtractor
 
 ## Logging
  
-Uses the same logging configurations as JdbcTemplate to log the SQL. In applications.properties:
+Uses the same logging configurations as Spring's JdbcTemplate to log the SQL. In applications.properties:
  
  ```
  # log the SQL
