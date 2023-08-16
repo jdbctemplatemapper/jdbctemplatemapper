@@ -66,14 +66,14 @@ public class JdbcTemplateMapper {
 	private boolean useColumnLabelForResultSetMetaData = true;
 
 	/**
-	 * @param jdbcTemplate - The jdbcTemplate
+	 * @param jdbcTemplate the jdbcTemplate
 	 */
 	public JdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
 		this(jdbcTemplate, null, null, null);
 	}
 
 	/**
-	 * @param jdbcTemplate - The jdbcTemplate
+	 * @param jdbcTemplate the jdbcTemplate
 	 * @param schemaName   database schema name.
 	 */
 	public JdbcTemplateMapper(JdbcTemplate jdbcTemplate, String schemaName) {
@@ -81,7 +81,7 @@ public class JdbcTemplateMapper {
 	}
 
 	/**
-	 * @param jdbcTemplate - The jdbcTemplate
+	 * @param jdbcTemplate the jdbcTemplate
 	 * @param schemaName   database schema name.
 	 * @param catalogName  database catalog name.
 	 */
@@ -90,10 +90,10 @@ public class JdbcTemplateMapper {
 	}
 
 	/**
-	 * @param jdbcTemplate              - The jdbcTemplate
-	 * @param schemaName                - database schema name.
-	 * @param catalogName               - database catalog name.
-	 * @param metaDataColumnNamePattern - For most jdbc drivers getting column
+	 * @param jdbcTemplate              The jdbcTemplate
+	 * @param schemaName                database schema name.
+	 * @param catalogName               database catalog name.
+	 * @param metaDataColumnNamePattern For most jdbc drivers getting column
 	 *                                  metadata from database the
 	 *                                  metaDataColumnNamePattern argument of null
 	 *                                  will return all the columns (which is the
@@ -131,8 +131,8 @@ public class JdbcTemplateMapper {
 	}
 
 	/**
-	 * An implementation of IRecordOperatorResolver is used to populate the &#64;CreatedBy and &#64;UpdatedBy
-	 * annotated properties. 
+	 * An implementation of IRecordOperatorResolver is used to populate the
+	 * &#64;CreatedBy and &#64;UpdatedBy annotated properties.
 	 * 
 	 * @param recordOperatorResolver The implement for interface
 	 *                               IRecordOperatorResolver
@@ -167,8 +167,9 @@ public class JdbcTemplateMapper {
 
 	/**
 	 * Some postgres drivers seem to not return the correct meta data for TIMESTAMP
-	 * WITH TIMEZONE fields. If this value is set to true it will force system to use
-	 * java.sql.Types.TIMESTAMP_WITH_TIMEZONE for properties of models which are of type OffsetDateTime.
+	 * WITH TIMEZONE fields. If this value is set to true it will force system to
+	 * use java.sql.Types.TIMESTAMP_WITH_TIMEZONE for properties of models which are
+	 * of type OffsetDateTime.
 	 * 
 	 * @param val boolean value
 	 */
