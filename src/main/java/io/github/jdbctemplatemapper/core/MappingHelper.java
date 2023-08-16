@@ -113,7 +113,7 @@ class MappingHelper {
 			Map<String, ColumnInfo> columnNameToColumnInfo = tableColumnInfo.getColumnInfos().stream()
 					.collect(Collectors.toMap(o -> o.getColumnName(), o -> o));
 
-			// key:propertyName, value:PropertyMapping. LinkedHashMap to ma
+			// key:propertyName, value:PropertyMapping. LinkedHashMap to maintain order of properties
 			Map<String, PropertyMapping> propNameToPropertyMapping = new LinkedHashMap<>();
 			for (Field field : clazz.getDeclaredFields()) {
 				String propertyName = field.getName();
@@ -222,9 +222,10 @@ class MappingHelper {
 
 			tableMapping = new TableMapping(clazz, tableName, idPropertyInfo.getPropertyName(), propertyMappings);
 			tableMapping.setIdAutoIncrement(idPropertyInfo.isIdAutoIncrement());
+			
+			objectToTableMappingCache.put(clazz, tableMapping);
 		}
-
-		objectToTableMappingCache.put(clazz, tableMapping);
+		
 		return tableMapping;
 	}
 	

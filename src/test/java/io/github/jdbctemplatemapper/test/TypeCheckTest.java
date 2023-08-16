@@ -31,7 +31,7 @@ import io.github.jdbctemplatemapper.model.TypeCheck;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
-public class TypeTest {
+public class TypeCheckTest {
 
 	@Value("${spring.datasource.driver-class-name}")
 	private String jdbcDriver;

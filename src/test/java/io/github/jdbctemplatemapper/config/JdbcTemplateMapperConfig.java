@@ -8,7 +8,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
-import org.springframework.core.convert.ConversionService;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -29,7 +28,7 @@ public class JdbcTemplateMapperConfig {
 
   @Bean
   @Primary
-  public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate, ConversionService conversionService) {
+  public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
     String schemaName = getSchemaName();
     JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate, schemaName);
     jdbcTemplateMapper
