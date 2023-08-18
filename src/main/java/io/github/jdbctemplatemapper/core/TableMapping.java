@@ -1,5 +1,6 @@
 package io.github.jdbctemplatemapper.core;
 
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -80,7 +81,7 @@ class TableMapping {
 
     public int getPropertySqlType(String propertyName) {
         PropertyMapping propMapping = propertyNameMap.get(propertyName);
-        return propMapping == null ? 0 : propMapping.getColumnSqlDataType();
+        return propMapping == null ? Types.NULL : propMapping.getColumnSqlDataType();
     }
 
     public Class<?> getTableClass() {

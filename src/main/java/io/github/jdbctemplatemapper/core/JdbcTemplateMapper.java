@@ -635,7 +635,7 @@ public class JdbcTemplateMapper {
         if (columnsSql == null) {
             StringJoiner sj = new StringJoiner(", ", " ", " ");
             for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
-                sj.add(propMapping.getColumnName() + " as " + AppUtils.toUnderscoreName(propMapping.getPropertyName()));
+                sj.add(propMapping.getColumnName() + " as " + MapperUtils.toUnderscoreName(propMapping.getPropertyName()));
             }
             columnsSql = sj.toString();
             findColumnsSqlCache.put(clazz, columnsSql);

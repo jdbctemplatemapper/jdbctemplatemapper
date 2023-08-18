@@ -71,6 +71,26 @@ CREATE TABLE jdbctemplatemapper.type_check (
    CONSTRAINT type_check_pk PRIMARY KEY (id)
 );
 
+CREATE TABLE jdbctemplatemapper.annotation_check (
+   id integer NOT NULL,  
+   id2 integer,
+   something varchar(100),
+   created_on1 timestamp,
+   created_on2 timestamp,
+   created_by1 varchar(100),
+   created_by2 varchar(100),
+   updated_on1 timestamp,
+   updated_on2 timestamp,
+   updated_by1 varchar(100),
+   updated_by2 varchar(100),
+   version1 integer,
+   version2 integer
+);
+
+CREATE TABLE jdbctemplatemapper.no_id_object (
+   something varchar(100)
+);
+
 
 
 

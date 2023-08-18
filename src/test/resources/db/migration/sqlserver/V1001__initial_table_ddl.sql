@@ -69,6 +69,28 @@ CREATE TABLE jdbctemplatemapper.type_check (
    offset_date_time_data varchar(100)
 );
 
+CREATE TABLE jdbctemplatemapper.annotation_check (
+   id int NOT NULL,  
+   id2 int,
+   something varchar(100),
+   created_on1 timestamp,
+   created_on2 timestamp,
+   created_by1 varchar(100),
+   created_by2 varchar(100),
+   updated_on1 timestamp,
+   updated_on2 timestamp,
+   updated_by1 varchar(100),
+   updated_by2 varchar(100),
+   version1 int,
+   version2 int,
+
+   CONSTRAINT annotation_check_pk PRIMARY KEY (id)
+);
+
+CREATE TABLE jdbctemplatemapper.no_id_object (
+   something varchar(100)
+);
+
 
 
 

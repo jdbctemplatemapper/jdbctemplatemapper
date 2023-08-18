@@ -2,7 +2,6 @@ package io.github.jdbctemplatemapper.config;
 
 import javax.sql.DataSource;
 
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
@@ -35,21 +34,6 @@ public class JdbcTemplateMapperConfig {
         // postgres driver bug where database meta data returns TIMESTAMP instead of
         // TIMESTAMP_WITH_TIME_ZONE for timestamptz field.
         // THis flag forces fixs that for now.
-        if (jdbcDriver.contains("postgres")) {
-            jdbcTemplateMapper.forcePostgresTimestampWithTimezone(true);
-        }
-
-        return jdbcTemplateMapper;
-    }
-
-    @Bean
-    @Qualifier("noConfigJdbcTemplateMapper")
-    public JdbcTemplateMapper noConfigJdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
-        String schemaName = getSchemaName();
-        JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate, schemaName);
-
-        // postgres driver database metadata bug so need this to handle timestamptz
-        // fields
         if (jdbcDriver.contains("postgres")) {
             jdbcTemplateMapper.forcePostgresTimestampWithTimezone(true);
         }

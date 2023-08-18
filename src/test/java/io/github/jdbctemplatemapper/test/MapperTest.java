@@ -38,7 +38,7 @@ import io.github.jdbctemplatemapper.model.Product;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
-public class CrudTest {
+public class MapperTest {
 
     @Value("${spring.datasource.driver-class-name}")
     private String jdbcDriver;

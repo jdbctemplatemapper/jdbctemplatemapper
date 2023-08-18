@@ -46,7 +46,7 @@ public class SelectMapper<T> {
         this.useColumnLabelForResultSetMetaData = useColumnLabelForResultSetMetaData;
         this.tableAlias = tableAlias;
         this.colPrefix = tableAlias + ".";
-        this.colAliasPrefix = AppUtils.toLowerCase(tableAlias + "_");
+        this.colAliasPrefix = MapperUtils.toLowerCase(tableAlias + "_");
     }
 
     /**
@@ -108,7 +108,7 @@ public class SelectMapper<T> {
                 String columnLabel = useColumnLabelForResultSetMetaData ? rsMetaData.getColumnLabel(i)
                         : rsMetaData.getColumnName(i);
                 if (columnLabel != null) {
-                    columnLabel = AppUtils.toLowerCase(columnLabel);
+                    columnLabel = MapperUtils.toLowerCase(columnLabel);
                     if (columnLabel.startsWith(colAliasPrefix)) {
                         String propertyName = tableMapping
                                 .getProperyName(columnLabel.substring(colAliasPrefix.length()));
