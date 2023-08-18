@@ -1,9 +1,13 @@
 package io.github.jdbctemplatemapper.core;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.springframework.jdbc.support.JdbcUtils;
+import org.springframework.util.Assert;
 
 class MapperUtils {
     /**
@@ -41,6 +45,27 @@ class MapperUtils {
         }
         return result.toString();
     }
+
+    /**
+     * Splits the list into multiple lists of chunk size. Used to split the sql IN
+     * clauses since some databases have a limitation of 1024.
+     *
+     * @param list      The list of Long
+     * @param chunkSize The size of each chunk
+     * @return Collection of lists broken down by chunkSize
+     */
+    public static <T extends Object> Collection<List<T>> chunkTheCollection(
+            Collection<T> collection, Integer chunkSize) {
+          Assert.notNull(collection, "collection must not be null");
+          AtomicInteger counter = new AtomicInteger();
+          Collection<List<T>> result =
+              collection
+                  .stream()
+                  .filter(e -> e != null)
+                  .collect(Collectors.groupingBy(it -> counter.getAndIncrement() / chunkSize))
+                  .values();
+          return result;
+        }
 
     public static boolean isEmpty(String str) {
         return str == null || str.length() == 0;

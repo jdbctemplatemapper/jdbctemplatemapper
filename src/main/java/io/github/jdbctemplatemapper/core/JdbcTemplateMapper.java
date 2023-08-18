@@ -2,6 +2,7 @@ package io.github.jdbctemplatemapper.core;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -186,7 +187,7 @@ public class JdbcTemplateMapper {
      * @param <T>   the type
      * @param clazz Class of object
      * @param id    Id of object
-     * @return the object of the specific type
+     * @return the object of type T
      */
     public <T> T findById(Class<T> clazz, Object id) {
         Assert.notNull(clazz, "Class must not be null");
@@ -214,7 +215,7 @@ public class JdbcTemplateMapper {
      * @param clazz         Class of List of objects returned
      * @param propertyName  the property name
      * @param propertyValue the value of property to query by
-     * @return the object of the specific type
+     * @return a List of objects of type T
      */
     public <T> List<T> findByProperty(Class<T> clazz, String propertyName, Object propertyValue) {
         return findByProperty(clazz, propertyName, propertyValue, null);
@@ -229,7 +230,7 @@ public class JdbcTemplateMapper {
      * @param propertyName        the property name
      * @param propertyValue       the value of property to query by
      * @param orderByPropertyName the order by property name
-     * @return the object of the specific type
+     * @return a List of objects for type T
      */
 
     public <T> List<T> findByProperty(Class<T> clazz, String propertyName, Object propertyValue,
@@ -240,7 +241,7 @@ public class JdbcTemplateMapper {
         TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
         String propColumnName = tableMapping.getColumnName(propertyName);
         if (propColumnName == null) {
-            throw new MapperException("property " + clazz.getSimpleName() + "." + propertyName
+            throw new MapperException(clazz.getSimpleName() + "." + propertyName
                     + " is either invalid or does not have a corresponding column in database.");
         }
 
@@ -266,13 +267,80 @@ public class JdbcTemplateMapper {
 
         return jdbcTemplate.query(sql, mapper, propertyValue);
     }
+    
+    /**
+     * Returns list of objects which match the set of property values. Generates an
+     * SQL with 'IN' clause. Some databases have a limitation for number of entries
+     * in the 'IN' clause so if propertyValues have more that 100 entries, multiple
+     * sql calls will be issued to get all the records
+     *
+     * @param <T>            the type
+     * @param <U>            the type of the property values
+     * @param clazz          Class of List of objects returned
+     * @param propertyName   the property name
+     * @param propertyValues Set of values to query by
+     * @return a List of objects of type T
+     */
+    public <T, U extends Object> List<T> findByProperty(Class<T> clazz, String propertyName, Set<U> propertyValues) {
+        return findByProperty(clazz, propertyName, propertyValues, null);
+    }
+
+    /**
+     * Returns list of objects which match the set of property values. Generates an
+     * SQL with 'IN' clause. Some databases have a limitation for number of entries
+     * in the 'IN' clause so if propertyValues have more that 100 entries, multiple
+     * sql calls will be issued to get all the records
+     *
+     * @param <T>            the type
+     * @param <U>            the type of the property values
+     * @param clazz          Class of List of objects returned
+     * @param propertyName   the property name
+     * @param propertyValues Set of values to query by
+     * @param orderByProperty property to order by
+     * @return a List of objects of type T
+     */
+    public <T, U extends Object> List<T> findByProperty(Class<T> clazz, String propertyName, Set<U> propertyValues, String orderByPropertyName) {
+        List<T> resultList = new ArrayList<>();
+        TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
+        String propColumnName = tableMapping.getColumnName(propertyName);
+        String columnsSql = getFindColumnsSql(tableMapping, clazz);
+        
+        String orderByColumnName = null;
+        if (orderByPropertyName != null) {
+            orderByColumnName = tableMapping.getColumnName(orderByPropertyName);
+            if (orderByColumnName == null) {
+                throw new MapperException("orderByPropertyName " + clazz.getSimpleName() + "." + orderByPropertyName
+                        + " is either invalid or does not have a corresponding column in database.");
+            }
+        }
+
+        // chunk the set into 100s so there are no issues with database specific limits
+        // on IN clause.
+        Collection<List<U>> chunkedPropertyValues = MapperUtils.chunkTheCollection(propertyValues, 100);
+
+        for (List<U> propValues : chunkedPropertyValues) {
+            String sql = "SELECT " + columnsSql + " FROM "
+                    + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " WHERE " + propColumnName
+                    + " IN (:propValues)";       
+            
+            if (orderByColumnName != null) {
+                sql = sql + " ORDER BY " + orderByColumnName + " ASC";
+            }
+            
+            MapSqlParameterSource params = new MapSqlParameterSource("propValues", propValues);
+            
+            RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
+            resultList.addAll(npJdbcTemplate.query(sql, params, mapper));
+        }
+        return resultList;
+    }
 
     /**
      * Find all objects
      * 
      * @param <T>   the type
      * @param clazz Type of object
-     * @return List of objects
+     * @return List of objects of type T
      */
     public <T> List<T> findAll(Class<T> clazz) {
         return findAll(clazz, null);
@@ -284,7 +352,7 @@ public class JdbcTemplateMapper {
      * @param <T>                 the type
      * @param clazz               Type of object
      * @param orderByPropertyName the order by property
-     * @return List of objects
+     * @return List of objects of type T
      */
     public <T> List<T> findAll(Class<T> clazz, String orderByPropertyName) {
         Assert.notNull(clazz, "Class must not be null");
@@ -635,7 +703,8 @@ public class JdbcTemplateMapper {
         if (columnsSql == null) {
             StringJoiner sj = new StringJoiner(", ", " ", " ");
             for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
-                sj.add(propMapping.getColumnName() + " as " + MapperUtils.toUnderscoreName(propMapping.getPropertyName()));
+                sj.add(propMapping.getColumnName() + " as "
+                        + MapperUtils.toUnderscoreName(propMapping.getPropertyName()));
             }
             columnsSql = sj.toString();
             findColumnsSqlCache.put(clazz, columnsSql);

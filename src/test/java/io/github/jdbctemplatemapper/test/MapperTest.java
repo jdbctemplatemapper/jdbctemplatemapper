@@ -9,7 +9,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,15 +92,17 @@ public class MapperTest {
     }
 
     @Test
-    public void insert_withNonNullIdFailureTest() {
+    public void insert_withNonNullIdFailure_Test() {
         Order order = new Order();
         order.setOrderId(2002L);
         order.setOrderDate(LocalDateTime.now());
         order.setCustomerId(2);
 
-        Assertions.assertThrows(RuntimeException.class, () -> {
+        Exception exception = Assertions.assertThrows(MapperException.class, () -> {
             jtm.insert(order);
         });
+        assertTrue(exception.getMessage()
+                .contains("has to be null since this insert is for an object whose id is auto increment"));
     }
 
     @Test
@@ -130,7 +134,7 @@ public class MapperTest {
     }
 
     @Test
-    public void insert_withManualStringId() {
+    public void insert_withManualStringId_Test() {
 
         Person person = new Person();
         person.setPersonId("p1");
@@ -146,27 +150,32 @@ public class MapperTest {
     }
 
     @Test
-    public void insert_nullObjectFailureTest() {
-        Assertions.assertThrows(RuntimeException.class, () -> {
+    public void insert_nullObjectFailure_Test() {
+        Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
             jtm.insert(null);
         });
+        assertTrue(exception.getMessage().contains("Object must not be null"));     
     }
 
     @Test
-    public void insertWithId_withNullIdFailureTest() {
+    public void insert_nonAutoIncrementId_withNullIdFailure_Test() {
         Product product = new Product();
         product.setName("hat");
         product.setCost(12.25);
-        Assertions.assertThrows(RuntimeException.class, () -> {
+        
+        Exception exception = Assertions.assertThrows(MapperException.class, () -> {
             jtm.insert(product);
         });
+        
+        assertTrue(exception.getMessage().contains("cannot be null since it is not an auto increment id"));   
     }
 
     @Test
-    public void insertWithId_nullObjectFailureTest() {
-        Assertions.assertThrows(RuntimeException.class, () -> {
+    public void insert_nonAutoIncrementId_nullObjectFailure_Test() {
+        Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
             jtm.insert(null);
         });
+        assertTrue(exception.getMessage().contains("Object must not be null"));  
     }
 
     @Test
@@ -194,21 +203,22 @@ public class MapperTest {
     }
 
     @Test
-    public void update_withIdOfTypeIntegerTest() {
+    public void update_withIdOfTypeInteger_Test() {
 
-        Product product = jtm.findById(Product.class, 4);
+        Product product = jtm.findById(Product.class, 6);
 
-        Product product1 = jtm.findById(Product.class, 4);
-
+        Product product1 = jtm.findById(Product.class, 6);
         product1.setName("xyz");
         jtm.update(product1);
+        
+        Product product2 = jtm.findById(Product.class, 6);
 
         assertEquals("xyz", product1.getName());
-        assertTrue(product1.getVersion() > product.getVersion()); // version incremented
+        assertTrue(product2.getVersion() > product.getVersion()); // version incremented
     }
 
     @Test
-    public void update_withIdOfTypeStringTest() {
+    public void update_withIdOfTypeString_Test() {
 
         Person person = jtm.findById(Person.class, "person101");
 
@@ -221,7 +231,7 @@ public class MapperTest {
     }
 
     @Test
-    public void update_withNoVersionAndUpdateInfoTest() {
+    public void update_withNoVersionAndUpdateInfo_Test() {
         Customer customer = jtm.findById(Customer.class, 4);
         customer.setFirstName("xyz");
         jtm.update(customer);
@@ -231,7 +241,7 @@ public class MapperTest {
     }
 
     @Test
-    public void update_throwsOptimisticLockingExceptionTest() {
+    public void update_throwsOptimisticLockingException_Test() {
         Assertions.assertThrows(OptimisticLockingException.class, () -> {
             Order order = jtm.findById(Order.class, 2);
             order.setVersion(order.getVersion() - 1);
@@ -240,14 +250,15 @@ public class MapperTest {
     }
 
     @Test
-    public void update_nullObjectFailureTest() {
-        Assertions.assertThrows(RuntimeException.class, () -> {
+    public void update_nullObjectFailure_Test() {
+        Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
             jtm.update(null);
         });
+        assertTrue(exception.getMessage().contains("Object must not be null"));  
     }
 
     @Test
-    public void update_nonDatabasePropertyTest() {
+    public void update_nonDatabaseProperty_Test() {
         Person person = jtm.findById(Person.class, "person101");
 
         person.setSomeNonDatabaseProperty("xyz");
@@ -303,10 +314,11 @@ public class MapperTest {
     }
 
     @Test
-    public void delete_nullObjectFailureTest() {
-        Assertions.assertThrows(RuntimeException.class, () -> {
+    public void delete_nullObjectFailure_Test() {
+        Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
             jtm.delete(null);
         });
+        assertTrue(exception.getMessage().contains("Object must not be null"));  
     }
 
     @Test
@@ -321,10 +333,11 @@ public class MapperTest {
     }
 
     @Test
-    public void deleteById_nullObjectFailureTest() {
-        Assertions.assertThrows(RuntimeException.class, () -> {
-            jtm.deleteById(null, Product.class);
-        });
+    public void deleteById_nullIdFailure_Test() {
+        Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            jtm.deleteById(Product.class, null);
+        });     
+        assertTrue(exception.getMessage().contains("id must not be null"));          
     }
 
     @Test
@@ -335,9 +348,10 @@ public class MapperTest {
 
     @Test
     public void findByProperty_InvalidProperty_Test() {
-        Assertions.assertThrows(MapperException.class, () -> {
+        Exception exception = Assertions.assertThrows(MapperException.class, () -> {
             jtm.findByProperty(OrderLine.class, "x", 1);
         });
+        assertTrue(exception.getMessage().contains("is either invalid or does not have a corresponding column in database"));          
     }
 
     @Test
@@ -350,20 +364,29 @@ public class MapperTest {
 
     @Test
     public void findByProperty_InvalidOrderByProperty_Test() {
-        Assertions.assertThrows(MapperException.class, () -> {
+        Exception exception = Assertions.assertThrows(MapperException.class, () -> {
             jtm.findByProperty(OrderLine.class, "orderId", 1, "x");
         });
+        assertTrue(exception.getMessage().contains("is either invalid or does not have a corresponding column in database"));          
+
     }
 
     @Test
-    public void loadMapping_uccess_test() {
+    public void findByProperty_MultipleValues_Test() {
+        Integer[] orderIds = { 1, 2, 3 };
+        List<Order> orders = jtm.findByProperty(Order.class, "orderId", new HashSet<Integer>(Arrays.asList(orderIds)));
+        assertTrue(orders.size() == 3);
+    }
+
+    @Test
+    public void loadMapping_uccess_Test() {
         Assertions.assertDoesNotThrow(() -> {
             jtm.loadMapping(Order.class);
         });
     }
 
     @Test
-    public void loadMapping_failure_test() {
+    public void loadMapping_failure_Test() {
         Assertions.assertThrows(AnnotationException.class, () -> {
             jtm.loadMapping(NoTableAnnotationModel.class);
         });
@@ -382,7 +405,7 @@ public class MapperTest {
     }
 
     @Test
-    public void selectMapper_test() {
+    public void selectMapper_Test() {
         SelectMapper<Order> orderSelectMapper = jtm.getSelectMapper(Order.class, "o");
         SelectMapper<OrderLine> orderLineSelectMapper = jtm.getSelectMapper(OrderLine.class, "ol");
         SelectMapper<Product> productSelectMapper = jtm.getSelectMapper(Product.class, "p");
