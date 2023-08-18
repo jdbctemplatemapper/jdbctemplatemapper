@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *<pre>
+ * <pre>
  * Annotation to map an object to a database table
  * 
  * This is a class level annotation and is required for models. 
@@ -17,7 +17,7 @@ import java.lang.annotation.Target;
  *    .....
  *  }
  *
- *</pre>
+ * </pre>
  *
  * @author ajoseph
  *

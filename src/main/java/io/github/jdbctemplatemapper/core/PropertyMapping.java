@@ -6,93 +6,93 @@ package io.github.jdbctemplatemapper.core;
  * @author ajoseph
  */
 class PropertyMapping {
-	private String propertyName;
-	private Class<?> propertyType;
-	private String columnName;
-	private int columnSqlDataType; // see java.sql.Types
-	
-	private boolean idAnnotation = false;
-	private boolean createdOnAnnotation = false;
-	private boolean updatedOnAnnotation = false;
-	private boolean versionAnnotation = false;
-	private boolean createdByAnnotation = false;
-	private boolean updatedByAnnotation = false;
+    private String propertyName;
+    private Class<?> propertyType;
+    private String columnName;
+    private int columnSqlDataType; // see java.sql.Types
 
-	public PropertyMapping(String propertyName, Class<?> propertyType, String columnName, int columnSqlDataType) {
-		if (propertyName == null || propertyType == null || columnName == null) {
-			throw new IllegalArgumentException("propertyName, propertyType, columnName must not be null");
-		}
-		this.propertyName = propertyName;
-		this.propertyType = propertyType;
-		this.columnName = AppUtils.toLowerCase(columnName); // column names stored in lower case always
-		this.columnSqlDataType = columnSqlDataType;
-	}
+    private boolean idAnnotation = false;
+    private boolean createdOnAnnotation = false;
+    private boolean updatedOnAnnotation = false;
+    private boolean versionAnnotation = false;
+    private boolean createdByAnnotation = false;
+    private boolean updatedByAnnotation = false;
 
-	public void setColumnSqlDataType(int columnSqlDataType) {
-		this.columnSqlDataType = columnSqlDataType;
-	}
+    public PropertyMapping(String propertyName, Class<?> propertyType, String columnName, int columnSqlDataType) {
+        if (propertyName == null || propertyType == null || columnName == null) {
+            throw new IllegalArgumentException("propertyName, propertyType, columnName must not be null");
+        }
+        this.propertyName = propertyName;
+        this.propertyType = propertyType;
+        this.columnName = AppUtils.toLowerCase(columnName); // column names stored in lower case always
+        this.columnSqlDataType = columnSqlDataType;
+    }
 
-	public String getPropertyName() {
-		return propertyName;
-	}
+    public void setColumnSqlDataType(int columnSqlDataType) {
+        this.columnSqlDataType = columnSqlDataType;
+    }
 
-	public Class<?> getPropertyType() {
-		return propertyType;
-	}
+    public String getPropertyName() {
+        return propertyName;
+    }
 
-	public String getColumnName() {
-		return columnName;
-	}
+    public Class<?> getPropertyType() {
+        return propertyType;
+    }
 
-	public int getColumnSqlDataType() {
-		return columnSqlDataType;
-	}
-	
-	public boolean isIdAnnotation() {
-		return idAnnotation;
-	}
+    public String getColumnName() {
+        return columnName;
+    }
 
-	public void setIdAnnotation(boolean idAnnotation) {
-		this.idAnnotation = idAnnotation;
-	}
+    public int getColumnSqlDataType() {
+        return columnSqlDataType;
+    }
 
-	public boolean isCreatedOnAnnotation() {
-		return createdOnAnnotation;
-	}
+    public boolean isIdAnnotation() {
+        return idAnnotation;
+    }
 
-	public void setCreatedOnAnnotation(boolean createdOnAnnotation) {
-		this.createdOnAnnotation = createdOnAnnotation;
-	}
+    public void setIdAnnotation(boolean idAnnotation) {
+        this.idAnnotation = idAnnotation;
+    }
 
-	public boolean isUpdatedOnAnnotation() {
-		return updatedOnAnnotation;
-	}
+    public boolean isCreatedOnAnnotation() {
+        return createdOnAnnotation;
+    }
 
-	public void setUpdatedOnAnnotation(boolean updatedOnAnnotation) {
-		this.updatedOnAnnotation = updatedOnAnnotation;
-	}
+    public void setCreatedOnAnnotation(boolean createdOnAnnotation) {
+        this.createdOnAnnotation = createdOnAnnotation;
+    }
 
-	public boolean isVersionAnnotation() {
-		return versionAnnotation;
-	}
+    public boolean isUpdatedOnAnnotation() {
+        return updatedOnAnnotation;
+    }
 
-	public void setVersionAnnotation(boolean versionAnnotation) {
-		this.versionAnnotation = versionAnnotation;
-	}
+    public void setUpdatedOnAnnotation(boolean updatedOnAnnotation) {
+        this.updatedOnAnnotation = updatedOnAnnotation;
+    }
 
-	public boolean isCreatedByAnnotation() {
-		return createdByAnnotation;
-	}
+    public boolean isVersionAnnotation() {
+        return versionAnnotation;
+    }
 
-	public void setCreatedByAnnotation(boolean createdByAnnotation) {
-		this.createdByAnnotation = createdByAnnotation;
-	}
+    public void setVersionAnnotation(boolean versionAnnotation) {
+        this.versionAnnotation = versionAnnotation;
+    }
 
-	public boolean isUpdatedByAnnotation() {
-		return updatedByAnnotation;
-	}
+    public boolean isCreatedByAnnotation() {
+        return createdByAnnotation;
+    }
 
-	public void setUpdatedByAnnotation(boolean updatedByAnnotation) {
-		this.updatedByAnnotation = updatedByAnnotation;
-	}	
+    public void setCreatedByAnnotation(boolean createdByAnnotation) {
+        this.createdByAnnotation = createdByAnnotation;
+    }
+
+    public boolean isUpdatedByAnnotation() {
+        return updatedByAnnotation;
+    }
+
+    public void setUpdatedByAnnotation(boolean updatedByAnnotation) {
+        this.updatedByAnnotation = updatedByAnnotation;
+    }
 }

@@ -8,10 +8,10 @@ import io.github.jdbctemplatemapper.annotation.Version;
 
 @Table(name = "annotation_check")
 public class ConflictAnnotation {
-	@Id(type = IdType.AUTO_INCREMENT)
-	@Version
-	private Integer id;
+    @Id(type = IdType.AUTO_INCREMENT)
+    @Version
+    private Integer id;
 
-	@Column
-	private String something;
+    @Column
+    private String something;
 }

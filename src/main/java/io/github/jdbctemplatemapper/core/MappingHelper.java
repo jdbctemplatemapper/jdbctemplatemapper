@@ -225,7 +225,6 @@ class MappingHelper {
 			
 			objectToTableMappingCache.put(clazz, tableMapping);
 		}
-		
 		return tableMapping;
 	}
 	
@@ -273,7 +272,6 @@ class MappingHelper {
 				}		
 		    }
 		}
-		
 		return new TableColumnInfo(tableName, columnInfoList);
 	}
 
@@ -329,7 +327,6 @@ class MappingHelper {
 		}
 		return new PropertyMapping(propertyName, field.getType(), colName,
 				columnNameToColumnInfo.get(colName).getColumnSqlDataType());
-
 	}
 
 	private void validateTableAnnotation(Table tableAnnotation, Class<?> clazz) {
@@ -398,7 +395,6 @@ class MappingHelper {
 				throw new AnnotationException(clazz.getSimpleName() + "." + propMapping.getPropertyName()
 						+ " has multiple annotations that conflict");
 			}
-
 		}
 
 		if (idCnt > 1) {
@@ -420,5 +416,4 @@ class MappingHelper {
 			throw new AnnotationException(" model " + clazz.getSimpleName() + " has multiple @UpdatedBy annotations");
 		}
 	}
-
 }

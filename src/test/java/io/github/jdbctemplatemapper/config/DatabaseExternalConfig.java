@@ -17,6 +17,7 @@ import org.springframework.context.annotation.PropertySource;
  * @author ajoseph
  */
 @Configuration
-@PropertySource(value= {"file:/opt/tomcat/conf/jdbctemplatemapper-database.properties"}, ignoreResourceNotFound=true)
+@PropertySource(value = {
+        "file:/opt/tomcat/conf/jdbctemplatemapper-database.properties" }, ignoreResourceNotFound = true)
 public class DatabaseExternalConfig {
 }

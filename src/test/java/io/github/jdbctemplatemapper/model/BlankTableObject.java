@@ -3,7 +3,8 @@ package io.github.jdbctemplatemapper.model;
 import io.github.jdbctemplatemapper.annotation.Id;
 import io.github.jdbctemplatemapper.annotation.Table;
 
-@Table(name="    ")
+@Table(name = "    ")
 public class BlankTableObject {
-  @Id private Integer id;
+    @Id
+    private Integer id;
 }

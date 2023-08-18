@@ -78,7 +78,7 @@
  1. Configure the JdbcTemplate bean as per Spring documentation
  2. Configure the JdbcTemplateMapper bean:
 
- **Note: JdbcTemplateMapper is thread safe so you configure one for each JdbcTemplate**
+ **Note: An instance JdbcTemplateMapper is thread safe**
  
  ```java
 @Bean
@@ -390,5 +390,8 @@ Make sure you can connect to your database and issue a simple query using Spring
 
 ## Known issues
 1. For Oracle/SqlServer no support for blob/clob. Use JdbcTemplate directly for this with recommended custom code
+
+## New features/bugs
+Please open a [issues ticket](https://github.com/jdbctemplatemapper/jdbctemplatemapper/issues) 
   
  

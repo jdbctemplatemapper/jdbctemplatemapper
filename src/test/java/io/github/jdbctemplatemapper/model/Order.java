@@ -16,136 +16,136 @@ import io.github.jdbctemplatemapper.annotation.Version;
 
 @Table(name = "orders")
 public class Order {
-	@Id(type = IdType.AUTO_INCREMENT)
-	private Long orderId;
-	
-	@Column
-	private LocalDateTime orderDate;
-	
-	@Column
-	private Integer customerId;
-	
-	@Column
-	private String status;
-	
-	@CreatedOn
-	private LocalDateTime createdOn;
-	
-	@CreatedBy
-	private String createdBy;
-	
-	@UpdatedOn
-	private LocalDateTime updatedOn;
-	
-	@UpdatedBy
-	private String updatedBy;
-	
-	@Version
-	private Integer version;
+    @Id(type = IdType.AUTO_INCREMENT)
+    private Long orderId;
 
-	private Customer customer;
-	
-	private List<OrderLine> orderLines = new ArrayList<>();
+    @Column
+    private LocalDateTime orderDate;
 
-	public Long getOrderId() {
-		return orderId;
-	}
+    @Column
+    private Integer customerId;
 
-	public void setOrderId(Long id) {
-		this.orderId = id;
-	}
+    @Column
+    private String status;
 
-	public LocalDateTime getOrderDate() {
-		return orderDate;
-	}
+    @CreatedOn
+    private LocalDateTime createdOn;
 
-	public void setOrderDate(LocalDateTime orderDate) {
-		this.orderDate = orderDate;
-	}
+    @CreatedBy
+    private String createdBy;
 
-	public Integer getCustomerId() {
-		return customerId;
-	}
+    @UpdatedOn
+    private LocalDateTime updatedOn;
 
-	public void setCustomerId(Integer customerId) {
-		this.customerId = customerId;
-	}
+    @UpdatedBy
+    private String updatedBy;
 
-	public String getStatus() {
-		return status;
-	}
+    @Version
+    private Integer version;
 
-	public void setStatus(String status) {
-		this.status = status;
-	}
+    private Customer customer;
 
-	public LocalDateTime getCreatedOn() {
-		return createdOn;
-	}
+    private List<OrderLine> orderLines = new ArrayList<>();
 
-	public void setCreatedOn(LocalDateTime createdOn) {
-		this.createdOn = createdOn;
-	}
+    public Long getOrderId() {
+        return orderId;
+    }
 
-	public String getCreatedBy() {
-		return createdBy;
-	}
+    public void setOrderId(Long id) {
+        this.orderId = id;
+    }
 
-	public void setCreatedBy(String createdBy) {
-		this.createdBy = createdBy;
-	}
+    public LocalDateTime getOrderDate() {
+        return orderDate;
+    }
 
-	public LocalDateTime getUpdatedOn() {
-		return updatedOn;
-	}
+    public void setOrderDate(LocalDateTime orderDate) {
+        this.orderDate = orderDate;
+    }
 
-	public void setUpdatedOn(LocalDateTime updatedOn) {
-		this.updatedOn = updatedOn;
-	}
+    public Integer getCustomerId() {
+        return customerId;
+    }
 
-	public String getUpdatedBy() {
-		return updatedBy;
-	}
+    public void setCustomerId(Integer customerId) {
+        this.customerId = customerId;
+    }
 
-	public void setUpdatedBy(String updatedBy) {
-		this.updatedBy = updatedBy;
-	}
+    public String getStatus() {
+        return status;
+    }
 
-	public Integer getVersion() {
-		return version;
-	}
+    public void setStatus(String status) {
+        this.status = status;
+    }
 
-	public void setVersion(Integer version) {
-		this.version = version;
-	}
+    public LocalDateTime getCreatedOn() {
+        return createdOn;
+    }
 
-	public Customer getCustomer() {
-		return customer;
-	}
+    public void setCreatedOn(LocalDateTime createdOn) {
+        this.createdOn = createdOn;
+    }
 
-	public void setCustomer(Customer customer) {
-		this.customer = customer;
-	}
+    public String getCreatedBy() {
+        return createdBy;
+    }
 
-	public List<OrderLine> getOrderLines() {
-		return orderLines;
-	}
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
 
-	public void setOrderLines(List<OrderLine> orderLines) {
-		this.orderLines = orderLines;
-	}
+    public LocalDateTime getUpdatedOn() {
+        return updatedOn;
+    }
 
-	public void addOrderLine(OrderLine orderLine) {
-		orderLines.add(orderLine);
-	}
+    public void setUpdatedOn(LocalDateTime updatedOn) {
+        this.updatedOn = updatedOn;
+    }
 
-	public Person getPerson() {
-		return person;
-	}
+    public String getUpdatedBy() {
+        return updatedBy;
+    }
 
-	public void setPerson(Person person) {
-		this.person = person;
-	}
+    public void setUpdatedBy(String updatedBy) {
+        this.updatedBy = updatedBy;
+    }
 
-	private Person person;
+    public Integer getVersion() {
+        return version;
+    }
+
+    public void setVersion(Integer version) {
+        this.version = version;
+    }
+
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
+    }
+
+    public List<OrderLine> getOrderLines() {
+        return orderLines;
+    }
+
+    public void setOrderLines(List<OrderLine> orderLines) {
+        this.orderLines = orderLines;
+    }
+
+    public void addOrderLine(OrderLine orderLine) {
+        orderLines.add(orderLine);
+    }
+
+    public Person getPerson() {
+        return person;
+    }
+
+    public void setPerson(Person person) {
+        this.person = person;
+    }
+
+    private Person person;
 }

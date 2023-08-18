@@ -10,15 +10,15 @@ import io.github.jdbctemplatemapper.annotation.UpdatedOn;
 
 @Table(name = "annotation_check")
 public class DuplicateUpdatedOnAnnotation {
-	@Id(type = IdType.AUTO_INCREMENT)
-	private Integer id;
+    @Id(type = IdType.AUTO_INCREMENT)
+    private Integer id;
 
-	@UpdatedOn
-	private LocalDateTime updatedOn1;
+    @UpdatedOn
+    private LocalDateTime updatedOn1;
 
-	@UpdatedOn
-	private LocalDateTime updatedOn2;
+    @UpdatedOn
+    private LocalDateTime updatedOn2;
 
-	@Column
-	private String something;
+    @Column
+    private String something;
 }
