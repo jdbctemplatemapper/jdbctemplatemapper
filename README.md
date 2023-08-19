@@ -78,7 +78,7 @@
  1. Configure the JdbcTemplate bean as per Spring documentation
  2. Configure the JdbcTemplateMapper bean:
 
- **Note: An instance JdbcTemplateMapper is thread safe**
+ **Note: An instance of JdbcTemplateMapper is thread safe**
  
  ```java
 @Bean
