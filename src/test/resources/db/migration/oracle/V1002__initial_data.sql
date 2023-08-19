@@ -39,6 +39,10 @@ INSERT INTO jdbctemplatemapper.customer
 (first_name, last_name)
 VALUES('customer 4 test for no updateInfo and no version test', 'customer 4 last name');
 
+INSERT INTO jdbctemplatemapper.customer
+(first_name, last_name)
+VALUES(null, 'customer 5 last name whose first name is null');
+
 INSERT INTO jdbctemplatemapper.product
 (product_id, name, cost, created_on, created_by, updated_on, updated_by, version)
 VALUES(1, 'shoes', 95.00,to_timestamp('2020-06-20 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'system', to_timestamp('2020-06-20 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'system', 1);

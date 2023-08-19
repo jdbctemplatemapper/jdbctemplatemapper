@@ -23,7 +23,7 @@ CREATE TABLE jdbctemplatemapper.order_line (
 
 CREATE TABLE jdbctemplatemapper.customer (
 	customer_id integer NOT NULL AUTO_INCREMENT,
-	first_name varchar(100) NOT NULL,
+	first_name varchar(100),
 	last_name varchar(100) NOT NULL,
 	non_model_column varchar(100),
 	CONSTRAINT customer_pk PRIMARY KEY (customer_id)

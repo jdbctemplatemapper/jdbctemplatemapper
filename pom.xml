@@ -12,10 +12,10 @@
 
 	<groupId>io.github.jdbctemplatemapper</groupId>
 	<artifactId>jdbctemplatemapper</artifactId>
-	<version>1.3.1</version>
+	<version>1.3.2-SNAPSHOT</version>
 	<name>jdbctemplatemapper</name>
 	<description>
-      Allows usage of Spring's JdbcTemplate to be less verbose
+      Make usage of Spring's JdbcTemplate to be less verbose
     </description>
 	<packaging>jar</packaging>
 
