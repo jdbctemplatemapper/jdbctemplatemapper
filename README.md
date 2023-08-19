@@ -323,7 +323,7 @@ using Spring's ResultSetExtractor
      public List<Order> extractData(ResultSet rs) throws SQLException, DataAccessException {	
      
        Map<Long, Order> idOrderMap = new LinkedHashMap<>(); // LinkedHashMap to retain result order	
-       Map<Integer, Product> IdProductMap = new HashMap<>();
+       Map<Integer, Product> idProductMap = new HashMap<>();
  		
        while (rs.next()) {				
          // selectMapper.buildModel(rs) will return the model populated from the resultSet
@@ -343,10 +343,10 @@ using Spring's ResultSetExtractor
          // productSelectMapper.getResultSetModelIdColumnName() returns the id column alias which is 'p_product_id'
          // for the sql above.
          Integer productId = rs.getInt(productSelectMapper.getResultSetModelIdColumnLabel());
-         Product product = IdProductMap.get(productId);
+         Product product = idProductMap.get(productId);
          if (product == null) {
            product = productSelectMapper.buildModel(rs); // populates Product model from resultSet
-           IdProductMap.put(product.getProductId(), product);
+           idProductMap.put(product.getProductId(), product);
          }
  				    
          OrderLine orderLine = orderLineSelectMapper.buildModel(rs); // populated OrderLine model from resultSet
