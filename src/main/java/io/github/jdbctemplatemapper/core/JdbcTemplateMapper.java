@@ -32,7 +32,6 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
 "https://github.com/jdbctemplatemapper/jdbctemplatemapper#jdbctemplatemapper">JdbcTemplateMapper documentation</a> for more info
  * </pre>
  * 
- * <br />
  * <b> Note: JdbcTemplateMapper is thread safe.</b>
  * 
  * @author ajoseph
