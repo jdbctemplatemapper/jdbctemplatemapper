@@ -1,27 +1,26 @@
 package io.github.jdbctemplatemapper.core;
 
 class IdPropertyInfo {
-	private Class<?> parentClazz;
-	private String propertyName;
-	private boolean isIdAutoIncrement=false; 
-	
-	IdPropertyInfo(Class<?> parentClazz, String propertyName, Boolean isIdAutoIncrement){
-		this.parentClazz = parentClazz;
-		this.propertyName=propertyName;
-		this.isIdAutoIncrement=isIdAutoIncrement;
-	}
+    private Class<?> parentClazz;
+    private String propertyName;
+    private boolean isIdAutoIncrement = false;
 
-	public Class<?> getParentClazz() {
-		return parentClazz;
-	}
+    IdPropertyInfo(Class<?> parentClazz, String propertyName, Boolean isIdAutoIncrement) {
+        this.parentClazz = parentClazz;
+        this.propertyName = propertyName;
+        this.isIdAutoIncrement = isIdAutoIncrement;
+    }
 
-	public String getPropertyName() {
-		return propertyName;
-	}
+    public Class<?> getParentClazz() {
+        return parentClazz;
+    }
 
-	public boolean isIdAutoIncrement() {
-		return isIdAutoIncrement;
-	}
-	
+    public String getPropertyName() {
+        return propertyName;
+    }
+
+    public boolean isIdAutoIncrement() {
+        return isIdAutoIncrement;
+    }
 
 }

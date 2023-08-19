@@ -7,12 +7,12 @@ import io.github.jdbctemplatemapper.annotation.Table;
 
 @Table(name = "annotation_check")
 public class DuplicateIdAnnotion {
-	@Id(type = IdType.AUTO_INCREMENT)
-	private Integer id;
-    
-	@Id
-	private Integer id2;
-	
-	@Column
-	private String something;
+    @Id(type = IdType.AUTO_INCREMENT)
+    private Integer id;
+
+    @Id
+    private Integer id2;
+
+    @Column
+    private String something;
 }

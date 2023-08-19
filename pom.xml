@@ -12,10 +12,10 @@
 
 	<groupId>io.github.jdbctemplatemapper</groupId>
 	<artifactId>jdbctemplatemapper</artifactId>
-	<version>1.3.1</version>
+	<version>1.3.2-SNAPSHOT</version>
 	<name>jdbctemplatemapper</name>
 	<description>
-      Single line CRUD methods when using Spring JdbcTemplate
+      Make usage of Spring's JdbcTemplate to be less verbose
     </description>
 	<packaging>jar</packaging>
 

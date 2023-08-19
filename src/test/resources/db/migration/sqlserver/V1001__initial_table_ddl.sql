@@ -24,7 +24,7 @@ CREATE TABLE jdbctemplatemapper.order_line (
 
 CREATE TABLE jdbctemplatemapper.customer (
 	customer_id int IDENTITY(1,1) NOT NULL,
-	first_name varchar(100) NOT NULL,
+	first_name varchar(100),
 	last_name varchar(100) NOT NULL,
 	non_model_column varchar(100),
 	CONSTRAINT customer_pk PRIMARY KEY (customer_id)
@@ -67,6 +67,28 @@ CREATE TABLE jdbctemplatemapper.type_check (
    big_decimal_data numeric(10,2),
    non_model_column varchar(100),
    offset_date_time_data varchar(100)
+);
+
+CREATE TABLE jdbctemplatemapper.annotation_check (
+   id int NOT NULL,  
+   id2 int,
+   something varchar(100),
+   created_on1 datetime,
+   created_on2 datetime,
+   created_by1 varchar(100),
+   created_by2 varchar(100),
+   updated_on1 datetime,
+   updated_on2 datetime,
+   updated_by1 varchar(100),
+   updated_by2 varchar(100),
+   version1 int,
+   version2 int,
+
+   CONSTRAINT annotation_check_pk PRIMARY KEY (id)
+);
+
+CREATE TABLE jdbctemplatemapper.no_id_object (
+   something varchar(100)
 );
 
 

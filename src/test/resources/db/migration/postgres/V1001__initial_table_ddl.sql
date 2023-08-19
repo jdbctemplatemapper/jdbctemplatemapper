@@ -23,7 +23,7 @@ CREATE TABLE jdbctemplatemapper.order_line (
 
 CREATE TABLE jdbctemplatemapper.customer (
 	customer_id serial NOT NULL,
-	first_name varchar(100) NOT NULL,
+	first_name varchar(100),
 	last_name varchar(100) NOT NULL,
 	non_model_column varchar(100),
 	CONSTRAINT customer_pk PRIMARY KEY (customer_id)
@@ -89,6 +89,10 @@ CREATE TABLE jdbctemplatemapper.annotation_check (
    version2 integer,
 
    CONSTRAINT annotation_check_pk PRIMARY KEY (id)
+);
+
+CREATE TABLE jdbctemplatemapper.no_id_object (
+   something varchar(100)
 );
 
 

@@ -13,99 +13,99 @@ import io.github.jdbctemplatemapper.annotation.Version;
 
 @Table(name = "product")
 public class NonDefaultNamingProduct {
-	
-	@Column(name="naME")
-	private String productName;
-	
-	@Id
-	@Column(name="PRODUCT_id")
-	private Integer id;
-		
-	@Column
-	private Double cost;
 
-	@CreatedOn
-	@Column(name="created_on")
-	private LocalDateTime createdAt;
+    @Column(name = "naME")
+    private String productName;
 
-	@CreatedBy
-	@Column(name="created_by")
-	private String whoCreated;
+    @Id
+    @Column(name = "PRODUCT_id")
+    private Integer id;
 
-	@UpdatedOn
-	@Column(name="updated_on")
-	private LocalDateTime updatedAt;
+    @Column
+    private Double cost;
 
-	@UpdatedBy
-	@Column(name="updated_by")
-	private String whoUpdated;
+    @CreatedOn
+    @Column(name = "created_on")
+    private LocalDateTime createdAt;
 
-	@Version
-	@Column(name="version")
-	private Integer optiLock;
+    @CreatedBy
+    @Column(name = "created_by")
+    private String whoCreated;
 
-	public Integer getId() {
-		return id;
-	}
+    @UpdatedOn
+    @Column(name = "updated_on")
+    private LocalDateTime updatedAt;
 
-	public void setId(Integer id) {
-		this.id = id;
-	}
+    @UpdatedBy
+    @Column(name = "updated_by")
+    private String whoUpdated;
 
-	public String getProductName() {
-		return productName;
-	}
+    @Version
+    @Column(name = "version")
+    private Integer optiLock;
 
-	public void setProductName(String productName) {
-		this.productName = productName;
-	}
+    public Integer getId() {
+        return id;
+    }
 
-	public Double getCost() {
-		return cost;
-	}
+    public void setId(Integer id) {
+        this.id = id;
+    }
 
-	public void setCost(Double cost) {
-		this.cost = cost;
-	}
+    public String getProductName() {
+        return productName;
+    }
 
-	public LocalDateTime getCreatedAt() {
-		return createdAt;
-	}
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
 
-	public void setCreatedAt(LocalDateTime createdAt) {
-		this.createdAt = createdAt;
-	}
+    public Double getCost() {
+        return cost;
+    }
 
-	public String getWhoCreated() {
-		return whoCreated;
-	}
+    public void setCost(Double cost) {
+        this.cost = cost;
+    }
 
-	public void setWhoCreated(String whoCreated) {
-		this.whoCreated = whoCreated;
-	}
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
 
-	public LocalDateTime getUpdatedAt() {
-		return updatedAt;
-	}
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 
-	public void setUpdatedAt(LocalDateTime updatedAt) {
-		this.updatedAt = updatedAt;
-	}
+    public String getWhoCreated() {
+        return whoCreated;
+    }
 
-	public String getWhoUpdated() {
-		return whoUpdated;
-	}
+    public void setWhoCreated(String whoCreated) {
+        this.whoCreated = whoCreated;
+    }
 
-	public void setWhoUpdated(String whoUpdated) {
-		this.whoUpdated = whoUpdated;
-	}
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
 
-	public Integer getOptiLock() {
-		return optiLock;
-	}
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 
-	public void setOptiLock(Integer optiLock) {
-		this.optiLock = optiLock;
-	}
+    public String getWhoUpdated() {
+        return whoUpdated;
+    }
+
+    public void setWhoUpdated(String whoUpdated) {
+        this.whoUpdated = whoUpdated;
+    }
+
+    public Integer getOptiLock() {
+        return optiLock;
+    }
+
+    public void setOptiLock(Integer optiLock) {
+        this.optiLock = optiLock;
+    }
 
 }

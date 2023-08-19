@@ -23,7 +23,7 @@ CREATE TABLE jdbctemplatemapper.order_line (
 
 CREATE TABLE jdbctemplatemapper.customer (
 	customer_id NUMBER GENERATED ALWAYS AS IDENTITY,
-	first_name varchar(100) NOT NULL,
+	first_name varchar(100),
 	last_name varchar(100) NOT NULL,
 	non_model_column varchar(100),
 	CONSTRAINT customer_pk PRIMARY KEY (customer_id)
@@ -68,6 +68,25 @@ CREATE TABLE jdbctemplatemapper.type_check (
    offset_date_time_data timestamp with time zone
 );
 
+CREATE TABLE jdbctemplatemapper.annotation_check (
+   id integer NOT NULL,  
+   id2 integer,
+   something varchar(100),
+   created_on1 timestamp,
+   created_on2 timestamp,
+   created_by1 varchar(100),
+   created_by2 varchar(100),
+   updated_on1 timestamp,
+   updated_on2 timestamp,
+   updated_by1 varchar(100),
+   updated_by2 varchar(100),
+   version1 integer,
+   version2 integer
+);
+
+CREATE TABLE jdbctemplatemapper.no_id_object (
+   something varchar(100)
+);
 
 
 
