@@ -580,10 +580,9 @@ public class JdbcTemplateMapper {
     }
 
     /**
-     * This loads the mapping for a class. Model mappings are loaded when they are
-     * used for the first time. This method is provided so that the mappings can be
-     * loaded during Spring application startup so any mapping issues can be known
-     * at startup.
+     * Model mappings are loaded when they are used for the first time. This method
+     * is provided so that the mappings can be loaded during Spring application
+     * startup so any mapping issues can be known at startup.
      * 
      * @param <T>   the type
      * @param clazz the class
