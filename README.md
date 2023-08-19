@@ -232,7 +232,8 @@ class Product {
 public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
     JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate);
     jdbcTemplateMapper
-        .withRecordOperatorResolver(new ConcreteImplementationOfIRecordOperatorResolver())
+        .withRecordOperatorResolver(new ConcreteImplementationOfIRecordOperatorResolver());
+    return jdbcTemplateMapper;
 }
 ```
  
