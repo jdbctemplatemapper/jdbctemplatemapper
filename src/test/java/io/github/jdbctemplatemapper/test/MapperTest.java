@@ -154,7 +154,7 @@ public class MapperTest {
         Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
             jtm.insert(null);
         });
-        assertTrue(exception.getMessage().contains("Object must not be null"));     
+        assertTrue(exception.getMessage().contains("Object must not be null"));
     }
 
     @Test
@@ -162,12 +162,12 @@ public class MapperTest {
         Product product = new Product();
         product.setName("hat");
         product.setCost(12.25);
-        
+
         Exception exception = Assertions.assertThrows(MapperException.class, () -> {
             jtm.insert(product);
         });
-        
-        assertTrue(exception.getMessage().contains("cannot be null since it is not an auto increment id"));   
+
+        assertTrue(exception.getMessage().contains("cannot be null since it is not an auto increment id"));
     }
 
     @Test
@@ -175,7 +175,7 @@ public class MapperTest {
         Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
             jtm.insert(null);
         });
-        assertTrue(exception.getMessage().contains("Object must not be null"));  
+        assertTrue(exception.getMessage().contains("Object must not be null"));
     }
 
     @Test
@@ -186,7 +186,6 @@ public class MapperTest {
         Thread.sleep(1000); // avoid timing issue.
 
         order.setStatus("COMPLETE");
-
         jtm.update(order);
 
         // check if auto assigned properties have changed.
@@ -204,13 +203,11 @@ public class MapperTest {
 
     @Test
     public void update_withIdOfTypeInteger_Test() {
-
         Product product = jtm.findById(Product.class, 6);
-
         Product product1 = jtm.findById(Product.class, 6);
         product1.setName("xyz");
         jtm.update(product1);
-        
+
         Product product2 = jtm.findById(Product.class, 6);
 
         assertEquals("xyz", product1.getName());
@@ -219,9 +216,7 @@ public class MapperTest {
 
     @Test
     public void update_withIdOfTypeString_Test() {
-
         Person person = jtm.findById(Person.class, "person101");
-
         person.setLastName("new name");
         jtm.update(person);
 
@@ -254,13 +249,12 @@ public class MapperTest {
         Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
             jtm.update(null);
         });
-        assertTrue(exception.getMessage().contains("Object must not be null"));  
+        assertTrue(exception.getMessage().contains("Object must not be null"));
     }
 
     @Test
     public void update_nonDatabaseProperty_Test() {
         Person person = jtm.findById(Person.class, "person101");
-
         person.setSomeNonDatabaseProperty("xyz");
         jtm.update(person);
 
@@ -303,13 +297,10 @@ public class MapperTest {
     @Test
     public void deleteByObject_Test() {
         Product product = jtm.findById(Product.class, 4);
-
         int cnt = jtm.delete(product);
-
         assertTrue(cnt == 1);
 
         Product product1 = jtm.findById(Product.class, 4);
-
         assertNull(product1);
     }
 
@@ -318,17 +309,15 @@ public class MapperTest {
         Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
             jtm.delete(null);
         });
-        assertTrue(exception.getMessage().contains("Object must not be null"));  
+        assertTrue(exception.getMessage().contains("Object must not be null"));
     }
 
     @Test
     public void deleteById_Test() {
         int cnt = jtm.deleteById(Product.class, 5);
-
         assertTrue(cnt == 1);
 
         Product product1 = jtm.findById(Product.class, 5);
-
         assertNull(product1);
     }
 
@@ -336,8 +325,8 @@ public class MapperTest {
     public void deleteById_nullIdFailure_Test() {
         Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
             jtm.deleteById(Product.class, null);
-        });     
-        assertTrue(exception.getMessage().contains("id must not be null"));          
+        });
+        assertTrue(exception.getMessage().contains("id must not be null"));
     }
 
     @Test
@@ -347,11 +336,34 @@ public class MapperTest {
     }
 
     @Test
+    public void findByProperty_nullPropertyName_Test() {
+        Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            jtm.findByProperty(OrderLine.class, null, 1);
+        });
+        assertTrue(exception.getMessage().contains("propertyName must not be null"));
+    }
+
+    @Test
+    public void findByProperty_nullClazz_Test() {
+        Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            jtm.findByProperty(null, "orderId", 1);
+        });
+        assertTrue(exception.getMessage().contains("Class must not be null"));
+    }
+
+    @Test
+    public void findByProperty_nullPropertyValue_Test() {
+        // TONY need data for this test
+        jtm.findByProperty(OrderLine.class, "orderId", null);
+    }
+
+    @Test
     public void findByProperty_InvalidProperty_Test() {
         Exception exception = Assertions.assertThrows(MapperException.class, () -> {
             jtm.findByProperty(OrderLine.class, "x", 1);
         });
-        assertTrue(exception.getMessage().contains("is either invalid or does not have a corresponding column in database"));          
+        assertTrue(exception.getMessage()
+                .contains("is either invalid or does not have a corresponding column in database"));
     }
 
     @Test
@@ -367,15 +379,86 @@ public class MapperTest {
         Exception exception = Assertions.assertThrows(MapperException.class, () -> {
             jtm.findByProperty(OrderLine.class, "orderId", 1, "x");
         });
-        assertTrue(exception.getMessage().contains("is either invalid or does not have a corresponding column in database"));          
-
+        assertTrue(exception.getMessage()
+                .contains("is either invalid or does not have a corresponding column in database"));
     }
 
     @Test
     public void findByProperty_MultipleValues_Test() {
         Integer[] orderIds = { 1, 2, 3 };
-        List<Order> orders = jtm.findByProperty(Order.class, "orderId", new HashSet<Integer>(Arrays.asList(orderIds)));
+        List<Order> orders = jtm.findByPropertyWithMultipleValues(Order.class, "orderId",
+                new HashSet<Integer>(Arrays.asList(orderIds)));
         assertTrue(orders.size() == 3);
+    }
+
+    @Test
+    public void findByPropertyWithMultipleValues_nullPropertyName_Test() {
+        Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            jtm.findByPropertyWithMultipleValues(OrderLine.class, null, new HashSet<Integer>());
+        });
+        assertTrue(exception.getMessage().contains("propertyName must not be null"));
+    }
+
+    @Test
+    public void findByPropertyWithMultipleValues_nullPropertyValues_Test() {
+        Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            jtm.findByPropertyWithMultipleValues(OrderLine.class, "orderId", null);
+        });
+        assertTrue(exception.getMessage().contains("propertyValues argument must not be null"));
+    }
+
+    @Test
+    public void findByPropertyWithMultipleValues_emptyPropertyValues_Test() {
+        List<OrderLine> lines = jtm.findByPropertyWithMultipleValues(OrderLine.class, "orderId",
+                new HashSet<Integer>());
+        assertTrue(lines.size() == 0);
+    }
+
+    @Test
+    public void findByPropertyWithMultipleValuesOfWhichOneisNull_Test() {
+        //TONY
+        Integer[] orderIds = { 1, 2,null, 3 };
+        List<Order> orders = jtm.findByPropertyWithMultipleValues(Order.class, "orderId",
+                new HashSet<Integer>(Arrays.asList(orderIds)));
+        assertTrue(orders.size() == 3);
+    }
+    
+    @Test
+    public void findByPropertyWithMultipleValuesOfWhichHasOnlyNull_Test() {
+        //TONY
+        Integer[] orderIds = { null };
+        List<Order> orders = jtm.findByPropertyWithMultipleValues(Order.class, "orderId",
+                new HashSet<Integer>(Arrays.asList(orderIds)));
+        //assertTrue(orders.size() == 3);
+    }
+
+    @Test
+    public void findByProperty_MultipleValuesWithOrderBy_Test() {
+        Integer[] orderIds = { 1, 2, 3 };
+        List<Order> orders = jtm.findByPropertyWithMultipleValues(Order.class, "orderId",
+                new HashSet<Integer>(Arrays.asList(orderIds)), "orderDate");
+        assertTrue(orders.size() == 3);
+    }
+
+    @Test
+    public void findByProperty_MultipleValuesInvalidProperty_Test() {
+        Integer[] orderIds = { 1, 2, 3 };
+        Exception exception = Assertions.assertThrows(MapperException.class, () -> {
+            jtm.findByPropertyWithMultipleValues(Order.class, "x", new HashSet<Integer>(Arrays.asList(orderIds)));
+        });
+        assertTrue(exception.getMessage()
+                .contains("is either invalid or does not have a corresponding column in database"));
+    }
+
+    @Test
+    public void findByProperty_MultipleValuesInvalidOrderByProperty_Test() {
+        Integer[] orderIds = { 1, 2, 3 };
+        Exception exception = Assertions.assertThrows(MapperException.class, () -> {
+            jtm.findByPropertyWithMultipleValues(Order.class, "orderId", new HashSet<Integer>(Arrays.asList(orderIds)),
+                    "x");
+        });
+        assertTrue(exception.getMessage()
+                .contains("is either invalid or does not have a corresponding column in database"));
     }
 
     @Test
@@ -458,7 +541,5 @@ public class MapperTest {
         assertEquals("shoes", orders.get(0).getOrderLines().get(0).getProduct().getName());
         assertEquals("socks", orders.get(0).getOrderLines().get(1).getProduct().getName());
         assertEquals("laces", orders.get(1).getOrderLines().get(0).getProduct().getName());
-
     }
-
 }

@@ -137,8 +137,8 @@ class MappingHelper {
                             colName, columnNameToColumnInfo.get(colName).getColumnSqlDataType()));
                 }
 
-                processAnnotation(Id.class, field, tableName, propNameToPropertyMapping, columnNameToColumnInfo);               
-                processAnnotation(Version.class, field, tableName, propNameToPropertyMapping, columnNameToColumnInfo); 
+                processAnnotation(Id.class, field, tableName, propNameToPropertyMapping, columnNameToColumnInfo);
+                processAnnotation(Version.class, field, tableName, propNameToPropertyMapping, columnNameToColumnInfo);
                 processAnnotation(CreatedOn.class, field, tableName, propNameToPropertyMapping, columnNameToColumnInfo);
                 processAnnotation(UpdatedOn.class, field, tableName, propNameToPropertyMapping, columnNameToColumnInfo);
                 processAnnotation(CreatedBy.class, field, tableName, propNameToPropertyMapping, columnNameToColumnInfo);
@@ -259,13 +259,13 @@ class MappingHelper {
 
     private <T extends Annotation> void processAnnotation(Class<T> annotationClazz, Field field, String tableName,
             Map<String, PropertyMapping> propNameToPropertyMapping, Map<String, ColumnInfo> columnNameToColumnInfo) {
-        
+
         Annotation annotation = AnnotationUtils.findAnnotation(field, annotationClazz);
         if (annotation != null) {
             String propertyName = field.getName();
             PropertyMapping propMapping = propNameToPropertyMapping.get(propertyName);
-            if (propMapping == null) {  // it means there is no @Column annotation for the property
-                String colName = MapperUtils.toUnderscoreName(propertyName); //the default column name
+            if (propMapping == null) { // it means there is no @Column annotation for the property
+                String colName = MapperUtils.toUnderscoreName(propertyName); // the default column name
                 if (!columnNameToColumnInfo.containsKey(colName)) {
                     throw new AnnotationException(
                             colName + " column not found in table " + tableName + " for model property "
@@ -275,9 +275,9 @@ class MappingHelper {
                         columnNameToColumnInfo.get(colName).getColumnSqlDataType());
                 propNameToPropertyMapping.put(propertyName, propMapping);
             }
-            
+
             BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(propMapping);
-            bw.setPropertyValue(annotationClazz.getSimpleName()+"Annotation", true);
+            bw.setPropertyValue(annotationClazz.getSimpleName() + "Annotation", true);
         }
     }
 

@@ -2,7 +2,6 @@ package io.github.jdbctemplatemapper.core;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -210,6 +209,12 @@ public class JdbcTemplateMapper {
 
     /**
      * Returns list of objects which match the property value.
+     * 
+     * <pre>
+     * Query is constructed
+     * in such a way that if propertyValue is null it will return records in
+     * database which have null values for the property
+     * </pre>
      *
      * @param <T>           the type
      * @param clazz         Class of List of objects returned
@@ -224,6 +229,12 @@ public class JdbcTemplateMapper {
     /**
      * Returns list of objects which match the propertyValue ordered by the
      * orderedByProperty ascending.
+     * 
+     * <pre>
+     * Query is constructed in such a way that if
+     * propertyValue is null it will return records in database which have null
+     * values for the property
+     * </pre>
      *
      * @param <T>                 the type
      * @param clazz               Class of List of objects returned
@@ -247,8 +258,13 @@ public class JdbcTemplateMapper {
 
         String columnsSql = getFindColumnsSql(tableMapping, clazz);
         String sql = "SELECT " + columnsSql + " FROM "
-                + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " WHERE " + propColumnName
-                + " = ?";
+                + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " WHERE " + propColumnName;
+
+        if (propertyValue == null) {
+            sql += " iS NULL";
+        } else {
+            sql += " = ?";
+        }
 
         String orderByColumnName = null;
         if (orderByPropertyName != null) {
@@ -260,51 +276,72 @@ public class JdbcTemplateMapper {
         }
 
         if (orderByColumnName != null) {
-            sql = sql + " ORDER BY " + orderByColumnName + " ASC";
+            sql += " ORDER BY " + orderByColumnName + " ASC";
         }
 
         RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
 
-        return jdbcTemplate.query(sql, mapper, propertyValue);
-    }
-    
-    /**
-     * Returns list of objects which match the set of property values. Generates an
-     * SQL with 'IN' clause. Some databases have a limitation for number of entries
-     * in the 'IN' clause so if propertyValues have more that 100 entries, multiple
-     * sql calls will be issued to get all the records
-     *
-     * @param <T>            the type
-     * @param <U>            the type of the property values
-     * @param clazz          Class of List of objects returned
-     * @param propertyName   the property name
-     * @param propertyValues Set of values to query by
-     * @return a List of objects of type T
-     */
-    public <T, U extends Object> List<T> findByProperty(Class<T> clazz, String propertyName, Set<U> propertyValues) {
-        return findByProperty(clazz, propertyName, propertyValues, null);
+        if (propertyValue == null) {
+            return jdbcTemplate.query(sql, mapper);
+        } else {
+            return jdbcTemplate.query(sql, mapper, propertyValue);
+        }
     }
 
     /**
      * Returns list of objects which match the set of property values. Generates an
-     * SQL with 'IN' clause. Some databases have a limitation for number of entries
-     * in the 'IN' clause so if propertyValues have more that 100 entries, multiple
-     * sql calls will be issued to get all the records
+     * SQL with 'IN' clause. Some databases have a limits for number of entries in
+     * the 'IN' clause so be careful.
+     * 
+     * <pre>
+     * Query is constructed in such a way that if there is a null value in the propertyValues Set 
+     * the returned records will include records whose values are null for that property in the database.
+     * </pre>
      *
      * @param <T>            the type
      * @param <U>            the type of the property values
      * @param clazz          Class of List of objects returned
      * @param propertyName   the property name
      * @param propertyValues Set of values to query by
+     * @return a List of objects of type T
+     */
+    public <T, U extends Object> List<T> findByPropertyWithMultipleValues(Class<T> clazz, String propertyName,
+            Set<U> propertyValues) {
+        return findByPropertyWithMultipleValues(clazz, propertyName, propertyValues, null);
+    }
+
+    /**
+     * Returns list of objects which match the set of property values. Generates an
+     * SQL with 'IN' clause. Some databases have limits for number of entries so be
+     * careful.
+     * 
+     * <pre>
+     * Query is constructed in such a way that if there is a null value in the propertyValues Set 
+     * the returned records will include records whose values are null for that property in the database.
+     * </pre>
+     *
+     * @param <T>             the type
+     * @param <U>             the type of the property values
+     * @param clazz           Class of List of objects returned
+     * @param propertyName    the property name
+     * @param propertyValues  Set of values to query by
      * @param orderByProperty property to order by
      * @return a List of objects of type T
      */
-    public <T, U extends Object> List<T> findByProperty(Class<T> clazz, String propertyName, Set<U> propertyValues, String orderByPropertyName) {
+    public <T, U extends Object> List<T> findByPropertyWithMultipleValues(Class<T> clazz, String propertyName,
+            Set<U> propertyValues, String orderByPropertyName) {
+        Assert.notNull(clazz, "Class must not be null");
+        Assert.notNull(propertyName, "propertyName must not be null");
+        Assert.notNull(propertyValues, "propertyValues argument must not be null");
+
         List<T> resultList = new ArrayList<>();
         TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
         String propColumnName = tableMapping.getColumnName(propertyName);
-        String columnsSql = getFindColumnsSql(tableMapping, clazz);
-        
+        if (propColumnName == null) {
+            throw new MapperException(clazz.getSimpleName() + "." + propertyName
+                    + " is either invalid or does not have a corresponding column in database.");
+        }
+
         String orderByColumnName = null;
         if (orderByPropertyName != null) {
             orderByColumnName = tableMapping.getColumnName(orderByPropertyName);
@@ -314,25 +351,38 @@ public class JdbcTemplateMapper {
             }
         }
 
-        // chunk the set into 100s so there are no issues with database specific limits
-        // on IN clause.
-        Collection<List<U>> chunkedPropertyValues = MapperUtils.chunkTheCollection(propertyValues, 100);
-
-        for (List<U> propValues : chunkedPropertyValues) {
-            String sql = "SELECT " + columnsSql + " FROM "
-                    + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " WHERE " + propColumnName
-                    + " IN (:propValues)";       
-            
-            if (orderByColumnName != null) {
-                sql = sql + " ORDER BY " + orderByColumnName + " ASC";
-            }
-            
-            MapSqlParameterSource params = new MapSqlParameterSource("propValues", propValues);
-            
-            RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
-            resultList.addAll(npJdbcTemplate.query(sql, params, mapper));
+        if (MapperUtils.isEmpty(propertyValues)) {
+            return resultList;
         }
-        return resultList;
+
+        // need to handle a null value in the set.
+        Set<U> localPropertyValues = new HashSet<>(propertyValues);
+        boolean hasNullInSet = localPropertyValues.remove(null);
+
+        String columnsSql = getFindColumnsSql(tableMapping, clazz);
+        String sql = "SELECT " + columnsSql + " FROM "
+                + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " WHERE ";
+
+        if (MapperUtils.isEmpty(localPropertyValues)) {
+            sql += propColumnName + " IS NULL";
+        } else {
+            sql += propColumnName + " IN (:propertyValues)";
+            if (hasNullInSet) {
+                sql += " OR " + propColumnName + " IS NULL";
+            }
+        }
+
+        if (orderByColumnName != null) {
+            sql += " ORDER BY " + orderByColumnName + " ASC";
+        }
+
+        RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
+        if (MapperUtils.isEmpty(localPropertyValues)) {
+            return npJdbcTemplate.query(sql, mapper);
+        } else {
+            MapSqlParameterSource params = new MapSqlParameterSource("propertyValues", localPropertyValues);
+            return npJdbcTemplate.query(sql, params, mapper);
+        }
     }
 
     /**
