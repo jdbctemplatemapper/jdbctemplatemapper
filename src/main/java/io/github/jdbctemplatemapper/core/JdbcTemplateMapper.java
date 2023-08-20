@@ -536,12 +536,12 @@ public class JdbcTemplateMapper {
      * Returns the SelectMapper
      * 
      * @param <T>        the type for the SelectMapper
-     * @param clazz      the class
+     * @param type      the class
      * @param tableAlias the table alias used in the query.
      * @return the SelectMapper
      */
-    public <T> SelectMapper<T> getSelectMapper(Class<T> clazz, String tableAlias) {
-        return new SelectMapper<T>(clazz, tableAlias, mappingHelper, conversionService,
+    public <T> SelectMapper<T> getSelectMapper(Class<T> type, String tableAlias) {
+        return new SelectMapper<T>(type, tableAlias, mappingHelper, conversionService,
                 useColumnLabelForResultSetMetaData);
     }
 
@@ -564,7 +564,7 @@ public class JdbcTemplateMapper {
      * underscore name of propertyName.
      * 
      * Works well when using JdbcTemplate's BeanPropertyRowMapper for writing custom
-     * where clauses. Will return something like
+     * where clauses. Will return something like:
      * 
      * <pre>
      * "id as id, last_name as last_name"
@@ -583,10 +583,9 @@ public class JdbcTemplateMapper {
      * is provided so that the mappings can be loaded during Spring application
      * startup so any mapping issues can be known at startup.
      * 
-     * @param <T>   the type
      * @param clazz the class
      */
-    public <T> void loadMapping(Class<T> clazz) {
+    public void loadMapping(Class<?> clazz) {
         mappingHelper.getTableMapping(clazz);
     }
 

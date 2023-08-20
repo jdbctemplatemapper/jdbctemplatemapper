@@ -72,10 +72,22 @@ public class SelectMapper<T> {
         return sj.toString();
     }
 
-    String getTableAlias() {
+    /**
+     * Get the type the SelectMapper is for
+     * @return the type
+     */
+    public Class<?> getType() {
+        return clazz;
+    }
+    
+    /**
+     * Get the table alias of the SelectMapper
+     * @return the table alias
+     */
+    public String getTableAlias() {
         return tableAlias;
     }
-
+    
     /**
      * gets column alias of the models id in sql statement
      * 
