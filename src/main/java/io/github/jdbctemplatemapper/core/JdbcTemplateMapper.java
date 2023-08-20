@@ -558,7 +558,7 @@ public class JdbcTemplateMapper {
 
     /**
      * returns a string which can be used in a sql select statement with all the
-     * properties which have corresponding database columns. the column alias will be the
+     * properties which have corresponding database columns. The column alias will be the
      * underscore case name of property name, so it works well with JdbcTemplate's BeanPropertyRowMapper
      * 
      * Will return something like below:
