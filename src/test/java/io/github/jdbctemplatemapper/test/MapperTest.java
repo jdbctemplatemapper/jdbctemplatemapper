@@ -412,6 +412,10 @@ public class MapperTest {
         SelectMapper<Order> orderSelectMapper = jtm.getSelectMapper(Order.class, "o");
         SelectMapper<OrderLine> orderLineSelectMapper = jtm.getSelectMapper(OrderLine.class, "ol");
         SelectMapper<Product> productSelectMapper = jtm.getSelectMapper(Product.class, "p");
+        
+        
+        assertTrue(Order.class == orderSelectMapper.getType());
+        assertTrue(orderSelectMapper.getTableAlias().equals("o"));
 
         //@formatter:off       
         String sql = "select" 
