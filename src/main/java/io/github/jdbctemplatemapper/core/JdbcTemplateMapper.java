@@ -517,12 +517,11 @@ public class JdbcTemplateMapper {
     /**
      * Physically Deletes the object from the database by id
      *
-     * @param <T>   the type
      * @param clazz Type of object to be deleted.
      * @param id    Id of object to be deleted
      * @return number records were deleted (1 or 0)
      */
-    public <T> Integer deleteById(Class<T> clazz, Object id) {
+    public Integer deleteById(Class<?> clazz, Object id) {
         Assert.notNull(clazz, "Class must not be null");
         Assert.notNull(id, "id must not be null");
 
@@ -549,12 +548,11 @@ public class JdbcTemplateMapper {
      * Get the column name of a property of the Model. Will return null if there is
      * no corresponding column for the property.
      * 
-     * @param <T>          the type
      * @param clazz        the class
      * @param propertyName the property name
      * @return the column name
      */
-    public <T> String getColumnName(Class<T> clazz, String propertyName) {
+    public String getColumnName(Class<?> clazz, String propertyName) {
         return mappingHelper.getTableMapping(clazz).getColumnName(propertyName);
     }
 
