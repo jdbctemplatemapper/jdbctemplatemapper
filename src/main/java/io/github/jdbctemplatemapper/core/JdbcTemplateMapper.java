@@ -560,21 +560,19 @@ public class JdbcTemplateMapper {
 
     /**
      * returns a string which can be used in a sql select statement with all the
-     * properties which have corresponding database columns. the alias will be the
-     * underscore name of propertyName.
+     * properties which have corresponding database columns. the column alias will be the
+     * underscore case name of property name, so it works well with JdbcTemplate's BeanPropertyRowMapper
      * 
-     * Works well when using JdbcTemplate's BeanPropertyRowMapper for writing custom
-     * where clauses. Will return something like:
+     * Will return something like below:
      * 
      * <pre>
      * "id as id, last_name as last_name"
      * </pre>
      * 
-     * @param <T>   the type
      * @param clazz the class
      * @return comma separated select column string
      */
-    public <T> String getColumnsSql(Class<T> clazz) {
+    public String getColumnsSql(Class<?> clazz) {
         return getFindColumnsSql(mappingHelper.getTableMapping(clazz), clazz);
     }
 
