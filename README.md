@@ -315,7 +315,7 @@ An example for querying the following relationship: An 'Order' has many 'OrderLi
          //   idProductMap.put(product.getProductId(), product);
          //}
 
-         // Above code is replaced by getModel(). See its definition futher below.
+         // Above code is replaced by getModel(). See its definition further below.
          Product product = getModel(rs, productSelectMapper, idProductMap);
  				    
          OrderLine orderLine = orderLineSelectMapper.buildModel(rs); // populated OrderLine model from resultSet
