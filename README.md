@@ -305,7 +305,7 @@ using Spring's ResultSetExtractor
  SelectMapper<OrderLine> orderLineSelectMapper = jdbcTemplateMapper.getSelectMapper(OrderLine.class, "ol");
  SelectMapper<Product> productSelectMapper = jdbcTemplateMapper.getSelectMapper(Product.class, "p");
 
- // no need to type all those column names so we can concentrate on where and join clauses
+ // no need to type in column names and aliases so we can concentrate on where and join clauses
  String sql = "select" 
                + orderSelectMapper.getColumnsSql() 
                + ","
