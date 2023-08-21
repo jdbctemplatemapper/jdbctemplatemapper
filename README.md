@@ -12,7 +12,7 @@
   3. Auto assign properties for models:
       * auto assign created on, updated on.
       * auto assign created by, updated by using an implementation of interface IRecordOperatorResolver.
-      * optimistic locking functionality for updates.
+      * optimistic locking feature for updates.
   4. For transaction management use Spring transactions since the library uses JdbcTemplate behind the scenes.
   5. To log the SQL statements it uses the same logging configurations as JdbcTemplate. See the logging section.
   6. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with other relational databases. 
@@ -293,10 +293,7 @@ An example for querying the following relationship: An 'Order' has many 'OrderLi
        // below maps used to prevent repeated creation of same models as we loop through the resultset 
        Map<Long, Order> idOrderMap = new LinkedHashMap<>(); // LinkedHashMap to retain result order	
        Map<Integer, Product> idProductMap = new HashMap<>();
-       while (rs.next()) {				
-         // selectMapper.buildModel(rs) will return the model populated from the resultSet
-         // In this use case Order has many OrderLine and an OrderLine has one Product
- 					
+       while (rs.next()) {				 					
          // orderSelectMapper.getResultSetModelIdColumnLabel() returns the id column alias which is 'o_order_id'
          // for the sql above. 
          //Long orderId = rs.getLong(orderSelectMapper.getResultSetModelIdColumnLabel());						
@@ -341,7 +338,7 @@ private <T, U> T getModel(ResultSet rs, SelectMapper<T> selectMapper, Map<U, T> 
     U id = (U) rs.getObject(selectMapper.getResultSetModelIdColumnLabel());     
     T model = idToModelMap.get(id);
     if (model == null) {
-        model = selectMapper.buildModel(rs);
+        model = selectMapper.buildModel(rs); // builds the model from resultSet
         idToModelMap.put(id, model);
      }
      return model;      
