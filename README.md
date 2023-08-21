@@ -329,8 +329,8 @@ using Spring's ResultSetExtractor
          // selectMapper.buildModel(rs) will return the model populated from the resultSet
          // Everything below is just logic to populate the relationships
          // Doing some checks to make sure unwanted objects are not created.
-         // Common code to get models can be extracted out. See getModel() method
-         // definition below.
+         // Common code to get models can be extracted out to be one liners.
+         // See getModel() method definition below.
          // In this use case Order has many OrderLine and an OrderLine has one product
  					
          // orderSelectMapper.getResultSetModelIdColumnLabel() returns the id column alias which is 'o_order_id'
@@ -372,18 +372,18 @@ using Spring's ResultSetExtractor
  
   // execute the JdbcTemplate query	
   List<Order> orders = jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor);
-
 ...
- @SuppressWarnings("unchecked")
-    private <T, U> T getModel(ResultSet rs, SelectMapper<T> selectMapper, Map<U, T> idToModelMap) throws SQLException{
-        U id = (U) rs.getObject(selectMapper.getResultSetModelIdColumnLabel());     
-        T model = idToModelMap.get(id);
-        if (model == null) {
-            model = selectMapper.buildModel(rs);
-            idToModelMap.put(id, model);
-        }
-        return model;      
-    }
+
+@SuppressWarnings("unchecked")
+private <T, U> T getModel(ResultSet rs, SelectMapper<T> selectMapper, Map<U, T> idToModelMap) throws SQLException{
+    U id = (U) rs.getObject(selectMapper.getResultSetModelIdColumnLabel());     
+    T model = idToModelMap.get(id);
+    if (model == null) {
+        model = selectMapper.buildModel(rs);
+        idToModelMap.put(id, model);
+     }
+     return model;      
+ }
 
 ```
 
