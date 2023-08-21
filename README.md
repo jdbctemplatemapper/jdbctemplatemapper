@@ -225,7 +225,7 @@ works well.
 
 SelectMapper allows generating the select columns string for the model and population of the model from a ResultSet.
 
-An example for querying the following relationship: An 'Order' has many 'OrderLine' and each 'OrderLine' has one product using Spring's ResultSetExtractor  
+An example for querying the following relationship: An 'Order' has many 'OrderLine' and each 'OrderLine' has one Product using Spring's ResultSetExtractor  
 
 ```java
  @Table(name = "orders")
