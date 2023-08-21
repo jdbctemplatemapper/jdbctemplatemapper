@@ -290,7 +290,7 @@ An example for querying the following relationship: An 'Order' has many 'OrderLi
  ResultSetExtractor<List<Order>> rsExtractor = new ResultSetExtractor<List<Order>>() {
      @Override
      public List<Order> extractData(ResultSet rs) throws SQLException, DataAccessException {
-       // below to maps used to prevent repeated creation of same models.  
+       // below maps used to prevent repeated creation of same models.  
        Map<Long, Order> idOrderMap = new LinkedHashMap<>(); // LinkedHashMap to retain result order	
        Map<Integer, Product> idProductMap = new HashMap<>();
        while (rs.next()) {				
