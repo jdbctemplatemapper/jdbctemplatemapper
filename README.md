@@ -146,25 +146,6 @@ This will map property to a column using the default naming convention of camel 
 @Column(name="some_colum_name")  
 This will map the property to the column specified by name attribute. 
 
-```java
-@Table(name="customer")
-class Customer {
- @Id
- @Column(name = "customer_id")   
- private Integer id;           // this will map id property to customer_id in database table.
- 
- @Column
- private String customerName;  // will map to custmer_name column by default
- 
- @Column(name="type")
- private String customerType;  // will map to type column in database
- 
- private String something;     // This will not be persisted because it has no annotations
- 
-}
-```
-
-
 **@Version**
 
 This annotation is used for optimistic locking. It has to be of type Integer.
