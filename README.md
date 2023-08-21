@@ -326,8 +326,6 @@ using Spring's ResultSetExtractor
        while (rs.next()) {				
          // selectMapper.buildModel(rs) will return the model populated from the resultSet
          // In this use case Order has many OrderLine and an OrderLine has one Product
-         // The code to get Order and Product and other models are similar so
-         // can be extracted away. See getModel() definition further down.
  					
          // orderSelectMapper.getResultSetModelIdColumnLabel() returns the id column alias which is 'o_order_id'
          // for the sql above. 
