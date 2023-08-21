@@ -294,7 +294,7 @@ using Spring's ResultSetExtractor
     @Column
     private Double price;
   }
-
+...
  // The second argument to getSelectMapper() below is the table alias used in the query.
  // For the query below the 'orders' table alias is 'o', the 'order_line' table alias is 'ol' and the product
  // table alias is 'p'. SelectMapper.getColumnsSql() aliases the columns with the prefix; table alias + "_" so that there are 
