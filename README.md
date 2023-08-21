@@ -320,11 +320,9 @@ using Spring's ResultSetExtractor
  // Using Spring's ResultSetExtractor 		
  ResultSetExtractor<List<Order>> rsExtractor = new ResultSetExtractor<List<Order>>() {
      @Override
-     public List<Order> extractData(ResultSet rs) throws SQLException, DataAccessException {	
-     
+     public List<Order> extractData(ResultSet rs) throws SQLException, DataAccessException {	    
        Map<Long, Order> idOrderMap = new LinkedHashMap<>(); // LinkedHashMap to retain result order	
        Map<Integer, Product> idProductMap = new HashMap<>();
- 		
        while (rs.next()) {				
          // selectMapper.buildModel(rs) will return the model populated from the resultSet
          // In this use case Order has many OrderLine and an OrderLine has one Product
