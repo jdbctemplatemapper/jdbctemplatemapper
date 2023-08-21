@@ -349,7 +349,7 @@ using Spring's ResultSetExtractor
            idProductMap.put(product.getProductId(), product);
          }
 
-         // getModel() extracts away the common code for models. See definition below:
+         // getModel() extracts away the common code to get models. See definition below:
          // Leaving the code above for better understanding.
          
          // order = getModel(rs, orderSelectMapper, idOrderMap);
