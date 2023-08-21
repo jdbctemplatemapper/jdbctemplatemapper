@@ -132,7 +132,7 @@ class Customer {
 }
 ```
 
-In this case you will have to manually set the id value before calling insert()
+In this case you will have to manually set the id value before invoking insert()
 
 **@Column**
 
