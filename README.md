@@ -352,8 +352,8 @@ using Spring's ResultSetExtractor
          // getModel() extracts away the common code to get models.
          // Leaving the code above for better understanding.
          
-         // order = getModel(rs, orderSelectMapper, idOrderMap);
-         // product = getModel(rs, productSelectMapper, idProductMap);
+         // Order order = getModel(rs, orderSelectMapper, idOrderMap);
+         // Product product = getModel(rs, productSelectMapper, idProductMap);
  				    
          OrderLine orderLine = orderLineSelectMapper.buildModel(rs); // populated OrderLine model from resultSet
          if(orderLine != null) {
