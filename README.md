@@ -12,7 +12,7 @@
   3. Auto assign properties for models:
       * auto assign created on, updated on.
       * auto assign created by, updated by using an implementation of interface IRecordOperatorResolver.
-      * optimistic locking functionality for updates by configuring a version property.
+      * optimistic locking functionality for updates.
   4. For transaction management use Spring transactions since the library uses JdbcTemplate behind the scenes.
   5. To log the SQL statements it uses the same logging configurations as JdbcTemplate. See the logging section.
   6. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with other relational databases. 
