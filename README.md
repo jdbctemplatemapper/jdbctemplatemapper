@@ -1,7 +1,7 @@
 # JdbcTemplateMapper #
  
- The goal of JdbcTemplateMapper is to make the usage of Spring's JdbcTemplate less verbose for features like CRUD and relationship queries.
- Use it where appropriate and for other features keep using JdbcTemplate as you normally would.
+ A simple library to make the usage of Spring's JdbcTemplate less verbose for features like CRUD and relationship queries.
+ Use it's features where appropriate and for other functionality keep using JdbcTemplate as you normally would.
  
  [Javadoc](https://jdbctemplatemapper.github.io/jdbctemplatemapper/javadoc/javadoc.html) 
  
