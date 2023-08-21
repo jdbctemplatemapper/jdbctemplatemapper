@@ -329,31 +329,31 @@ using Spring's ResultSetExtractor
          // selectMapper.buildModel(rs) will return the model populated from the resultSet
          // In this use case Order has many OrderLine and an OrderLine has one Product
          // The code below to get Order and Product and other models are similar so
-         // can be extracted out to be single liners. See getModel() definition further down.
+         // can be extracted away. See getModel() definition further down.
  					
          // orderSelectMapper.getResultSetModelIdColumnLabel() returns the id column alias which is 'o_order_id'
          // for the sql above. 
-         Long orderId = rs.getLong(orderSelectMapper.getResultSetModelIdColumnLabel());						
-         Order order = idOrderMap.get(orderId);
-         if (order == null) {
-           order = orderSelectMapper.buildModel(rs); // populates Order model from resultSet
-           idOrderMap.put(order.getOrderId(), order);
-         }
+         //Long orderId = rs.getLong(orderSelectMapper.getResultSetModelIdColumnLabel());						
+         //Order order = idOrderMap.get(orderId);
+         //if (order == null) {
+         //  order = orderSelectMapper.buildModel(rs); // populates Order model from resultSet
+         //  idOrderMap.put(order.getOrderId(), order);
+         //}
+
+         // above code is replaced by getModel()
+         Order order = getModel(rs, orderSelectMapper, idOrderMap);
  				    
          // productSelectMapper.getResultSetModelIdColumnName() returns the id column alias which is 'p_product_id'
          // for the sql above.
-         Integer productId = rs.getInt(productSelectMapper.getResultSetModelIdColumnLabel());
-         Product product = idProductMap.get(productId);
-         if (product == null) {
-           product = productSelectMapper.buildModel(rs); // populates Product model from resultSet
-           idProductMap.put(product.getProductId(), product);
-         }
+         //Integer productId = rs.getInt(productSelectMapper.getResultSetModelIdColumnLabel());
+         //Product product = idProductMap.get(productId);
+         //if (product == null) {
+         //  product = productSelectMapper.buildModel(rs); // populates Product model from resultSet
+         //   idProductMap.put(product.getProductId(), product);
+         //}
 
-         // getModel() extracts away the common code to get models.
-         // Leaving the code above for better understanding.
-         
-         // Order order = getModel(rs, orderSelectMapper, idOrderMap);
-         // Product product = getModel(rs, productSelectMapper, idProductMap);
+         // above code is replaced by getModel()
+         Product product = getModel(rs, productSelectMapper, idProductMap);
  				    
          OrderLine orderLine = orderLineSelectMapper.buildModel(rs); // populated OrderLine model from resultSet
          if(orderLine != null) {
