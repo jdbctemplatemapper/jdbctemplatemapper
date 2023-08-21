@@ -244,9 +244,6 @@ works well.
 
 SelectMapper allows generating the select columns string for the model and population of the model from a ResultSet.
 
-selectMapper.getColumnsSql() will provide a string of columns which can be used in the sql select statement. 
-selectMapper.buildModel(resultSet) will return a model populated from the resultSet data.
-
 Makes the code for writing and retrieving relationships less verbose.
 
 An example for querying the following relationship: An 'Order' has many 'OrderLine' and each 'OrderLine' has one product
