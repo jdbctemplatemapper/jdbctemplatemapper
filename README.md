@@ -356,8 +356,8 @@ using Spring's ResultSetExtractor
          // Leaving the code above for better understanding.
          // See getModel() method definition below:
 
-         // Order order = getModel(rs, orderSelectMapper, idOrderMap);
-         // Product product = getModel(rs, productSelectMapper, idProductMap);
+         // order = getModel(rs, orderSelectMapper, idOrderMap);
+         // product = getModel(rs, productSelectMapper, idProductMap);
  				    
          OrderLine orderLine = orderLineSelectMapper.buildModel(rs); // populated OrderLine model from resultSet
          if(orderLine != null) {
