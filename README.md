@@ -339,8 +339,9 @@ An example for querying the following relationship: An 'Order' has many 'OrderLi
   List<Order> orders = jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor);
 ...
 
+// This method is not part of the distribution. You will need to copy it for use in your code.
 @SuppressWarnings("unchecked")
-private <T, U> T getModel(ResultSet rs, SelectMapper<T> selectMapper, Map<U, T> idToModelMap) throws SQLException{
+public <T, U> T getModel(ResultSet rs, SelectMapper<T> selectMapper, Map<U, T> idToModelMap) throws SQLException{
     U id = (U) rs.getObject(selectMapper.getResultSetModelIdColumnLabel());     
     T model = idToModelMap.get(id);
     if (model == null) {
