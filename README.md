@@ -25,17 +25,17 @@
  public class Product {
      // @Id annotation is required.
      // For auto increment database id use @Id(type=IdType.AUTO_INCREMENT)
-     // For non auto increment id use @Id. In this case you will have to manually set id value before invoking insert().
+     // For non auto increment id use @Id. In this case you will have to manually set the id value before invoking insert().
  
      @Id(type=IdType.AUTO_INCREMENT)
-     private Integer id;   
-       
+     private Integer id; 
+             
      @Column(name="product_name")   
      private String name;                    // will map to product_name column in table
      
      @Column
      private LocalDateTime availableDate;    // will map to column available_date by default 
-       
+     
      @Column
      private Double price;                   // will map to price column
      
@@ -55,11 +55,13 @@
  jdbcTemplateMapper.update(product);
  
  List<Product> products = jdbcTemplateMapper.findAll(Product.class);
+ 
+ List<Product> list = jdbcTemplateMapper.findByProperty(Product.class, "name", "some product name");
 
  jdbcTemplateMapper.delete(product);
- jdbcTemplateMapper.delete(Product.class, 5); // deleting just using id
+ jdbcTemplateMapper.delete(Product.class, 5); // delete using id
  
- // for methods which help make querying relationships less verbose see section 'Querying relationships' below
+ // for methods which help make querying relationships less verbose see section 'Querying relationships' further below
  
  ```
  
@@ -87,7 +89,6 @@ public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
   
  // new JdbcTemplateMapper(jdbcTemplate, schemaName);
  // new JdbcTemplateMapper(jdbcTemplate, schemaName, catalogName);
- // see javadocs for all constructors
 }
 ```
 
@@ -220,12 +221,11 @@ public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
  
 ## Querying relationships
 
-For querying complex relationships using SelectMapper with Spring's ResultSetExtractor
-works well.
+For querying complex relationships use SelectMapper with Spring ResultSetExtractor.
 
 SelectMapper allows generating the select columns string for the model and population of the model from a ResultSet.
 
-An example for querying the following relationship: An 'Order' has many 'OrderLine' and each 'OrderLine' has one Product using Spring's ResultSetExtractor  
+An example for querying the following relationship: An 'Order' has many 'OrderLine' and each 'OrderLine' has one Product.  
 
 ```java
  @Table(name = "orders")
@@ -265,16 +265,18 @@ An example for querying the following relationship: An 'Order' has many 'OrderLi
   }
 ...
  // The second argument to getSelectMapper() below is the table alias used in the query.
- // For the query below the 'orders' table alias is 'o', the 'order_line' table alias is 'ol' and the product
- // table alias is 'p'. SelectMapper.getColumnsSql() aliases the columns with the prefix; table alias + "_" so that there are 
- // no conflicts in sql when different models have same property names like for example id. SelectMapper.buildModel(rs) uses 
- // the column alias prefix to identify and populate the pertinent models from the ResultSet.
+ // For the query below the 'orders' table alias is 'o', the 'order_line' table alias 
+ // is 'ol' and the product table alias is 'p'. SelectMapper.getColumnsSql() aliases 
+ // the columns with the prefix; table alias + "_" so that there are no conflicts in sql
+ // when different models have same property names like for example id.
+ // SelectMapper.buildModel(rs) uses the column alias prefix to populate the pertinent
+ // model from the ResultSet.
  
  SelectMapper<Order> orderSelectMapper = jdbcTemplateMapper.getSelectMapper(Order.class, "o");
  SelectMapper<OrderLine> orderLineSelectMapper = jdbcTemplateMapper.getSelectMapper(OrderLine.class, "ol");
  SelectMapper<Product> productSelectMapper = jdbcTemplateMapper.getSelectMapper(Product.class, "p");
 
- // no need to type in column names and aliases so we can concentrate on where and join clauses
+ // no need to type in column names and aliases so we can concentrate on join and where clauses
  String sql = "select" 
                + orderSelectMapper.getColumnsSql() 
                + ","
@@ -290,35 +292,39 @@ An example for querying the following relationship: An 'Order' has many 'OrderLi
  ResultSetExtractor<List<Order>> rsExtractor = new ResultSetExtractor<List<Order>>() {
      @Override
      public List<Order> extractData(ResultSet rs) throws SQLException, DataAccessException {
-       // below maps used to prevent repeated creation of same models as we loop through the resultset 
-       Map<Long, Order> idOrderMap = new LinkedHashMap<>(); // LinkedHashMap to retain result order	
+       // below maps used to prevent repeated creation of same models
+       Map<Long, Order> idOrderMap = new LinkedHashMap<>(); // LinkedHashMap to retain record order
        Map<Integer, Product> idProductMap = new HashMap<>();
        while (rs.next()) {				 					
-         // orderSelectMapper.getResultSetModelIdColumnLabel() returns the id column alias which is 'o_order_id'
-         // for the sql above. 
-         //Long orderId = rs.getLong(orderSelectMapper.getResultSetModelIdColumnLabel());						
-         //Order order = idOrderMap.get(orderId);
-         //if (order == null) {
-         //  order = orderSelectMapper.buildModel(rs); // populates Order model from resultSet
-         //  idOrderMap.put(order.getOrderId(), order);
-         //}
+         // orderSelectMapper.getResultSetModelIdColumnLabel() returns the id column alias 
+         // which is 'o_order_id' for the sql above. 
+         /*
+         Long orderId = rs.getLong(orderSelectMapper.getResultSetModelIdColumnLabel());
+         Order order = idOrderMap.get(orderId);
+         if (order == null) {
+           order = orderSelectMapper.buildModel(rs);
+           idOrderMap.put(order.getOrderId(), order);
+         }
+         */
 
          // Above code is replaced by getModel(). See its definition further below.
          Order order = getModel(rs, orderSelectMapper, idOrderMap);
  				    
-         // productSelectMapper.getResultSetModelIdColumnName() returns the id column alias which is 'p_product_id'
-         // for the sql above.
-         //Integer productId = rs.getInt(productSelectMapper.getResultSetModelIdColumnLabel());
-         //Product product = idProductMap.get(productId);
-         //if (product == null) {
-         //  product = productSelectMapper.buildModel(rs); // populates Product model from resultSet
-         //   idProductMap.put(product.getProductId(), product);
-         //}
+         // productSelectMapper.getResultSetModelIdColumnName() returns the id column alias 
+         // which is 'p_product_id'for the sql above.
+         /*
+           Integer productId = rs.getInt(productSelectMapper.getResultSetModelIdColumnLabel());
+           Product product = idProductMap.get(productId);
+           if (product == null) {
+             product = productSelectMapper.buildModel(rs); 
+             idProductMap.put(product.getProductId(), product);
+           }
+         */
 
          // Above code is replaced by getModel(). See its definition further below.
          Product product = getModel(rs, productSelectMapper, idProductMap);
  				    
-         OrderLine orderLine = orderLineSelectMapper.buildModel(rs); // populated OrderLine model from resultSet
+         OrderLine orderLine = orderLineSelectMapper.buildModel(rs);
          if(orderLine != null) {
            // wire up the relationships
            orderLine.setProduct(product); 
@@ -368,9 +374,9 @@ Uses the same logging configurations as Spring's JdbcTemplate to log the SQL. In
  3. Models will need a no argument constructor so it can be instantiated and properties set.
  
 ## TroubleShooting
-Make sure you can connect to your database and issue a simple query using Spring's JdbcTemplate without the JdbcTemplateMapper.
+Make sure you can connect to your database and issue a simple query using Spring JdbcTemplate without the JdbcTemplateMapper.
 
-## Known issues
+## Limitations
 1. For Oracle/SqlServer no support for blob/clob. Use JdbcTemplate directly for this with recommended custom code
 
 ## New features/bugs
