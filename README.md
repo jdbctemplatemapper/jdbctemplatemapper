@@ -294,7 +294,9 @@ An example for querying the following relationship: An 'Order' has many 'OrderLi
  ResultSetExtractor<List<Order>> rsExtractor = new ResultSetExtractor<List<Order>>() {
      @Override
      public List<Order> extractData(ResultSet rs) throws SQLException, DataAccessException {
-       // below maps used to prevent repeated creation of same models
+       // below is kind of standard logic used for populating relationships from a resultSet.
+       // maps used to prevent repeated creation of same models and is needed for
+       // correcly populating oneToMany relationships (in this case order.orderLines)
        Map<Long, Order> idOrderMap = new LinkedHashMap<>(); // LinkedHashMap to retain record order
        Map<Integer, Product> idProductMap = new HashMap<>();
        while (rs.next()) {				 					
