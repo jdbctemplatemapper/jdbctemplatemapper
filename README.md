@@ -144,7 +144,7 @@ The two ways to use it:
 @Column  
 This will map property to a column using the default naming convention of camel case to underscore name.
 
-@Column(name="some_colum_name")  
+@Column(name="some_column_name")  
 This will map the property to the column specified by name attribute.   
 Note that this will impact using "SELECT * " with Spring BeanPropertyRowMapper in custom queries. The mismatch of column and property names will cause BeanPropertyRowMapper to ignore these properties. Use "SELECT " + jdbcTemplateMapper.getColumnsSql(TheClass.class) which will create column aliases to match property names so will work with BeanPropertyRowMapper.
 
