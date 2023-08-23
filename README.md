@@ -30,8 +30,8 @@
      @Id(type=IdType.AUTO_INCREMENT)
      private Integer id; 
              
-     @Column(name="product_name")   
-     private String name;                    // will map to product_name column in table
+     @Column(name="product_name")            // Please read documentation of this annotation.
+     private String name;                    // will map to product_name column in table.
      
      @Column
      private LocalDateTime availableDate;    // will map to column available_date by default 
@@ -145,7 +145,9 @@ The two ways to use it:
 This will map property to a column using the default naming convention of camel case to underscore name.
 
 @Column(name="some_colum_name")  
-This will map the property to the column specified by name attribute. 
+This will map the property to the column specified by name attribute.   
+Note that this will impact using "SELECT * " with Spring BeanPropertyRowMapper in custom queries. The mismatch of column and property names will cause BeanPropertyRowMapper to ignore these properties. Use "SELECT " + jdbcTemplateMapper.getColumnsSql(TheClass.class) which will create column aliases to match property names so will work with BeanPropertyRowMapper.
+
 
 **@Version**
 
@@ -372,8 +374,9 @@ Uses the same logging configurations as Spring's JdbcTemplate to log the SQL. In
 ## Notes
  1. If insert/update fails do not reuse the object since it could be in an inconsistent state.
  2. Database changes will require a restart of the application since JdbcTemplateMapper caches table metadata.
- 3. Models will need a no argument constructor so it can be instantiated and properties set.
- 4. For Oracle/SqlServer no support for blob/clob. Use JdbcTemplate directly for this with recommended custom code
+ 3. if you use @Column(name="some_colum_name") to map a property to a non default column it will impact using "SELECT * " with Spring BeanPropertyRowMapper in custom queries. The mismatch of column and property names will cause BeanPropertyRowMapper to ignore these properties. Use "SELECT " + jdbcTemplateMapper.getColumnsSql(TheClass.class) which will create column aliases to match property names so will work with BeanPropertyRowMapper.
+ 4. Models will need a no argument constructor so it can be instantiated and properties set.
+ 5. For Oracle/SqlServer no support for blob/clob. Use JdbcTemplate directly for this with recommended custom code
  
 ## TroubleShooting
 Make sure you can connect to your database and issue a simple query using Spring JdbcTemplate without the JdbcTemplateMapper.
