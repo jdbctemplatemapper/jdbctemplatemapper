@@ -19,6 +19,7 @@ import io.github.jdbctemplatemapper.core.SelectMapper;
 import io.github.jdbctemplatemapper.exception.MapperExtractorException;
 import io.github.jdbctemplatemapper.model.Customer;
 import io.github.jdbctemplatemapper.model.Order;
+import io.github.jdbctemplatemapper.model.Order2;
 import io.github.jdbctemplatemapper.model.OrderLine;
 import io.github.jdbctemplatemapper.model.Product;
 
@@ -34,7 +35,6 @@ public class MapperResultSetExtractorTest {
 
     @Test
     public void extractor_noMapperForExtractorType_Test() {
-        SelectMapper<Order> orderSelectMapper = jtm.getSelectMapper(Order.class, "o");
         SelectMapper<OrderLine> orderLineSelectMapper = jtm.getSelectMapper(OrderLine.class, "ol");
         SelectMapper<Product> productSelectMapper = jtm.getSelectMapper(Product.class, "p");
 
@@ -55,12 +55,11 @@ public class MapperResultSetExtractorTest {
     @Test
     public void extractor_noMapperForMainObject_Test() {
         SelectMapper<Order> orderSelectMapper = jtm.getSelectMapper(Order.class, "o");
-        SelectMapper<OrderLine> orderLineSelectMapper = jtm.getSelectMapper(OrderLine.class, "ol");
         SelectMapper<Product> productSelectMapper = jtm.getSelectMapper(Product.class, "p");
 
         //@formatter:off  
         Exception exception = Assertions.assertThrows(MapperExtractorException.class, () -> {
-           MapperResultSetExtractor<Order> resultSetExtractor = MapperResultSetExtractor
+           MapperResultSetExtractor
                 .builder(Order.class, orderSelectMapper, productSelectMapper)// no orderLineSelectMapper
                 .relationship(OrderLine.class).hasOne(Product.class, "product")
                 .relationship(Order.class).hasMany(OrderLine.class, "orderLines")  
@@ -76,7 +75,6 @@ public class MapperResultSetExtractorTest {
     public void extractor_noMapperForRelatedClass_Test() {
         SelectMapper<Order> orderSelectMapper = jtm.getSelectMapper(Order.class, "o");
         SelectMapper<OrderLine> orderLineSelectMapper = jtm.getSelectMapper(OrderLine.class, "ol");
-        SelectMapper<Product> productSelectMapper = jtm.getSelectMapper(Product.class, "p");
 
         //@formatter:off  
         Exception exception = Assertions.assertThrows(MapperExtractorException.class, () -> {
@@ -186,8 +184,66 @@ public class MapperResultSetExtractorTest {
         });
         //@formatter:on
         assertTrue(exception.getMessage().contains("duplicate selectMapper for type"));
-
     }
+    
+    @Test
+    public void extractor_selectMapperNotNull_Test() {
+        SelectMapper<Order> orderSelectMapper = jtm.getSelectMapper(Order.class, "o");
+        SelectMapper<OrderLine> orderLineSelectMapper = jtm.getSelectMapper(OrderLine.class, "ol");
+        SelectMapper<Product> productSelectMapper = jtm.getSelectMapper(Product.class, "p");
+
+        //@formatter:off  
+        Exception exception = Assertions.assertThrows(MapperExtractorException.class, () -> {
+           MapperResultSetExtractor
+                    .builder(Order.class, orderSelectMapper, orderLineSelectMapper, productSelectMapper, productSelectMapper, null)
+                    .relationship(Order.class).hasMany(OrderLine.class, "orderLines")
+                    .relationship(OrderLine.class).hasOne(Product.class, "product")
+                    .build();  
+        });
+           
+        //@formatter:on
+        assertTrue(exception.getMessage().contains("At least one selectMapper was null"));
+    }
+    
+    @Test
+    public void extractor_CollectionHasNoGenericType_Test() {
+        //Order2 has collection does not have generic type
+        SelectMapper<Order2> orderSelectMapper = jtm.getSelectMapper(Order2.class, "o");
+        SelectMapper<OrderLine> orderLineSelectMapper = jtm.getSelectMapper(OrderLine.class, "ol");
+        SelectMapper<Product> productSelectMapper = jtm.getSelectMapper(Product.class, "p");
+
+        //@formatter:off  
+        Exception exception = Assertions.assertThrows(MapperExtractorException.class, () -> {
+           MapperResultSetExtractor
+                    .builder(Order2.class, orderSelectMapper, orderLineSelectMapper, productSelectMapper, productSelectMapper)
+                    .relationship(Order2.class).hasMany(OrderLine.class, "orderLines")
+                    .relationship(OrderLine.class).hasOne(Product.class, "product")
+                    .build();  
+        });
+           
+        //@formatter:on
+        assertTrue(exception.getMessage().contains("Collections which do not have generic type are not supported"));
+    }
+    
+    @Test
+    public void extractor_CollectionGenericMismatch_Test() {
+        SelectMapper<Order> orderSelectMapper = jtm.getSelectMapper(Order.class, "o");
+        SelectMapper<OrderLine> orderLineSelectMapper = jtm.getSelectMapper(OrderLine.class, "ol");
+        SelectMapper<Product> productSelectMapper = jtm.getSelectMapper(Product.class, "p");
+
+        //@formatter:off  
+        Exception exception = Assertions.assertThrows(MapperExtractorException.class, () -> {
+           MapperResultSetExtractor
+                    .builder(Order.class, orderSelectMapper, orderLineSelectMapper, productSelectMapper, productSelectMapper)
+                    .relationship(Order.class).hasMany(Product.class, "orderLines")
+                    .relationship(OrderLine.class).hasOne(Product.class, "product")
+                    .build();  
+        });
+           
+        //@formatter:on
+        assertTrue(exception.getMessage().contains("Collection generic type mismatch"));
+    }
+    
 
     @Test
     public void extractor_FullyBuilt_Test() {

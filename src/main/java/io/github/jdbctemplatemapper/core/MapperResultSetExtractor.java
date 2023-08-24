@@ -29,7 +29,7 @@ public class MapperResultSetExtractor<T>
     private SelectMapper<?>[] selectMappers = {};
     private List<Relationship> relationships = new ArrayList<>();
     private Relationship tmpRelationship;
-    
+
     private boolean fullyBuilt = false;
 
     private MapperResultSetExtractor(Class<T> extractorType, SelectMapper<?>... selectMappers) {
@@ -40,21 +40,17 @@ public class MapperResultSetExtractor<T>
     private MapperResultSetExtractor(Class<T> extractorType, List<Relationship> relationships,
             SelectMapper<?>... selectMappers) {
         Assert.notNull(extractorType, "extractorType must not be null");
-        Assert.notEmpty(selectMappers, "selectMappers must not be null or empty. There should be atleat one.");
+        Assert.notEmpty(selectMappers, "selectMappers must not be null or empty. There should be at least one.");
 
         this.extractorType = extractorType;
-
         this.selectMappers = selectMappers;
-
         this.relationships = relationships;
-
         if (relationships != null) {
             for (Relationship relationship : relationships) {
                 relationship.setSelectMapperMainClazz(getSelectMapper(relationship.getMainClazz()));
                 relationship.setSelectMapperRelatedClazz(getSelectMapper(relationship.getRelatedClazz()));
             }
         }
-
         validate();
     }
 
@@ -91,8 +87,9 @@ public class MapperResultSetExtractor<T>
 
     @Override
     public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
-        if(!fullyBuilt) {
-           throw new MapperExtractorException("MapperResultSetExtractor was not fully built. Use MapperResultSetExtractor.builder()");
+        if (!fullyBuilt) {
+            throw new MapperExtractorException(
+                    "MapperResultSetExtractor was not fully built. Use MapperResultSetExtractor.builder()");
         }
 
         // key - SelectMapper type.
@@ -112,11 +109,8 @@ public class MapperResultSetExtractor<T>
             } else {
                 for (Relationship relationship : relationships) {
                     SelectMapper<?> smMainClazz = relationship.getSelectMapperMainClazz();
-
                     Object mainModel = getModel(rs, smMainClazz, smIdToModelMap.get(getSelectMapperKey(smMainClazz)));
-
                     SelectMapper<?> smRelatedClazz = relationship.getSelectMapperRelatedClazz();
-
                     Object relatedModel = getModel(rs, smRelatedClazz,
                             smIdToModelMap.get(getSelectMapperKey(smRelatedClazz)));
 
@@ -141,8 +135,6 @@ public class MapperResultSetExtractor<T>
                                 bw.setPropertyValue(relationship.getPropertyName(), set);
                                 bw.setPropertyValue(relationship.getPropertyName() + "[0]", relatedModel);
                             }
-                            //
-
                         } else {
                             if (value instanceof Collection<?>) {
                                 int size = ((Collection<?>) value).size();
@@ -153,9 +145,7 @@ public class MapperResultSetExtractor<T>
                 }
             }
         }
-
         Map<Object, Object> map = smIdToModelMap.get(getSelectMapperKey(getSelectMapper(extractorType)));
-
         return (List<T>) new ArrayList(map.values());
     }
 
@@ -192,14 +182,12 @@ public class MapperResultSetExtractor<T>
 
             if (genericType != null && genericType.length > 0) {
                 return Class.forName(genericType[0].getTypeName());
-            } else {
-                throw new RuntimeException("Could not find generic type for property: " + propertyName + " in class: "
-                        + mainObj.getClass().getSimpleName());
-            }
+            } 
 
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            // do nothing
         }
+        return null;
     }
 
     private <U> List<U> createArrayList(Class<U> clazz) {
@@ -211,6 +199,8 @@ public class MapperResultSetExtractor<T>
     }
 
     private void validate() {
+        checkSelectMappersNotNull();
+
         // check there is a SelectMapper for extractorType
         if (getSelectMapper(extractorType) == null) {
             throw new MapperExtractorException(
@@ -225,8 +215,8 @@ public class MapperResultSetExtractor<T>
                             "Could not find a SelectMapper for class " + relationship.getMainClazz().getName());
                 }
                 if (relationship.getSelectMapperRelatedClazz() == null) {
-                    throw new MapperExtractorException(
-                            "Could not find a SelectMapper for related class " + relationship.getRelatedClazz().getName());
+                    throw new MapperExtractorException("Could not find a SelectMapper for related class "
+                            + relationship.getRelatedClazz().getName());
                 }
 
                 Object mainModel = null;
@@ -249,13 +239,25 @@ public class MapperResultSetExtractor<T>
                                 + relationship.getPropertyName()
                                 + " is not a collection. hasMany() relationship requires it to be a collection");
                     }
-                    // TODO check isassignable here also
+                    Class<?> type = getGenericTypeOfCollection(mainModel, relationship.getPropertyName());
+                    if (type == null) {
+                        throw new MapperExtractorException("Collections which do not have generic type are not supported"
+                                + relationship.getMainClazz().getName() + "." + relationship.getPropertyName());
+
+                    }
+                    if (!type.isAssignableFrom(relationship.getRelatedClazz())) {
+                        throw new MapperExtractorException("Collection generic type mismatch "
+                                + relationship.getMainClazz().getName() + "." + relationship.getPropertyName()
+                                + " has genric type " + type.getName() + " while the related class is of type"
+                                + relationship.getRelatedClazz().getName());
+                    }
                 } else if (relationship.getRelationshipType() == RelationshipType.HAS_ONE) {
                     PropertyDescriptor pd = bw.getPropertyDescriptor(relationship.getPropertyName());
                     if (!relationship.getRelatedClazz().isAssignableFrom(pd.getPropertyType())) {
-                        throw new MapperExtractorException("property type conflict. property " + relationship.getMainClazz() + "."
-                                + relationship.getPropertyName() + " is of type " + pd.getPropertyType()
-                                + " while type for hasOne relationship is " + relationship.getRelatedClazz());
+                        throw new MapperExtractorException(
+                                "property type conflict. property " + relationship.getMainClazz() + "."
+                                        + relationship.getPropertyName() + " is of type " + pd.getPropertyType()
+                                        + " while type for hasOne relationship is " + relationship.getRelatedClazz());
                     }
                 }
             }
@@ -265,20 +267,22 @@ public class MapperResultSetExtractor<T>
         checkDuplicateSelectMappers();
     }
 
-    // dont allow duplicate relationships with same combination of main and related classes.
+    // dont allow duplicate relationships with same combination of main and related
+    // classes.
     void checkDuplicateRelationships() {
         List<String> seen = new ArrayList<>();
         for (Relationship r : relationships) {
             String str = r.getMainClazz().getName() + "-" + r.getRelatedClazz().getName();
             if (seen.contains(str)) {
-                throw new MapperExtractorException("there are duplicate relationships between " + r.getMainClazz().getName() + " and " + r.getRelatedClazz().getName());
+                throw new MapperExtractorException("there are duplicate relationships between "
+                        + r.getMainClazz().getName() + " and " + r.getRelatedClazz().getName());
             } else {
                 seen.add(str);
             }
         }
     }
-    
-    // dont allow duplicate selectMappers for same class
+
+    // dont allow duplicate selectMappers ie selectMappers of same class
     void checkDuplicateSelectMappers() {
         List<Class<?>> seen = new ArrayList<>();
         for (SelectMapper<?> sm : selectMappers) {
@@ -288,6 +292,15 @@ public class MapperResultSetExtractor<T>
                 seen.add(sm.getType());
             }
         }
-    }    
+    }
+
+    // a select mapper cannot be null
+    void checkSelectMappersNotNull() {
+        for (SelectMapper<?> sm : selectMappers) {
+            if (sm == null) {
+                throw new MapperExtractorException("At least one selectMapper was null");
+            }
+        }
+    }
 
 }
