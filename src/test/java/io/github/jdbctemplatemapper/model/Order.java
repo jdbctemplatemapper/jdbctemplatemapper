@@ -45,7 +45,7 @@ public class Order {
 
     private Customer customer;
 
-    private List<OrderLine> orderLines = new ArrayList<>();
+    private List<OrderLine> orderLines;
 
     public Long getOrderId() {
         return orderId;
