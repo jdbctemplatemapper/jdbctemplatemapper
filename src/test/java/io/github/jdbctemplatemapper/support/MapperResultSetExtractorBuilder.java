@@ -23,6 +23,7 @@ public class MapperResultSetExtractorBuilder<T> {
     }
     
     public MapperResultSetExtractor<T> build(){
-        return  new MapperResultSetExtractor<T>(this);
+//        return  new MapperResultSetExtractor<T>(this);
+        return null;
     }
 }

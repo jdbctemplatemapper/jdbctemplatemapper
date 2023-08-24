@@ -19,15 +19,15 @@ import io.github.jdbctemplatemapper.model.Order;
 import io.github.jdbctemplatemapper.model.OrderLine;
 import io.github.jdbctemplatemapper.model.Product;
 
-public class MapperResultSetExtractor<T> implements ResultSetExtractor<T> {
+public class MapperResultSetExtractor<T> implements ResultSetExtractor<List<T>>{
 
     
-    Class<?> rootClazz;
+    Class<T> rootClazz;
     SelectMapper<?>[] selectMappers = {};
     List<Relationship> relationships = new ArrayList<>();
 
-    public MapperResultSetExtractor(SelectMapper<?>... selectMappers) {
-        this.rootClazz = Order.class;
+    public MapperResultSetExtractor(Class<T> rootClazz, SelectMapper<?>... selectMappers) {
+        this.rootClazz = rootClazz;
         
         this.selectMappers = selectMappers;
         
@@ -40,15 +40,14 @@ public class MapperResultSetExtractor<T> implements ResultSetExtractor<T> {
         rel2.setSelectMapperMainClazz(getSelectMapper(OrderLine.class));
         rel2.setSelectMapperRelatedClazz(getSelectMapper(Product.class));
         relationships.add(rel2);
- 
-
+        
     }
 
-    public MapperResultSetExtractor(MapperResultSetExtractorBuilder<T> builder) {
-    }
+    //public MapperResultSetExtractor(MapperResultSetExtractorBuilder<T> builder) {
+    //}
 
     @Override
-    public T extractData(ResultSet rs) throws SQLException, DataAccessException {
+    public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
 
         Map<String, Map<Object, Object>> smIdToModelMap = new HashMap<>();
 
@@ -82,16 +81,15 @@ public class MapperResultSetExtractor<T> implements ResultSetExtractor<T> {
                 }               
             }  
         }
-        
-        
-         Map<Object, Object> map = smIdToModelMap.get(getSelectMapperKey(selectMappers[0]));
+            
+        // Root of relationship is first relationship mainClazz.
+         Map<Object, Object> map = smIdToModelMap.get(getSelectMapperKey(getSelectMapper(rootClazz)));
          
          for(Object obj : map.values()) {
              System.out.println("Object class name " + obj.getClass().getSimpleName());
          }
          
-         return null;
-         
+         return (List<T>) new ArrayList(map.values());         
     }
 
     private String getSelectMapperKey(SelectMapper<?> selectMapper) {
@@ -107,8 +105,8 @@ public class MapperResultSetExtractor<T> implements ResultSetExtractor<T> {
     throw new MapperException("No select mapper for clazz " + clazz.getName());
     }
     
-    @SuppressWarnings("unchecked")
-    public Object getModel(ResultSet rs, SelectMapper<?> selectMapper, Map<Object, Object> idToModelMap) throws SQLException{
+    
+    private Object getModel(ResultSet rs, SelectMapper<?> selectMapper, Map<Object, Object> idToModelMap) throws SQLException{
        Object id = rs.getObject(selectMapper.getResultSetModelIdColumnLabel());     
         Object model = idToModelMap.get(id);
         if (model == null) {

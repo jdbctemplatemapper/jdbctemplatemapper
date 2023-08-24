@@ -1,6 +1,5 @@
 package io.github.jdbctemplatemapper.test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -33,7 +32,7 @@ public class MapperResultSetExtractorTest {
         SelectMapper<OrderLine> orderLineSelectMapper = jtm.getSelectMapper(OrderLine.class, "ol");
         SelectMapper<Product> productSelectMapper = jtm.getSelectMapper(Product.class, "p");
 
-        //@formatter:off       
+        //@formatter:off      
         String sql = "select" 
                 + orderSelectMapper.getColumnsSql() 
                 + "," 
@@ -43,14 +42,15 @@ public class MapperResultSetExtractorTest {
                 + " from orders o"
                 + " left join order_line ol on o.order_id = ol.order_id"
                 + " join product p on p.product_id = ol.product_id" 
-                + " order by o.order_id, ol.order_line_id";        
+                + " order by o.order_id, ol.order_line_id";  
         //@formatter:on
-        List<Order> x = new ArrayList<>();
 
-        MapperResultSetExtractor<List<Order>> rsExtractor = new MapperResultSetExtractor<List<Order>>(
+        MapperResultSetExtractor<Order> rsExtractor = new MapperResultSetExtractor<Order>(Order.class,
                 orderSelectMapper, orderLineSelectMapper, productSelectMapper);
 
         List<Order> orders = jtm.getJdbcTemplate().query(sql, rsExtractor);
+        
+        System.out.println(orders.size());
 
     }
 
