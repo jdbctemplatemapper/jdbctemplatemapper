@@ -1,4 +1,4 @@
-package io.github.jdbctemplatemapper.support;
+package io.github.jdbctemplatemapper.core;
 
 public interface IMapperExtractionBuilder<T> {
     IRelationshipBuilder <T> relationship(Class<?> mainClazz);

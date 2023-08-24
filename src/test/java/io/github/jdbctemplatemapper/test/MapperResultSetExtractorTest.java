@@ -1,5 +1,8 @@
 package io.github.jdbctemplatemapper.test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -10,11 +13,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
+import io.github.jdbctemplatemapper.core.MapperResultSetExtractor;
 import io.github.jdbctemplatemapper.core.SelectMapper;
 import io.github.jdbctemplatemapper.model.Order;
 import io.github.jdbctemplatemapper.model.OrderLine;
 import io.github.jdbctemplatemapper.model.Product;
-import io.github.jdbctemplatemapper.support.MapperResultSetExtractor;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
@@ -45,7 +48,7 @@ public class MapperResultSetExtractorTest {
                 + " join product p on p.product_id = ol.product_id" 
                 + " order by o.order_id, ol.order_line_id";  
   
-        MapperResultSetExtractor<Order> rsExtractor = MapperResultSetExtractor
+        MapperResultSetExtractor<Order> resultSetExtractor = MapperResultSetExtractor
                 .builder(Order.class, orderSelectMapper, orderLineSelectMapper,productSelectMapper)
                 .relationship(Order.class).hasMany(OrderLine.class, "orderLines")
                 .relationship(OrderLine.class).hasOne(Product.class, "product")
@@ -53,10 +56,16 @@ public class MapperResultSetExtractorTest {
         
         //@formatter:on
 
-        List<Order> orders = jtm.getJdbcTemplate().query(sql, rsExtractor);
+        List<Order> orders = jtm.getJdbcTemplate().query(sql, resultSetExtractor);
 
-        System.out.println(orders.size());
-
+        assertTrue(orders.size() == 2);
+        assertTrue(orders.get(0).getOrderLines().size() == 2);
+        assertEquals("IN PROCESS", orders.get(1).getStatus());
+        assertTrue(orders.get(1).getOrderLines().size() == 1);
+        assertTrue(orders.get(0).getOrderLines().get(0).getProductId() == 1);
+        assertEquals("shoes", orders.get(0).getOrderLines().get(0).getProduct().getName());
+        assertEquals("socks", orders.get(0).getOrderLines().get(1).getProduct().getName());
+        assertEquals("laces", orders.get(1).getOrderLines().get(0).getProduct().getName());
     }
 
 }

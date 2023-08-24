@@ -1,16 +1,13 @@
-package io.github.jdbctemplatemapper.support;
+package io.github.jdbctemplatemapper.core;
 
-import io.github.jdbctemplatemapper.core.SelectMapper;
-
-class Relationship {
+class Relationship implements Cloneable{
     
     private Class<?> mainClazz;
     private SelectMapper<?> selectMapperMainClazz;
     private RelationshipType relationshipType;
     private Class<?> relatedClazz;
-    private SelectMapper<?> selectMapperRelatedClazz;
-    
-    private String propertyName; // propertyName on main class that needs to be poputated
+    private SelectMapper<?> selectMapperRelatedClazz;    
+    private String propertyName; // propertyName on main class that needs to be populated
     
     Relationship(Class<?> mainClazz){
         this.mainClazz = mainClazz;
@@ -24,6 +21,7 @@ class Relationship {
         
         this.propertyName = relationshipPropertyName;
     }
+   
     
     public Class<?> getMainClazz() {
         return mainClazz;
