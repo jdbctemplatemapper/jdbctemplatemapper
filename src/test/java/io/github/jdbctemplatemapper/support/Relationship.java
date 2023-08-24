@@ -12,6 +12,10 @@ class Relationship {
     
     private String propertyName; // propertyName on main class that needs to be poputated
     
+    Relationship(Class<?> mainClazz){
+        this.mainClazz = mainClazz;
+    }
+    
     Relationship(Class<?> mainClazz, RelationshipType relationshipType, Class<?> relatedClazz, String relationshipPropertyName) {
         this.mainClazz = mainClazz;
         this.relationshipType = relationshipType;
