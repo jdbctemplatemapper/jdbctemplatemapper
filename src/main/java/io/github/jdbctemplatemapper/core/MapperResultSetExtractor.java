@@ -20,17 +20,17 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.util.Assert;
 
-import io.github.jdbctemplatemapper.exception.MapperException;
 import io.github.jdbctemplatemapper.exception.MapperExtractorException;
 
 public class MapperResultSetExtractor<T>
         implements ResultSetExtractor<List<T>>, IMapperExtractionBuilder<T>, IRelationshipBuilder<T> {
 
-    Class<T> extractorType;
-    SelectMapper<?>[] selectMappers = {};
-    List<Relationship> relationships = new ArrayList<>();
-
+    private Class<T> extractorType;
+    private SelectMapper<?>[] selectMappers = {};
+    private List<Relationship> relationships = new ArrayList<>();
     private Relationship tmpRelationship;
+    
+    private boolean fullyBuilt = false;
 
     private MapperResultSetExtractor(Class<T> extractorType, SelectMapper<?>... selectMappers) {
         this.extractorType = extractorType;
@@ -59,7 +59,6 @@ public class MapperResultSetExtractor<T>
     }
 
     public static <T> IMapperExtractionBuilder<T> builder(Class<T> extractorType, SelectMapper<?>... selectMappers) {
-
         return new MapperResultSetExtractor<T>(extractorType, selectMappers);
     }
 
@@ -85,14 +84,16 @@ public class MapperResultSetExtractor<T>
     }
 
     public MapperResultSetExtractor<T> build() {
-        return new MapperResultSetExtractor<T>(extractorType, relationships, selectMappers);
+        MapperResultSetExtractor<T> obj = new MapperResultSetExtractor<T>(extractorType, relationships, selectMappers);
+        obj.fullyBuilt = true;
+        return obj;
     }
-
-    // public MapperResultSetExtractor(MapperResultSetExtractorBuilder<T> builder) {
-    // }
 
     @Override
     public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
+        if(!fullyBuilt) {
+           throw new MapperExtractorException("MapperResultSetExtractor was not fully built. Use MapperResultSetExtractor.builder()");
+        }
 
         // key - SelectMapper type.
         // value - a Map, key: id of model, value: model
@@ -168,7 +169,7 @@ public class MapperResultSetExtractor<T>
                 return selectMapper;
             }
         }
-        throw new MapperException("No select mapper for clazz " + clazz.getName());
+        return null;
     }
 
     private Object getModel(ResultSet rs, SelectMapper<?> selectMapper, Map<Object, Object> idToModelMap)
@@ -210,7 +211,6 @@ public class MapperResultSetExtractor<T>
     }
 
     private void validate() {
-        System.out.println("In validate");
         // check there is a SelectMapper for extractorType
         if (getSelectMapper(extractorType) == null) {
             throw new MapperExtractorException(
@@ -222,11 +222,11 @@ public class MapperResultSetExtractor<T>
             for (Relationship relationship : relationships) {
                 if (relationship.getSelectMapperMainClazz() == null) {
                     throw new MapperExtractorException(
-                            "Could not find a SelectMapper for class " + relationship.getMainClazz());
+                            "Could not find a SelectMapper for class " + relationship.getMainClazz().getName());
                 }
                 if (relationship.getSelectMapperRelatedClazz() == null) {
                     throw new MapperExtractorException(
-                            "Could not find a SelectMapper for class " + relationship.getRelatedClazz());
+                            "Could not find a SelectMapper for related class " + relationship.getRelatedClazz().getName());
                 }
 
                 Object mainModel = null;
@@ -238,14 +238,14 @@ public class MapperResultSetExtractor<T>
 
                 BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainModel);
                 if (!bw.isReadableProperty(relationship.getPropertyName())) {
-                    throw new MapperExtractorException("Could not access property " + relationship.getPropertyName()
+                    throw new MapperExtractorException("Invalid property name " + relationship.getPropertyName()
                             + " for class " + relationship.getMainClazz());
                 }
 
                 if (relationship.getRelationshipType() == RelationshipType.HAS_MANY) {
                     PropertyDescriptor pd = bw.getPropertyDescriptor(relationship.getPropertyName());
                     if (!Collection.class.isAssignableFrom(pd.getPropertyType())) {
-                        throw new MapperExtractorException("property " + relationship.getMainClazz() + "."
+                        throw new MapperExtractorException("property " + relationship.getMainClazz().getName() + "."
                                 + relationship.getPropertyName()
                                 + " is not a collection. hasMany() relationship requires it to be a collection");
                     }
@@ -253,7 +253,7 @@ public class MapperResultSetExtractor<T>
                 } else if (relationship.getRelationshipType() == RelationshipType.HAS_ONE) {
                     PropertyDescriptor pd = bw.getPropertyDescriptor(relationship.getPropertyName());
                     if (!relationship.getRelatedClazz().isAssignableFrom(pd.getPropertyType())) {
-                        throw new MapperExtractorException("property " + relationship.getMainClazz() + "."
+                        throw new MapperExtractorException("property type conflict. property " + relationship.getMainClazz() + "."
                                 + relationship.getPropertyName() + " is of type " + pd.getPropertyType()
                                 + " while type for hasOne relationship is " + relationship.getRelatedClazz());
                     }
@@ -262,19 +262,32 @@ public class MapperResultSetExtractor<T>
         }
 
         checkDuplicateRelationships();
+        checkDuplicateSelectMappers();
     }
 
-    // dont allow relationships with same combination of main and related classes.
+    // dont allow duplicate relationships with same combination of main and related classes.
     void checkDuplicateRelationships() {
         List<String> seen = new ArrayList<>();
         for (Relationship r : relationships) {
             String str = r.getMainClazz().getName() + "-" + r.getRelatedClazz().getName();
             if (seen.contains(str)) {
-                throw new MapperExtractorException("X");
+                throw new MapperExtractorException("there are duplicate relationships between " + r.getMainClazz().getName() + " and " + r.getRelatedClazz().getName());
             } else {
                 seen.add(str);
             }
         }
     }
+    
+    // dont allow duplicate selectMappers for same class
+    void checkDuplicateSelectMappers() {
+        List<Class<?>> seen = new ArrayList<>();
+        for (SelectMapper<?> sm : selectMappers) {
+            if (seen.contains(sm.getType())) {
+                throw new MapperExtractorException("duplicate selectMapper for type " + sm.getType().getName());
+            } else {
+                seen.add(sm.getType());
+            }
+        }
+    }    
 
 }
