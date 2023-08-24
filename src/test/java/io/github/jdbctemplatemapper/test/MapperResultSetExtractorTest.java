@@ -1,0 +1,57 @@
+package io.github.jdbctemplatemapper.test;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
+import io.github.jdbctemplatemapper.core.SelectMapper;
+import io.github.jdbctemplatemapper.model.Order;
+import io.github.jdbctemplatemapper.model.OrderLine;
+import io.github.jdbctemplatemapper.model.Product;
+import io.github.jdbctemplatemapper.support.MapperResultSetExtractor;
+
+@SpringBootTest
+@ExtendWith(SpringExtension.class)
+public class MapperResultSetExtractorTest {
+
+    @Value("${spring.datasource.driver-class-name}")
+    private String jdbcDriver;
+
+    @Autowired
+    private JdbcTemplateMapper jtm;
+
+    @Test
+    public void mapperResultSetExtractor_Test() {
+        SelectMapper<Order> orderSelectMapper = jtm.getSelectMapper(Order.class, "o");
+        SelectMapper<OrderLine> orderLineSelectMapper = jtm.getSelectMapper(OrderLine.class, "ol");
+        SelectMapper<Product> productSelectMapper = jtm.getSelectMapper(Product.class, "p");
+
+        //@formatter:off       
+        String sql = "select" 
+                + orderSelectMapper.getColumnsSql() 
+                + "," 
+                + orderLineSelectMapper.getColumnsSql() 
+                + ","
+                + productSelectMapper.getColumnsSql() 
+                + " from orders o"
+                + " left join order_line ol on o.order_id = ol.order_id"
+                + " join product p on p.product_id = ol.product_id" 
+                + " order by o.order_id, ol.order_line_id";        
+        //@formatter:on
+        List<Order> x = new ArrayList<>();
+
+        MapperResultSetExtractor<List<Order>> rsExtractor = new MapperResultSetExtractor<List<Order>>(
+                orderSelectMapper, orderLineSelectMapper, productSelectMapper);
+
+        List<Order> orders = jtm.getJdbcTemplate().query(sql, rsExtractor);
+
+    }
+
+}
