@@ -58,8 +58,8 @@ public class MapperResultSetExtractorTest {
         // .build();
 
       //@formatter:off   
-        MapperResultSetExtractor<Order> rsExtractor = MapperResultSetExtractorBuilder
-                .newMapperResultSetExtractorBuilder(Order.class, orderSelectMapper, orderLineSelectMapper,productSelectMapper)
+        MapperResultSetExtractor<Order> rsExtractor = MapperResultSetExtractor
+                .builder(Order.class, orderSelectMapper, orderLineSelectMapper,productSelectMapper)
                 .relationship(Order.class).hasMany(OrderLine.class, "orderLines")
                 .relationship(OrderLine.class).hasOne(Product.class, "product")
                 .build();

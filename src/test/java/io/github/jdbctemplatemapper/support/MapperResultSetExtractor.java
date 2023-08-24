@@ -22,14 +22,20 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import io.github.jdbctemplatemapper.core.SelectMapper;
 import io.github.jdbctemplatemapper.exception.MapperException;
 
-public class MapperResultSetExtractor<T> implements ResultSetExtractor<List<T>> {
+public class MapperResultSetExtractor<T> implements ResultSetExtractor<List<T>>,IMapperExtractionBuilder<T>, IRelationshipBuilder<T> {
 
     Class<T> rootClazz;
     SelectMapper<?>[] selectMappers = {};
     List<Relationship> relationships = new ArrayList<>();
    
+    private Relationship tmpRelationship;
+    
+    private MapperResultSetExtractor(Class<T> rootClazz,SelectMapper<?>... selectMappers) {
+        this.rootClazz = rootClazz;
+        this.selectMappers = selectMappers;
+    }
 
-    public MapperResultSetExtractor(Class<T> rootClazz, List<Relationship> relationships, SelectMapper<?>... selectMappers) {
+    private MapperResultSetExtractor(Class<T> rootClazz, List<Relationship> relationships, SelectMapper<?>... selectMappers) {
         this.rootClazz = rootClazz;
 
         this.relationships = relationships;
@@ -53,7 +59,41 @@ public class MapperResultSetExtractor<T> implements ResultSetExtractor<List<T>> 
 
     }
     
+    public static <T> IMapperExtractionBuilder<T> builder(Class<T> rootClazz,
+            SelectMapper<?>... selectMappers) {
 
+        return new MapperResultSetExtractor<T>(rootClazz, selectMappers);
+    }
+    
+    
+    public IRelationshipBuilder<T> relationship(Class<?> clazz) {
+        this.tmpRelationship = new Relationship(clazz);
+        return this;
+    }
+
+    public IMapperExtractionBuilder<T> hasMany(Class<?> relatedClazz, String propertyName) {
+        tmpRelationship.setRelatedClazz(relatedClazz);
+        tmpRelationship.setPropertyName(propertyName);
+        tmpRelationship.setRelationshipType(RelationshipType.HAS_MANY);
+
+        relationships.add(tmpRelationship);
+        tmpRelationship = null;
+        return this;
+    }
+
+    public IMapperExtractionBuilder<T> hasOne(Class<?> relatedClazz, String propertyName) {
+        tmpRelationship.setRelatedClazz(relatedClazz);
+        tmpRelationship.setPropertyName(propertyName);
+        tmpRelationship.setRelationshipType(RelationshipType.HAS_ONE);
+        relationships.add(tmpRelationship);
+        tmpRelationship = null;
+        return this;
+    }
+    
+    public MapperResultSetExtractor<T> build() {
+        return new MapperResultSetExtractor<T>(rootClazz, relationships, selectMappers);
+    }
+    
     // public MapperResultSetExtractor(MapperResultSetExtractorBuilder<T> builder) {
     // }
 

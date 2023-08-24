@@ -15,11 +15,10 @@ public class MapperResultSetExtractorBuilder<T> implements IMapperExtractionBuil
     private MapperResultSetExtractorBuilder(Class<T> rootClazz,
             SelectMapper<?>... selectMappers) {
         this.rootClazz = rootClazz;
-
         this.selectMappers = selectMappers;
     }
 
-    public static <T> IMapperExtractionBuilder<T> newMapperResultSetExtractorBuilder(Class<T> rootClazz,
+    public static <T> IMapperExtractionBuilder<T> builder(Class<T> rootClazz,
             SelectMapper<?>... selectMappers) {
 
         return new MapperResultSetExtractorBuilder<T>(rootClazz, selectMappers);
@@ -50,7 +49,9 @@ public class MapperResultSetExtractorBuilder<T> implements IMapperExtractionBuil
     }
 
     public MapperResultSetExtractor<T> build() {
-        return new MapperResultSetExtractor<T>(rootClazz, relationships, selectMappers);
+       // return new MapperResultSetExtractor<T>(rootClazz, relationships, selectMappers);
+        
+        return null;
     }
 
 }
