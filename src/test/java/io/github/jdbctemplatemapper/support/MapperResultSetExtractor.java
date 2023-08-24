@@ -22,50 +22,40 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import io.github.jdbctemplatemapper.core.SelectMapper;
 import io.github.jdbctemplatemapper.exception.MapperException;
 
-public class MapperResultSetExtractor<T> implements ResultSetExtractor<List<T>>,IMapperExtractionBuilder<T>, IRelationshipBuilder<T> {
+public class MapperResultSetExtractor<T>
+        implements ResultSetExtractor<List<T>>, IMapperExtractionBuilder<T>, IRelationshipBuilder<T> {
 
     Class<T> rootClazz;
     SelectMapper<?>[] selectMappers = {};
     List<Relationship> relationships = new ArrayList<>();
-   
+
     private Relationship tmpRelationship;
-    
-    private MapperResultSetExtractor(Class<T> rootClazz,SelectMapper<?>... selectMappers) {
+
+    private MapperResultSetExtractor(Class<T> rootClazz, SelectMapper<?>... selectMappers) {
         this.rootClazz = rootClazz;
         this.selectMappers = selectMappers;
     }
 
-    private MapperResultSetExtractor(Class<T> rootClazz, List<Relationship> relationships, SelectMapper<?>... selectMappers) {
+    private MapperResultSetExtractor(Class<T> rootClazz, List<Relationship> relationships,
+            SelectMapper<?>... selectMappers) {
         this.rootClazz = rootClazz;
 
         this.relationships = relationships;
         this.selectMappers = selectMappers;
-        
-        for(Relationship relationship : relationships) {
-            relationship.setSelectMapperMainClazz(getSelectMapper(relationship.getMainClazz()));
-            relationship.setSelectMapperRelatedClazz(getSelectMapper(relationship.getRelatedClazz()));
+
+        if (relationships != null) {
+            for (Relationship relationship : relationships) {
+                relationship.setSelectMapperMainClazz(getSelectMapper(relationship.getMainClazz()));
+                relationship.setSelectMapperRelatedClazz(getSelectMapper(relationship.getRelatedClazz()));
+            }
         }
-        
-
-        //Relationship rel1 = new Relationship(Order.class, RelationshipType.HAS_MANY, OrderLine.class, "orderLines");
-        //rel1.setSelectMapperMainClazz(getSelectMapper(Order.class));
-        //rel1.setSelectMapperRelatedClazz(getSelectMapper(OrderLine.class));
-        //relationships.add(rel1);
-
-        //Relationship rel2 = new Relationship(OrderLine.class, RelationshipType.HAS_ONE, Product.class, "product");
-        //rel2.setSelectMapperMainClazz(getSelectMapper(OrderLine.class));
-        //rel2.setSelectMapperRelatedClazz(getSelectMapper(Product.class));
-        //relationships.add(rel2);
-
     }
-    
-    public static <T> IMapperExtractionBuilder<T> builder(Class<T> rootClazz,
-            SelectMapper<?>... selectMappers) {
+
+    public static <T> IMapperExtractionBuilder<T> builder(Class<T> rootClazz, SelectMapper<?>... selectMappers) {
 
         return new MapperResultSetExtractor<T>(rootClazz, selectMappers);
     }
-    
-    
+
     public IRelationshipBuilder<T> relationship(Class<?> clazz) {
         this.tmpRelationship = new Relationship(clazz);
         return this;
@@ -89,11 +79,11 @@ public class MapperResultSetExtractor<T> implements ResultSetExtractor<List<T>>,
         tmpRelationship = null;
         return this;
     }
-    
+
     public MapperResultSetExtractor<T> build() {
         return new MapperResultSetExtractor<T>(rootClazz, relationships, selectMappers);
     }
-    
+
     // public MapperResultSetExtractor(MapperResultSetExtractorBuilder<T> builder) {
     // }
 
@@ -130,23 +120,21 @@ public class MapperResultSetExtractor<T> implements ResultSetExtractor<List<T>>,
                     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainModel);
                     Object value = bw.getPropertyValue(relationship.getPropertyName());
                     if (value == null) {
-                        
+
                         PropertyDescriptor pd = bw.getPropertyDescriptor(relationship.getPropertyName());
                         if (List.class == pd.getPropertyType() || ArrayList.class == pd.getPropertyType()) {
                             Class<?> type = getGenericTypeOfCollection(mainModel, relationship.getPropertyName());
                             List<?> list = createArrayList(type);
                             bw.setPropertyValue(relationship.getPropertyName(), list);
                             bw.setPropertyValue(relationship.getPropertyName() + "[0]", relatedModel);
-                        }
-                        else if (Set.class == pd.getPropertyType() || HashSet.class == pd.getPropertyType()) {
+                        } else if (Set.class == pd.getPropertyType() || HashSet.class == pd.getPropertyType()) {
                             Class<?> type = getGenericTypeOfCollection(mainModel, relationship.getPropertyName());
                             Set<?> set = createHashSet(type);
                             bw.setPropertyValue(relationship.getPropertyName(), set);
                             bw.setPropertyValue(relationship.getPropertyName() + "[0]", relatedModel);
                         }
                         //
-                        
-                        
+
                     } else {
                         if (value instanceof Collection<?>) {
                             int size = ((Collection<?>) value).size();
@@ -176,7 +164,6 @@ public class MapperResultSetExtractor<T> implements ResultSetExtractor<List<T>>,
         throw new MapperException("No select mapper for clazz " + clazz.getName());
     }
 
-    
     private Object getModel(ResultSet rs, SelectMapper<?> selectMapper, Map<Object, Object> idToModelMap)
             throws SQLException {
         Object id = rs.getObject(selectMapper.getResultSetModelIdColumnLabel());

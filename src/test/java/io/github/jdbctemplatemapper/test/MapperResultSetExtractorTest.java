@@ -15,7 +15,6 @@ import io.github.jdbctemplatemapper.model.Order;
 import io.github.jdbctemplatemapper.model.OrderLine;
 import io.github.jdbctemplatemapper.model.Product;
 import io.github.jdbctemplatemapper.support.MapperResultSetExtractor;
-import io.github.jdbctemplatemapper.support.MapperResultSetExtractorBuilder;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
@@ -33,7 +32,8 @@ public class MapperResultSetExtractorTest {
         SelectMapper<OrderLine> orderLineSelectMapper = jtm.getSelectMapper(OrderLine.class, "ol");
         SelectMapper<Product> productSelectMapper = jtm.getSelectMapper(Product.class, "p");
 
-        //@formatter:off      
+        //@formatter:off  
+        
         String sql = "select" 
                 + orderSelectMapper.getColumnsSql() 
                 + "," 
@@ -44,27 +44,15 @@ public class MapperResultSetExtractorTest {
                 + " left join order_line ol on o.order_id = ol.order_id"
                 + " join product p on p.product_id = ol.product_id" 
                 + " order by o.order_id, ol.order_line_id";  
-        //@formatter:on
-
-        // MapperResultSetExtractor<Order> rsExtractor = new
-        // MapperResultSetExtractor<Order>(Order.class,
-        // orderSelectMapper, orderLineSelectMapper, productSelectMapper);
-
-        // MapperResultSetExtractor<Order> rsExtractor = new
-        // MapperResultSetExtractorBuilder<Order>(Order.class,
-        // orderSelectMapper, orderLineSelectMapper, productSelectMapper)
-        // .relationship(Order.class).hasMany(OrderLine.class, "orderLines")
-        // .relationship(OrderLine.class).hasOne(Product.class, "product")
-        // .build();
-
-      //@formatter:off   
+  
         MapperResultSetExtractor<Order> rsExtractor = MapperResultSetExtractor
                 .builder(Order.class, orderSelectMapper, orderLineSelectMapper,productSelectMapper)
                 .relationship(Order.class).hasMany(OrderLine.class, "orderLines")
                 .relationship(OrderLine.class).hasOne(Product.class, "product")
                 .build();
-      //@formatter:on
         
+        //@formatter:on
+
         List<Order> orders = jtm.getJdbcTemplate().query(sql, rsExtractor);
 
         System.out.println(orders.size());
