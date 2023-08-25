@@ -221,8 +221,8 @@ public class MapperResultSetExtractor<T>
                     Class<?> type = getGenericTypeOfCollection(mainModel, relationship.getPropertyName());
                     if (type == null) {
                         throw new MapperExtractorException(
-                                "Collections which do not have generic type are not supported"
-                                        + relationship.getMainClazz().getName() + "." + relationship.getPropertyName());
+                                "Collections without generic types are not supported. Collection "
+                                        + relationship.getMainClazz().getName() + "." + relationship.getPropertyName() + " does not have a generic type.");
 
                     }
                     if (!type.isAssignableFrom(relationship.getRelatedClazz())) {
@@ -234,9 +234,9 @@ public class MapperResultSetExtractor<T>
 
                     Object value = bw.getPropertyValue(relationship.getPropertyName());
                     if (value == null) {
-                        throw new MapperExtractorException("Collection property "
+                        throw new MapperExtractorException("MapperResultSetExtractor only works with initialized collections. Collection property "
                                 + relationship.getMainClazz().getName() + "." + relationship.getPropertyName()
-                                + " has to initialized. MapperResultSetExtractor only works with initialized collections");
+                                + " is not initialized");
                     }
 
                 } else if (relationship.getRelationshipType() == RelationshipType.HAS_ONE) {

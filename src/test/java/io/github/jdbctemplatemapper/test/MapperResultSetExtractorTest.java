@@ -224,7 +224,7 @@ public class MapperResultSetExtractorTest {
         });
            
         //@formatter:on
-        assertTrue(exception.getMessage().contains("Collections which do not have generic type are not supported"));
+        assertTrue(exception.getMessage().contains("Collections without generic types are not supported"));
     }
     
     @Test
@@ -262,7 +262,7 @@ public class MapperResultSetExtractorTest {
         });
            
         //@formatter:on
-        assertTrue(exception.getMessage().contains("has to initialized. MapperResultSetExtractor only works with initialized collections"));
+        assertTrue(exception.getMessage().contains("MapperResultSetExtractor only works with initialized collections."));
     }
     
 
