@@ -35,6 +35,7 @@ public class JdbcTemplateMapperConfig {
     }
 
     private String getSchemaName() {
+        // Test databases setup
         String schemaName = "jdbctemplatemapper"; // default
         if (jdbcDriver.contains("mysql")) {
             schemaName = null; // mysql does not have schema.
