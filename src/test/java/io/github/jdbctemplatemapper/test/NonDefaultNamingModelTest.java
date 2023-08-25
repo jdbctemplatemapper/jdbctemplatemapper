@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -48,6 +50,23 @@ public class NonDefaultNamingModelTest {
     @Test
     public void findByProperty_Test() {
         List<NonDefaultNamingProduct> list = jtm.findByProperty(NonDefaultNamingProduct.class, "productName", "socks");
+
+        NonDefaultNamingProduct prod = list.get(0);
+
+        assertEquals(2, prod.getId());
+        assertEquals("socks", prod.getProductName());
+        assertEquals("system", prod.getWhoCreated());
+        assertEquals("system", prod.getWhoUpdated());
+        assertEquals(1, prod.getOptiLock());
+        assertNotNull(prod.getCreatedAt());
+        assertNotNull(prod.getUpdatedAt());
+    }
+
+    @Test
+    public void findByProperty_MultipleValues_Test() {
+        String[] productNames = { "socks" };
+        List<NonDefaultNamingProduct> list = jtm.findByProperty(NonDefaultNamingProduct.class, "productName",
+                new HashSet<String>(Arrays.asList(productNames)));
 
         NonDefaultNamingProduct prod = list.get(0);
 

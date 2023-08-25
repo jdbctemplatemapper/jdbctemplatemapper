@@ -77,7 +77,6 @@ public class MapperTest {
     @Test
     public void insert_integerAutoIncrementId_withNoVersionAndCreatedInfoTest() {
 
-        // Customer table does not have version, create_on, created_by etc
         Customer customer = new Customer();
         customer.setFirstName("aaa");
         customer.setLastName("bbb");
@@ -106,7 +105,7 @@ public class MapperTest {
     }
 
     @Test
-    public void insertWithManualIntegerId_Test() {
+    public void insert_WithManualIntegerId_Test() {
         Product product = new Product();
         product.setProductId(1001);
         product.setName("hat");
@@ -132,7 +131,7 @@ public class MapperTest {
         assertEquals("tester", product.getCreatedBy());
         assertEquals("tester", product.getUpdatedBy());
     }
-
+    
     @Test
     public void insert_withManualStringId_Test() {
 
@@ -277,7 +276,7 @@ public class MapperTest {
         assertNotNull(order.getUpdatedOn());
         assertNotNull(order.getVersion());
     }
-
+    
     @Test
     public void findAll_Test() {
         List<Order> orders = jtm.findAll(Order.class);
@@ -384,15 +383,24 @@ public class MapperTest {
     }
     
     @Test
-    public void findByProperty_MultipleValues_Test() {
+    public void findByProperty_MultipleValues_Success_Test() {
         Integer[] orderIds = { 1, 2, 3 };
         List<Order> orders = jtm.findByProperty(Order.class, "orderId",
                 new HashSet<Integer>(Arrays.asList(orderIds)));
         assertTrue(orders.size() == 3);
     }
+    
+    @Test
+    public void findByProperty_MultipleValues_nullClazz_Test() {
+        Integer[] orderIds = { 1, 2, 3 };
+        Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            jtm.findByProperty(null, "orderId", new HashSet<Integer>(Arrays.asList(orderIds)));
+        });
+        assertTrue(exception.getMessage().contains("Class must not be null"));
+    }
 
     @Test
-    public void findByPropertyWithMultipleValues_nullPropertyName_Test() {
+    public void findByProperty_MultipleValues_nullPropertyName_Test() {
         Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
             jtm.findByProperty(OrderLine.class, null, new HashSet<Integer>());
         });
@@ -400,40 +408,46 @@ public class MapperTest {
     }
 
     @Test
-    public void findByPropertyWithMultipleValues_nullPropertyValues_Test() {
-        Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            jtm.findByProperty(OrderLine.class, "orderId", null);
-        });
-        assertTrue(exception.getMessage().contains("propertyValues argument must not be null"));
-    }
-
-    @Test
-    public void findByPropertyWithMultipleValues_emptyPropertyValues_Test() {
+    public void findByProperty_MultipleValues_emptyPropertyValues_Test() {
         List<OrderLine> lines = jtm.findByProperty(OrderLine.class, "orderId",
                 new HashSet<Integer>());
         assertTrue(lines.size() == 0);
     }
 
     @Test
-    public void findByPropertyWithMultipleValuesOfWhichOneisNull_Test() {
-        //TONY
-        Integer[] orderIds = { 1, 2,null, 3 };
-        List<Order> orders = jtm.findByProperty(Order.class, "orderId",
-                new HashSet<Integer>(Arrays.asList(orderIds)));
-        assertTrue(orders.size() == 3);
+    public void findByProperty_MultipleValues_OfWhichOneisNull_Test() {
+        String[] names = {"tony", null, "jane" };
+        List<Customer> customers = jtm.findByProperty(Customer.class, "firstName",
+                new HashSet<String>(Arrays.asList(names)));
+        assertTrue(customers.size() == 3);
     }
     
     @Test
-    public void findByPropertyWithMultipleValuesOfWhichHasOnlyNull_Test() {
-        //TONY
-        Integer[] orderIds = { null };
-        List<Order> orders = jtm.findByProperty(Order.class, "orderId",
-                new HashSet<Integer>(Arrays.asList(orderIds)));
-        //assertTrue(orders.size() == 3);
+    public void findByProperty_MultipleValues_OfWhichOneisNull_OrderBy_Test() {
+        String[] names = {"tony", null, "jane" };
+        List<Customer> customers = jtm.findByProperty(Customer.class, "firstName",
+                new HashSet<String>(Arrays.asList(names)), "customerId");
+        assertTrue(customers.size() == 3);
+    }
+    
+    @Test
+    public void findByProperty_MultipleValues_WhichHasOnlyNull_Test() {
+        String[] names = { null };
+        List<Customer> customers = jtm.findByProperty(Customer.class, "firstName",
+                new HashSet<String>(Arrays.asList(names)));
+        assertTrue(customers.size() == 1);
+    }
+    
+    @Test
+    public void findByProperty_MultipleValues_WhichHasOnlyNull_OrderBy_Test() {
+        String[] names = { null };
+        List<Customer> customers = jtm.findByProperty(Customer.class, "firstName",
+                new HashSet<String>(Arrays.asList(names)), "customerId");
+        assertTrue(customers.size() == 1);
     }
 
     @Test
-    public void findByProperty_MultipleValuesWithOrderBy_Test() {
+    public void findByProperty_MultipleValues_WithOrderBy_Test() {
         Integer[] orderIds = { 1, 2, 3 };
         List<Order> orders = jtm.findByProperty(Order.class, "orderId",
                 new HashSet<Integer>(Arrays.asList(orderIds)), "orderDate");
@@ -441,7 +455,7 @@ public class MapperTest {
     }
 
     @Test
-    public void findByProperty_MultipleValuesInvalidProperty_Test() {
+    public void findByProperty_MultipleValues_InvalidProperty_Test() {
         Integer[] orderIds = { 1, 2, 3 };
         Exception exception = Assertions.assertThrows(MapperException.class, () -> {
             jtm.findByProperty(Order.class, "x", new HashSet<Integer>(Arrays.asList(orderIds)));
@@ -451,7 +465,7 @@ public class MapperTest {
     }
 
     @Test
-    public void findByProperty_MultipleValuesInvalidOrderByProperty_Test() {
+    public void findByProperty_MultipleValues_InvalidOrderByProperty_Test() {
         Integer[] orderIds = { 1, 2, 3 };
         Exception exception = Assertions.assertThrows(MapperException.class, () -> {
             jtm.findByProperty(Order.class, "orderId", new HashSet<Integer>(Arrays.asList(orderIds)),
@@ -462,7 +476,7 @@ public class MapperTest {
     }
 
     @Test
-    public void loadMapping_uccess_Test() {
+    public void loadMapping_success_Test() {
         Assertions.assertDoesNotThrow(() -> {
             jtm.loadMapping(Order.class);
         });
@@ -476,7 +490,7 @@ public class MapperTest {
     }
 
     @Test
-    public void getColumnName_Test() {
+    public void getColumnName_Success_Test() {
         String columnName = jtm.getColumnName(Order.class, "status");
         assertEquals("status", columnName);
     }
@@ -488,7 +502,7 @@ public class MapperTest {
     }
 
     @Test
-    public void selectMapper_Test() {
+    public void selectMapper_Success_Test() {
         SelectMapper<Order> orderSelectMapper = jtm.getSelectMapper(Order.class, "o");
         SelectMapper<OrderLine> orderLineSelectMapper = jtm.getSelectMapper(OrderLine.class, "ol");
         SelectMapper<Product> productSelectMapper = jtm.getSelectMapper(Product.class, "p");

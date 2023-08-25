@@ -293,6 +293,8 @@ public class JdbcTemplateMapper {
         Assert.notNull(clazz, "Class must not be null");
         Assert.notNull(propertyName, "propertyName must not be null");
         
+        // when propertyValues in null runtime calls this method because it is more specific of the overloaded methods.
+        // handle it by calling the findByPropertyInternal.
         if(propertyValues == null) {
             return findByPropertyInternal(clazz, propertyName, propertyValues, null);
         }
@@ -656,6 +658,7 @@ public class JdbcTemplateMapper {
         mappingHelper.getTableMapping(clazz);
     }
     
+    // used so we can handle the overloaded findByProperty() methods.
     private <T> List<T> findByPropertyInternal(Class<T> clazz, String propertyName, Object propertyValue,
             String orderByPropertyName) {
         Assert.notNull(clazz, "Class must not be null");
