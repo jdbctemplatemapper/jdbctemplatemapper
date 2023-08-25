@@ -395,10 +395,18 @@ public class JdbcTemplateMapper {
         }
 
         MapSqlParameterSource mapSqlParameterSource = new MapSqlParameterSource();
-        for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
-            mapSqlParameterSource.addValue(propMapping.getColumnName(),
-                    bw.getPropertyValue(propMapping.getPropertyName()),
-                    tableMapping.getPropertySqlType(propMapping.getPropertyName()));
+        
+        if (mappingHelper.getForcePostgresTimestampWithTimezone()) {
+            for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
+                mapSqlParameterSource.addValue(propMapping.getColumnName(),
+                        bw.getPropertyValue(propMapping.getPropertyName()),
+                        tableMapping.getPropertySqlType(propMapping.getPropertyName()));
+            }
+        } else {
+            for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
+                mapSqlParameterSource.addValue(propMapping.getColumnName(),
+                        bw.getPropertyValue(propMapping.getPropertyName()));
+            }
         }
 
         SimpleJdbcInsert jdbcInsert = simpleJdbcInsertCache.get(obj.getClass());
@@ -535,7 +543,7 @@ public class JdbcTemplateMapper {
      * Returns the SelectMapper
      * 
      * @param <T>        the type for the SelectMapper
-     * @param type      the class
+     * @param type       the class
      * @param tableAlias the table alias used in the query.
      * @return the SelectMapper
      */
@@ -558,8 +566,9 @@ public class JdbcTemplateMapper {
 
     /**
      * returns a string which can be used in a sql select statement with all the
-     * properties which have corresponding database columns. The column alias will be the
-     * underscore case name of property name, so it works well with JdbcTemplate's BeanPropertyRowMapper
+     * properties which have corresponding database columns. The column alias will
+     * be the underscore case name of property name, so it works well with
+     * JdbcTemplate's BeanPropertyRowMapper
      * 
      * Will return something like below:
      * 

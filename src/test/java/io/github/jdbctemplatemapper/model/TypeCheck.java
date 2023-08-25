@@ -33,8 +33,8 @@ public class TypeCheck {
     @Column
     private BigDecimal bigDecimalData;
 
-    @Column
-    private OffsetDateTime offsetDateTimeData; // mysql/oracle/and postgres with flag to get around driver bug
+    //@Column
+    private OffsetDateTime offsetDateTimeData; // mysql/oracle
 
     @Column
     private Boolean booleanVal; // postgres/mysql

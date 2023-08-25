@@ -110,6 +110,7 @@ public class MapperResultSetExtractor<T>
                 for (Relationship relationship : relationships) {
                     SelectMapper<?> smMainClazz = relationship.getSelectMapperMainClazz();
                     Object mainModel = getModel(rs, smMainClazz, smIdToModelMap.get(getSelectMapperKey(smMainClazz)));
+                    
                     SelectMapper<?> smRelatedClazz = relationship.getSelectMapperRelatedClazz();
                     Object relatedModel = getModel(rs, smRelatedClazz,
                             smIdToModelMap.get(getSelectMapperKey(smRelatedClazz)));
@@ -121,8 +122,8 @@ public class MapperResultSetExtractor<T>
 
                     if (RelationshipType.HAS_MANY == relationship.getRelationshipType()) {
                         BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainModel);
-                        // the property has already been validated by builder so we know it is a collection
-                        // and has been initialized
+                        // the property has already been validated by builder() so we know it is a collection
+                        // that has been initialized
                         @SuppressWarnings("rawtypes")
                         Collection collection = (Collection) bw.getPropertyValue(relationship.getPropertyName());
                         collection.add(relatedModel);                       

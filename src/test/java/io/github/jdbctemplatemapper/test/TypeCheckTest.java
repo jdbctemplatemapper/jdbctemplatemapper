@@ -66,7 +66,7 @@ public class TypeCheckTest {
 
         assertTrue(tc.getBigDecimalData().compareTo(obj.getBigDecimalData()) == 0);
 
-        if (!jdbcDriver.contains("sqlserver")) {
+        if (jdbcDriver.contains("mysql") || jdbcDriver.contains("oracle")) {
             assertNotNull(tc.getOffsetDateTimeData());
         }
 
@@ -142,7 +142,8 @@ public class TypeCheckTest {
         assertTrue(tc2.getJavaUtilDateData().getTime() > tc.getJavaUtilDateData().getTime());
         assertTrue(tc2.getLocalDateTimeData().isAfter(tc.getLocalDateTimeData()));
 
-        if (!jdbcDriver.contains("sqlserver")) {
+        // OffsetDateTime currently only supported by oracle/mysql
+        if (jdbcDriver.contains("oracle") || jdbcDriver.contains("mysql")) {
             assertTrue(tc2.getOffsetDateTimeData().isAfter(tc.getOffsetDateTimeData()));
         }
 
@@ -210,7 +211,7 @@ public class TypeCheckTest {
         assertNotNull(tc.getJavaUtilDateData());
         assertNotNull(tc.getLocalDateTimeData());
 
-        if (!jdbcDriver.contains("sqlserver")) {
+        if (jdbcDriver.contains("mysql") || jdbcDriver.contains("oracle")) {
             assertNotNull(tc.getOffsetDateTimeData());
         }
         assertTrue(tc.getBigDecimalData().compareTo(obj.getBigDecimalData()) == 0);
