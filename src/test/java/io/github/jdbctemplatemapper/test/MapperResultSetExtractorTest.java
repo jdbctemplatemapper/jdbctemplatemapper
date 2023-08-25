@@ -111,7 +111,7 @@ public class MapperResultSetExtractorTest {
     }
 
     @Test
-    public void extractor_hasManyPropertyNotACollection_Test() {
+    public void extractor_hasMany_PropertyNotACollection_Test() {
         SelectMapper<Order> orderSelectMapper = jtm.getSelectMapper(Order.class, "o");
         SelectMapper<OrderLine> orderLineSelectMapper = jtm.getSelectMapper(OrderLine.class, "ol");
         SelectMapper<Product> productSelectMapper = jtm.getSelectMapper(Product.class, "p");
@@ -131,7 +131,7 @@ public class MapperResultSetExtractorTest {
     }
 
     @Test
-    public void extractor_hasOnePropertyTypeConflict_Test() {
+    public void extractor_hasOne_PropertyTypeConflict_Test() {
         SelectMapper<Order> orderSelectMapper = jtm.getSelectMapper(Order.class, "o");
         SelectMapper<OrderLine> orderLineSelectMapper = jtm.getSelectMapper(OrderLine.class, "ol");
         SelectMapper<Product> productSelectMapper = jtm.getSelectMapper(Product.class, "p");
@@ -243,7 +243,7 @@ public class MapperResultSetExtractorTest {
         });
            
         //@formatter:on
-        assertTrue(exception.getMessage().contains("Collection generic type mismatch"));
+        assertTrue(exception.getMessage().contains("Collection generic type and hasMany relationship type mismatch."));
     }
     
     @Test

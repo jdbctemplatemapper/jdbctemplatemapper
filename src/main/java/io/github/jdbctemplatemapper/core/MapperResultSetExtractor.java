@@ -220,14 +220,14 @@ public class MapperResultSetExtractor<T>
                     Class<?> type = getGenericTypeOfCollection(mainModel, relationship.getPropertyName());
                     if (type == null) {
                         throw new MapperExtractorException(
-                                "Collections without generic types are not supported. Collection "
+                                "Collections without generic types are not supported. Collection for property "
                                         + relationship.getMainClazz().getSimpleName() + "." + relationship.getPropertyName() + " does not have a generic type.");
 
                     }
                     if (!type.isAssignableFrom(relationship.getRelatedClazz())) {
-                        throw new MapperExtractorException("Collection generic type mismatch "
+                        throw new MapperExtractorException("Collection generic type and hasMany relationship type mismatch. "
                                 + relationship.getMainClazz().getSimpleName() + "." + relationship.getPropertyName()
-                                + " has genric type " + type.getSimpleName() + " while the related class is of type "
+                                + " has generic type " + type.getSimpleName() + " while the hasMany relationship is of type "
                                 + relationship.getRelatedClazz().getSimpleName());
                     }
 
@@ -242,9 +242,9 @@ public class MapperResultSetExtractor<T>
                     PropertyDescriptor pd = bw.getPropertyDescriptor(relationship.getPropertyName());
                     if (!relationship.getRelatedClazz().isAssignableFrom(pd.getPropertyType())) {
                         throw new MapperExtractorException(
-                                "property type conflict. property " + relationship.getMainClazz() + "."
-                                        + relationship.getPropertyName() + " is of type " + pd.getPropertyType()
-                                        + " while type for hasOne relationship is " + relationship.getRelatedClazz());
+                                "property type conflict. property " + relationship.getMainClazz().getSimpleName() + "."
+                                        + relationship.getPropertyName() + " is of type " + pd.getPropertyType().getSimpleName()
+                                        + " while type for hasOne relationship is " + relationship.getRelatedClazz().getSimpleName());
                     }
                 }
             }
@@ -254,8 +254,8 @@ public class MapperResultSetExtractor<T>
         checkDuplicateSelectMappers();
     }
 
-    // dont allow duplicate relationships with same combination of main and related
-    // classes.
+    // duplicate relationships ie same combination of main and related
+    // classes not allowed
     void checkDuplicateRelationships() {
         List<String> seen = new ArrayList<>();
         for (Relationship r : relationships) {
