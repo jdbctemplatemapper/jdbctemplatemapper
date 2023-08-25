@@ -9,10 +9,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
@@ -85,6 +83,8 @@ public class MapperResultSetExtractor<T>
         return obj;
     }
 
+    
+    @SuppressWarnings("unchecked")
     @Override
     public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
         if (!fullyBuilt) {
@@ -121,32 +121,17 @@ public class MapperResultSetExtractor<T>
 
                     if (RelationshipType.HAS_MANY == relationship.getRelationshipType()) {
                         BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainModel);
-                        Object value = bw.getPropertyValue(relationship.getPropertyName());
-                        if (value == null) {
-                            PropertyDescriptor pd = bw.getPropertyDescriptor(relationship.getPropertyName());
-                            if (List.class == pd.getPropertyType() || ArrayList.class == pd.getPropertyType()) {
-                                Class<?> type = getGenericTypeOfCollection(mainModel, relationship.getPropertyName());
-                                List<?> list = createArrayList(type);
-                                bw.setPropertyValue(relationship.getPropertyName(), list);
-                                bw.setPropertyValue(relationship.getPropertyName() + "[0]", relatedModel);
-                            } else if (Set.class == pd.getPropertyType() || HashSet.class == pd.getPropertyType()) {
-                                Class<?> type = getGenericTypeOfCollection(mainModel, relationship.getPropertyName());
-                                Set<?> set = createHashSet(type);
-                                bw.setPropertyValue(relationship.getPropertyName(), set);
-                                bw.setPropertyValue(relationship.getPropertyName() + "[0]", relatedModel);
-                            }
-                        } else {
-                            if (value instanceof Collection<?>) {
-                                int size = ((Collection<?>) value).size();
-                                bw.setPropertyValue(relationship.getPropertyName() + "[" + size + "]", relatedModel);
-                            }
-                        }
+                        // the property has already been validated by builder so we know it is a collection
+                        // and has been initialized
+                        @SuppressWarnings("rawtypes")
+                        Collection collection = (Collection) bw.getPropertyValue(relationship.getPropertyName());
+                        collection.add(relatedModel);                       
                     }
                 }
             }
         }
         Map<Object, Object> map = smIdToModelMap.get(getSelectMapperKey(getSelectMapper(extractorType)));
-        return (List<T>) new ArrayList(map.values());
+        return (List<T>) new ArrayList<>(map.values());
     }
 
     private Class<?> getSelectMapperKey(SelectMapper<?> selectMapper) {
@@ -182,20 +167,12 @@ public class MapperResultSetExtractor<T>
 
             if (genericType != null && genericType.length > 0) {
                 return Class.forName(genericType[0].getTypeName());
-            } 
+            }
 
         } catch (Exception e) {
             // do nothing
         }
         return null;
-    }
-
-    private <U> List<U> createArrayList(Class<U> clazz) {
-        return new ArrayList<U>();
-    }
-
-    private <U> Set<U> createHashSet(Class<U> clazz) {
-        return new HashSet<U>();
     }
 
     private void validate() {
@@ -239,18 +216,28 @@ public class MapperResultSetExtractor<T>
                                 + relationship.getPropertyName()
                                 + " is not a collection. hasMany() relationship requires it to be a collection");
                     }
+
                     Class<?> type = getGenericTypeOfCollection(mainModel, relationship.getPropertyName());
                     if (type == null) {
-                        throw new MapperExtractorException("Collections which do not have generic type are not supported"
-                                + relationship.getMainClazz().getName() + "." + relationship.getPropertyName());
+                        throw new MapperExtractorException(
+                                "Collections which do not have generic type are not supported"
+                                        + relationship.getMainClazz().getName() + "." + relationship.getPropertyName());
 
                     }
                     if (!type.isAssignableFrom(relationship.getRelatedClazz())) {
                         throw new MapperExtractorException("Collection generic type mismatch "
                                 + relationship.getMainClazz().getName() + "." + relationship.getPropertyName()
-                                + " has genric type " + type.getName() + " while the related class is of type"
+                                + " has genric type " + type.getName() + " while the related class is of type "
                                 + relationship.getRelatedClazz().getName());
                     }
+
+                    Object value = bw.getPropertyValue(relationship.getPropertyName());
+                    if (value == null) {
+                        throw new MapperExtractorException("Collection property "
+                                + relationship.getMainClazz().getName() + "." + relationship.getPropertyName()
+                                + " has to initialized. MapperResultSetExtractor only works with initialized collections");
+                    }
+
                 } else if (relationship.getRelationshipType() == RelationshipType.HAS_ONE) {
                     PropertyDescriptor pd = bw.getPropertyDescriptor(relationship.getPropertyName());
                     if (!relationship.getRelatedClazz().isAssignableFrom(pd.getPropertyType())) {
@@ -302,5 +289,5 @@ public class MapperResultSetExtractor<T>
             }
         }
     }
-
+    
 }

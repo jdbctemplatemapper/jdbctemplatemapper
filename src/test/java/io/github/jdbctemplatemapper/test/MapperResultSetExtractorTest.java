@@ -20,6 +20,8 @@ import io.github.jdbctemplatemapper.exception.MapperExtractorException;
 import io.github.jdbctemplatemapper.model.Customer;
 import io.github.jdbctemplatemapper.model.Order;
 import io.github.jdbctemplatemapper.model.Order2;
+import io.github.jdbctemplatemapper.model.Order3;
+import io.github.jdbctemplatemapper.model.Order4;
 import io.github.jdbctemplatemapper.model.OrderLine;
 import io.github.jdbctemplatemapper.model.Product;
 
@@ -244,6 +246,25 @@ public class MapperResultSetExtractorTest {
         assertTrue(exception.getMessage().contains("Collection generic type mismatch"));
     }
     
+    @Test
+    public void extractor_CollectionHasToBeInitialized_Test() {
+        SelectMapper<Order3> orderSelectMapper = jtm.getSelectMapper(Order3.class, "o");
+        SelectMapper<OrderLine> orderLineSelectMapper = jtm.getSelectMapper(OrderLine.class, "ol");
+        SelectMapper<Product> productSelectMapper = jtm.getSelectMapper(Product.class, "p");
+
+        //@formatter:off  
+        Exception exception = Assertions.assertThrows(MapperExtractorException.class, () -> {
+           MapperResultSetExtractor
+                    .builder(Order3.class, orderSelectMapper, orderLineSelectMapper, productSelectMapper, productSelectMapper)
+                    .relationship(Order3.class).hasMany(OrderLine.class, "orderLines")
+                    .relationship(OrderLine.class).hasOne(Product.class, "product")
+                    .build();  
+        });
+           
+        //@formatter:on
+        assertTrue(exception.getMessage().contains("has to initialized. MapperResultSetExtractor only works with initialized collections"));
+    }
+    
 
     @Test
     public void extractor_FullyBuilt_Test() {
@@ -295,9 +316,45 @@ public class MapperResultSetExtractorTest {
         List<Order> orders = jtm.getJdbcTemplate().query(sql, resultSetExtractor);
         assertTrue(orders.size() == 3);
     }
+    
+    @Test
+    public void mapperResultSetExtractor_Set_Success_Test() {
+        SelectMapper<Order4> orderSelectMapper = jtm.getSelectMapper(Order4.class, "o");
+        SelectMapper<OrderLine> orderLineSelectMapper = jtm.getSelectMapper(OrderLine.class, "ol");
+        SelectMapper<Product> productSelectMapper = jtm.getSelectMapper(Product.class, "p");
+
+        //@formatter:off  
+        
+        String sql = "select" 
+                + orderSelectMapper.getColumnsSql() 
+                + "," 
+                + orderLineSelectMapper.getColumnsSql() 
+                + ","
+                + productSelectMapper.getColumnsSql() 
+                + " from orders o"
+                + " left join order_line ol on o.order_id = ol.order_id"
+                + " join product p on p.product_id = ol.product_id" 
+                + " order by o.order_id, ol.order_line_id";  
+  
+        MapperResultSetExtractor<Order4> resultSetExtractor = MapperResultSetExtractor
+                .builder(Order4.class, orderSelectMapper, orderLineSelectMapper,productSelectMapper)
+                .relationship(Order4.class).hasMany(OrderLine.class, "orderLines")
+                .relationship(OrderLine.class).hasOne(Product.class, "product")
+                .build();
+        
+        //@formatter:on
+
+        List<Order4> orders = jtm.getJdbcTemplate().query(sql, resultSetExtractor);
+
+        assertTrue(orders.size() == 2);
+        assertTrue(orders.get(0).getOrderLines().size() == 2);
+        assertEquals("IN PROCESS", orders.get(1).getStatus());
+        assertTrue(orders.get(1).getOrderLines().size() == 1);
+ 
+    }
 
     @Test
-    public void mapperResultSetExtractor_Success_Test() {
+    public void mapperResultSetExtractor_List_Success_Test() {
         SelectMapper<Order> orderSelectMapper = jtm.getSelectMapper(Order.class, "o");
         SelectMapper<OrderLine> orderLineSelectMapper = jtm.getSelectMapper(OrderLine.class, "ol");
         SelectMapper<Product> productSelectMapper = jtm.getSelectMapper(Product.class, "p");

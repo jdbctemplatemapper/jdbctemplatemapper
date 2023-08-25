@@ -1,9 +1,8 @@
 package io.github.jdbctemplatemapper.model;
 
-
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import io.github.jdbctemplatemapper.annotation.Column;
 import io.github.jdbctemplatemapper.annotation.CreatedBy;
@@ -15,12 +14,10 @@ import io.github.jdbctemplatemapper.annotation.UpdatedBy;
 import io.github.jdbctemplatemapper.annotation.UpdatedOn;
 import io.github.jdbctemplatemapper.annotation.Version;
 
-
-//Order2 has collection does not have generic type
-@SuppressWarnings("unchecked")
+//Order4 collection is a Set instead of List
 
 @Table(name = "orders")
-public class Order2 {
+public class Order4 {
     @Id(type = IdType.AUTO_INCREMENT)
     private Long orderId;
 
@@ -50,8 +47,7 @@ public class Order2 {
 
     private Customer customer;
 
-    @SuppressWarnings("rawtypes")
-    private List orderLines = new ArrayList();
+    private Set<OrderLine> orderLines = new HashSet<>();
 
     public Long getOrderId() {
         return orderId;
@@ -133,12 +129,11 @@ public class Order2 {
         this.customer = customer;
     }
 
-    @SuppressWarnings("rawtypes")
-    public List getOrderLines() {
+    public Set<OrderLine> getOrderLines() {
         return orderLines;
     }
 
-    public void setOrderLines(List<OrderLine> orderLines) {
+    public void setOrderLines(Set<OrderLine> orderLines) {
         this.orderLines = orderLines;
     }
 
@@ -156,4 +151,3 @@ public class Order2 {
 
     private Person person;
 }
-

@@ -2,7 +2,6 @@ package io.github.jdbctemplatemapper.model;
 
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import io.github.jdbctemplatemapper.annotation.Column;
@@ -16,11 +15,10 @@ import io.github.jdbctemplatemapper.annotation.UpdatedOn;
 import io.github.jdbctemplatemapper.annotation.Version;
 
 
-//Order2 has collection does not have generic type
-@SuppressWarnings("unchecked")
+//Order3 collection which is not initialized
 
 @Table(name = "orders")
-public class Order2 {
+public class Order3 {
     @Id(type = IdType.AUTO_INCREMENT)
     private Long orderId;
 
@@ -50,8 +48,7 @@ public class Order2 {
 
     private Customer customer;
 
-    @SuppressWarnings("rawtypes")
-    private List orderLines = new ArrayList();
+    private List<OrderLine> orderLines;
 
     public Long getOrderId() {
         return orderId;
@@ -133,8 +130,7 @@ public class Order2 {
         this.customer = customer;
     }
 
-    @SuppressWarnings("rawtypes")
-    public List getOrderLines() {
+    public List<OrderLine> getOrderLines() {
         return orderLines;
     }
 
