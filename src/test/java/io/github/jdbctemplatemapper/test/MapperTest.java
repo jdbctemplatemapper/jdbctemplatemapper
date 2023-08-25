@@ -9,7 +9,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -376,6 +378,84 @@ public class MapperTest {
     public void findByProperty_InvalidOrderByProperty_Test() {
         Exception exception = Assertions.assertThrows(MapperException.class, () -> {
             jtm.findByProperty(OrderLine.class, "orderId", 1, "x");
+        });
+        assertTrue(exception.getMessage()
+                .contains("is either invalid or does not have a corresponding column in database"));
+    }
+    
+    @Test
+    public void findByProperty_MultipleValues_Test() {
+        Integer[] orderIds = { 1, 2, 3 };
+        List<Order> orders = jtm.findByProperty(Order.class, "orderId",
+                new HashSet<Integer>(Arrays.asList(orderIds)));
+        assertTrue(orders.size() == 3);
+    }
+
+    @Test
+    public void findByPropertyWithMultipleValues_nullPropertyName_Test() {
+        Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            jtm.findByProperty(OrderLine.class, null, new HashSet<Integer>());
+        });
+        assertTrue(exception.getMessage().contains("propertyName must not be null"));
+    }
+
+    @Test
+    public void findByPropertyWithMultipleValues_nullPropertyValues_Test() {
+        Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            jtm.findByProperty(OrderLine.class, "orderId", null);
+        });
+        assertTrue(exception.getMessage().contains("propertyValues argument must not be null"));
+    }
+
+    @Test
+    public void findByPropertyWithMultipleValues_emptyPropertyValues_Test() {
+        List<OrderLine> lines = jtm.findByProperty(OrderLine.class, "orderId",
+                new HashSet<Integer>());
+        assertTrue(lines.size() == 0);
+    }
+
+    @Test
+    public void findByPropertyWithMultipleValuesOfWhichOneisNull_Test() {
+        //TONY
+        Integer[] orderIds = { 1, 2,null, 3 };
+        List<Order> orders = jtm.findByProperty(Order.class, "orderId",
+                new HashSet<Integer>(Arrays.asList(orderIds)));
+        assertTrue(orders.size() == 3);
+    }
+    
+    @Test
+    public void findByPropertyWithMultipleValuesOfWhichHasOnlyNull_Test() {
+        //TONY
+        Integer[] orderIds = { null };
+        List<Order> orders = jtm.findByProperty(Order.class, "orderId",
+                new HashSet<Integer>(Arrays.asList(orderIds)));
+        //assertTrue(orders.size() == 3);
+    }
+
+    @Test
+    public void findByProperty_MultipleValuesWithOrderBy_Test() {
+        Integer[] orderIds = { 1, 2, 3 };
+        List<Order> orders = jtm.findByProperty(Order.class, "orderId",
+                new HashSet<Integer>(Arrays.asList(orderIds)), "orderDate");
+        assertTrue(orders.size() == 3);
+    }
+
+    @Test
+    public void findByProperty_MultipleValuesInvalidProperty_Test() {
+        Integer[] orderIds = { 1, 2, 3 };
+        Exception exception = Assertions.assertThrows(MapperException.class, () -> {
+            jtm.findByProperty(Order.class, "x", new HashSet<Integer>(Arrays.asList(orderIds)));
+        });
+        assertTrue(exception.getMessage()
+                .contains("is either invalid or does not have a corresponding column in database"));
+    }
+
+    @Test
+    public void findByProperty_MultipleValuesInvalidOrderByProperty_Test() {
+        Integer[] orderIds = { 1, 2, 3 };
+        Exception exception = Assertions.assertThrows(MapperException.class, () -> {
+            jtm.findByProperty(Order.class, "orderId", new HashSet<Integer>(Arrays.asList(orderIds)),
+                    "x");
         });
         assertTrue(exception.getMessage()
                 .contains("is either invalid or does not have a corresponding column in database"));
