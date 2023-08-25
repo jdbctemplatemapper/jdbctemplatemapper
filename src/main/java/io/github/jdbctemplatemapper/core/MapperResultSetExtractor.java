@@ -85,7 +85,6 @@ public class MapperResultSetExtractor<T>
 
     
     @SuppressWarnings("unchecked")
-    @Override
     public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
         if (!fullyBuilt) {
             throw new MapperExtractorException(
@@ -182,7 +181,7 @@ public class MapperResultSetExtractor<T>
         // check there is a SelectMapper for extractorType
         if (getSelectMapper(extractorType) == null) {
             throw new MapperExtractorException(
-                    "Could not find a SelectMapper for extractorType " + extractorType.getName());
+                    "Could not find a SelectMapper for extractorType " + extractorType.getSimpleName());
         }
 
         // make sure relationship classes have selectMappers
@@ -190,11 +189,11 @@ public class MapperResultSetExtractor<T>
             for (Relationship relationship : relationships) {
                 if (relationship.getSelectMapperMainClazz() == null) {
                     throw new MapperExtractorException(
-                            "Could not find a SelectMapper for class " + relationship.getMainClazz().getName());
+                            "Could not find a SelectMapper for class " + relationship.getMainClazz().getSimpleName());
                 }
                 if (relationship.getSelectMapperRelatedClazz() == null) {
                     throw new MapperExtractorException("Could not find a SelectMapper for related class "
-                            + relationship.getRelatedClazz().getName());
+                            + relationship.getRelatedClazz().getSimpleName());
                 }
 
                 Object mainModel = null;
@@ -213,7 +212,7 @@ public class MapperResultSetExtractor<T>
                 if (relationship.getRelationshipType() == RelationshipType.HAS_MANY) {
                     PropertyDescriptor pd = bw.getPropertyDescriptor(relationship.getPropertyName());
                     if (!Collection.class.isAssignableFrom(pd.getPropertyType())) {
-                        throw new MapperExtractorException("property " + relationship.getMainClazz().getName() + "."
+                        throw new MapperExtractorException("property " + relationship.getMainClazz().getSimpleName() + "."
                                 + relationship.getPropertyName()
                                 + " is not a collection. hasMany() relationship requires it to be a collection");
                     }
@@ -222,20 +221,20 @@ public class MapperResultSetExtractor<T>
                     if (type == null) {
                         throw new MapperExtractorException(
                                 "Collections without generic types are not supported. Collection "
-                                        + relationship.getMainClazz().getName() + "." + relationship.getPropertyName() + " does not have a generic type.");
+                                        + relationship.getMainClazz().getSimpleName() + "." + relationship.getPropertyName() + " does not have a generic type.");
 
                     }
                     if (!type.isAssignableFrom(relationship.getRelatedClazz())) {
                         throw new MapperExtractorException("Collection generic type mismatch "
-                                + relationship.getMainClazz().getName() + "." + relationship.getPropertyName()
-                                + " has genric type " + type.getName() + " while the related class is of type "
-                                + relationship.getRelatedClazz().getName());
+                                + relationship.getMainClazz().getSimpleName() + "." + relationship.getPropertyName()
+                                + " has genric type " + type.getSimpleName() + " while the related class is of type "
+                                + relationship.getRelatedClazz().getSimpleName());
                     }
 
                     Object value = bw.getPropertyValue(relationship.getPropertyName());
                     if (value == null) {
                         throw new MapperExtractorException("MapperResultSetExtractor only works with initialized collections. Collection property "
-                                + relationship.getMainClazz().getName() + "." + relationship.getPropertyName()
+                                + relationship.getMainClazz().getSimpleName() + "." + relationship.getPropertyName()
                                 + " is not initialized");
                     }
 
@@ -263,7 +262,7 @@ public class MapperResultSetExtractor<T>
             String str = r.getMainClazz().getName() + "-" + r.getRelatedClazz().getName();
             if (seen.contains(str)) {
                 throw new MapperExtractorException("there are duplicate relationships between "
-                        + r.getMainClazz().getName() + " and " + r.getRelatedClazz().getName());
+                        + r.getMainClazz().getSimpleName() + " and " + r.getRelatedClazz().getSimpleName());
             } else {
                 seen.add(str);
             }
@@ -275,7 +274,7 @@ public class MapperResultSetExtractor<T>
         List<Class<?>> seen = new ArrayList<>();
         for (SelectMapper<?> sm : selectMappers) {
             if (seen.contains(sm.getType())) {
-                throw new MapperExtractorException("duplicate selectMapper for type " + sm.getType().getName());
+                throw new MapperExtractorException("duplicate selectMapper for type " + sm.getType().getSimpleName());
             } else {
                 seen.add(sm.getType());
             }
