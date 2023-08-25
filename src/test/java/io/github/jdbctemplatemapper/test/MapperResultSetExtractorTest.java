@@ -15,12 +15,12 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
 import io.github.jdbctemplatemapper.core.MapperResultSetExtractor;
+import io.github.jdbctemplatemapper.core.MapperResultSetExtractorBuilder;
 import io.github.jdbctemplatemapper.core.SelectMapper;
 import io.github.jdbctemplatemapper.exception.MapperExtractorException;
 import io.github.jdbctemplatemapper.model.Customer;
 import io.github.jdbctemplatemapper.model.Order;
 import io.github.jdbctemplatemapper.model.Order2;
-import io.github.jdbctemplatemapper.model.Order3;
 import io.github.jdbctemplatemapper.model.Order4;
 import io.github.jdbctemplatemapper.model.OrderLine;
 import io.github.jdbctemplatemapper.model.Product;
@@ -36,17 +36,21 @@ public class MapperResultSetExtractorTest {
     private JdbcTemplateMapper jtm;
 
     @Test
-    public void extractor_noMapperForExtractorType_Test() {
+    public void extractor_noSelectMapperForExtractorType_Test() {
         SelectMapper<OrderLine> orderLineSelectMapper = jtm.getSelectMapper(OrderLine.class, "ol");
         SelectMapper<Product> productSelectMapper = jtm.getSelectMapper(Product.class, "p");
 
         //@formatter:off  
         Exception exception = Assertions.assertThrows(MapperExtractorException.class, () -> {
-           MapperResultSetExtractor
-                    .builder(Order.class, orderLineSelectMapper,productSelectMapper)// no selectMapper for Order.class
+           MapperResultSetExtractorBuilder
+                    .initialize(Order.class, orderLineSelectMapper,productSelectMapper)// no selectMapper for Order.class
                     .relationship(Order.class).hasMany(OrderLine.class, "orderLines")
                     .relationship(OrderLine.class).hasOne(Product.class, "product")
-                    .build();  
+                    .build(); 
+           
+           MapperResultSetExtractorBuilder.initialize(Order.class, orderLineSelectMapper)
+           .relationship(Order.class).hasMany(OrderLine.class, "orderLines").build();
+           
         });
         //@formatter:on
 
@@ -55,14 +59,14 @@ public class MapperResultSetExtractorTest {
     }
 
     @Test
-    public void extractor_noMapperForMainObject_Test() {
+    public void extractor_noSelectMapperForMainObject_Test() {
         SelectMapper<Order> orderSelectMapper = jtm.getSelectMapper(Order.class, "o");
         SelectMapper<Product> productSelectMapper = jtm.getSelectMapper(Product.class, "p");
 
         //@formatter:off  
         Exception exception = Assertions.assertThrows(MapperExtractorException.class, () -> {
-           MapperResultSetExtractor
-                .builder(Order.class, orderSelectMapper, productSelectMapper)// no orderLineSelectMapper
+           MapperResultSetExtractorBuilder
+                .initialize(Order.class, orderSelectMapper, productSelectMapper)// no orderLineSelectMapper
                 .relationship(OrderLine.class).hasOne(Product.class, "product")
                 .relationship(Order.class).hasMany(OrderLine.class, "orderLines")  
                 .build();
@@ -74,14 +78,14 @@ public class MapperResultSetExtractorTest {
     }
 
     @Test
-    public void extractor_noMapperForRelatedClass_Test() {
+    public void extractor_noSelectMapperForRelatedClass_Test() {
         SelectMapper<Order> orderSelectMapper = jtm.getSelectMapper(Order.class, "o");
         SelectMapper<OrderLine> orderLineSelectMapper = jtm.getSelectMapper(OrderLine.class, "ol");
 
         //@formatter:off  
         Exception exception = Assertions.assertThrows(MapperExtractorException.class, () -> {
-           MapperResultSetExtractor
-                    .builder(Order.class, orderSelectMapper, orderLineSelectMapper)// no selectMapper for product.class
+           MapperResultSetExtractorBuilder
+                    .initialize(Order.class, orderSelectMapper, orderLineSelectMapper)// no selectMapper for product.class
                     .relationship(Order.class).hasMany(OrderLine.class, "orderLines")
                     .relationship(OrderLine.class).hasOne(Product.class, "product")
                     .build();  
@@ -99,8 +103,8 @@ public class MapperResultSetExtractorTest {
 
         //@formatter:off  
         Exception exception = Assertions.assertThrows(MapperExtractorException.class, () -> {
-           MapperResultSetExtractor
-                    .builder(Order.class, orderSelectMapper, orderLineSelectMapper, productSelectMapper)
+           MapperResultSetExtractorBuilder
+                    .initialize(Order.class, orderSelectMapper, orderLineSelectMapper, productSelectMapper)
                     .relationship(Order.class).hasMany(OrderLine.class, "orderLinesX")
                     .relationship(OrderLine.class).hasOne(Product.class, "product")
                     .build();  
@@ -118,8 +122,8 @@ public class MapperResultSetExtractorTest {
 
         //@formatter:off  
         Exception exception = Assertions.assertThrows(MapperExtractorException.class, () -> {
-           MapperResultSetExtractor
-                    .builder(Order.class, orderSelectMapper, orderLineSelectMapper, productSelectMapper)
+           MapperResultSetExtractorBuilder
+                    .initialize(Order.class, orderSelectMapper, orderLineSelectMapper, productSelectMapper)
                     .relationship(Order.class).hasMany(OrderLine.class, "status")
                     .relationship(OrderLine.class).hasOne(Product.class, "product")
                     .build();  
@@ -139,8 +143,8 @@ public class MapperResultSetExtractorTest {
 
         //@formatter:off  
         Exception exception = Assertions.assertThrows(MapperExtractorException.class, () -> {
-           MapperResultSetExtractor
-                    .builder(Order.class, orderSelectMapper, orderLineSelectMapper, productSelectMapper, customerSelectMapper)
+           MapperResultSetExtractorBuilder
+                    .initialize(Order.class, orderSelectMapper, orderLineSelectMapper, productSelectMapper, customerSelectMapper)
                     .relationship(Order.class).hasMany(OrderLine.class, "orderLines")
                     .relationship(OrderLine.class).hasOne(Customer.class, "product")
                     .build();  
@@ -157,8 +161,8 @@ public class MapperResultSetExtractorTest {
 
         //@formatter:off  
         Exception exception = Assertions.assertThrows(MapperExtractorException.class, () -> {
-           MapperResultSetExtractor
-                    .builder(Order.class, orderSelectMapper, orderLineSelectMapper, productSelectMapper)
+           MapperResultSetExtractorBuilder
+                    .initialize(Order.class, orderSelectMapper, orderLineSelectMapper, productSelectMapper)
                     .relationship(Order.class).hasMany(OrderLine.class, "orderLines")
                     .relationship(OrderLine.class).hasOne(Product.class, "product")
                     .relationship(OrderLine.class).hasOne(Product.class, "product")
@@ -178,8 +182,8 @@ public class MapperResultSetExtractorTest {
 
         //@formatter:off  
         Exception exception = Assertions.assertThrows(MapperExtractorException.class, () -> {
-           MapperResultSetExtractor
-                    .builder(Order.class, orderSelectMapper, orderLineSelectMapper, productSelectMapper, productSelectMapper)
+           MapperResultSetExtractorBuilder
+                    .initialize(Order.class, orderSelectMapper, orderLineSelectMapper, productSelectMapper, productSelectMapper)
                     .relationship(Order.class).hasMany(OrderLine.class, "orderLines")
                     .relationship(OrderLine.class).hasOne(Product.class, "product")
                     .build();  
@@ -196,8 +200,8 @@ public class MapperResultSetExtractorTest {
 
         //@formatter:off  
         Exception exception = Assertions.assertThrows(MapperExtractorException.class, () -> {
-           MapperResultSetExtractor
-                    .builder(Order.class, orderSelectMapper, orderLineSelectMapper, productSelectMapper, productSelectMapper, null)
+           MapperResultSetExtractorBuilder
+                    .initialize(Order.class, orderSelectMapper, orderLineSelectMapper, productSelectMapper, productSelectMapper, null)
                     .relationship(Order.class).hasMany(OrderLine.class, "orderLines")
                     .relationship(OrderLine.class).hasOne(Product.class, "product")
                     .build();  
@@ -216,8 +220,8 @@ public class MapperResultSetExtractorTest {
 
         //@formatter:off  
         Exception exception = Assertions.assertThrows(MapperExtractorException.class, () -> {
-           MapperResultSetExtractor
-                    .builder(Order2.class, orderSelectMapper, orderLineSelectMapper, productSelectMapper, productSelectMapper)
+           MapperResultSetExtractorBuilder
+                    .initialize(Order2.class, orderSelectMapper, orderLineSelectMapper, productSelectMapper, productSelectMapper)
                     .relationship(Order2.class).hasMany(OrderLine.class, "orderLines")
                     .relationship(OrderLine.class).hasOne(Product.class, "product")
                     .build();  
@@ -235,8 +239,8 @@ public class MapperResultSetExtractorTest {
 
         //@formatter:off  
         Exception exception = Assertions.assertThrows(MapperExtractorException.class, () -> {
-           MapperResultSetExtractor
-                    .builder(Order.class, orderSelectMapper, orderLineSelectMapper, productSelectMapper, productSelectMapper)
+           MapperResultSetExtractorBuilder
+                    .initialize(Order.class, orderSelectMapper, orderLineSelectMapper, productSelectMapper, productSelectMapper)
                     .relationship(Order.class).hasMany(Product.class, "orderLines")
                     .relationship(OrderLine.class).hasOne(Product.class, "product")
                     .build();  
@@ -246,56 +250,6 @@ public class MapperResultSetExtractorTest {
         assertTrue(exception.getMessage().contains("Collection generic type and hasMany relationship type mismatch."));
     }
     
-    @Test
-    public void extractor_CollectionHasToBeInitialized_Test() {
-        SelectMapper<Order3> orderSelectMapper = jtm.getSelectMapper(Order3.class, "o");
-        SelectMapper<OrderLine> orderLineSelectMapper = jtm.getSelectMapper(OrderLine.class, "ol");
-        SelectMapper<Product> productSelectMapper = jtm.getSelectMapper(Product.class, "p");
-
-        //@formatter:off  
-        Exception exception = Assertions.assertThrows(MapperExtractorException.class, () -> {
-           MapperResultSetExtractor
-                    .builder(Order3.class, orderSelectMapper, orderLineSelectMapper, productSelectMapper, productSelectMapper)
-                    .relationship(Order3.class).hasMany(OrderLine.class, "orderLines")
-                    .relationship(OrderLine.class).hasOne(Product.class, "product")
-                    .build();  
-        });
-           
-        //@formatter:on
-        assertTrue(exception.getMessage().contains("MapperResultSetExtractor only works with initialized collections."));
-    }
-    
-
-    @Test
-    public void extractor_FullyBuilt_Test() {
-        SelectMapper<Order> orderSelectMapper = jtm.getSelectMapper(Order.class, "o");
-        SelectMapper<OrderLine> orderLineSelectMapper = jtm.getSelectMapper(OrderLine.class, "ol");
-        SelectMapper<Product> productSelectMapper = jtm.getSelectMapper(Product.class, "p");
-
-        //@formatter:off  
-        
-        String sql = "select" 
-                + orderSelectMapper.getColumnsSql() 
-                + "," 
-                + orderLineSelectMapper.getColumnsSql() 
-                + ","
-                + productSelectMapper.getColumnsSql() 
-                + " from orders o"
-                + " left join order_line ol on o.order_id = ol.order_id"
-                + " join product p on p.product_id = ol.product_id" 
-                + " order by o.order_id, ol.order_line_id";  
-  
-        MapperResultSetExtractor<Order> resultSetExtractor = (MapperResultSetExtractor<Order>)MapperResultSetExtractor
-                .builder(Order.class, orderSelectMapper, orderLineSelectMapper,productSelectMapper);
-        
-        //@formatter:on
-        Exception exception = Assertions.assertThrows(MapperExtractorException.class, () -> {
-            jtm.getJdbcTemplate().query(sql, resultSetExtractor);
-        });
-
-        assertTrue(exception.getMessage().contains("MapperResultSetExtractor was not fully built"));
-    }
-
     @Test
     public void mapperResultSetExtractor_NoRelationship_Success_Test() {
         SelectMapper<Order> orderSelectMapper = jtm.getSelectMapper(Order.class, "o");
@@ -307,8 +261,8 @@ public class MapperResultSetExtractorTest {
                 + " from orders o";
      
   
-        MapperResultSetExtractor<Order> resultSetExtractor = MapperResultSetExtractor
-                .builder(Order.class, orderSelectMapper)
+        MapperResultSetExtractor<Order> resultSetExtractor = MapperResultSetExtractorBuilder
+                .initialize(Order.class, orderSelectMapper)
                 .build();
         
         //@formatter:on
@@ -336,8 +290,8 @@ public class MapperResultSetExtractorTest {
                 + " join product p on p.product_id = ol.product_id" 
                 + " order by o.order_id, ol.order_line_id";  
   
-        MapperResultSetExtractor<Order4> resultSetExtractor = MapperResultSetExtractor
-                .builder(Order4.class, orderSelectMapper, orderLineSelectMapper,productSelectMapper)
+        MapperResultSetExtractor<Order4> resultSetExtractor = MapperResultSetExtractorBuilder
+                .initialize(Order4.class, orderSelectMapper, orderLineSelectMapper,productSelectMapper)
                 .relationship(Order4.class).hasMany(OrderLine.class, "orderLines")
                 .relationship(OrderLine.class).hasOne(Product.class, "product")
                 .build();
@@ -372,8 +326,8 @@ public class MapperResultSetExtractorTest {
                 + " join product p on p.product_id = ol.product_id" 
                 + " order by o.order_id, ol.order_line_id";  
   
-        MapperResultSetExtractor<Order> resultSetExtractor = MapperResultSetExtractor
-                .builder(Order.class, orderSelectMapper, orderLineSelectMapper,productSelectMapper)
+        MapperResultSetExtractor<Order> resultSetExtractor = MapperResultSetExtractorBuilder
+                .initialize(Order.class, orderSelectMapper, orderLineSelectMapper,productSelectMapper)
                 .relationship(Order.class).hasMany(OrderLine.class, "orderLines")
                 .relationship(OrderLine.class).hasOne(Product.class, "product")
                 .build();

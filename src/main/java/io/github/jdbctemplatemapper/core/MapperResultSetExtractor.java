@@ -20,22 +20,13 @@ import org.springframework.util.Assert;
 
 import io.github.jdbctemplatemapper.exception.MapperExtractorException;
 
-public class MapperResultSetExtractor<T>
-        implements ResultSetExtractor<List<T>>, IMapperExtractionBuilder<T>, IRelationshipBuilder<T> {
+public final class MapperResultSetExtractor<T> implements ResultSetExtractor<List<T>> {
 
     private Class<T> extractorType;
     private SelectMapper<?>[] selectMappers = {};
     private List<Relationship> relationships = new ArrayList<>();
-    private Relationship tmpRelationship;
 
-    private boolean fullyBuilt = false;
-
-    private MapperResultSetExtractor(Class<T> extractorType, SelectMapper<?>... selectMappers) {
-        this.extractorType = extractorType;
-        this.selectMappers = selectMappers;
-    }
-
-    private MapperResultSetExtractor(Class<T> extractorType, List<Relationship> relationships,
+    MapperResultSetExtractor(Class<T> extractorType, List<Relationship> relationships,
             SelectMapper<?>... selectMappers) {
         Assert.notNull(extractorType, "extractorType must not be null");
         Assert.notEmpty(selectMappers, "selectMappers must not be null or empty. There should be at least one.");
@@ -52,44 +43,13 @@ public class MapperResultSetExtractor<T>
         validate();
     }
 
-    public static <T> IMapperExtractionBuilder<T> builder(Class<T> extractorType, SelectMapper<?>... selectMappers) {
-        return new MapperResultSetExtractor<T>(extractorType, selectMappers);
-    }
-
-    public IRelationshipBuilder<T> relationship(Class<?> clazz) {
-        this.tmpRelationship = new Relationship(clazz);
-        return this;
-    }
-
-    public IMapperExtractionBuilder<T> hasMany(Class<?> relatedClazz, String propertyName) {
-        tmpRelationship.setRelatedClazz(relatedClazz);
-        tmpRelationship.setPropertyName(propertyName);
-        tmpRelationship.setRelationshipType(RelationshipType.HAS_MANY);
-        relationships.add(tmpRelationship);
-        return this;
-    }
-
-    public IMapperExtractionBuilder<T> hasOne(Class<?> relatedClazz, String propertyName) {
-        tmpRelationship.setRelatedClazz(relatedClazz);
-        tmpRelationship.setPropertyName(propertyName);
-        tmpRelationship.setRelationshipType(RelationshipType.HAS_ONE);
-        relationships.add(tmpRelationship);
-        return this;
-    }
-
-    public MapperResultSetExtractor<T> build() {
-        MapperResultSetExtractor<T> obj = new MapperResultSetExtractor<T>(extractorType, relationships, selectMappers);
-        obj.fullyBuilt = true;
-        return obj;
-    }
-
-    
     @SuppressWarnings("unchecked")
     public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
-        if (!fullyBuilt) {
-            throw new MapperExtractorException(
-                    "MapperResultSetExtractor was not fully built. Use MapperResultSetExtractor.builder()");
-        }
+        // if (!fullyBuilt) {
+        // throw new MapperExtractorException(
+        // "MapperResultSetExtractor was not fully built. Use
+        // MapperResultSetExtractor.builder()");
+        // }
 
         // key - SelectMapper type.
         // value - a Map, key: id of model, value: model
@@ -109,7 +69,7 @@ public class MapperResultSetExtractor<T>
                 for (Relationship relationship : relationships) {
                     SelectMapper<?> smMainClazz = relationship.getSelectMapperMainClazz();
                     Object mainModel = getModel(rs, smMainClazz, smIdToModelMap.get(getSelectMapperKey(smMainClazz)));
-                    
+
                     SelectMapper<?> smRelatedClazz = relationship.getSelectMapperRelatedClazz();
                     Object relatedModel = getModel(rs, smRelatedClazz,
                             smIdToModelMap.get(getSelectMapperKey(smRelatedClazz)));
@@ -121,11 +81,12 @@ public class MapperResultSetExtractor<T>
 
                     if (RelationshipType.HAS_MANY == relationship.getRelationshipType()) {
                         BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainModel);
-                        // the property has already been validated by builder() so we know it is a collection
+                        // the property has already been validated by builder() so we know it is a
+                        // collection
                         // that has been initialized
                         @SuppressWarnings("rawtypes")
                         Collection collection = (Collection) bw.getPropertyValue(relationship.getPropertyName());
-                        collection.add(relatedModel);                       
+                        collection.add(relatedModel);
                     }
                 }
             }
@@ -212,8 +173,8 @@ public class MapperResultSetExtractor<T>
                 if (relationship.getRelationshipType() == RelationshipType.HAS_MANY) {
                     PropertyDescriptor pd = bw.getPropertyDescriptor(relationship.getPropertyName());
                     if (!Collection.class.isAssignableFrom(pd.getPropertyType())) {
-                        throw new MapperExtractorException("property " + relationship.getMainClazz().getSimpleName() + "."
-                                + relationship.getPropertyName()
+                        throw new MapperExtractorException("property " + relationship.getMainClazz().getSimpleName()
+                                + "." + relationship.getPropertyName()
                                 + " is not a collection. hasMany() relationship requires it to be a collection");
                     }
 
@@ -221,30 +182,35 @@ public class MapperResultSetExtractor<T>
                     if (type == null) {
                         throw new MapperExtractorException(
                                 "Collections without generic types are not supported. Collection for property "
-                                        + relationship.getMainClazz().getSimpleName() + "." + relationship.getPropertyName() + " does not have a generic type.");
+                                        + relationship.getMainClazz().getSimpleName() + "."
+                                        + relationship.getPropertyName() + " does not have a generic type.");
 
                     }
                     if (!type.isAssignableFrom(relationship.getRelatedClazz())) {
-                        throw new MapperExtractorException("Collection generic type and hasMany relationship type mismatch. "
-                                + relationship.getMainClazz().getSimpleName() + "." + relationship.getPropertyName()
-                                + " has generic type " + type.getSimpleName() + " while the hasMany relationship is of type "
-                                + relationship.getRelatedClazz().getSimpleName());
+                        throw new MapperExtractorException(
+                                "Collection generic type and hasMany relationship type mismatch. "
+                                        + relationship.getMainClazz().getSimpleName() + "."
+                                        + relationship.getPropertyName() + " has generic type " + type.getSimpleName()
+                                        + " while the hasMany relationship is of type "
+                                        + relationship.getRelatedClazz().getSimpleName());
                     }
 
                     Object value = bw.getPropertyValue(relationship.getPropertyName());
                     if (value == null) {
-                        throw new MapperExtractorException("MapperResultSetExtractor only works with initialized collections. Collection property "
-                                + relationship.getMainClazz().getSimpleName() + "." + relationship.getPropertyName()
-                                + " is not initialized");
+                        throw new MapperExtractorException(
+                                "MapperResultSetExtractor only works with initialized collections. Collection property "
+                                        + relationship.getMainClazz().getSimpleName() + "."
+                                        + relationship.getPropertyName() + " is not initialized");
                     }
 
                 } else if (relationship.getRelationshipType() == RelationshipType.HAS_ONE) {
                     PropertyDescriptor pd = bw.getPropertyDescriptor(relationship.getPropertyName());
                     if (!relationship.getRelatedClazz().isAssignableFrom(pd.getPropertyType())) {
-                        throw new MapperExtractorException(
-                                "property type conflict. property " + relationship.getMainClazz().getSimpleName() + "."
-                                        + relationship.getPropertyName() + " is of type " + pd.getPropertyType().getSimpleName()
-                                        + " while type for hasOne relationship is " + relationship.getRelatedClazz().getSimpleName());
+                        throw new MapperExtractorException("property type conflict. property "
+                                + relationship.getMainClazz().getSimpleName() + "." + relationship.getPropertyName()
+                                + " is of type " + pd.getPropertyType().getSimpleName()
+                                + " while type for hasOne relationship is "
+                                + relationship.getRelatedClazz().getSimpleName());
                     }
                 }
             }
@@ -289,5 +255,5 @@ public class MapperResultSetExtractor<T>
             }
         }
     }
-    
+
 }
