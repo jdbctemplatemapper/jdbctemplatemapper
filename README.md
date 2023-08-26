@@ -300,32 +300,22 @@ An example for querying the following relationship: An 'Order' has many 'OrderLi
        Map<Integer, Product> idProductMap = new HashMap<>();
        while (rs.next()) {				 					
          // orderSelectMapper.getResultSetModelIdColumnLabel() returns the id column alias 
-         // which is 'o_order_id' for the sql above. 
-         /*
+         // which is 'o_order_id' for the sql above.
          Long orderId = rs.getLong(orderSelectMapper.getResultSetModelIdColumnLabel());
          Order order = idOrderMap.get(orderId);
          if (order == null) {
            order = orderSelectMapper.buildModel(rs);
            idOrderMap.put(order.getOrderId(), order);
          }
-         */
 
-         // Above code is replaced by getModel(). See its definition further below.
-         Order order = getModel(rs, orderSelectMapper, idOrderMap);
- 				    
          // productSelectMapper.getResultSetModelIdColumnName() returns the id column alias 
-         // which is 'p_product_id'for the sql above.
-         /*
-           Integer productId = rs.getInt(productSelectMapper.getResultSetModelIdColumnLabel());
-           Product product = idProductMap.get(productId);
-           if (product == null) {
-             product = productSelectMapper.buildModel(rs); 
-             idProductMap.put(product.getProductId(), product);
-           }
-         */
-
-         // Above code is replaced by getModel(). See its definition further below.
-         Product product = getModel(rs, productSelectMapper, idProductMap);
+         // which is 'p_product_id'for the sql above.       
+         Integer productId = rs.getInt(productSelectMapper.getResultSetModelIdColumnLabel());
+         Product product = idProductMap.get(productId);
+         if (product == null) {
+           product = productSelectMapper.buildModel(rs); 
+           idProductMap.put(product.getProductId(), product);
+         }
  				    
          OrderLine orderLine = orderLineSelectMapper.buildModel(rs);
          if(orderLine != null) {
@@ -341,18 +331,6 @@ An example for querying the following relationship: An 'Order' has many 'OrderLi
   // execute the JdbcTemplate query	
   List<Order> orders = jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor);
 ...
-
-// This method is not part of the distribution. You will need to copy it for use in your code.
-@SuppressWarnings("unchecked")
-public <T, U> T getModel(ResultSet rs, SelectMapper<T> selectMapper, Map<U, T> idToModelMap) throws SQLException{
-    U id = (U) rs.getObject(selectMapper.getResultSetModelIdColumnLabel());     
-    T model = idToModelMap.get(id);
-    if (model == null) {
-        model = selectMapper.buildModel(rs); // builds the model from resultSet
-        idToModelMap.put(id, model);
-     }
-     return model;      
- }
 
 ```
 
