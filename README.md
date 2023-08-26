@@ -304,7 +304,7 @@ An example for querying the following relationship: An 'Order' has many 'OrderLi
          Long orderId = rs.getLong(orderSelectMapper.getResultSetModelIdColumnLabel());
          Order order = idOrderMap.get(orderId);
          if (order == null) {
-           order = orderSelectMapper.buildModel(rs);
+           order = orderSelectMapper.buildModel(rs); //build the model
            idOrderMap.put(order.getOrderId(), order);
          }
 
@@ -313,7 +313,7 @@ An example for querying the following relationship: An 'Order' has many 'OrderLi
          Integer productId = rs.getInt(productSelectMapper.getResultSetModelIdColumnLabel());
          Product product = idProductMap.get(productId);
          if (product == null) {
-           product = productSelectMapper.buildModel(rs); 
+           product = productSelectMapper.buildModel(rs); // build the model
            idProductMap.put(product.getProductId(), product);
          }
  				    
