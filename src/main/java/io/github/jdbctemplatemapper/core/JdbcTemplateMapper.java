@@ -32,12 +32,12 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
 "https://github.com/jdbctemplatemapper/jdbctemplatemapper#jdbctemplatemapper">JdbcTemplateMapper documentation</a> for more info
  * </pre>
  * 
- * <b> Note: JdbcTemplateMapper is thread safe.</b>
+ * <b> Note: An instance of JdbcTemplateMapper is thread safe.</b>
  * 
  * @author ajoseph
  * 
  */
-public class JdbcTemplateMapper {
+public final class JdbcTemplateMapper {
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate npJdbcTemplate;
 
@@ -611,7 +611,7 @@ public class JdbcTemplateMapper {
      * @param tableAlias the table alias used in the query.
      * @return the SelectMapper
      */
-    public <T> SelectMapper<T> getSelectMapper(Class<T> type, String tableAlias) {
+    public <T> SelectMapper<T> getSelectMapper(Class<T> type, String tableAlias) {        
         return new SelectMapper<T>(type, tableAlias, mappingHelper, conversionService,
                 useColumnLabelForResultSetMetaData);
     }
@@ -630,14 +630,14 @@ public class JdbcTemplateMapper {
 
     /**
      * returns a string which can be used in a sql select statement with all the
-     * properties which have corresponding database columns. The column alias will
+     * properties which are mapped. The column alias will
      * be the underscore case name of property name, so it works well with
      * JdbcTemplate's BeanPropertyRowMapper
      * 
-     * Will return something like below:
+     * Will return something like below if name property is mapped to last_name:
      * 
      * <pre>
-     * "id as id, last_name as last_name"
+     * "id as id, last_name as name"
      * </pre>
      * 
      * @param clazz the class
@@ -656,6 +656,10 @@ public class JdbcTemplateMapper {
      */
     public void loadMapping(Class<?> clazz) {
         mappingHelper.getTableMapping(clazz);
+    }
+    
+    MappingHelper getMappingHelper(){
+        return mappingHelper;
     }
     
     // used so we can handle the overloaded findByProperty() methods.

@@ -44,9 +44,9 @@ public class SelectMapper<T> {
         this.conversionService = conversionService;
 
         this.useColumnLabelForResultSetMetaData = useColumnLabelForResultSetMetaData;
-        this.tableAlias = tableAlias;
-        this.colPrefix = tableAlias + ".";
-        this.colAliasPrefix = MapperUtils.toLowerCase(tableAlias + "_");
+        this.tableAlias = tableAlias.trim();
+        this.colPrefix = this.tableAlias + ".";
+        this.colAliasPrefix = MapperUtils.toLowerCase(this.tableAlias + "_");
     }
 
     /**

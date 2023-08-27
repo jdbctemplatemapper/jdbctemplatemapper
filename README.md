@@ -223,8 +223,7 @@ public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
  
 ## Querying relationships
 
-For querying complex relationships use SelectMapper with either MapperResultSetExtractor (it implements 
-Spring ResultSetExtractor interface) or with Spring ResultSetExtractor directly. MapperResultSetExtractor is less verbose and allows you to chain up hasMany and hasOne relationships as needed. Using Spring ResultSetExtractor is a little bit more verbose but gives you more control. Both examples are shown below. Even if you use MapperResultSetExtractor it is good to review how the Spring ResultSetExtractor works with SelectMapper.
+For querying complex relationships use SelectMapper with Spring ResultSetExtractor.
 
 SelectMapper allows generating the select columns string for the model and population of the model from a ResultSet.
 
@@ -290,27 +289,7 @@ An example for querying the following relationship: An Order has many OrderLine 
                + " left join order_line ol on o.order_id = ol.order_id"
                + " join product p on p.product_id = ol.product_id"
                + " order by o.order_id, ol.order_line_id";
-               
-               
- //Option 1: Using MapperResultSetExtractor:
- // 
- // The extractor depends on the SelectMapper to populate the models so for very class in the 
- // builder you will need to provide a corresponding SelectMapper. The builder has a lot of checks
- // and provides good exception message. You can add as many relationships as you need as long as
- // there are corresponding SelectMappers for them. The ide will help you with the methods available 
- // as you chain up the builder. You may also want to take a look at the tests in the source code 
- 
-  MapperResultSetExtractor<Order> mapperResultSetExtractor = MapperResultSetExtractor
-                .builder(Order.class, orderSelectMapper, orderLineSelectMapper,productSelectMapper)
-                .relationship(Order.class).hasMany(OrderLine.class, "orderLines")
-                .relationship(OrderLine.class).hasOne(Product.class, "product")
-                .build();
-                
-  // execute the JdbcTemplate query	
-  List<Order> orders = jdbcTemplateMapper.getJdbcTemplate().query(sql, mapperResultSetExtractor);             
-              
-                                        
- //Option 2: Using Spring's ResultSetExtractor 		
+                                        	
  ResultSetExtractor<List<Order>> rsExtractor = new ResultSetExtractor<List<Order>>() {
      @Override
      public List<Order> extractData(ResultSet rs) throws SQLException, DataAccessException {
@@ -361,17 +340,7 @@ An example for querying the following relationship: An Order has many OrderLine 
   List<Order> orders = jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor);
 ...
 
-// This method is not part of the distribution. You will need to copy it for use in your code.
-@SuppressWarnings("unchecked")
-public <T, U> T getModel(ResultSet rs, SelectMapper<T> selectMapper, Map<U, T> idToModelMap) throws SQLException{
-    U id = (U) rs.getObject(selectMapper.getResultSetModelIdColumnLabel());     
-    T model = idToModelMap.get(id);
-    if (model == null) {
-        model = selectMapper.buildModel(rs); // builds the model from resultSet
-        idToModelMap.put(id, model);
-     }
-     return model;      
- }
+
 
 ```
 
@@ -394,7 +363,7 @@ Uses the same logging configurations as Spring's JdbcTemplate to log the SQL. In
 ## Notes
  1. If insert/update fails do not reuse the object since it could be in an inconsistent state.
  2. Database changes will require a restart of the application since JdbcTemplateMapper caches table metadata.
- 3. When using @Column(name="some_colum_name") to map a property to a non default column it will impact using "SELECT * " with Spring BeanPropertyRowMapper in custom queries. The mismatch of column and property names will cause BeanPropertyRowMapper to ignore these properties. Use "SELECT " + jdbcTemplateMapper.getColumnsSql(Class) which will create column aliases to match property names so will work with BeanPropertyRowMapper.
+ 3. When using @Column(name="some_column_name") to map a property to a non default column it will impact using "SELECT * " with Spring BeanPropertyRowMapper in custom queries. The mismatch of column and property names will cause BeanPropertyRowMapper to ignore these properties. Use "SELECT " + jdbcTemplateMapper.getColumnsSql(Class) which will create column aliases to match property names so will work with BeanPropertyRowMapper.
  4. Models should have a no argument constructor so they can be instantiated and properties set.
  5. For Oracle/SqlServer no support for blob/clob. Use JdbcTemplate directly for this with recommended custom code
  
