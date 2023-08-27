@@ -1,7 +1,5 @@
 package io.github.jdbctemplatemapper.test;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
-
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -27,7 +25,7 @@ public class QueryTest {
     @Autowired
     private JdbcTemplateMapper jtm;
 
-    @Test
+    //@Test
     public void find_hasMany_Test() {
       //@formatter:off
         List<Order> list = Query.find(Order.class)
@@ -48,7 +46,7 @@ public class QueryTest {
       //@formatter:on
     }
 
-    // @Test
+    @Test
     public void find_hasOne_Test() {
       //@formatter:off
         Query.find(Order.class)

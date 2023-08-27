@@ -10,7 +10,7 @@ public class OrderLine {
     @Id(type = IdType.AUTO_INCREMENT)
     private Integer orderLineId;
     @Column
-    private Integer orderId;
+    private Long orderId;
     @Column
     private Integer productId;
     @Column
@@ -30,11 +30,11 @@ public class OrderLine {
         this.orderLineId = id;
     }
 
-    public Integer getOrderId() {
+    public Long getOrderId() {
         return orderId;
     }
 
-    public void setOrderId(Integer orderId) {
+    public void setOrderId(Long orderId) {
         this.orderId = orderId;
     }
 

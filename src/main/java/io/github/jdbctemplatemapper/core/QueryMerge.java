@@ -1,14 +1,13 @@
 package io.github.jdbctemplatemapper.core;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 
 public class QueryMerge<T> {
     private Class<T> type;
@@ -17,7 +16,7 @@ public class QueryMerge<T> {
     private Class<?> relatedClazz;
     private String propertyName; // propertyName on main class that needs to be populated
     private String joinColumn;
-    private String throughJoinTable;
+    //private String throughJoinTable;
 
     private QueryMerge(Class<T> type) {
         this.type = type;
@@ -46,7 +45,7 @@ public class QueryMerge<T> {
 
     public QueryMerge<T> throughJoinTable(String tableName) {
         this.relationshipType = RelationshipType.HAS_MANY_THROUGH;
-        this.throughJoinTable = tableName;
+        //this.throughJoinTable = tableName;
         return this;
     }
 
@@ -55,15 +54,15 @@ public class QueryMerge<T> {
         return this;
     }
 
-    public void execute(JdbcTemplateMapper jdbcTemplateMapper, List<?> list) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public void execute(JdbcTemplateMapper jdbcTemplateMapper, List<T> list) {
         JdbcTemplateMapper jtm = jdbcTemplateMapper;
 
         MappingHelper mappingHelper = jtm.getMappingHelper();
         mappingHelper.getTableMapping(type);
-        
-        TableMapping relatedClazzTableMapping = mappingHelper.getTableMapping(relatedClazz);
 
-        Set params = new HashSet<>();        
+        TableMapping relatedClazzTableMapping = mappingHelper.getTableMapping(relatedClazz);
+        Set params = new HashSet<>();
         // TONY validate
         String joinPropertyName = relatedClazzTableMapping.getProperyName(joinColumn);
 
@@ -72,36 +71,54 @@ public class QueryMerge<T> {
             params.add(bw.getPropertyValue(joinPropertyName));
         }
 
-        String sql = "SELECT " + jtm.getColumnsSql(relatedClazz) + " FROM "
-                + mappingHelper.fullyQualifiedTableName(relatedClazzTableMapping.getTableName()) + " WHERE "
-                + joinColumn + " IN (:propertyValues)";
-
-        RowMapper<?> mapper = BeanPropertyRowMapper.newInstance(relatedClazz);
-
-        List<?> relatedList = jtm.getNamedParameterJdbcTemplate().query(sql,
-                new MapSqlParameterSource("propertyValues", params), mapper);
-        
+        List relatedList = jtm.findByProperty(relatedClazz, joinPropertyName, params);
         String relatedPropertyIdName = relatedClazzTableMapping.getIdPropertyName();
-             
+
         // TONY handle hasMany because relatedObj return could be a list.
         for (Object obj : list) {
             BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
-            Object joinPropertyValue = bw.getPropertyValue(joinPropertyName);
-            Object relatedObj = getRelatedObject(relatedList, relatedPropertyIdName, joinPropertyValue);
-            bw.setPropertyValue(propertyName, relatedObj);
-            //bw.setPropertyValue(propertyName,  );
+            if (relationshipType == RelationshipType.HAS_ONE) {
+                // Object joinPropertyValue = bw.getPropertyValue(joinPropertyName);
+                Object relatedObj = getRelatedObject(relatedList, relatedPropertyIdName,
+                        bw.getPropertyValue(joinPropertyName));
+                bw.setPropertyValue(propertyName, relatedObj);
+            } else if (relationshipType == RelationshipType.HAS_MANY) {
+                // check type of collection in validation
+                List l = getRelatedObjectList(relatedList, joinPropertyName,
+                        bw.getPropertyValue(joinPropertyName));
+                        
+                Collection collection = (Collection) bw.getPropertyValue(propertyName);
+                collection.addAll(l);
+            }
         }
     }
-    
-    // TONY: should handle hasMany so return should be List
+
     private Object getRelatedObject(List<?> relatedList, String idName, Object idValue) {
-        for(Object obj : relatedList) {
-        BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
-        // TONY handle null
-        if(bw.getPropertyValue(idName).equals(idValue))
-            return obj; 
+        for (Object obj : relatedList) {
+            BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
+            // TONY handle null
+            if (bw.getPropertyValue(idName).equals(idValue)) {
+                return obj;
+            }
         }
         return null;
     }
+
+    
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private List getRelatedObjectList(List<?> relatedList, String joinPropertyName, Object joinPropertyValue) {
+        List list = new ArrayList();
+        for (Object obj : relatedList) {
+            BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);            
+            // TONY handle null
+            if (bw.getPropertyValue(joinPropertyName).equals(joinPropertyValue)) {
+                list.add(obj);
+            }
+        }
+        return list;
+    }
+    
+    
+    // Validation the joinProperty type should match id property type
 
 }
