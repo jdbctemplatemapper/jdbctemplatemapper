@@ -30,7 +30,7 @@ public class QueryMergeTest {
     //@Test
     public void merge_hasOne_Test() {
         //@formatter:off
-        List<Order> orders = Query.find(Order.class)
+        List<Order> orders = Query.type(Order.class)
         .where("orders.status = ?", "IN PROCESS")
         .orderBy("orders.status DESC")
         .hasMany(OrderLine.class)
@@ -57,7 +57,7 @@ public class QueryMergeTest {
     @Test
     public void merge_hasMany_Test() {
         //@formatter:off
-        List<Order> orders = Query.find(Order.class)
+        List<Order> orders = Query.type(Order.class)
         .where("orders.status = ?", "IN PROCESS")
         .orderBy("orders.status DESC")
         .hasOne(Customer.class)

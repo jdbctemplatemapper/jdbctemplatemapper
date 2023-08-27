@@ -28,7 +28,7 @@ public class QueryTest {
     //@Test
     public void find_hasMany_Test() {
       //@formatter:off
-        List<Order> list = Query.find(Order.class)
+        List<Order> list = Query.type(Order.class)
         .where("orders.status = ?", "IN PROCESS")
         .orderBy("orders.status DESC")
         .hasMany(OrderLine.class)
@@ -49,7 +49,7 @@ public class QueryTest {
     @Test
     public void find_hasOne_Test() {
       //@formatter:off
-        Query.find(Order.class)
+        Query.type(Order.class)
         .where("orders.status = ?", "IN PROCESS")
         .orderBy("orders.status DESC")
         .hasOne(Customer.class)
@@ -63,7 +63,7 @@ public class QueryTest {
     // @Test
     public void find_typeOnly_Test() {
       //@formatter:off
-        Query.find(Order.class)
+        Query.type(Order.class)
         .execute(jtm);
         
       //@formatter:on

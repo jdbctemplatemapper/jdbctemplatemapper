@@ -74,7 +74,6 @@ public class QueryMerge<T> {
         List relatedList = jtm.findByProperty(relatedClazz, joinPropertyName, params);
         String relatedPropertyIdName = relatedClazzTableMapping.getIdPropertyName();
 
-        // TONY handle hasMany because relatedObj return could be a list.
         for (Object obj : list) {
             BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
             if (relationshipType == RelationshipType.HAS_ONE) {
@@ -83,7 +82,7 @@ public class QueryMerge<T> {
                         bw.getPropertyValue(joinPropertyName));
                 bw.setPropertyValue(propertyName, relatedObj);
             } else if (relationshipType == RelationshipType.HAS_MANY) {
-                // check type of collection in validation
+                // TONY fix the name
                 List l = getRelatedObjectList(relatedList, joinPropertyName,
                         bw.getPropertyValue(joinPropertyName));
                         
