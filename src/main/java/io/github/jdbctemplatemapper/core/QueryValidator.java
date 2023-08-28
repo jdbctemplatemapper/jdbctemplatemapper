@@ -8,6 +8,7 @@ import java.util.Collection;
 
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
+import org.springframework.util.StringUtils;
 
 import io.github.jdbctemplatemapper.exception.QueryException;
 
@@ -93,34 +94,53 @@ public class QueryValidator {
         TableMapping modelClazzTableMapping = mappingHelper.getTableMapping(modelClazz);
         String modelTableName = modelClazzTableMapping.getTableName();
 
-        String[] splits = MapperUtils.toLowerCase(orderBy).split("\\s+");
-        for (String word : splits) {
-            if (word.contains(".")) {
-                String[] arr = word.split(".");
-                if (arr.length > 2) {
-                    new QueryException(
-                            "Invalid orderBy. column names should be prefixed with table alias which in this case is "
-                                    + modelClazzTableMapping.getTableName());
-                } else {
-                    String tmpTableName = arr[0];
-                    String tmpColumnName = arr[1];
-                    if (!MapperUtils.toLowerCase(modelTableName).equals(tmpTableName)) {
-                        new QueryException(
-                                "Invalid table alias for column. Column should be prefixed by " + modelTableName);
+        validateOrderBy(orderBy, modelClazzTableMapping);
+
+    }
+
+    private static void validateOrderBy(String orderBy, TableMapping modelClazzTableMapping) {
+        if (orderBy != null) {
+            if (MapperUtils.isBlank(orderBy)) {
+                throw new QueryException(
+                        "orderBy() blank string is invalid. Don't invoke orderBy() method if no value");
+            }
+
+            String modelTableName = modelClazzTableMapping.getTableName();
+     
+            String[] clauses = orderBy.split(",");
+            for (String clause : clauses) {
+                String clauseStr = MapperUtils.toLowerCase(clause.trim());
+                String[] splits = clauseStr.split("\\s+");
+                for (String str : splits) {
+                    if (str.contains(".")) {
+                        String[] arr = StringUtils.split(str, ".");
+                        if (arr.length == 2) {
+                            String tmpTableName = arr[0];
+                            String tmpColumnName = arr[1];
+                            if (!MapperUtils.toLowerCase(modelTableName).equals(tmpTableName)) {
+                                throw new QueryException(
+                                        "orderBy() Invalid table alias. Column should be prefixed by "
+                                                + modelTableName);
+                            }
+                            if (modelClazzTableMapping.getPropertyName(tmpColumnName) == null) {
+                                throw new QueryException("orderBy() invalid column name "+ tmpColumnName +" Table " + modelTableName + " for model "
+                                        + modelClazzTableMapping.getTableClass().getSimpleName()
+                                        + " either does not have column " + tmpColumnName + " or is not mapped.");
+                            }
+                        } else {
+                            throw new QueryException(
+                                    "Invalid orderBy() column names should be prefixed with table alias. In this case it should be something like "
+                                            + modelClazzTableMapping.getTableName());
+                        }
+                    } else {
+                        if ("asc".equals(str) || "desc".equals(str)) {
+                            // do nothing
+                        } else {
+                            throw new QueryException(
+                                    "Invalid orderBy() column names should be prefixed with table alias. In this case it should be something like "
+                                            + modelClazzTableMapping.getTableName() + "." + str);
+                        }
                     }
-                    if (modelClazzTableMapping.getPropertyName(tmpColumnName) == null) {
-                        new QueryException("Invalid column name. Table " + modelTableName + " for model "
-                                + modelClazz.getSimpleName() + " either does not have column " + tmpColumnName
-                                + " or is not mapped.");
-                    }
-                }
-            } else {
-                if ("asc".equals(word) || "desc".equals(word)) {
-                    // do nothing
-                } else {
-                    new QueryException(
-                            "Invalid orderBy. column names should be prefixed with table alias which in this case is "
-                                    + modelClazzTableMapping.getTableName());
                 }
             }
         }

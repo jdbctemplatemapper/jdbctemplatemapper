@@ -23,9 +23,8 @@ public class Query<T> {
     private Class<?> relatedClazz;
     private String propertyName; // propertyName on main class that needs to be populated
     private String joinColumn;
-    //private String throughJoinTable;
+    // private String throughJoinTable;
 
-    
     private JdbcTemplateMapper jtm;
     private MappingHelper mappingHelper;
     private TableMapping mainClazzTableMapping;
@@ -73,7 +72,7 @@ public class Query<T> {
 
     public Query<T> throughJoinTable(String tableName) {
         this.relationshipType = RelationshipType.HAS_MANY_THROUGH;
-        //this.throughJoinTable = tableName;
+        // this.throughJoinTable = tableName;
         return this;
     }
 
@@ -84,11 +83,11 @@ public class Query<T> {
 
     public List<T> execute(JdbcTemplateMapper jdbcTemplateMapper) {
         initialize(jdbcTemplateMapper);
-        
-        QueryValidator.validate(jtm, mainClazz,relationshipType, relatedClazz, joinColumn, propertyName);
-        
+
+        QueryValidator.validate(jtm, mainClazz, relationshipType, relatedClazz, joinColumn, propertyName);
+
         QueryValidator.validate(jtm, mainClazz, whereClause, orderBy);
-        
+
         String sql = "SELECT " + mainClazzSelectMapper.getColumnsSql();
 
         if (relatedClazz != null) {
@@ -130,18 +129,20 @@ public class Query<T> {
 
                 while (rs.next()) {
                     Object mainModel = getModel(rs, mainClazzSelectMapper, idToModelMap);
-                    Object relatedModel = getModel(rs, relatedClazzSelectMapper, idToRelatedModelMap);
-                    if (RelationshipType.HAS_ONE == relationshipType) {
-                        BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainModel);
-                        bw.setPropertyValue(propertyName, relatedModel);
-                    }
-                    if (RelationshipType.HAS_MANY == relationshipType) {
-                        BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainModel);
-                        // the property has already been validated so we know it is a
-                        // collection that has been initialized
-                        @SuppressWarnings("rawtypes")
-                        Collection collection = (Collection) bw.getPropertyValue(propertyName);
-                        collection.add(relatedModel);
+                    if (relatedClazz != null) {
+                        Object relatedModel = getModel(rs, relatedClazzSelectMapper, idToRelatedModelMap);
+                        if (RelationshipType.HAS_ONE == relationshipType) {
+                            BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainModel);
+                            bw.setPropertyValue(propertyName, relatedModel);
+                        }
+                        if (RelationshipType.HAS_MANY == relationshipType) {
+                            BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainModel);
+                            // the property has already been validated so we know it is a
+                            // collection that has been initialized
+                            @SuppressWarnings("rawtypes")
+                            Collection collection = (Collection) bw.getPropertyValue(propertyName);
+                            collection.add(relatedModel);
+                        }
                     }
                 }
                 return (List<T>) new ArrayList<>(idToModelMap.values());
@@ -151,8 +152,8 @@ public class Query<T> {
         return jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor, whereParams);
 
     }
-    
-    private void initialize(JdbcTemplateMapper jdbcTemplateMapper) {     
+
+    private void initialize(JdbcTemplateMapper jdbcTemplateMapper) {
         this.jtm = jdbcTemplateMapper;
         mappingHelper = jtm.getMappingHelper();
         mainClazzTableMapping = mappingHelper.getTableMapping(mainClazz);
@@ -164,7 +165,7 @@ public class Query<T> {
                     getRelatedTableAlias(mainClazzTableMapping.getTableName()));
         }
     }
-    
+
     private Object getModel(ResultSet rs, SelectMapper<?> selectMapper, Map<Object, Object> idToModelMap)
             throws SQLException {
         Object id = rs.getObject(selectMapper.getResultSetModelIdColumnLabel());

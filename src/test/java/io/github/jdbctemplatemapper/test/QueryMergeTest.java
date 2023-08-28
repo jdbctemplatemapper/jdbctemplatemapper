@@ -55,7 +55,7 @@ public class QueryMergeTest {
     
     
     @Test
-    public void merge_hasMany_Test() {
+    public void merge_hasMany_success_Test() {
         //@formatter:off
         List<Order> orders = Query.type(Order.class)
         .where("orders.status = ?", "IN PROCESS")
@@ -74,12 +74,6 @@ public class QueryMergeTest {
         .execute(jtm, orders);       
       //@formatter:on
         
-        
-        System.out.println("size:" + orders.size());
-        
-        for(Order o : orders){
-            System.out.println("OrderLine.size: " + o.getOrderLines().size());
-        }
     }
     
 }

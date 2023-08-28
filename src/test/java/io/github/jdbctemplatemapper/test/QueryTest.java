@@ -1,7 +1,10 @@
 package io.github.jdbctemplatemapper.test;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.List;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +14,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
 import io.github.jdbctemplatemapper.core.Query;
+import io.github.jdbctemplatemapper.exception.QueryException;
 import io.github.jdbctemplatemapper.model.Customer;
 import io.github.jdbctemplatemapper.model.Order;
 import io.github.jdbctemplatemapper.model.OrderLine;
@@ -24,9 +28,92 @@ public class QueryTest {
 
     @Autowired
     private JdbcTemplateMapper jtm;
+    
+    
+    @Test
+    public void query_orderBy_multiClauseInvalidColumn_test() {
+      //@formatter:off       
+        Exception exception = Assertions.assertThrows(QueryException.class, () -> {
+        Query.type(Order.class)
+             .where("orders.status = ?", "IN PROCESS")
+             .orderBy("orders.status DeSC, orders.id Asc")
+             .hasMany(OrderLine.class)
+             .joinColumn("order_id")
+             .populateProperty("orderLines")
+             .execute(jtm); 
+        });       
+        //@formatter:on
+        assertTrue(exception.getMessage().contains("orderBy() invalid column name "));
+    }
 
-    //@Test
-    public void find_hasMany_Test() {
+    @Test
+    public void query_orderBy_noTableAlias_test() {
+      //@formatter:off       
+        Exception exception = Assertions.assertThrows(QueryException.class, () -> {
+        Query.type(Order.class)
+             .where("orders.status = ?", "IN PROCESS")
+             .orderBy("status DESC")
+             .hasMany(OrderLine.class)
+             .joinColumn("order_id")
+             .populateProperty("orderLines")
+             .execute(jtm); 
+        });       
+        //@formatter:on
+        assertTrue(
+                exception.getMessage().contains("Invalid orderBy() column names should be prefixed with table alias"));
+    }
+
+   @Test
+    public void query_orderBy_invalidTableAlias_test() {
+    //@formatter:off  
+      Exception exception = Assertions.assertThrows(QueryException.class, () -> {
+        Query.type(Order.class)
+             .where("orders.status = ?", "IN PROCESS")
+             .orderBy(" xyz.status DESC ")
+             .hasMany(OrderLine.class)
+             .joinColumn("order_id")
+             .populateProperty("orderLines")
+             .execute(jtm); 
+      });
+    //@formatter:on  
+      assertTrue(exception.getMessage().contains("orderBy() Invalid table alias"));
+    }
+    
+    @Test
+    public void query_orderBy_invalidBlankValue_test() {
+    //@formatter:off  
+      Exception exception = Assertions.assertThrows(QueryException.class, () -> {
+        Query.type(Order.class)
+             .where("orders.status = ?", "IN PROCESS")
+             .orderBy(" ")
+             .hasMany(OrderLine.class)
+             .joinColumn("order_id")
+             .populateProperty("orderLines")
+             .execute(jtm); 
+      });
+    //@formatter:on  
+      assertTrue(exception.getMessage().contains("orderBy() blank string is invalid"));
+    }
+    
+    @Test
+    public void query_orderBy_invalidColumn_test() {
+    //@formatter:off  
+      Exception exception = Assertions.assertThrows(QueryException.class, () -> {
+        Query.type(Order.class)
+             .where("orders.status = ?", "IN PROCESS")
+             .orderBy(" orders.xyz ")
+             .hasMany(OrderLine.class)
+             .joinColumn("order_id")
+             .populateProperty("orderLines")
+             .execute(jtm); 
+      });
+    //@formatter:on  
+      assertTrue(exception.getMessage().contains("orderBy() invalid column name"));
+    }
+    
+
+    @Test
+    public void find_hasMany_Success_Test() {
       //@formatter:off
         List<Order> list = Query.type(Order.class)
         .where("orders.status = ?", "IN PROCESS")
@@ -60,7 +147,7 @@ public class QueryTest {
       //@formatter:on
     }
 
-    // @Test
+    @Test
     public void find_typeOnly_Test() {
       //@formatter:off
         Query.type(Order.class)
