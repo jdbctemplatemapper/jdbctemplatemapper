@@ -1,9 +1,5 @@
 package io.github.jdbctemplatemapper.core;
 
-import java.beans.PropertyDescriptor;
-import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -16,8 +12,6 @@ import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
-
-import io.github.jdbctemplatemapper.exception.QueryException;
 
 public class Query<T> {
     private Class<T> mainClazz;
@@ -90,7 +84,10 @@ public class Query<T> {
 
     public List<T> execute(JdbcTemplateMapper jdbcTemplateMapper) {
         initialize(jdbcTemplateMapper);
-        validate();
+        
+        QueryValidator.validate(jtm, mainClazz,relationshipType, relatedClazz, joinColumn, propertyName);
+        
+        QueryValidator.validate(jtm, mainClazz, whereClause, orderBy);
         
         String sql = "SELECT " + mainClazzSelectMapper.getColumnsSql();
 
@@ -150,7 +147,7 @@ public class Query<T> {
                 return (List<T>) new ArrayList<>(idToModelMap.values());
             }
         };
-
+        // TONY take care when just the main Object
         return jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor, whereParams);
 
     }
@@ -168,77 +165,6 @@ public class Query<T> {
         }
     }
     
-    private void validate() {
-        if (relatedClazz != null) {     
-            Object mainModel = null;
-            try {
-                mainModel = mainClazz.newInstance();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-
-            BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainModel);
-            if (!bw.isReadableProperty(propertyName)) {
-                throw new QueryException(
-                        "Invalid property name " + propertyName + " for class " + mainClazz.getSimpleName());
-            }
-            
-            if (relationshipType == RelationshipType.HAS_ONE) {
-                PropertyDescriptor pd = bw.getPropertyDescriptor(propertyName);
-                if (! relatedClazz.isAssignableFrom(pd.getPropertyType())) {
-                    throw new QueryException("property type conflict. property "
-                            + mainClazz.getSimpleName() + "." + propertyName
-                            + " is of type " + pd.getPropertyType().getSimpleName()
-                            + " while type for hasOne relationship is "
-                            + relatedClazz.getSimpleName());
-                }
-                
-                if (mainClazzTableMapping.getProperyName(joinColumn) == null) {
-                    throw new QueryException("Invalid join column " + joinColumn
-                            + " table " + mainClazzTableMapping.getTableName() + " for object " + mainClazz.getSimpleName() + " does not have a column " + joinColumn);
-                }
-                
-            }
-            else if(relationshipType == RelationshipType.HAS_MANY) {
-                if (relatedClazzTableMapping.getProperyName(joinColumn) == null) {
-                    throw new QueryException("Invalid join column " + joinColumn
-                            + " . table " + relatedClazzTableMapping.getTableName() + " for object " + relatedClazz.getSimpleName() + " does not have a column " + joinColumn);
-                }
-                
-                PropertyDescriptor pd = bw.getPropertyDescriptor(propertyName);
-                if (!Collection.class.isAssignableFrom(pd.getPropertyType())) {
-                    throw new QueryException("property " + mainClazz.getSimpleName()
-                            + "." + propertyName
-                            + " is not a collection. hasMany() relationship requires it to be a collection");
-                }
-                
-                Class<?> propertyType = getGenericTypeOfCollection(mainModel, propertyName);
-                if (propertyType == null) {
-                    throw new QueryException(
-                            "Collections without generic types are not supported. Collection for property "
-                                    + mainClazz.getSimpleName() + "."
-                                    + propertyName + " does not have a generic type.");
-                }
-                
-                if (!propertyType.isAssignableFrom(relatedClazz)) {
-                    throw new QueryException(
-                            "Collection generic type and hasMany relationship type mismatch. "
-                                    + mainClazz.getSimpleName() + "."
-                                    + propertyName + " has generic type " + propertyType.getSimpleName()
-                                    + " while the hasMany relationship is of type "
-                                    + relatedClazz.getSimpleName());
-                }
-                Object value = bw.getPropertyValue(propertyName);
-                if (value == null) {
-                    throw new QueryException(
-                            "Query only works with initialized collections. Collection property "
-                                    + mainClazz.getSimpleName() + "."
-                                    + propertyName + " is not initialized");
-                }
-            }
-        }
-    }
-
     private Object getModel(ResultSet rs, SelectMapper<?> selectMapper, Map<Object, Object> idToModelMap)
             throws SQLException {
         Object id = rs.getObject(selectMapper.getResultSetModelIdColumnLabel());
@@ -248,20 +174,6 @@ public class Query<T> {
             idToModelMap.put(id, model);
         }
         return model;
-    }
-
-    private Class<?> getGenericTypeOfCollection(Object mainObj, String propertyName) {
-        try {
-            Field field = mainObj.getClass().getDeclaredField(propertyName);
-            ParameterizedType pt = (ParameterizedType) field.getGenericType();
-            Type[] genericType = pt.getActualTypeArguments();
-            if (genericType != null && genericType.length > 0) {
-                return Class.forName(genericType[0].getTypeName());
-            }
-        } catch (Exception e) {
-            // do nothing
-        }
-        return null;
     }
 
     private String getRelatedTableAlias(String tableName) {

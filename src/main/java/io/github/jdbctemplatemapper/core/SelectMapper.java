@@ -123,7 +123,7 @@ public class SelectMapper<T> {
                     columnLabel = MapperUtils.toLowerCase(columnLabel);
                     if (columnLabel.startsWith(colAliasPrefix)) {
                         String propertyName = tableMapping
-                                .getProperyName(columnLabel.substring(colAliasPrefix.length()));
+                                .getPropertyName(columnLabel.substring(colAliasPrefix.length()));
                         if (propertyName != null) {
                             bw.setPropertyValue(propertyName,
                                     JdbcUtils.getResultSetValue(rs, i, tableMapping.getPropertyType(propertyName)));

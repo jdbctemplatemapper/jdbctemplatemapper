@@ -10,16 +10,21 @@ import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
 
 public class QueryMerge<T> {
-    private Class<T> type;
+    private Class<T> mainClazz;
 
     private RelationshipType relationshipType;
     private Class<?> relatedClazz;
     private String propertyName; // propertyName on main class that needs to be populated
     private String joinColumn;
-    //private String throughJoinTable;
+    // private String throughJoinTable;
+
+    private JdbcTemplateMapper jtm;
+    private MappingHelper mappingHelper;
+   // private TableMapping mainClazzTableMapping;
+    private TableMapping relatedClazzTableMapping = null;
 
     private QueryMerge(Class<T> type) {
-        this.type = type;
+        this.mainClazz = type;
     }
 
     public static <T> QueryMerge<T> type(Class<T> type) {
@@ -45,7 +50,7 @@ public class QueryMerge<T> {
 
     public QueryMerge<T> throughJoinTable(String tableName) {
         this.relationshipType = RelationshipType.HAS_MANY_THROUGH;
-        //this.throughJoinTable = tableName;
+        // this.throughJoinTable = tableName;
         return this;
     }
 
@@ -56,16 +61,11 @@ public class QueryMerge<T> {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     public void execute(JdbcTemplateMapper jdbcTemplateMapper, List<T> list) {
-        JdbcTemplateMapper jtm = jdbcTemplateMapper;
-
-        MappingHelper mappingHelper = jtm.getMappingHelper();
-        mappingHelper.getTableMapping(type);
-
-        TableMapping relatedClazzTableMapping = mappingHelper.getTableMapping(relatedClazz);
+        initialize(jdbcTemplateMapper);
+        QueryValidator.validate(jtm, mainClazz,relationshipType, relatedClazz, joinColumn, propertyName);
+        
+        String joinPropertyName = relatedClazzTableMapping.getPropertyName(joinColumn);
         Set params = new HashSet<>();
-        // TONY validate
-        String joinPropertyName = relatedClazzTableMapping.getProperyName(joinColumn);
-
         for (Object obj : list) {
             BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
             params.add(bw.getPropertyValue(joinPropertyName));
@@ -77,7 +77,6 @@ public class QueryMerge<T> {
         for (Object obj : list) {
             BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
             if (relationshipType == RelationshipType.HAS_ONE) {
-                // Object joinPropertyValue = bw.getPropertyValue(joinPropertyName);
                 Object relatedObj = getRelatedObject(relatedList, relatedPropertyIdName,
                         bw.getPropertyValue(joinPropertyName));
                 bw.setPropertyValue(propertyName, relatedObj);
@@ -92,6 +91,13 @@ public class QueryMerge<T> {
         }
     }
 
+    private void initialize(JdbcTemplateMapper jdbcTemplateMapper) {
+        jtm = jdbcTemplateMapper;
+        mappingHelper = jtm.getMappingHelper();
+        //mainClazzTableMapping = mappingHelper.getTableMapping(mainClazz);
+        relatedClazzTableMapping = mappingHelper.getTableMapping(relatedClazz);
+    }
+
     private Object getRelatedObject(List<?> relatedList, String idName, Object idValue) {
         for (Object obj : relatedList) {
             BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
@@ -103,12 +109,11 @@ public class QueryMerge<T> {
         return null;
     }
 
-    
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private List getRelatedObjectList(List<?> relatedList, String joinPropertyName, Object joinPropertyValue) {
         List list = new ArrayList();
         for (Object obj : relatedList) {
-            BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);            
+            BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
             // TONY handle null
             if (bw.getPropertyValue(joinPropertyName).equals(joinPropertyValue)) {
                 list.add(obj);
@@ -116,8 +121,7 @@ public class QueryMerge<T> {
         }
         return list;
     }
-    
-    
+
     // Validation the joinProperty type should match id property type
 
 }

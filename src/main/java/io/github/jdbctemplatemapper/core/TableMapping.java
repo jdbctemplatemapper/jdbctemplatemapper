@@ -69,7 +69,7 @@ class TableMapping {
         return propMapping == null ? null : propMapping.getColumnName();
     }
 
-    public String getProperyName(String columnName) {
+    public String getPropertyName(String columnName) {
         PropertyMapping propMapping = columnNameMap.get(columnName);
         return propMapping == null ? null : propMapping.getPropertyName();
     }
