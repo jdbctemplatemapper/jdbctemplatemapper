@@ -87,4 +87,30 @@ public class QueryOrderByTest {
     //@formatter:on  
         assertTrue(exception.getMessage().contains("orderBy() blank string is invalid"));
     }
+    
+    @Test
+    public void orderBy_Success_Test() {
+        //@formatter:off
+        Query.type(Order.class)
+        .orderBy("orders.status")
+        .execute(jtm);
+        
+         Query.type(Order.class)
+          .orderBy("orders.status DESC")
+          .execute(jtm);
+          
+          Query.type(Order.class)
+                .orderBy(" orders.status ASC ")
+                .execute(jtm);
+
+          
+          Query.type(Order.class)
+          .orderBy(" orders.STATUS ASC , orders.order_id Desc")
+          .execute(jtm);
+            
+           //@formatter:on
+      }
+    
+    
+    
 }
