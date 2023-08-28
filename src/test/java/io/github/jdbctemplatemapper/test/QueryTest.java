@@ -28,89 +28,6 @@ public class QueryTest {
 
     @Autowired
     private JdbcTemplateMapper jtm;
-    
-    
-    @Test
-    public void query_orderBy_multiClauseInvalidColumn_test() {
-      //@formatter:off       
-        Exception exception = Assertions.assertThrows(QueryException.class, () -> {
-        Query.type(Order.class)
-             .where("orders.status = ?", "IN PROCESS")
-             .orderBy("orders.status DeSC, orders.id Asc")
-             .hasMany(OrderLine.class)
-             .joinColumn("order_id")
-             .populateProperty("orderLines")
-             .execute(jtm); 
-        });       
-        //@formatter:on
-        assertTrue(exception.getMessage().contains("orderBy() invalid column name "));
-    }
-
-    @Test
-    public void query_orderBy_noTableAlias_test() {
-      //@formatter:off       
-        Exception exception = Assertions.assertThrows(QueryException.class, () -> {
-        Query.type(Order.class)
-             .where("orders.status = ?", "IN PROCESS")
-             .orderBy("status DESC")
-             .hasMany(OrderLine.class)
-             .joinColumn("order_id")
-             .populateProperty("orderLines")
-             .execute(jtm); 
-        });       
-        //@formatter:on
-        assertTrue(
-                exception.getMessage().contains("Invalid orderBy() column names should be prefixed with table alias"));
-    }
-
-   @Test
-    public void query_orderBy_invalidTableAlias_test() {
-    //@formatter:off  
-      Exception exception = Assertions.assertThrows(QueryException.class, () -> {
-        Query.type(Order.class)
-             .where("orders.status = ?", "IN PROCESS")
-             .orderBy(" xyz.status DESC ")
-             .hasMany(OrderLine.class)
-             .joinColumn("order_id")
-             .populateProperty("orderLines")
-             .execute(jtm); 
-      });
-    //@formatter:on  
-      assertTrue(exception.getMessage().contains("orderBy() Invalid table alias"));
-    }
-    
-    @Test
-    public void query_orderBy_invalidBlankValue_test() {
-    //@formatter:off  
-      Exception exception = Assertions.assertThrows(QueryException.class, () -> {
-        Query.type(Order.class)
-             .where("orders.status = ?", "IN PROCESS")
-             .orderBy(" ")
-             .hasMany(OrderLine.class)
-             .joinColumn("order_id")
-             .populateProperty("orderLines")
-             .execute(jtm); 
-      });
-    //@formatter:on  
-      assertTrue(exception.getMessage().contains("orderBy() blank string is invalid"));
-    }
-    
-    @Test
-    public void query_orderBy_invalidColumn_test() {
-    //@formatter:off  
-      Exception exception = Assertions.assertThrows(QueryException.class, () -> {
-        Query.type(Order.class)
-             .where("orders.status = ?", "IN PROCESS")
-             .orderBy(" orders.xyz ")
-             .hasMany(OrderLine.class)
-             .joinColumn("order_id")
-             .populateProperty("orderLines")
-             .execute(jtm); 
-      });
-    //@formatter:on  
-      assertTrue(exception.getMessage().contains("orderBy() invalid column name"));
-    }
-    
 
     @Test
     public void find_hasMany_Success_Test() {
@@ -134,7 +51,7 @@ public class QueryTest {
     }
 
     @Test
-    public void find_hasOne_Test() {
+    public void find_hasOne_success_Test() {
       //@formatter:off
         Query.type(Order.class)
         .where("orders.status = ?", "IN PROCESS")

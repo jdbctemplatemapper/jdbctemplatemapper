@@ -86,7 +86,7 @@ public class Query<T> {
 
         QueryValidator.validate(jtm, mainClazz, relationshipType, relatedClazz, joinColumn, propertyName);
 
-        QueryValidator.validate(jtm, mainClazz, whereClause, orderBy);
+        QueryValidator.validate(jtm, mainClazz, orderBy);
 
         String sql = "SELECT " + mainClazzSelectMapper.getColumnsSql();
 

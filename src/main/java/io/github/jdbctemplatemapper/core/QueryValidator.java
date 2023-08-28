@@ -89,10 +89,10 @@ public class QueryValidator {
         }
     }
 
-    static void validate(JdbcTemplateMapper jtm, Class<?> modelClazz, String whereClause, String orderBy) {
+    static void validate(JdbcTemplateMapper jtm, Class<?> modelClazz, String orderBy) {
         MappingHelper mappingHelper = jtm.getMappingHelper();
         TableMapping modelClazzTableMapping = mappingHelper.getTableMapping(modelClazz);
-        String modelTableName = modelClazzTableMapping.getTableName();
+        //String modelTableName = modelClazzTableMapping.getTableName();
 
         validateOrderBy(orderBy, modelClazzTableMapping);
 
@@ -130,15 +130,14 @@ public class QueryValidator {
                         } else {
                             throw new QueryException(
                                     "Invalid orderBy() column names should be prefixed with table alias. In this case it should be something like "
-                                            + modelClazzTableMapping.getTableName());
+                                            + modelClazzTableMapping.getTableName() + "." + str);
                         }
                     } else {
                         if ("asc".equals(str) || "desc".equals(str)) {
                             // do nothing
                         } else {
                             throw new QueryException(
-                                    "Invalid orderBy() column names should be prefixed with table alias. In this case it should be something like "
-                                            + modelClazzTableMapping.getTableName() + "." + str);
+                                    "Invalid orderBy(). Note that the column name should be prefixed by table alias.");
                         }
                     }
                 }
