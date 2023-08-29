@@ -100,12 +100,12 @@ public class QueryOrderByTest {
           .execute(jtm);
           
           Query.type(Order.class)
-                .orderBy(" orders.status ASC ")
+                .orderBy("orders.status  ASC ")
                 .execute(jtm);
 
           
           Query.type(Order.class)
-          .orderBy(" orders.STATUS ASC , orders.order_id Desc")
+          .orderBy("orders.STATUS ASC  ,  orders.order_id   Desc")
           .execute(jtm);
             
            //@formatter:on

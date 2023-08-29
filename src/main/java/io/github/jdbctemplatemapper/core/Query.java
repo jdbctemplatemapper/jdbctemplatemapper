@@ -148,8 +148,13 @@ public class Query<T> {
                 return (List<T>) new ArrayList<>(idToModelMap.values());
             }
         };
-        // TONY take care when just the main Object
-        return jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor, whereParams);
+        
+        if(whereParams == null) {
+            return jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor);
+        }
+        else {
+           return jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor, whereParams);
+        }
 
     }
 
