@@ -36,7 +36,7 @@ public class QueryMergeTest {
     private JdbcTemplateMapper jtm;
     
     @Test
-    public void hasManyJoinTypeMismatch_test() {
+    public void hasMany_joinTypeMismatch_test() {
         //@formatter:off
         Exception exception = Assertions.assertThrows(QueryException.class, () -> {
         Query.type(Order5.class)
@@ -51,7 +51,7 @@ public class QueryMergeTest {
     }
     
     @Test
-    public void hasOneJoinTypeMismatch_test() {
+    public void hasOne_joinTypeMismatch_test() {
         //@formatter:off
         Exception exception = Assertions.assertThrows(QueryException.class, () -> {
         Query.type(Order6.class)

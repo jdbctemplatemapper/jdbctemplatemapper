@@ -23,7 +23,7 @@ public class Query<T> {
     private Class<?> relatedClazz;
     private String propertyName; // propertyName on main class that needs to be populated
     private String joinColumn;
-    // private String throughJoinTable;
+    private String throughJoinTable;
 
     private JdbcTemplateMapper jtm;
     private MappingHelper mappingHelper;
@@ -32,6 +32,9 @@ public class Query<T> {
 
     private TableMapping relatedClazzTableMapping = null;
     private SelectMapper<?> relatedClazzSelectMapper = null;
+    
+    String mainClazzJoinColumn;
+    String relatedClazzJoinColumn;
 
     private Query(Class<T> type) {
         this.mainClazz = type;
@@ -69,10 +72,16 @@ public class Query<T> {
         this.joinColumn = MapperUtils.toLowerCase(joinColumn.trim());
         return this;
     }
+    
+    public Query<T> throughJoinColumns(String mainClassJoinColumn, String relatedClassJoinColumn) {
+        this.mainClazzJoinColumn = mainClassJoinColumn;
+        this.relatedClazzJoinColumn = relatedClassJoinColumn;
+        return this;
+    }
 
     public Query<T> throughJoinTable(String tableName) {
         this.relationshipType = RelationshipType.HAS_MANY_THROUGH;
-        // this.throughJoinTable = tableName;
+        this.throughJoinTable = tableName;
         return this;
     }
 
@@ -86,29 +95,40 @@ public class Query<T> {
 
         QueryValidator.validate(jtm, mainClazz, relationshipType, relatedClazz, joinColumn, propertyName);
 
-        QueryValidator.validate(jtm, mainClazz, orderBy);
+        QueryValidator.validateOrderBy(jtm, orderBy, mainClazz, relatedClazz, null);
 
         String sql = "SELECT " + mainClazzSelectMapper.getColumnsSql();
+        
+        String mainClazzTableName = mainClazzTableMapping.getTableName();
 
         if (relatedClazz != null) {
             sql += "," + relatedClazzSelectMapper.getColumnsSql();
         }
-        sql += " FROM " + mappingHelper.fullyQualifiedTableName(mainClazzTableMapping.getTableName()) + " "
-                + mainClazzTableMapping.getTableName();
+        sql += " FROM " + mappingHelper.fullyQualifiedTableName(mainClazzTableName);
 
         if (relatedClazz != null) {
-            String relatedTableAlias = getRelatedTableAlias(mainClazzTableMapping.getTableName());
-            if (relationshipType == RelationshipType.HAS_MANY) {
-          //@formatter:off
-            sql += " LEFT JOIN " 
-                + mappingHelper.fullyQualifiedTableName(relatedClazzTableMapping.getTableName()) + " " + relatedTableAlias 
-                + " on " + mainClazzTableMapping.getTableName() + "." + mainClazzTableMapping.getIdColumnName() + " = " + relatedTableAlias +"." + joinColumn;
-          //@formatter:on
-            } else if (relationshipType == RelationshipType.HAS_ONE) {
+            String relatedClazzTableName = relatedClazzTableMapping.getTableName();
+            if (relationshipType == RelationshipType.HAS_ONE) {
                 //@formatter:off
                 sql += " LEFT JOIN " 
-                    + mappingHelper.fullyQualifiedTableName(relatedClazzTableMapping.getTableName()) + " " + relatedTableAlias 
-                    + " on " + mainClazzTableMapping.getTableName() + "."  + joinColumn + " = " + relatedTableAlias + "." + relatedClazzTableMapping.getIdColumnName();
+                    + mappingHelper.fullyQualifiedTableName(relatedClazzTableMapping.getTableName()) 
+                    + " on " + mainClazzTableName + "."  + joinColumn + " = " + relatedClazzTableName + "." + relatedClazzTableMapping.getIdColumnName();
+              //@formatter:on
+            } else if (relationshipType == RelationshipType.HAS_MANY) {
+          //@formatter:off
+            sql += " LEFT JOIN " 
+                + mappingHelper.fullyQualifiedTableName(relatedClazzTableName) 
+                + " on " + mainClazzTableName + "." + mainClazzTableMapping.getIdColumnName() + " = " + relatedClazzTableName +"." + joinColumn;
+          //@formatter:on
+            } else if (relationshipType == RelationshipType.HAS_MANY_THROUGH) {
+                //@formatter:off
+                sql += " JOIN " 
+                    + mappingHelper.fullyQualifiedTableName(throughJoinTable) 
+                    + " on " + mainClazzTableName + "." + mainClazzTableMapping.getIdColumnName() + " = " + throughJoinTable +"." + mainClazzJoinColumn
+                + " JOIN "
+                + mappingHelper.fullyQualifiedTableName(relatedClazzTableName)
+                + " on " + throughJoinTable +"." + relatedClazzJoinColumn + " = " + relatedClazzTableName + "." + relatedClazzTableMapping.getIdColumnName();
+
               //@formatter:on
             }
         }
@@ -143,17 +163,25 @@ public class Query<T> {
                             Collection collection = (Collection) bw.getPropertyValue(propertyName);
                             collection.add(relatedModel);
                         }
+
+                        if (RelationshipType.HAS_MANY_THROUGH == relationshipType) {
+                            BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainModel);
+                            // the property has already been validated so we know it is a
+                            // collection that has been initialized
+                            @SuppressWarnings("rawtypes")
+                            Collection collection = (Collection) bw.getPropertyValue(propertyName);
+                            collection.add(relatedModel);
+                        }
                     }
                 }
                 return (List<T>) new ArrayList<>(idToModelMap.values());
             }
         };
-        
-        if(whereParams == null) {
+
+        if (whereParams == null) {
             return jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor);
-        }
-        else {
-           return jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor, whereParams);
+        } else {
+            return jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor, whereParams);
         }
 
     }
@@ -166,8 +194,7 @@ public class Query<T> {
         mainClazzSelectMapper = jtm.getSelectMapper(mainClazz, mainClazzTableMapping.getTableName());
         if (relatedClazz != null) {
             relatedClazzTableMapping = mappingHelper.getTableMapping(relatedClazz);
-            relatedClazzSelectMapper = jtm.getSelectMapper(relatedClazz,
-                    getRelatedTableAlias(mainClazzTableMapping.getTableName()));
+            relatedClazzSelectMapper = jtm.getSelectMapper(relatedClazz, relatedClazzTableMapping.getTableName());
         }
     }
 
@@ -180,15 +207,6 @@ public class Query<T> {
             idToModelMap.put(id, model);
         }
         return model;
-    }
-
-    private String getRelatedTableAlias(String tableName) {
-        String tableAlias = "t1";
-        // just making sure related table alias does not conflict with main table name.
-        if (tableAlias.equals(tableName)) {
-            tableAlias = "t2";
-        }
-        return tableAlias;
     }
 
 }
