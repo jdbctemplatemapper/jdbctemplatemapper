@@ -121,7 +121,9 @@ public class Query<T> implements IQueryType<T>, IQueryWhere<T>, IQueryOrderBy<T>
 
         if (relatedClazz != null) {
             String relatedClazzTableName = relatedClazzTableMapping.getTableName();
+          //TONY Fullyqualified check if user entered fullyqualified
             if (relationshipType == RelationshipType.HAS_ONE) {
+                
                 //@formatter:off
                 sql += " LEFT JOIN " 
                     + mappingHelper.fullyQualifiedTableName(relatedClazzTableMapping.getTableName()) 
@@ -154,7 +156,7 @@ public class Query<T> implements IQueryType<T>, IQueryWhere<T>, IQueryOrderBy<T>
             sql = sql + " ORDER BY " + orderBy;
         }
 
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings({"unchecked", "rawtypes"})
         ResultSetExtractor<List<T>> rsExtractor = new ResultSetExtractor<List<T>>() {
             public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
                 Map<Object, Object> idToModelMap = new HashMap<>();
@@ -168,20 +170,10 @@ public class Query<T> implements IQueryType<T>, IQueryWhere<T>, IQueryOrderBy<T>
                             BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainModel);
                             bw.setPropertyValue(propertyName, relatedModel);
                         }
-                        if (RelationshipType.HAS_MANY == relationshipType) {
+                        else if (RelationshipType.HAS_MANY == relationshipType || RelationshipType.HAS_MANY_THROUGH == relationshipType) {
                             BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainModel);
                             // the property has already been validated so we know it is a
                             // collection that has been initialized
-                            @SuppressWarnings("rawtypes")
-                            Collection collection = (Collection) bw.getPropertyValue(propertyName);
-                            collection.add(relatedModel);
-                        }
-
-                        if (RelationshipType.HAS_MANY_THROUGH == relationshipType) {
-                            BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainModel);
-                            // the property has already been validated so we know it is a
-                            // collection that has been initialized
-                            @SuppressWarnings("rawtypes")
                             Collection collection = (Collection) bw.getPropertyValue(propertyName);
                             collection.add(relatedModel);
                         }

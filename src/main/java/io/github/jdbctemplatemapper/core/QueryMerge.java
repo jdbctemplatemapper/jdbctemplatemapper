@@ -14,12 +14,10 @@ import io.github.jdbctemplatemapper.querymerge.IQueryMergeHasMany;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeHasOne;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeJoinColumn;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergePopulateProperty;
-import io.github.jdbctemplatemapper.querymerge.IQueryMergeThroughJoinColumns;
-import io.github.jdbctemplatemapper.querymerge.IQueryMergeThroughJoinTable;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeType;
 
 public class QueryMerge<T> implements IQueryMergeType<T>, IQueryMergeHasMany<T>, IQueryMergeHasOne<T>,
-IQueryMergeJoinColumn<T>, IQueryMergeThroughJoinTable<T>, IQueryMergeThroughJoinColumns<T>, IQueryMergePopulateProperty<T>,
+IQueryMergeJoinColumn<T>, IQueryMergePopulateProperty<T>,
 IQueryMergeExecute<T> {
 
     private Class<T> mainClazz;
@@ -35,10 +33,6 @@ IQueryMergeExecute<T> {
    // private TableMapping mainClazzTableMapping;
     private TableMapping relatedClazzTableMapping = null;
     
-    private String mainClazzJoinColumn;
-    private String relatedClazzJoinColumn;
-
-
     private QueryMerge(Class<T> type) {
         this.mainClazz = type;
     }
@@ -63,27 +57,12 @@ IQueryMergeExecute<T> {
         this.joinColumn = joinColumn;
         return this;
     }
-
-    public IQueryMergeThroughJoinTable<T> throughJoinTable(String tableName) {
-        this.relationshipType = RelationshipType.HAS_MANY_THROUGH;
-        // this.throughJoinTable = tableName;
-        return this;
-    }
-
-    public IQueryMergeThroughJoinColumns<T> throughJoinColumns(String mainClassJoinColumn, String relatedClassJoinColumn) {
-        this.mainClazzJoinColumn = mainClassJoinColumn;
-        this.relatedClazzJoinColumn = relatedClassJoinColumn;
-        return this;
-    }
     
     public IQueryMergePopulateProperty<T> populateProperty(String propertyName) {
         this.propertyName = propertyName;
         return this;
     }
     
-
-    
-
     @SuppressWarnings({"unchecked", "rawtypes"})
     public void execute(JdbcTemplateMapper jdbcTemplateMapper, List<T> list) {
         initialize(jdbcTemplateMapper);
@@ -105,13 +84,12 @@ IQueryMergeExecute<T> {
                 Object relatedObj = getRelatedObject(relatedList, relatedPropertyIdName,
                         bw.getPropertyValue(joinPropertyName));
                 bw.setPropertyValue(propertyName, relatedObj);
-            } else if (relationshipType == RelationshipType.HAS_MANY) {
-                // TONY fix the name
-                List l = getRelatedObjectList(relatedList, joinPropertyName,
+            } else if (relationshipType == RelationshipType.HAS_MANY|| relationshipType == RelationshipType.HAS_MANY_THROUGH) {
+                List matchedList = getRelatedObjectList(relatedList, joinPropertyName,
                         bw.getPropertyValue(joinPropertyName));
                         
                 Collection collection = (Collection) bw.getPropertyValue(propertyName);
-                collection.addAll(l);
+                collection.addAll(matchedList);
             }
         }
     }
@@ -146,7 +124,5 @@ IQueryMergeExecute<T> {
         }
         return list;
     }
-
-    // Validation the joinProperty type should match id property type
 
 }
