@@ -46,7 +46,7 @@ public class QueryValidator {
                 }
 
                 if (MapperUtils.isBlank(joinColumn)) {
-                    throw new QueryException("joinColumn cannot be null");
+                    throw new QueryException("joinColumn cannot be blank");
                 }
                 if (joinColumn.contains(".")) {
                     throw new QueryException("Invalid joinColumn. It should have no table prefix");
@@ -76,7 +76,7 @@ public class QueryValidator {
                 validatePopulatePropertyForCollection(propertyName, mainModel, mainClazz, relatedClazz);
 
                 if (MapperUtils.isBlank(joinColumn)) {
-                    throw new QueryException("joinColumn cannot be null");
+                    throw new QueryException("joinColumn cannot be blank");
                 }
                 if (joinColumn.contains(".")) {
                     throw new QueryException("Invalid joinColumn. It should have no table prefix");
@@ -110,22 +110,22 @@ public class QueryValidator {
 
                 }
                 if (throughJoinTable.contains(".")) {
-                    throw new QueryException("Invalid throughJoinTable. It should have no prefixes");
+                    throw new QueryException("Invalid throughJoinTable " + throughJoinTable +" .It should have no prefixes");
                 }
 
                 if (MapperUtils.isBlank(throughMainClazzJoinColumn)) {
-                    throw new QueryException("mainClassJoinColumn cannot be blank");
+                    throw new QueryException("Invalid throughJoinColumns. Cannot be blank");
 
                 }
                 if (throughMainClazzJoinColumn.contains(".")) {
-                    throw new QueryException("Invalid mainClazzJoinColumn. It should have no prefixes");
+                    throw new QueryException("Invalid throughJoinColumns " + throughMainClazzJoinColumn + " .It should have no prefixes");
                 }
 
                 if (MapperUtils.isBlank(throughRelatedClazzJoinColumn)) {
-                    throw new QueryException("relatedClassJoinColumn cannot be blank");
+                    throw new QueryException("Invalid throughJoinColumns. Cannot be blank");
                 }
                 if (throughRelatedClazzJoinColumn.contains(".")) {
-                    throw new QueryException("relatedClassJoinColumn cannot be blank");
+                    throw new QueryException("Invalid throughJoinColumns " + throughRelatedClazzJoinColumn + " .It should have no prefixes");
                 }
             }
         }

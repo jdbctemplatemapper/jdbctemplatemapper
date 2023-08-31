@@ -81,7 +81,6 @@ public class Query<T> implements IQueryType<T>, IQueryWhere<T>, IQueryOrderBy<T>
     }
 
     public IQueryJoinColumn<T> joinColumn(String joinColumn) {
-        // TONY check for null or empty
         this.joinColumn = MapperUtils.toLowerCase(joinColumn.trim());
         return this;
     }
@@ -122,38 +121,31 @@ public class Query<T> implements IQueryType<T>, IQueryWhere<T>, IQueryOrderBy<T>
 
         if (relatedClazz != null) {
             String relatedClazzTableName = relatedClazzTableMapping.getTableName();
-
             if (relationshipType == RelationshipType.HAS_ONE) {
-
-                //@formatter:off
-                sql += " LEFT JOIN " 
-                    + mappingHelper.fullyQualifiedTableName(relatedClazzTableMapping.getTableName()) 
-                    + " on " + mainClazzTableName + "."  + joinColumn + " = " + relatedClazzTableName + "." + relatedClazzTableMapping.getIdColumnName();
-              //@formatter:on
+                // joinColumn is on main table
+                sql += " LEFT JOIN " + mappingHelper.fullyQualifiedTableName(relatedClazzTableMapping.getTableName())
+                        + " on " + mainClazzTableName + "." + joinColumn + " = " + relatedClazzTableName + "."
+                        + relatedClazzTableMapping.getIdColumnName();
             } else if (relationshipType == RelationshipType.HAS_MANY) {
-              //@formatter:off
-              sql += " LEFT JOIN " 
-                + mappingHelper.fullyQualifiedTableName(relatedClazzTableName) 
-                + " on " + mainClazzTableName + "." + mainClazzTableMapping.getIdColumnName() + " = " + relatedClazzTableName +"." + joinColumn;
-          //@formatter:on
+                // joinColumn is on related table
+                sql += " LEFT JOIN " + mappingHelper.fullyQualifiedTableName(relatedClazzTableName) + " on "
+                        + mainClazzTableName + "." + mainClazzTableMapping.getIdColumnName() + " = "
+                        + relatedClazzTableName + "." + joinColumn;
             } else if (relationshipType == RelationshipType.HAS_MANY_THROUGH) {
-                //@formatter:off
-                sql += " JOIN " 
-                    + mappingHelper.fullyQualifiedTableName(throughJoinTable) 
-                    + " on " + mainClazzTableName + "." + mainClazzTableMapping.getIdColumnName() + " = " + throughJoinTable +"." + throughMainClazzJoinColumn
-                + " JOIN "
-                + mappingHelper.fullyQualifiedTableName(relatedClazzTableName)
-                + " on " + throughJoinTable +"." + throughRelatedClazzJoinColumn + " = " + relatedClazzTableName + "." + relatedClazzTableMapping.getIdColumnName();
-
-              //@formatter:on
+                sql += " JOIN " + mappingHelper.fullyQualifiedTableName(throughJoinTable) + " on " + mainClazzTableName
+                        + "." + mainClazzTableMapping.getIdColumnName() + " = " + throughJoinTable + "."
+                        + throughMainClazzJoinColumn + " JOIN "
+                        + mappingHelper.fullyQualifiedTableName(relatedClazzTableName) + " on " + throughJoinTable + "."
+                        + throughRelatedClazzJoinColumn + " = " + relatedClazzTableName + "."
+                        + relatedClazzTableMapping.getIdColumnName();
             }
         }
 
-        if (MapperUtils.isNotEmpty(whereClause)) {
+        if (MapperUtils.isNotBlank(whereClause)) {
             sql += " WHERE " + whereClause;
         }
 
-        if (MapperUtils.isNotEmpty(orderBy)) {
+        if (MapperUtils.isNotBlank(orderBy)) {
             sql = sql + " ORDER BY " + orderBy;
         }
 
@@ -162,7 +154,6 @@ public class Query<T> implements IQueryType<T>, IQueryWhere<T>, IQueryOrderBy<T>
             public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
                 Map<Object, Object> idToModelMap = new HashMap<>();
                 Map<Object, Object> idToRelatedModelMap = new HashMap<>();
-
                 while (rs.next()) {
                     Object mainModel = getModel(rs, mainClazzSelectMapper, idToModelMap);
                     if (relatedClazz != null) {

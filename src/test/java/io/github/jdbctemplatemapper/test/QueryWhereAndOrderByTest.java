@@ -20,13 +20,26 @@ import io.github.jdbctemplatemapper.model.OrderLine;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
-public class QueryOrderByTest {
+public class QueryWhereAndOrderByTest {
 
     @Value("${spring.datasource.driver-class-name}")
     private String jdbcDriver;
 
     @Autowired
     private JdbcTemplateMapper jtm;
+    
+    @Test
+    public void query_where_invalidBlank_test() {
+      //@formatter:off  
+        
+       Exception exception = Assertions.assertThrows(QueryException.class, () -> {
+        Query.type(Order.class)
+             .where("")
+             .execute(jtm); 
+        });       
+        //@formatter:on
+        assertTrue(exception.getMessage().contains("where() blank string is invalid"));
+    }
     
     @Test
     public void query_orderBy_invalidWithJustPeriod_test() {

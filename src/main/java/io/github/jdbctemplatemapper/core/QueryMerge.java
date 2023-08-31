@@ -18,18 +18,13 @@ import io.github.jdbctemplatemapper.querymerge.IQueryMergeType;
 
 public class QueryMerge<T> implements IQueryMergeType<T>, IQueryMergeHasMany<T>, IQueryMergeHasOne<T>,
         IQueryMergeJoinColumn<T>, IQueryMergePopulateProperty<T>, IQueryMergeExecute<T> {
-
     private Class<T> mainClazz;
-
     private RelationshipType relationshipType;
     private Class<?> relatedClazz;
     private String propertyName; // propertyName on main class that needs to be populated
     private String joinColumn;
-    // private String throughJoinTable;
-
     private JdbcTemplateMapper jtm;
     private MappingHelper mappingHelper;
-    // private TableMapping mainClazzTableMapping;
     private TableMapping relatedClazzTableMapping = null;
 
     private QueryMerge(Class<T> type) {
@@ -65,7 +60,8 @@ public class QueryMerge<T> implements IQueryMergeType<T>, IQueryMergeHasMany<T>,
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void execute(JdbcTemplateMapper jdbcTemplateMapper, List<T> list) {
         initialize(jdbcTemplateMapper);
-        QueryValidator.validate(jtm, mainClazz, relationshipType, relatedClazz, joinColumn, propertyName, null, null,null);
+        QueryValidator.validate(jtm, mainClazz, relationshipType, relatedClazz, joinColumn, propertyName, null, null,
+                null);
 
         String joinPropertyName = relatedClazzTableMapping.getPropertyName(joinColumn);
         Set params = new HashSet<>();
@@ -96,7 +92,6 @@ public class QueryMerge<T> implements IQueryMergeType<T>, IQueryMergeHasMany<T>,
     private void initialize(JdbcTemplateMapper jdbcTemplateMapper) {
         jtm = jdbcTemplateMapper;
         mappingHelper = jtm.getMappingHelper();
-        // mainClazzTableMapping = mappingHelper.getTableMapping(mainClazz);
         relatedClazzTableMapping = mappingHelper.getTableMapping(relatedClazz);
     }
 
@@ -116,7 +111,6 @@ public class QueryMerge<T> implements IQueryMergeType<T>, IQueryMergeHasMany<T>,
         List list = new ArrayList();
         for (Object obj : relatedList) {
             BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
-            // TONY handle null
             if (bw.getPropertyValue(joinPropertyName).equals(joinPropertyValue)) {
                 list.add(obj);
             }

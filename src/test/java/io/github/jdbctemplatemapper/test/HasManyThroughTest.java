@@ -1,5 +1,8 @@
 package io.github.jdbctemplatemapper.test;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -9,6 +12,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
 import io.github.jdbctemplatemapper.core.Query;
+import io.github.jdbctemplatemapper.exception.QueryException;
 import io.github.jdbctemplatemapper.model.Employee;
 import io.github.jdbctemplatemapper.model.EmployeeSkill;
 import io.github.jdbctemplatemapper.model.Skill;
@@ -68,9 +72,87 @@ public class HasManyThroughTest {
       }
     }
    
-
-    //@Test
-    public void hasManyThrough_test() {
+    @Test
+    public void hasManyThrough_invalidJoinTableBlank_test() {
+        Exception exception = Assertions.assertThrows(QueryException.class, () -> {
+        Query.type(Employee.class)
+        .hasMany(Skill.class)
+        .throughJoinTable("    ")
+        .throughJoinColumns("employee_id", "skill_id")
+        .populateProperty("skills")
+        .execute(jtm);
+        });
+        assertTrue(exception.getMessage().contains("throughJoinTable cannot be blank"));
+    }
+    
+    @Test
+    public void hasManyThrough_invalidJoinTableWithPrefix_test() {
+        Exception exception = Assertions.assertThrows(QueryException.class, () -> {
+        Query.type(Employee.class)
+        .hasMany(Skill.class)
+        .throughJoinTable("jdbctemplatemapper.employee_skill")
+        .throughJoinColumns("employee_id", "skill_id")
+        .populateProperty("skills")
+        .execute(jtm);
+        });
+        assertTrue(exception.getMessage().contains("Invalid throughJoinTable"));
+    }
+    
+    @Test
+    public void hasManyThrough_invalidFirstJoinColumnWithPrefix_test() {
+        Exception exception = Assertions.assertThrows(QueryException.class, () -> {
+        Query.type(Employee.class)
+        .hasMany(Skill.class)
+        .throughJoinTable("employee_skill")
+        .throughJoinColumns("employee_skill.employee_id", "skill_id")
+        .populateProperty("skills")
+        .execute(jtm);
+        });
+        assertTrue(exception.getMessage().contains("Invalid throughJoinColumns"));
+    }
+    
+    @Test
+    public void hasManyThrough_invalidFirstJoinColumnBlank_test() {
+        Exception exception = Assertions.assertThrows(QueryException.class, () -> {
+        Query.type(Employee.class)
+        .hasMany(Skill.class)
+        .throughJoinTable("employee_skill")
+        .throughJoinColumns("   ", "skill_id")
+        .populateProperty("skills")
+        .execute(jtm);
+        });
+        assertTrue(exception.getMessage().contains("Invalid throughJoinColumns. Cannot be blank"));
+    }
+    
+    @Test
+    public void hasManyThrough_invalidSecondJoinColumnWithPrefix_test() {
+        Exception exception = Assertions.assertThrows(QueryException.class, () -> {
+        Query.type(Employee.class)
+        .hasMany(Skill.class)
+        .throughJoinTable("employee_skill")
+        .throughJoinColumns("employee_id", "employee_skill.skill_id")
+        .populateProperty("skills")
+        .execute(jtm);
+        });
+       assertTrue(exception.getMessage().contains("Invalid throughJoinColumns"));
+    }
+    
+    @Test
+    public void hasManyThrough_invalidSecondJoinColumnBlank_test() {
+        Exception exception = Assertions.assertThrows(QueryException.class, () -> {
+        Query.type(Employee.class)
+        .hasMany(Skill.class)
+        .throughJoinTable("employee_skill")
+        .throughJoinColumns("employee_id", "")
+        .populateProperty("skills")
+        .execute(jtm);
+        });
+        assertTrue(exception.getMessage().contains("Invalid throughJoinColumns. Cannot be blank"));
+    }
+    
+    
+    @Test
+    public void hasManyThrough_sucess_test() {
         Query.type(Employee.class)
         .hasMany(Skill.class)
         .throughJoinTable("employee_skill")
@@ -80,7 +162,7 @@ public class HasManyThroughTest {
     }
     
     @Test
-    public void hasManyThrough2_test() {
+    public void hasManyThrough2_success_test() {
         Query.type(Skill.class)
         .hasMany(Employee.class)
         .throughJoinTable("employee_skill")

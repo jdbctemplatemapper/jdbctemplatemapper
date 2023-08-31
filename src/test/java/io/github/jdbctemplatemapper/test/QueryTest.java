@@ -33,8 +33,6 @@ public class QueryTest {
 
     @Autowired
     private JdbcTemplateMapper jtm;
-    
-
 
     @Test
     public void invalidType_test() {
@@ -46,9 +44,9 @@ public class QueryTest {
         //@formatter:on
         assertTrue(exception.getMessage().contains("Could not find table"));
     }
-    
+
     @Test
-    public void hasMany_invalidClass_test() {
+    public void hasMany_invalidHasManyClass_test() {
         //@formatter:off  
         Exception exception = Assertions.assertThrows(AnnotationException.class, () -> {
             Query.type(Order.class)
@@ -60,9 +58,9 @@ public class QueryTest {
         //@formatter:on
         assertTrue(exception.getMessage().contains("does not have the @Table annotation"));
     }
-    
+
     @Test
-    public void hasOne_invalidClass_test() {
+    public void hasOne_invalidHasManyClass2_test() {
         //@formatter:off  
         Exception exception = Assertions.assertThrows(AnnotationException.class, () -> {
             Query.type(Order.class)
@@ -74,7 +72,7 @@ public class QueryTest {
         //@formatter:on
         assertTrue(exception.getMessage().contains("does not have the @Table annotation"));
     }
-    
+
     @Test
     public void hasMany_invalidJoinColumn_test() {
         //@formatter:off  
@@ -88,8 +86,63 @@ public class QueryTest {
         //@formatter:on
         assertTrue(exception.getMessage().contains("Invalid join column"));
     }
-    
-    
+
+    @Test
+    public void hasMany_invalidJoinColumnWithPrefix_test() {
+        //@formatter:off  
+        Exception exception = Assertions.assertThrows(QueryException.class, () -> {
+            Query.type(Order.class)
+                    .hasMany(OrderLine.class)
+                    .joinColumn("order_line.order_id")
+                    .populateProperty("orderLines")
+                    .execute(jtm);      
+       });
+        //@formatter:on
+        assertTrue(exception.getMessage().contains("Invalid joinColumn"));
+    }
+
+    @Test
+    public void hasMany_invalidJoinColumnBlank_test() {
+        //@formatter:off  
+        Exception exception = Assertions.assertThrows(QueryException.class, () -> {
+            Query.type(Order.class)
+                    .hasMany(OrderLine.class)
+                    .joinColumn("     ")
+                    .populateProperty("orderLines")
+                    .execute(jtm);      
+       });
+        //@formatter:on
+        assertTrue(exception.getMessage().contains("joinColumn cannot be blank"));
+    }
+
+    @Test
+    public void hasOne_invalidJoinColumnWithPrefix_test() {
+        //@formatter:off  
+        Exception exception = Assertions.assertThrows(QueryException.class, () -> {
+            Query.type(Order.class)
+                    .hasOne(Customer.class)
+                    .joinColumn("order.customer_id")
+                    .populateProperty("customer")
+                    .execute(jtm);      
+       });
+        //@formatter:on
+        assertTrue(exception.getMessage().contains("Invalid joinColumn"));
+    }
+
+    @Test
+    public void hasOne_invalidJoinColumnBlank_test() {
+        //@formatter:off  
+        Exception exception = Assertions.assertThrows(QueryException.class, () -> {
+            Query.type(Order.class)
+                    .hasOne(Customer.class)
+                    .joinColumn("")
+                    .populateProperty("customer")
+                    .execute(jtm);      
+       });
+        //@formatter:on
+        assertTrue(exception.getMessage().contains("joinColumn cannot be blank"));
+    }
+
     @Test
     public void hasOne_invalidJoinColumn_test() {
         //@formatter:off  
@@ -103,7 +156,6 @@ public class QueryTest {
         //@formatter:on
         assertTrue(exception.getMessage().contains("Invalid join column"));
     }
-    
 
     @Test
     public void hasMany_populatePropertyNotACollection_test() {
@@ -117,8 +169,8 @@ public class QueryTest {
        });
         //@formatter:on
         assertTrue(exception.getMessage().contains("is not a collection"));
-    } 
-    
+    }
+
     @Test
     public void hasMany_populatePropertyCollectionHasNoGenericType_test() {
         //@formatter:off  
@@ -130,9 +182,9 @@ public class QueryTest {
                     .execute(jtm);      
        });
         //@formatter:on
-       assertTrue(exception.getMessage().contains("Collections without generic types are not supported"));
-    } 
-    
+        assertTrue(exception.getMessage().contains("Collections without generic types are not supported"));
+    }
+
     @Test
     public void hasMany_populatePropertyCollectionTypeMismatch_test() {
         //@formatter:off  
@@ -144,10 +196,10 @@ public class QueryTest {
                     .execute(jtm);      
        });
         //@formatter:on
-       assertTrue(exception.getMessage().contains("Collection generic type and hasMany relationship type mismatch"));
-    } 
-    
-   @Test
+        assertTrue(exception.getMessage().contains("Collection generic type and hasMany relationship type mismatch"));
+    }
+
+    @Test
     public void hasOne_populatePropertyTypeConflict_test() {
         //@formatter:off  
         Exception exception = Assertions.assertThrows(QueryException.class, () -> {
@@ -160,8 +212,7 @@ public class QueryTest {
         //@formatter:on
         assertTrue(exception.getMessage().contains("property type conflict"));
     }
-    
-    
+
     @Test
     public void hasMany_List_success_test() {
       //@formatter:off
@@ -175,7 +226,7 @@ public class QueryTest {
         
       //@formatter:on
     }
-    
+
     @Test
     public void hasMany_Set_success_test() {
       //@formatter:off
@@ -212,5 +263,49 @@ public class QueryTest {
         
       //@formatter:on
     }
+
+    @Test
+    public void whereonly_success_test() {
+      //@formatter:off
+        Query.type(Order.class)
+        .where("orders.status = ?", "IN PROCESS")
+        .execute(jtm);
+        
+      //@formatter:on
+    }
+    
+    @Test
+    public void whereAndOrderBy_success_test() {
+      //@formatter:off
+        Query.type(Order.class)
+        .where("orders.status = ?", "IN PROCESS")
+        .orderBy("orders.status")
+        .execute(jtm);
+        
+      //@formatter:on
+    }
+    
+    @Test
+    public void hasOne_withoutWhereAndOrderBy_success_test() {
+      //@formatter:off
+        Query.type(Order.class)
+        .hasOne(Customer.class)
+        .joinColumn("customer_id")
+        .populateProperty("customer")
+        .execute(jtm);
+        
+      //@formatter:on
+    }
+    
+    public void hasMany_withoutWhereAndOrderBy_success_test() {
+        //@formatter:off
+          List<Order> list = Query.type(Order.class)
+          .hasMany(OrderLine.class) 
+          .joinColumn("order_id")
+          .populateProperty("orderLines") // list
+          .execute(jtm); 
+          
+        //@formatter:on
+      }
 
 }
