@@ -36,7 +36,6 @@ public class Query<T> implements IQueryType<T>, IQueryWhere<T>, IQueryOrderBy<T>
     private Class<?> relatedClazz;
     private String propertyName; // propertyName on main class that needs to be populated
     private String joinColumn;
-    private String throughJoinTable;
 
     private JdbcTemplateMapper jtm;
     private MappingHelper mappingHelper;
@@ -46,8 +45,9 @@ public class Query<T> implements IQueryType<T>, IQueryWhere<T>, IQueryOrderBy<T>
     private TableMapping relatedClazzTableMapping = null;
     private SelectMapper<?> relatedClazzSelectMapper = null;
 
-    private String mainClazzJoinColumn;
-    private String relatedClazzJoinColumn;
+    private String throughJoinTable;
+    private String throughMainClazzJoinColumn;
+    private String throughRelatedClazzJoinColumn;
 
     private Query(Class<T> type) {
         this.mainClazz = type;
@@ -93,8 +93,8 @@ public class Query<T> implements IQueryType<T>, IQueryWhere<T>, IQueryOrderBy<T>
     }
 
     public IQueryThroughJoinColumns<T> throughJoinColumns(String mainClassJoinColumn, String relatedClassJoinColumn) {
-        this.mainClazzJoinColumn = mainClassJoinColumn;
-        this.relatedClazzJoinColumn = relatedClassJoinColumn;
+        this.throughMainClazzJoinColumn = mainClassJoinColumn;
+        this.throughRelatedClazzJoinColumn = relatedClassJoinColumn;
         return this;
     }
 
@@ -106,9 +106,10 @@ public class Query<T> implements IQueryType<T>, IQueryWhere<T>, IQueryOrderBy<T>
     public List<T> execute(JdbcTemplateMapper jdbcTemplateMapper) {
         initialize(jdbcTemplateMapper);
 
-        QueryValidator.validate(jtm, mainClazz, relationshipType, relatedClazz, joinColumn, propertyName);
+        QueryValidator.validate(jtm, mainClazz, relationshipType, relatedClazz, joinColumn, propertyName,
+                throughJoinTable, throughMainClazzJoinColumn, throughRelatedClazzJoinColumn);
 
-        QueryValidator.validateOrderBy(jtm, orderBy, mainClazz, relatedClazz, null);
+        QueryValidator.validateOrderBy(jtm, orderBy, mainClazz, relatedClazz);
 
         String sql = "SELECT " + mainClazzSelectMapper.getColumnsSql();
 
@@ -121,9 +122,9 @@ public class Query<T> implements IQueryType<T>, IQueryWhere<T>, IQueryOrderBy<T>
 
         if (relatedClazz != null) {
             String relatedClazzTableName = relatedClazzTableMapping.getTableName();
-          //TONY Fullyqualified check if user entered fullyqualified
+
             if (relationshipType == RelationshipType.HAS_ONE) {
-                
+
                 //@formatter:off
                 sql += " LEFT JOIN " 
                     + mappingHelper.fullyQualifiedTableName(relatedClazzTableMapping.getTableName()) 
@@ -139,10 +140,10 @@ public class Query<T> implements IQueryType<T>, IQueryWhere<T>, IQueryOrderBy<T>
                 //@formatter:off
                 sql += " JOIN " 
                     + mappingHelper.fullyQualifiedTableName(throughJoinTable) 
-                    + " on " + mainClazzTableName + "." + mainClazzTableMapping.getIdColumnName() + " = " + throughJoinTable +"." + mainClazzJoinColumn
+                    + " on " + mainClazzTableName + "." + mainClazzTableMapping.getIdColumnName() + " = " + throughJoinTable +"." + throughMainClazzJoinColumn
                 + " JOIN "
                 + mappingHelper.fullyQualifiedTableName(relatedClazzTableName)
-                + " on " + throughJoinTable +"." + relatedClazzJoinColumn + " = " + relatedClazzTableName + "." + relatedClazzTableMapping.getIdColumnName();
+                + " on " + throughJoinTable +"." + throughRelatedClazzJoinColumn + " = " + relatedClazzTableName + "." + relatedClazzTableMapping.getIdColumnName();
 
               //@formatter:on
             }
@@ -156,7 +157,7 @@ public class Query<T> implements IQueryType<T>, IQueryWhere<T>, IQueryOrderBy<T>
             sql = sql + " ORDER BY " + orderBy;
         }
 
-        @SuppressWarnings({"unchecked", "rawtypes"})
+        @SuppressWarnings({ "unchecked", "rawtypes" })
         ResultSetExtractor<List<T>> rsExtractor = new ResultSetExtractor<List<T>>() {
             public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
                 Map<Object, Object> idToModelMap = new HashMap<>();
@@ -169,8 +170,8 @@ public class Query<T> implements IQueryType<T>, IQueryWhere<T>, IQueryOrderBy<T>
                         if (RelationshipType.HAS_ONE == relationshipType) {
                             BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainModel);
                             bw.setPropertyValue(propertyName, relatedModel);
-                        }
-                        else if (RelationshipType.HAS_MANY == relationshipType || RelationshipType.HAS_MANY_THROUGH == relationshipType) {
+                        } else if (RelationshipType.HAS_MANY == relationshipType
+                                || RelationshipType.HAS_MANY_THROUGH == relationshipType) {
                             BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainModel);
                             // the property has already been validated so we know it is a
                             // collection that has been initialized

@@ -17,8 +17,7 @@ import io.github.jdbctemplatemapper.querymerge.IQueryMergePopulateProperty;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeType;
 
 public class QueryMerge<T> implements IQueryMergeType<T>, IQueryMergeHasMany<T>, IQueryMergeHasOne<T>,
-IQueryMergeJoinColumn<T>, IQueryMergePopulateProperty<T>,
-IQueryMergeExecute<T> {
+        IQueryMergeJoinColumn<T>, IQueryMergePopulateProperty<T>, IQueryMergeExecute<T> {
 
     private Class<T> mainClazz;
 
@@ -30,9 +29,9 @@ IQueryMergeExecute<T> {
 
     private JdbcTemplateMapper jtm;
     private MappingHelper mappingHelper;
-   // private TableMapping mainClazzTableMapping;
+    // private TableMapping mainClazzTableMapping;
     private TableMapping relatedClazzTableMapping = null;
-    
+
     private QueryMerge(Class<T> type) {
         this.mainClazz = type;
     }
@@ -57,17 +56,17 @@ IQueryMergeExecute<T> {
         this.joinColumn = joinColumn;
         return this;
     }
-    
+
     public IQueryMergePopulateProperty<T> populateProperty(String propertyName) {
         this.propertyName = propertyName;
         return this;
     }
-    
-    @SuppressWarnings({"unchecked", "rawtypes"})
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public void execute(JdbcTemplateMapper jdbcTemplateMapper, List<T> list) {
         initialize(jdbcTemplateMapper);
-        QueryValidator.validate(jtm, mainClazz,relationshipType, relatedClazz, joinColumn, propertyName);
-        
+        QueryValidator.validate(jtm, mainClazz, relationshipType, relatedClazz, joinColumn, propertyName, null, null,null);
+
         String joinPropertyName = relatedClazzTableMapping.getPropertyName(joinColumn);
         Set params = new HashSet<>();
         for (Object obj : list) {
@@ -84,10 +83,10 @@ IQueryMergeExecute<T> {
                 Object relatedObj = getRelatedObject(relatedList, relatedPropertyIdName,
                         bw.getPropertyValue(joinPropertyName));
                 bw.setPropertyValue(propertyName, relatedObj);
-            } else if (relationshipType == RelationshipType.HAS_MANY|| relationshipType == RelationshipType.HAS_MANY_THROUGH) {
+            } else if (relationshipType == RelationshipType.HAS_MANY) {
                 List matchedList = getRelatedObjectList(relatedList, joinPropertyName,
                         bw.getPropertyValue(joinPropertyName));
-                        
+
                 Collection collection = (Collection) bw.getPropertyValue(propertyName);
                 collection.addAll(matchedList);
             }
@@ -97,7 +96,7 @@ IQueryMergeExecute<T> {
     private void initialize(JdbcTemplateMapper jdbcTemplateMapper) {
         jtm = jdbcTemplateMapper;
         mappingHelper = jtm.getMappingHelper();
-        //mainClazzTableMapping = mappingHelper.getTableMapping(mainClazz);
+        // mainClazzTableMapping = mappingHelper.getTableMapping(mainClazz);
         relatedClazzTableMapping = mappingHelper.getTableMapping(relatedClazz);
     }
 
