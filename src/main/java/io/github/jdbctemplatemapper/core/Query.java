@@ -13,7 +13,9 @@ import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 
-public class Query<T> {
+public class Query<T> implements IQueryType<T>, IQueryWhere<T>, IQueryOrderBy<T>, IQueryHasMany<T>, IQueryHasOne<T>,
+        IQueryJoinColumn<T>, IQueryThroughJoinTable<T>, IQueryThroughJoinColumns<T>, IQueryPopulateProperty<T>,
+        IQueryExecute<T> {
     private Class<T> mainClazz;
     private String whereClause;
     private Object[] whereParams;
@@ -32,7 +34,7 @@ public class Query<T> {
 
     private TableMapping relatedClazzTableMapping = null;
     private SelectMapper<?> relatedClazzSelectMapper = null;
-    
+
     String mainClazzJoinColumn;
     String relatedClazzJoinColumn;
 
@@ -40,52 +42,52 @@ public class Query<T> {
         this.mainClazz = type;
     }
 
-    public static <T> Query<T> type(Class<T> type) {
+    public static <T> IQueryType<T> type(Class<T> type) {
         return new Query<T>(type);
     }
 
-    public Query<T> where(String whereClause, Object... params) {
+    public IQueryWhere<T> where(String whereClause, Object... params) {
         this.whereClause = whereClause;
         this.whereParams = params;
         return this;
     }
 
-    public Query<T> orderBy(String orderBy) {
+    public IQueryOrderBy<T> orderBy(String orderBy) {
         this.orderBy = orderBy;
         return this;
     }
 
-    public Query<T> hasMany(Class<?> relatedClazz) {
+    public IQueryHasMany<T> hasMany(Class<?> relatedClazz) {
         this.relationshipType = RelationshipType.HAS_MANY;
         this.relatedClazz = relatedClazz;
         return this;
     }
 
-    public Query<T> hasOne(Class<?> relatedClazz) {
+    public IQueryHasOne<T> hasOne(Class<?> relatedClazz) {
         this.relationshipType = RelationshipType.HAS_ONE;
         this.relatedClazz = relatedClazz;
         return this;
     }
 
-    public Query<T> joinColumn(String joinColumn) {
+    public IQueryJoinColumn<T> joinColumn(String joinColumn) {
         // TONY check for null or empty
         this.joinColumn = MapperUtils.toLowerCase(joinColumn.trim());
         return this;
     }
-    
-    public Query<T> throughJoinColumns(String mainClassJoinColumn, String relatedClassJoinColumn) {
-        this.mainClazzJoinColumn = mainClassJoinColumn;
-        this.relatedClazzJoinColumn = relatedClassJoinColumn;
-        return this;
-    }
 
-    public Query<T> throughJoinTable(String tableName) {
+    public IQueryThroughJoinTable<T> throughJoinTable(String tableName) {
         this.relationshipType = RelationshipType.HAS_MANY_THROUGH;
         this.throughJoinTable = tableName;
         return this;
     }
 
-    public Query<T> populateProperty(String propertyName) {
+    public IQueryThroughJoinColumns<T> throughJoinColumns(String mainClassJoinColumn, String relatedClassJoinColumn) {
+        this.mainClazzJoinColumn = mainClassJoinColumn;
+        this.relatedClazzJoinColumn = relatedClassJoinColumn;
+        return this;
+    }
+
+    public IQueryPopulateProperty<T> populateProperty(String propertyName) {
         this.propertyName = propertyName;
         return this;
     }
@@ -98,7 +100,7 @@ public class Query<T> {
         QueryValidator.validateOrderBy(jtm, orderBy, mainClazz, relatedClazz, null);
 
         String sql = "SELECT " + mainClazzSelectMapper.getColumnsSql();
-        
+
         String mainClazzTableName = mainClazzTableMapping.getTableName();
 
         if (relatedClazz != null) {
@@ -115,8 +117,8 @@ public class Query<T> {
                     + " on " + mainClazzTableName + "."  + joinColumn + " = " + relatedClazzTableName + "." + relatedClazzTableMapping.getIdColumnName();
               //@formatter:on
             } else if (relationshipType == RelationshipType.HAS_MANY) {
-          //@formatter:off
-            sql += " LEFT JOIN " 
+              //@formatter:off
+              sql += " LEFT JOIN " 
                 + mappingHelper.fullyQualifiedTableName(relatedClazzTableName) 
                 + " on " + mainClazzTableName + "." + mainClazzTableMapping.getIdColumnName() + " = " + relatedClazzTableName +"." + joinColumn;
           //@formatter:on
@@ -188,13 +190,13 @@ public class Query<T> {
 
     private void initialize(JdbcTemplateMapper jdbcTemplateMapper) {
         this.jtm = jdbcTemplateMapper;
-        mappingHelper = jtm.getMappingHelper();
-        mainClazzTableMapping = mappingHelper.getTableMapping(mainClazz);
+        this.mappingHelper = jtm.getMappingHelper();
+        this.mainClazzTableMapping = mappingHelper.getTableMapping(mainClazz);
         // using table name as alias
-        mainClazzSelectMapper = jtm.getSelectMapper(mainClazz, mainClazzTableMapping.getTableName());
+        this.mainClazzSelectMapper = jtm.getSelectMapper(mainClazz, mainClazzTableMapping.getTableName());
         if (relatedClazz != null) {
-            relatedClazzTableMapping = mappingHelper.getTableMapping(relatedClazz);
-            relatedClazzSelectMapper = jtm.getSelectMapper(relatedClazz, relatedClazzTableMapping.getTableName());
+            this.relatedClazzTableMapping = mappingHelper.getTableMapping(relatedClazz);
+            this.relatedClazzSelectMapper = jtm.getSelectMapper(relatedClazz, relatedClazzTableMapping.getTableName());
         }
     }
 

@@ -195,12 +195,12 @@ public class QueryTest {
     public void hasOne_success_test() {
       //@formatter:off
         Query.type(Order.class)
-        .where("orders.status = ?", "IN PROCESS")
-        .orderBy("orders.status    DESC")
-        .hasOne(Customer.class)
-        .joinColumn("customer_id")
-        .populateProperty("customer")
-        .execute(jtm);
+             .where("orders.status = ?", "IN PROCESS")
+             .orderBy("orders.status    DESC")
+             .hasOne(Customer.class)
+             .joinColumn("customer_id")
+             .populateProperty("customer")
+             .execute(jtm);
         
       //@formatter:on
     }
