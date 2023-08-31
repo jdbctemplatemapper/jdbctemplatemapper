@@ -1,4 +1,4 @@
-package io.github.jdbctemplatemapper.core;
+package io.github.jdbctemplatemapper.query;
 
 public interface IQueryThroughJoinColumns<T> {
     IQueryPopulateProperty<T> populateProperty(String propertyName);

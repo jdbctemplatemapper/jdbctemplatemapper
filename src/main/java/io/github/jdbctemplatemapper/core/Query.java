@@ -13,6 +13,17 @@ import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 
+import io.github.jdbctemplatemapper.query.IQueryExecute;
+import io.github.jdbctemplatemapper.query.IQueryHasMany;
+import io.github.jdbctemplatemapper.query.IQueryHasOne;
+import io.github.jdbctemplatemapper.query.IQueryJoinColumn;
+import io.github.jdbctemplatemapper.query.IQueryOrderBy;
+import io.github.jdbctemplatemapper.query.IQueryPopulateProperty;
+import io.github.jdbctemplatemapper.query.IQueryThroughJoinColumns;
+import io.github.jdbctemplatemapper.query.IQueryThroughJoinTable;
+import io.github.jdbctemplatemapper.query.IQueryType;
+import io.github.jdbctemplatemapper.query.IQueryWhere;
+
 public class Query<T> implements IQueryType<T>, IQueryWhere<T>, IQueryOrderBy<T>, IQueryHasMany<T>, IQueryHasOne<T>,
         IQueryJoinColumn<T>, IQueryThroughJoinTable<T>, IQueryThroughJoinColumns<T>, IQueryPopulateProperty<T>,
         IQueryExecute<T> {
@@ -35,8 +46,8 @@ public class Query<T> implements IQueryType<T>, IQueryWhere<T>, IQueryOrderBy<T>
     private TableMapping relatedClazzTableMapping = null;
     private SelectMapper<?> relatedClazzSelectMapper = null;
 
-    String mainClazzJoinColumn;
-    String relatedClazzJoinColumn;
+    private String mainClazzJoinColumn;
+    private String relatedClazzJoinColumn;
 
     private Query(Class<T> type) {
         this.mainClazz = type;

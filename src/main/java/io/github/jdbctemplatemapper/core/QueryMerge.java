@@ -9,7 +9,19 @@ import java.util.Set;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
 
-public class QueryMerge<T> {
+import io.github.jdbctemplatemapper.querymerge.IQueryMergeExecute;
+import io.github.jdbctemplatemapper.querymerge.IQueryMergeHasMany;
+import io.github.jdbctemplatemapper.querymerge.IQueryMergeHasOne;
+import io.github.jdbctemplatemapper.querymerge.IQueryMergeJoinColumn;
+import io.github.jdbctemplatemapper.querymerge.IQueryMergePopulateProperty;
+import io.github.jdbctemplatemapper.querymerge.IQueryMergeThroughJoinColumns;
+import io.github.jdbctemplatemapper.querymerge.IQueryMergeThroughJoinTable;
+import io.github.jdbctemplatemapper.querymerge.IQueryMergeType;
+
+public class QueryMerge<T> implements IQueryMergeType<T>, IQueryMergeHasMany<T>, IQueryMergeHasOne<T>,
+IQueryMergeJoinColumn<T>, IQueryMergeThroughJoinTable<T>, IQueryMergeThroughJoinColumns<T>, IQueryMergePopulateProperty<T>,
+IQueryMergeExecute<T> {
+
     private Class<T> mainClazz;
 
     private RelationshipType relationshipType;
@@ -22,42 +34,55 @@ public class QueryMerge<T> {
     private MappingHelper mappingHelper;
    // private TableMapping mainClazzTableMapping;
     private TableMapping relatedClazzTableMapping = null;
+    
+    private String mainClazzJoinColumn;
+    private String relatedClazzJoinColumn;
+
 
     private QueryMerge(Class<T> type) {
         this.mainClazz = type;
     }
 
-    public static <T> QueryMerge<T> type(Class<T> type) {
+    public static <T> IQueryMergeType<T> type(Class<T> type) {
         return new QueryMerge<T>(type);
     }
 
-    public QueryMerge<T> hasMany(Class<?> relatedClazz) {
+    public IQueryMergeHasMany<T> hasMany(Class<?> relatedClazz) {
         this.relationshipType = RelationshipType.HAS_MANY;
         this.relatedClazz = relatedClazz;
         return this;
     }
 
-    public QueryMerge<T> hasOne(Class<?> relatedClazz) {
+    public IQueryMergeHasOne<T> hasOne(Class<?> relatedClazz) {
         this.relationshipType = RelationshipType.HAS_ONE;
         this.relatedClazz = relatedClazz;
         return this;
     }
 
-    public QueryMerge<T> joinColumn(String joinColumn) {
+    public IQueryMergeJoinColumn<T> joinColumn(String joinColumn) {
         this.joinColumn = joinColumn;
         return this;
     }
 
-    public QueryMerge<T> throughJoinTable(String tableName) {
+    public IQueryMergeThroughJoinTable<T> throughJoinTable(String tableName) {
         this.relationshipType = RelationshipType.HAS_MANY_THROUGH;
         // this.throughJoinTable = tableName;
         return this;
     }
 
-    public QueryMerge<T> populateProperty(String propertyName) {
+    public IQueryMergeThroughJoinColumns<T> throughJoinColumns(String mainClassJoinColumn, String relatedClassJoinColumn) {
+        this.mainClazzJoinColumn = mainClassJoinColumn;
+        this.relatedClazzJoinColumn = relatedClassJoinColumn;
+        return this;
+    }
+    
+    public IQueryMergePopulateProperty<T> populateProperty(String propertyName) {
         this.propertyName = propertyName;
         return this;
     }
+    
+
+    
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     public void execute(JdbcTemplateMapper jdbcTemplateMapper, List<T> list) {

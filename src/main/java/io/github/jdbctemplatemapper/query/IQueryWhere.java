@@ -1,4 +1,4 @@
-package io.github.jdbctemplatemapper.core;
+package io.github.jdbctemplatemapper.query;
 
 public interface IQueryWhere<T> {
     IQueryOrderBy<T>orderBy(String orderBy);
