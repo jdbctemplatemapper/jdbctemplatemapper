@@ -109,7 +109,7 @@ public class Query<T> implements IQueryType<T>, IQueryWhere<T>, IQueryOrderBy<T>
         QueryValidator.validate(jtm, mainClazz, relationshipType, relatedClazz, joinColumn, propertyName,
                 throughJoinTable, throughMainClazzJoinColumn, throughRelatedClazzJoinColumn);
 
-        QueryValidator.validateOrderBy(jtm, orderBy, mainClazz, relatedClazz);
+        QueryValidator.validateWhereAndOrderBy(jtm, whereClause, orderBy, mainClazz, relatedClazz);
 
         String sql = "SELECT " + mainClazzSelectMapper.getColumnsSql();
 
