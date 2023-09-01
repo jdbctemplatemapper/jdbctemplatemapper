@@ -100,4 +100,11 @@ class MapperUtils {
     public static String toLowerCase(String str) {
         return str != null ? str.toLowerCase(Locale.US) : null;
     }
+   
+    public static boolean equals(Object obj1, Object obj2) {
+        if (obj1 == null || obj2 == null) {
+            return false;
+        }
+        return obj1.equals(obj2);
+    }
 }
