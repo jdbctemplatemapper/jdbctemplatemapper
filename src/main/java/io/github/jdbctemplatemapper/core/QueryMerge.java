@@ -18,32 +18,32 @@ import io.github.jdbctemplatemapper.querymerge.IQueryMergeType;
 
 public class QueryMerge<T> implements IQueryMergeType<T>, IQueryMergeHasMany<T>, IQueryMergeHasOne<T>,
         IQueryMergeJoinColumn<T>, IQueryMergePopulateProperty<T>, IQueryMergeExecute<T> {
-    private Class<T> mainClazz;
+    private Class<T> ownerType;
     private RelationshipType relationshipType;
-    private Class<?> relatedClazz;
-    private String propertyName; // propertyName on main class that needs to be populated
+    private Class<?> relatedType;
+    private String propertyName; // propertyName on ownerType that needs to be populated
     private String joinColumn;
     private JdbcTemplateMapper jtm;
     private MappingHelper mappingHelper;
-    private TableMapping relatedClazzTableMapping = null;
+    private TableMapping relatedTypeTableMapping = null;
 
     private QueryMerge(Class<T> type) {
-        this.mainClazz = type;
+        this.ownerType = type;
     }
 
     public static <T> IQueryMergeType<T> type(Class<T> type) {
         return new QueryMerge<T>(type);
     }
 
-    public IQueryMergeHasMany<T> hasMany(Class<?> relatedClazz) {
+    public IQueryMergeHasMany<T> hasMany(Class<?> relatedType) {
         this.relationshipType = RelationshipType.HAS_MANY;
-        this.relatedClazz = relatedClazz;
+        this.relatedType = relatedType;
         return this;
     }
 
-    public IQueryMergeHasOne<T> hasOne(Class<?> relatedClazz) {
+    public IQueryMergeHasOne<T> hasOne(Class<?> relatedType) {
         this.relationshipType = RelationshipType.HAS_ONE;
-        this.relatedClazz = relatedClazz;
+        this.relatedType = relatedType;
         return this;
     }
 
@@ -58,29 +58,36 @@ public class QueryMerge<T> implements IQueryMergeType<T>, IQueryMergeHasMany<T>,
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public void execute(JdbcTemplateMapper jdbcTemplateMapper, List<T> list) {
+    public void execute(JdbcTemplateMapper jdbcTemplateMapper, List<T> mergeList) {
         initialize(jdbcTemplateMapper);
-        QueryValidator.validate(jtm, mainClazz, relationshipType, relatedClazz, joinColumn, propertyName, null, null,
+        QueryValidator.validate(jtm, ownerType, relationshipType, relatedType, joinColumn, propertyName, null, null,
                 null);
 
-        String joinPropertyName = relatedClazzTableMapping.getPropertyName(joinColumn);
+        String joinPropertyName = relatedTypeTableMapping.getPropertyName(joinColumn);
+
+        List<BeanWrapper> bwMergeList = new ArrayList<>(); // used to avoid excessive BeanWrapper creation
         Set params = new HashSet<>();
-        for (Object obj : list) {
+        for (Object obj : mergeList) {
             BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
             params.add(bw.getPropertyValue(joinPropertyName));
+            bwMergeList.add(bw);
         }
 
-        List relatedList = jtm.findByProperty(relatedClazz, joinPropertyName, params);
-        String relatedPropertyIdName = relatedClazzTableMapping.getIdPropertyName();
+        List relatedList = jtm.findByProperty(relatedType, joinPropertyName, params);
+        List<BeanWrapper> bwRelatedList = new ArrayList<>(); // used to avoid excessive BeanWrapper creation
+        for (Object obj : relatedList) {
+            bwRelatedList.add(PropertyAccessorFactory.forBeanPropertyAccess(obj));
+        }
 
-        for (Object obj : list) {
-            BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
+        String relatedPropertyIdName = relatedTypeTableMapping.getIdPropertyName();
+
+        for (BeanWrapper bw : bwMergeList) {
             if (relationshipType == RelationshipType.HAS_ONE) {
-                Object relatedObj = getRelatedObject(relatedList, relatedPropertyIdName,
+                Object relatedObj = getRelatedObject(bwRelatedList, relatedPropertyIdName,
                         bw.getPropertyValue(joinPropertyName));
                 bw.setPropertyValue(propertyName, relatedObj);
             } else if (relationshipType == RelationshipType.HAS_MANY) {
-                List matchedList = getRelatedObjectList(relatedList, joinPropertyName,
+                List matchedList = getRelatedObjectList(bwRelatedList, joinPropertyName,
                         bw.getPropertyValue(joinPropertyName));
 
                 Collection collection = (Collection) bw.getPropertyValue(propertyName);
@@ -92,27 +99,26 @@ public class QueryMerge<T> implements IQueryMergeType<T>, IQueryMergeHasMany<T>,
     private void initialize(JdbcTemplateMapper jdbcTemplateMapper) {
         jtm = jdbcTemplateMapper;
         mappingHelper = jtm.getMappingHelper();
-        relatedClazzTableMapping = mappingHelper.getTableMapping(relatedClazz);
+        relatedTypeTableMapping = mappingHelper.getTableMapping(relatedType);
     }
 
-    private Object getRelatedObject(List<?> relatedList, String idName, Object idValue) {
-        for (Object obj : relatedList) {
-            BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
+    private Object getRelatedObject(List<BeanWrapper> relatedList, String idName, Object idValue) {
+        for (BeanWrapper bw : relatedList) {
             // TONY handle null
             if (bw.getPropertyValue(idName).equals(idValue)) {
-                return obj;
+                return bw.getWrappedInstance();
             }
         }
         return null;
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private List getRelatedObjectList(List<?> relatedList, String joinPropertyName, Object joinPropertyValue) {
+    private List getRelatedObjectList(List<BeanWrapper> relatedList, String joinPropertyName,
+            Object joinPropertyValue) {
         List list = new ArrayList();
-        for (Object obj : relatedList) {
-            BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
+        for (BeanWrapper bw : relatedList) {
             if (bw.getPropertyValue(joinPropertyName).equals(joinPropertyValue)) {
-                list.add(obj);
+                list.add(bw.getWrappedInstance());
             }
         }
         return list;

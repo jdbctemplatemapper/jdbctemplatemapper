@@ -27,30 +27,30 @@ import io.github.jdbctemplatemapper.query.IQueryWhere;
 public class Query<T> implements IQueryType<T>, IQueryWhere<T>, IQueryOrderBy<T>, IQueryHasMany<T>, IQueryHasOne<T>,
         IQueryJoinColumn<T>, IQueryThroughJoinTable<T>, IQueryThroughJoinColumns<T>, IQueryPopulateProperty<T>,
         IQueryExecute<T> {
-    private Class<T> mainClazz;
+    private Class<T> ownerType;
     private String whereClause;
     private Object[] whereParams;
     private String orderBy;
 
     private RelationshipType relationshipType;
-    private Class<?> relatedClazz;
+    private Class<?> relatedType;
     private String propertyName; // propertyName on main class that needs to be populated
     private String joinColumn;
 
     private JdbcTemplateMapper jtm;
     private MappingHelper mappingHelper;
-    private TableMapping mainClazzTableMapping;
-    private SelectMapper<?> mainClazzSelectMapper;
+    private TableMapping ownerTypeTableMapping;
+    private SelectMapper<?> ownerTypeSelectMapper;
 
-    private TableMapping relatedClazzTableMapping = null;
-    private SelectMapper<?> relatedClazzSelectMapper = null;
+    private TableMapping relatedTypeTableMapping = null;
+    private SelectMapper<?> relatedTypeSelectMapper = null;
 
     private String throughJoinTable;
-    private String throughMainClazzJoinColumn;
-    private String throughRelatedClazzJoinColumn;
+    private String throughOwnerTypeJoinColumn;
+    private String throughRelatedTypeJoinColumn;
 
     private Query(Class<T> type) {
-        this.mainClazz = type;
+        this.ownerType = type;
     }
 
     public static <T> IQueryType<T> type(Class<T> type) {
@@ -68,20 +68,22 @@ public class Query<T> implements IQueryType<T>, IQueryWhere<T>, IQueryOrderBy<T>
         return this;
     }
 
-    public IQueryHasMany<T> hasMany(Class<?> relatedClazz) {
+    public IQueryHasMany<T> hasMany(Class<?> relatedType) {
         this.relationshipType = RelationshipType.HAS_MANY;
-        this.relatedClazz = relatedClazz;
+        this.relatedType = relatedType;
         return this;
     }
 
-    public IQueryHasOne<T> hasOne(Class<?> relatedClazz) {
+    public IQueryHasOne<T> hasOne(Class<?> relatedType) {
         this.relationshipType = RelationshipType.HAS_ONE;
-        this.relatedClazz = relatedClazz;
+        this.relatedType = relatedType;
         return this;
     }
 
     public IQueryJoinColumn<T> joinColumn(String joinColumn) {
-        this.joinColumn = MapperUtils.toLowerCase(joinColumn.trim());
+        if(joinColumn != null) {
+            this.joinColumn = MapperUtils.toLowerCase(joinColumn.trim());
+        }
         return this;
     }
 
@@ -91,9 +93,9 @@ public class Query<T> implements IQueryType<T>, IQueryWhere<T>, IQueryOrderBy<T>
         return this;
     }
 
-    public IQueryThroughJoinColumns<T> throughJoinColumns(String mainClassJoinColumn, String relatedClassJoinColumn) {
-        this.throughMainClazzJoinColumn = mainClassJoinColumn;
-        this.throughRelatedClazzJoinColumn = relatedClassJoinColumn;
+    public IQueryThroughJoinColumns<T> throughJoinColumns(String ownerTypeJoinColumn, String relatedTypeJoinColumn) {
+        this.throughOwnerTypeJoinColumn = ownerTypeJoinColumn;
+        this.throughRelatedTypeJoinColumn = relatedTypeJoinColumn;
         return this;
     }
 
@@ -105,39 +107,39 @@ public class Query<T> implements IQueryType<T>, IQueryWhere<T>, IQueryOrderBy<T>
     public List<T> execute(JdbcTemplateMapper jdbcTemplateMapper) {
         initialize(jdbcTemplateMapper);
 
-        QueryValidator.validate(jtm, mainClazz, relationshipType, relatedClazz, joinColumn, propertyName,
-                throughJoinTable, throughMainClazzJoinColumn, throughRelatedClazzJoinColumn);
+        QueryValidator.validate(jtm, ownerType, relationshipType, relatedType, joinColumn, propertyName,
+                throughJoinTable, throughOwnerTypeJoinColumn, throughRelatedTypeJoinColumn);
 
-        QueryValidator.validateWhereAndOrderBy(jtm, whereClause, orderBy, mainClazz, relatedClazz);
+        QueryValidator.validateWhereAndOrderBy(jtm, whereClause, orderBy, ownerType, relatedType);
 
-        String sql = "SELECT " + mainClazzSelectMapper.getColumnsSql();
+        String sql = "SELECT " + ownerTypeSelectMapper.getColumnsSql();
 
-        String mainClazzTableName = mainClazzTableMapping.getTableName();
+        String ownerTypeTableName = ownerTypeTableMapping.getTableName();
 
-        if (relatedClazz != null) {
-            sql += "," + relatedClazzSelectMapper.getColumnsSql();
+        if (relatedType != null) {
+            sql += "," + relatedTypeSelectMapper.getColumnsSql();
         }
-        sql += " FROM " + mappingHelper.fullyQualifiedTableName(mainClazzTableName);
+        sql += " FROM " + mappingHelper.fullyQualifiedTableName(ownerTypeTableName);
 
-        if (relatedClazz != null) {
-            String relatedClazzTableName = relatedClazzTableMapping.getTableName();
+        if (relatedType != null) {
+            String relatedTypeTableName = relatedTypeTableMapping.getTableName();
             if (relationshipType == RelationshipType.HAS_ONE) {
-                // joinColumn is on main table
-                sql += " LEFT JOIN " + mappingHelper.fullyQualifiedTableName(relatedClazzTableMapping.getTableName())
-                        + " on " + mainClazzTableName + "." + joinColumn + " = " + relatedClazzTableName + "."
-                        + relatedClazzTableMapping.getIdColumnName();
+                // joinColumn is on owner table
+                sql += " LEFT JOIN " + mappingHelper.fullyQualifiedTableName(relatedTypeTableMapping.getTableName())
+                        + " on " + ownerTypeTableName + "." + joinColumn + " = " + relatedTypeTableName + "."
+                        + relatedTypeTableMapping.getIdColumnName();
             } else if (relationshipType == RelationshipType.HAS_MANY) {
                 // joinColumn is on related table
-                sql += " LEFT JOIN " + mappingHelper.fullyQualifiedTableName(relatedClazzTableName) + " on "
-                        + mainClazzTableName + "." + mainClazzTableMapping.getIdColumnName() + " = "
-                        + relatedClazzTableName + "." + joinColumn;
+                sql += " LEFT JOIN " + mappingHelper.fullyQualifiedTableName(relatedTypeTableName) + " on "
+                        + ownerTypeTableName + "." + ownerTypeTableMapping.getIdColumnName() + " = "
+                        + relatedTypeTableName + "." + joinColumn;
             } else if (relationshipType == RelationshipType.HAS_MANY_THROUGH) {
-                sql += " JOIN " + mappingHelper.fullyQualifiedTableName(throughJoinTable) + " on " + mainClazzTableName
-                        + "." + mainClazzTableMapping.getIdColumnName() + " = " + throughJoinTable + "."
-                        + throughMainClazzJoinColumn + " JOIN "
-                        + mappingHelper.fullyQualifiedTableName(relatedClazzTableName) + " on " + throughJoinTable + "."
-                        + throughRelatedClazzJoinColumn + " = " + relatedClazzTableName + "."
-                        + relatedClazzTableMapping.getIdColumnName();
+                sql += " JOIN " + mappingHelper.fullyQualifiedTableName(throughJoinTable) + " on " + ownerTypeTableName
+                        + "." + ownerTypeTableMapping.getIdColumnName() + " = " + throughJoinTable + "."
+                        + throughOwnerTypeJoinColumn + " JOIN "
+                        + mappingHelper.fullyQualifiedTableName(relatedTypeTableName) + " on " + throughJoinTable + "."
+                        + throughRelatedTypeJoinColumn + " = " + relatedTypeTableName + "."
+                        + relatedTypeTableMapping.getIdColumnName();
             }
         }
 
@@ -152,12 +154,12 @@ public class Query<T> implements IQueryType<T>, IQueryWhere<T>, IQueryOrderBy<T>
         @SuppressWarnings({ "unchecked", "rawtypes" })
         ResultSetExtractor<List<T>> rsExtractor = new ResultSetExtractor<List<T>>() {
             public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
-                Map<Object, Object> idToModelMap = new HashMap<>();
+                Map<Object, Object> idToOwnerModelMap = new HashMap<>();
                 Map<Object, Object> idToRelatedModelMap = new HashMap<>();
                 while (rs.next()) {
-                    Object mainModel = getModel(rs, mainClazzSelectMapper, idToModelMap);
-                    if (relatedClazz != null) {
-                        Object relatedModel = getModel(rs, relatedClazzSelectMapper, idToRelatedModelMap);
+                    Object mainModel = getModel(rs, ownerTypeSelectMapper, idToOwnerModelMap);
+                    if (relatedType != null) {
+                        Object relatedModel = getModel(rs, relatedTypeSelectMapper, idToRelatedModelMap);
                         if (RelationshipType.HAS_ONE == relationshipType) {
                             BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainModel);
                             bw.setPropertyValue(propertyName, relatedModel);
@@ -171,7 +173,7 @@ public class Query<T> implements IQueryType<T>, IQueryWhere<T>, IQueryOrderBy<T>
                         }
                     }
                 }
-                return (List<T>) new ArrayList<>(idToModelMap.values());
+                return (List<T>) new ArrayList<>(idToOwnerModelMap.values());
             }
         };
 
@@ -186,12 +188,11 @@ public class Query<T> implements IQueryType<T>, IQueryWhere<T>, IQueryOrderBy<T>
     private void initialize(JdbcTemplateMapper jdbcTemplateMapper) {
         this.jtm = jdbcTemplateMapper;
         this.mappingHelper = jtm.getMappingHelper();
-        this.mainClazzTableMapping = mappingHelper.getTableMapping(mainClazz);
-        // using table name as alias
-        this.mainClazzSelectMapper = jtm.getSelectMapper(mainClazz, mainClazzTableMapping.getTableName());
-        if (relatedClazz != null) {
-            this.relatedClazzTableMapping = mappingHelper.getTableMapping(relatedClazz);
-            this.relatedClazzSelectMapper = jtm.getSelectMapper(relatedClazz, relatedClazzTableMapping.getTableName());
+        this.ownerTypeTableMapping = mappingHelper.getTableMapping(ownerType);
+        this.ownerTypeSelectMapper = jtm.getSelectMapper(ownerType, ownerTypeTableMapping.getTableName());
+        if (relatedType != null) {
+            this.relatedTypeTableMapping = mappingHelper.getTableMapping(relatedType);
+            this.relatedTypeSelectMapper = jtm.getSelectMapper(relatedType, relatedTypeTableMapping.getTableName());
         }
     }
 

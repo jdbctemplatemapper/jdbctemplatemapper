@@ -1,5 +1,7 @@
 package io.github.jdbctemplatemapper.test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -27,7 +29,6 @@ import io.github.jdbctemplatemapper.model.OrderLine;
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
 public class QueryTest {
-
     @Value("${spring.datasource.driver-class-name}")
     private String jdbcDriver;
 
@@ -216,13 +217,19 @@ public class QueryTest {
     @Test
     public void hasMany_List_success_test() {
       //@formatter:off
-        List<Order> list = Query.type(Order.class)
+        List<Order> orders = Query.type(Order.class)
         .where("orders.status = ?", "IN PROCESS")
-        .orderBy("orders.status DESC")
+        .orderBy("orders.order_id, order_line.order_line_id")
         .hasMany(OrderLine.class) 
         .joinColumn("order_id")
         .populateProperty("orderLines") // list
-        .execute(jtm); 
+        .execute(jtm);
+
+        assertTrue(orders.size() == 2);
+        assertTrue(orders.get(0).getOrderLines().size() == 2);
+        assertEquals("IN PROCESS", orders.get(1).getStatus());
+        assertTrue(orders.get(1).getOrderLines().size() == 1);
+        
         
       //@formatter:on
     }
@@ -230,13 +237,16 @@ public class QueryTest {
     @Test
     public void hasMany_Set_success_test() {
       //@formatter:off
-        List<Order4> list = Query.type(Order4.class)
+        List<Order4> orders = Query.type(Order4.class)
         .where("orders.status = ?", "IN PROCESS")
-        .orderBy("orders.status DESC")
+        .orderBy("orders.order_id ASC")
         .hasMany(OrderLine.class)
         .joinColumn("order_id")
         .populateProperty("orderLines") //set
         .execute(jtm); 
+        
+        assertTrue(orders.size() == 2);
+
         
       //@formatter:on
     }
@@ -244,7 +254,7 @@ public class QueryTest {
     @Test
     public void hasOne_success_test() {
       //@formatter:off
-        Query.type(Order.class)
+        List<Order> orders = Query.type(Order.class)
              .where("orders.status = ?", "IN PROCESS")
              .orderBy("orders.status    DESC")
              .hasOne(Customer.class)
@@ -252,14 +262,21 @@ public class QueryTest {
              .populateProperty("customer")
              .execute(jtm);
         
+        assertTrue(orders.size() == 2);
+        assertTrue("tony".equals(orders.get(0).getCustomer().getFirstName()));
+        assertTrue("jane".equals(orders.get(1).getCustomer().getFirstName()));
+        
+        
       //@formatter:on
     }
 
     @Test
     public void typeOnly_success_test() {
       //@formatter:off
-        Query.type(Order.class)
+        List<Order> orders = Query.type(Order.class)
         .execute(jtm);
+        
+        assertTrue(orders.size() == 3);
         
       //@formatter:on
     }
@@ -267,9 +284,11 @@ public class QueryTest {
     @Test
     public void whereonly_success_test() {
       //@formatter:off
-        Query.type(Order.class)
+        List<Order> orders = Query.type(Order.class)
         .where("orders.status = ?", "IN PROCESS")
         .execute(jtm);
+        
+        assertTrue(orders.size() == 2);
         
       //@formatter:on
     }
@@ -277,35 +296,40 @@ public class QueryTest {
     @Test
     public void whereAndOrderBy_success_test() {
       //@formatter:off
-        Query.type(Order.class)
+        List<Order> orders = Query.type(Order.class)
         .where("orders.status = ?", "IN PROCESS")
-        .orderBy("orders.status")
+        .orderBy("orders.order_id")
         .execute(jtm);
         
+        assertTrue(orders.size() == 2);
+        assertTrue(orders.get(0).getOrderId() == 1);
+        assertTrue(orders.get(1).getOrderId() == 2);
       //@formatter:on
     }
     
     @Test
     public void hasOne_withoutWhereAndOrderBy_success_test() {
       //@formatter:off
-        Query.type(Order.class)
+        List<Order> orders = Query.type(Order.class)
         .hasOne(Customer.class)
         .joinColumn("customer_id")
         .populateProperty("customer")
         .execute(jtm);
+        
+        assertNotNull(orders.get(0).getCustomer());
         
       //@formatter:on
     }
     
     public void hasMany_withoutWhereAndOrderBy_success_test() {
         //@formatter:off
-          List<Order> list = Query.type(Order.class)
+          List<Order> orders = Query.type(Order.class)
           .hasMany(OrderLine.class) 
           .joinColumn("order_id")
           .populateProperty("orderLines") // list
-          .execute(jtm); 
+          .execute(jtm);
           
+          assertTrue(orders.get(0).getOrderLines().size() > 0);
         //@formatter:on
       }
-
 }

@@ -20,6 +20,10 @@ public class QueryValidator {
     static void validate(JdbcTemplateMapper jtm, Class<?> mainClazz, RelationshipType relationshipType,
             Class<?> relatedClazz, String joinColumn, String propertyName, String throughJoinTable,
             String throughMainClazzJoinColumn, String throughRelatedClazzJoinColumn) {
+        
+        if(jtm == null) {
+            throw new QueryException("JdbcTemplateMapper cannot be null");
+        }
 
         MappingHelper mappingHelper = jtm.getMappingHelper();
         TableMapping mainClazzTableMapping = mappingHelper.getTableMapping(mainClazz);

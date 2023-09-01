@@ -149,7 +149,7 @@ public class QueryWhereAndOrderByTest {
         //@formatter:off
         List<Order> list = Query.type(Order.class)
         .where("orders.status = ?", "IN PROCESS")
-        .orderBy("orders.status ,  order_line.num_of_units DESC")
+        .orderBy(" orders.status  ASC,  order_line.num_of_units DESC")
         .hasMany(OrderLine.class) 
         .joinColumn("order_id")
         .populateProperty("orderLines")
