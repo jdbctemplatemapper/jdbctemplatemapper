@@ -25,7 +25,6 @@ public class JdbcTemplateMapperConfig {
     }
 
     @Bean
-    @Primary
     public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
         String schemaName = getSchemaName();
         JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate, schemaName);

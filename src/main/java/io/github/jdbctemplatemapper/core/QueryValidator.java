@@ -259,7 +259,6 @@ public class QueryValidator {
             return true;
         }
         return tableMapping.getPropertyName(columnName) != null;
-
     }
 
 }

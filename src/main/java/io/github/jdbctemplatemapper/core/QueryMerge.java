@@ -46,7 +46,18 @@ public class QueryMerge<T> implements IQueryMergeFluent<T>{
         this.relatedType = relatedType;
         return this;
     }
-
+    /**
+     * hasOne relationship:
+     *   The join column (the foreign key) is in the table of the owning model.
+     *   Example: Order hasOne Customer. The join column(foreign key) will be on the table order (owning model)
+     *   
+     *   
+     * hasMany relationship:
+     *   The join column( foreign key)  is in the table of the related model.
+     *   For example Order hasMay OrderLine then the join column will on the table order_line (related model)
+     *
+     * @param joinColumn the join column
+     */
     public IQueryMergeJoinColumn<T> joinColumn(String joinColumn) {
         Assert.notNull(joinColumn, "joinColumn cannot be null");
         this.joinColumn = joinColumn;
@@ -97,7 +108,6 @@ public class QueryMerge<T> implements IQueryMergeFluent<T>{
             } else if (relationshipType == RelationshipType.HAS_MANY) {
                 List matchedList = getRelatedObjectList(bwRelatedList, joinPropertyName,
                         bw.getPropertyValue(ownerTypeIdName));
-
                 Collection collection = (Collection) bw.getPropertyValue(propertyName);
                 collection.addAll(matchedList);
             }

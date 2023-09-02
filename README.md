@@ -8,7 +8,7 @@
 ## Features
 
   1. One liners for CRUD.
-  2. Features that help make querying of relationships less verbose.
+  2. 'fluent' style querying of relationships (hasOne, hasMany, hasMany through (many to many)
   3. Auto assign properties for models:
       * auto assign created on, updated on.
       * auto assign created by, updated by using an implementation of interface IRecordOperatorResolver.
@@ -222,36 +222,48 @@ public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
 ```
  
 ## Querying relationships
+The library provides different ways to query relationships. Keep in mind that that you can always use Spring JdbcTemplate if JdbcTemplateMapper lacks features you need. 
 
-For querying complex relationships use SelectMapper with Spring ResultSetExtractor.
 
-SelectMapper allows generating the select columns string for the model and population of the model from a ResultSet.
+### fluent style queries
 
-An example for querying the following relationship: An Order has many OrderLine and each OrderLine has one Product.  
+fluent' style queries allow querying of hasOne, hasMany and hasMany through (many to many using an associative table).
+The queries can handle one relationship at a time. The IDE will provide suggestions to help chain the fluent methods.
+Turn logging on (see logging section) to see the generated queries.
+
+
+Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Product
+
 
 ```java
+
  @Table(name = "orders")
   public class Order {
     @Id(type = IdType.AUTO_INCREMENT)
-    private Long orderId;  
+    private Integer id;                             // column id    
     @Column
-    private LocalDateTime orderDate;
+    private LocalDateTime orderDate;                // column order_date    
     @Column
-    private String customerName;
+    private String status;                          // column status  
+    @Column
+    private Integer customerId;                     // column customer_id. foreign key
+    
+    private Customer customer;                      // no mapping for relationships
     List<OrderLine> orderLines = new ArrayList<>(); // No mapping annotations for relationships
+                                                    // Important: collections should be initialized
+                                                    // for the queries to populate them.
   }
   
   @Table(name="order_line")
   public class OrderLine {
     @Id(type = IdType.AUTO_INCREMENT)   
+    private Integer id; // column id   
     @Column
-    private Integer orderLineId;
+    private Integer orderId; // column order_id. foreign key   
     @Column
-    private Integer orderId;
+    private Integer numOfUnits; // column num_of_units   
     @Column
-    private Integer numOfUnits;
-    @Column
-    private Integer productId;
+    private Integer productId; // column product_id. foreign key
 
     private Product product; // no mapping annotations for relationships
   }
@@ -259,13 +271,94 @@ An example for querying the following relationship: An Order has many OrderLine 
   @Table(name="product")
   public class Product {
     @Id 
-    private Integer productId;     
+    private Integer id;           // column id    
     @Column
-    private String name;
+    private String name;          // column name    
     @Column
-    private Double price;
+    private Double price;         // price
   }
-...
+  
+  @Table(name="customer")
+  public class Customer {
+    @Id 
+    private Integer id;           // column id      
+    @Column
+    private String name;          // column name
+  }
+  
+  
+```
+ 
+ 1) Below query will return a list of orders with their 'orderLines' populated.
+ 
+ ```
+ List<Order> order = 
+    Query.type(Order.class) // owning class
+         .where(orders.status = ?, "IN PROCESS") // always prefix columns with table name.
+         .orderBy("orders.order_date DESC, order_line.id") // always prefix columns with table name.
+         .hasMany(OrderLine.class) // the related class. Order hasMany OrderLine
+         .joinColumn("order_id") // for hasMany() the join column will be on the related side
+         .populateProperty("orderLines") // the property to populate on the owning class
+         .execute(jdbcTemplateMapper); // execute with the jdbcTemplateMapper
+ 
+ ```
+                          
+  orderBy() is strictly validated to protect against SQL injection  
+  where() has minimal validation since it is difficult to validate so make sure it is parameterized to prevent SQL injection.  
+                          
+ 2) Populate the Order hasOne customer relationship for the above orders.
+    For this use QueryMerge. It merges the results of a query with the orders list from previous query. 
+    Behind the scenes QueryMerge issues an 'IN' sql clause.
+    
+  ``` 
+   QueryMerge.type(Order.class) // owning class
+             .hasOne(Customer.class) // related class
+             .joinColumn("customer_id") // for hasOne() the join column in on the owning side
+             .populateProperty("customer") // the property to populate on the owning class
+             .execute(jdbcTemplateMapper, orders); // merges the query results with orders list
+     
+  ```
+             
+ Now we have  Order and its orderLines (1st query) and orders with its Customer (second query merge)   
+   
+   
+ 3) Finally we need to populate the product for each OrderLine.
+    Each order could have multiple orderLines so it is a list of lists.
+    To get all the orderLines as a list we need to flatten the list of lists.
+ 
+  ```       
+         List<OrderLine> allOrderLines = orders.stream()
+                                         .map(o -> o.getOrderLines())
+                                         .flatMap(list -> list.stream())
+                                         .collect(Collectors.toList());
+                 
+         QueryMerge.type(OrderLine.class) // owning class
+             .hasOne(Product.class) // related class
+             .joinColumn("product_id") // for hasOne the join column in on the order_line table
+             .populateProperty("product") // the property to populate on the owning class
+             .execute(jdbcTemplateMapper, allOrderLines); // merges the query results with orderLines
+             
+ ```
+ 
+### Querying hasMany through (many to many)
+This allows querying of many to many using an associated table
+
+ 
+
+### Some general queries
+
+
+ 
+### Querying complex relationships with a single query
+
+
+For querying complex relationships with a single query use SelectMapper with Spring ResultSetExtractor.
+
+SelectMapper allows generating the select columns string for the model and population of the model from a ResultSet.
+
+An example for querying the following relationship: An Order has many OrderLine and each OrderLine has one Product.  
+
+```
  // The second argument to getSelectMapper() below is the table alias used in the query.
  // For the query below the 'orders' table alias is 'o', the 'order_line' table alias 
  // is 'ol' and the product table alias is 'p'. SelectMapper.getColumnsSql() aliases 
@@ -286,44 +379,37 @@ An example for querying the following relationship: An Order has many OrderLine 
                + "," 
                + productSelectMapper.getColumnsSql()
                + " from orders o" 
-               + " left join order_line ol on o.order_id = ol.order_id"
-               + " join product p on p.product_id = ol.product_id"
-               + " order by o.order_id, ol.order_line_id";
+               + " left join order_line ol on o.id = ol.order_id"
+               + " join product p on p.id = ol.product_id"
+               + " order by o.id, ol.id";
                                         	
  ResultSetExtractor<List<Order>> rsExtractor = new ResultSetExtractor<List<Order>>() {
      @Override
      public List<Order> extractData(ResultSet rs) throws SQLException, DataAccessException {
-       // below is general standard logic used for populating relationships from a resultSet.
+       // below logic is specific to this use case. Your logic will be different.
+       // The thing to note is the model gets populated by selectMapper.build().
        Map<Long, Order> idOrderMap = new LinkedHashMap<>(); // LinkedHashMap to retain record order
        Map<Integer, Product> idProductMap = new HashMap<>();
        while (rs.next()) {				 					
          // orderSelectMapper.getResultSetModelIdColumnLabel() returns the id column alias 
-         // which is 'o_order_id' for the sql above. 
-         /*
+         // which is 'o_id' for the sql above. 
+         
          Long orderId = rs.getLong(orderSelectMapper.getResultSetModelIdColumnLabel());
          Order order = idOrderMap.get(orderId);
          if (order == null) {
            order = orderSelectMapper.buildModel(rs);
-           idOrderMap.put(order.getOrderId(), order);
+           idOrderMap.put(order.getId(), order);
          }
-         */
-
-         // Above code is replaced by getModel(). See its definition further below.
-         Order order = getModel(rs, orderSelectMapper, idOrderMap);
- 				    
+         
          // productSelectMapper.getResultSetModelIdColumnName() returns the id column alias 
-         // which is 'p_product_id'for the sql above.
-         /*
+         // which is 'p_id'for the sql above.
+         
            Integer productId = rs.getInt(productSelectMapper.getResultSetModelIdColumnLabel());
            Product product = idProductMap.get(productId);
            if (product == null) {
              product = productSelectMapper.buildModel(rs); 
-             idProductMap.put(product.getProductId(), product);
+             idProductMap.put(product.getId(), product);
            }
-         */
-
-         // Above code is replaced by getModel(). See its definition further below.
-         Product product = getModel(rs, productSelectMapper, idProductMap);
  				    
          OrderLine orderLine = orderLineSelectMapper.buildModel(rs);
          if(orderLine != null) {
@@ -339,8 +425,6 @@ An example for querying the following relationship: An Order has many OrderLine 
   // execute the JdbcTemplate query	
   List<Order> orders = jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor);
 ...
-
-
 
 ```
 

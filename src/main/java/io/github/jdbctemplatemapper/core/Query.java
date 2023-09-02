@@ -75,6 +75,18 @@ public class Query<T> implements IQueryFluent<T> {
         return this;
     }
 
+    /**
+     * hasOne relationship:
+     *   The join column (the foreign key) is in the table of the owning model.
+     *   Example: Order hasOne Customer. The join column(foreign key) will be on the table order (of the owning model)
+     *   
+     *   
+     * hasMany relationship:
+     *   The join column( foreign key)  is in the table of the related model.
+     *   For example Order hasMay OrderLine then the join column will on the table order_line (of the related model)
+     *
+     * @param joinColumn the join column
+     */
     public IQueryJoinColumn<T> joinColumn(String joinColumn) {
         Assert.notNull(joinColumn, "joinColumn cannot be null");
         this.joinColumn = MapperUtils.toLowerCase(joinColumn.trim());
@@ -200,5 +212,4 @@ public class Query<T> implements IQueryFluent<T> {
         }
         return model;
     }
-
 }
