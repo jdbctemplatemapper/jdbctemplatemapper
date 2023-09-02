@@ -129,7 +129,7 @@ public class Query<T> implements IQueryFluent<T> {
                 throughJoinTable, throughOwnerTypeJoinColumn, throughRelatedTypeJoinColumn);
 
         QueryValidator.validateWhereAndOrderBy(jdbcTemplateMapper, whereClause, orderBy, ownerType, relatedType);
-
+        
         String sql = "SELECT " + ownerTypeSelectMapper.getColumnsSql();
 
         String ownerTypeTableName = ownerTypeTableMapping.getTableName();
@@ -152,7 +152,7 @@ public class Query<T> implements IQueryFluent<T> {
                         + ownerTypeTableName + "." + ownerTypeTableMapping.getIdColumnName() + " = "
                         + relatedTypeTableName + "." + joinColumn;
             } else if (relationshipType == RelationshipType.HAS_MANY_THROUGH) {
-                sql += " JOIN " + mappingHelper.fullyQualifiedTableName(throughJoinTable) + " on " + ownerTypeTableName
+                sql += " LEFT JOIN " + mappingHelper.fullyQualifiedTableName(throughJoinTable) + " on " + ownerTypeTableName
                         + "." + ownerTypeTableMapping.getIdColumnName() + " = " + throughJoinTable + "."
                         + throughOwnerTypeJoinColumn + " JOIN "
                         + mappingHelper.fullyQualifiedTableName(relatedTypeTableName) + " on " + throughJoinTable + "."

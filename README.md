@@ -8,7 +8,7 @@
 ## Features
 
   1. One liners for CRUD.
-  2. 'fluent' style querying of relationships (hasOne, hasMany, hasMany through (many to many)
+  2. Fluent style queries for relationships (hasOne, hasMany, hasMany through (many to many)
   3. Auto assign properties for models:
       * auto assign created on, updated on.
       * auto assign created by, updated by using an implementation of interface IRecordOperatorResolver.
@@ -48,7 +48,7 @@
  product.setName("some product name");
  product.setPrice(10.25);
  product.setAvailableDate(LocalDateTime.now());
- jdbcTemplateMapper.insert(product); // because id type is auto increment, id value will be set after insert.
+ jdbcTemplateMapper.insert(product); // because id type is auto increment, id value will be set on insert.
 
  product = jdbcTemplateMapper.findById(Product.class, product.getId());
  product.setPrice(11.50);
@@ -148,7 +148,6 @@ This will map property to a column using the default naming convention of camel 
 This will map the property to the column specified by name attribute.   
 Note that this will impact using "SELECT * " with Spring BeanPropertyRowMapper in custom queries. The mismatch of column and property names will cause BeanPropertyRowMapper to ignore these properties. Use "SELECT " + jdbcTemplateMapper.getColumnsSql(Class) which will create column aliases to match property names so will work with BeanPropertyRowMapper.
 
-
 **@Version**
 
 This annotation is used for optimistic locking. It has to be of type Integer.
@@ -222,18 +221,53 @@ public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
 ```
  
 ## Querying relationships
-The library provides different ways to query relationships. Keep in mind that that you can always use Spring JdbcTemplate if JdbcTemplateMapper lacks features you need. 
-
+The library provides multiple ways to query relationships. Keep in mind that that you can always use Spring JdbcTemplate if JdbcTemplateMapper lacks features you need.   
+Fluent style queries allow querying of hasOne, hasMany and hasMany through (many to many using an associative table).
+The IDE will provide suggestions to help chain the methods. Turn logging on (see logging section) to see the generated queries.  
+The QueryMerge class allows the results of a previous query to be merged with results of a new query.
 
 ### fluent style queries
 
-fluent' style queries allow querying of hasOne, hasMany and hasMany through (many to many using an associative table).
-The queries can handle one relationship at a time. The IDE will provide suggestions to help chain the fluent methods.
-Turn logging on (see logging section) to see the generated queries.
+```
+// this is equivalent to jdbcTemplate.findAll(Order.class);
+List<Order> orders = Query.type(Order.class)
+                          .execute(jdbcTemplateMapper);
 
+// with where and orderBy
+// orderBy() is strictly validated and is protected against SQL injection.
+// where() has minimal validation since it is difficult to validate so make sure it is parameterized to prevent SQL injection.
+
+List<Order> orders = 
+  Query.type(Order.class)
+       .where("orders.status = ?", "IN PROCESS") // always prefix where() columns with table
+       .orderBy("orders.id")  // always prefix orderBy() columns with table
+       .execute(jdbcTemplateMapper); // execute with jdbcTemplateMapper
+
+// hasOne relationship         
+List<Order> orders = 
+  Query.type(Order.class) // owning class
+       .where("orders.status = ?", "IN PROCESS") // always prefix where() columns with table
+       .orderBy("orders.id")  // always prefix orderBy() columns with table
+       .hasOne(Customer.class) // related Class
+       .joinColumn("customer_id") // hasOne() join column is on owning side. No prefixes.
+       .populateProperty("customer") // property on owning class to populate
+       .execute(jdbcTemplateMapper); // execute with jdbcTemplateMapper
+              
+// hasMany relationship         
+List<Order> orders = 
+  Query.type(Order.class) // owning class
+       .where("orders.status = ?", "IN PROCESS") // always prefix where() columns with table
+       .orderBy("orders.id, order_line.id")  // owning and related table columns can be used
+       .hasMany(OrderLine.class) // related class
+       .joinColumn("order_id") // hasMany() join column will be on the related side. No prefixes
+       .populateProperty("orderLines") // the property to populate on the owning class
+       .execute(jdbcTemplateMapper); // execute with jdbcTemplateMapper                     
+         
+```
+
+### fluent queries with QueryMerge
 
 Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Product
-
 
 ```java
 
@@ -250,8 +284,8 @@ Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Produc
     
     private Customer customer;                      // no mapping for relationships
     List<OrderLine> orderLines = new ArrayList<>(); // No mapping annotations for relationships
-                                                    // Important: collections should be initialized
-                                                    // for the queries to populate them.
+                                                    // Important: collections have to be initialized
+                                                    // to that the queries can populate them.
   }
   
   @Table(name="order_line")
@@ -286,7 +320,6 @@ Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Produc
     private String name;          // column name
   }
   
-  
 ```
  
  1) Below query will return a list of orders with their 'orderLines' populated.
@@ -302,13 +335,10 @@ Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Produc
          .execute(jdbcTemplateMapper); // execute with the jdbcTemplateMapper
  
  ```
-                          
-  orderBy() is strictly validated to protect against SQL injection  
-  where() has minimal validation since it is difficult to validate so make sure it is parameterized to prevent SQL injection.  
-                          
+   
  2) Populate the Order hasOne customer relationship for the above orders.
     For this use QueryMerge. It merges the results of a query with the orders list from previous query. 
-    Behind the scenes QueryMerge issues an 'IN' sql clause.
+    QueryMerge issues an 'IN' sql clause.
     
   ``` 
    QueryMerge.type(Order.class) // owning class
@@ -319,20 +349,19 @@ Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Produc
      
   ```
              
- Now we have  Order and its orderLines (1st query) and orders with its Customer (second query merge)   
-   
+ Now we have Order and its orderLines (1st query) and orders with its Customer (second query merge)   
    
  3) Finally we need to populate the product for each OrderLine.
     Each order could have multiple orderLines so it is a list of lists.
     To get all the orderLines as a list we need to flatten the list of lists.
  
   ```       
-         List<OrderLine> allOrderLines = orders.stream()
+   List<OrderLine> allOrderLines = orders.stream()
                                          .map(o -> o.getOrderLines())
                                          .flatMap(list -> list.stream())
                                          .collect(Collectors.toList());
                  
-         QueryMerge.type(OrderLine.class) // owning class
+   QueryMerge.type(OrderLine.class) // owning class
              .hasOne(Product.class) // related class
              .joinColumn("product_id") // for hasOne the join column in on the order_line table
              .populateProperty("product") // the property to populate on the owning class
@@ -340,22 +369,69 @@ Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Produc
              
  ```
  
-### Querying hasMany through (many to many)
-This allows querying of many to many using an associated table
+### hasMany through (many to many)
+This allows querying of hasMany relationship through an associated table (many to many)
 
+```
+@Table(name = "employee")
+public class Employee {
+    @Id(type = IdType.AUTO_INCREMENT)
+    private Integer id;   
+    @Column
+    private String lastName;
+    @Column
+    private String firstName;
+        
+    private List<Skill> skills = new ArrayList<>();
+    ...
+}
+
+@Table(name = "skill")
+public class Skill {
+    @Id(type = IdType.AUTO_INCREMENT)
+    private Integer id;
+    @Column
+    private String name;
+    
+    private List<Employee> employees = new ArrayList<>();
+    ...
+}    
+
+@Table(name = "employee_skill")
+public class EmployeeSkill {
+    @Id(type = IdType.AUTO_INCREMENT)
+    private Integer id;
+    @Column
+    private Integer employeeId;
+    @Column
+    private Integer skillId;
+    ...
+ }   
+    
+ // employees with skills populated.
+ List<Employee> employees =  
+   Query.type(Employee.class) // owning class
+        .hasMany(Skill.class) // related class
+        .throughJoinTable("employee_skill") // the associated table
+        .throughJoinColumns("employee_id", "skill_id")  // note order of join columns. owning join column is first
+        .populateProperty("skills") // property on owning class to populate
+        .execute(jdbcTemplateMapper);
  
-
-### Some general queries
-
-
+ // Skills with employees populated
+ List<Skill> skills = 
+   Query.type(Skill.class) // owning class
+        .hasMany(Employee.class) // related class
+        .throughJoinTable("employee_skill") //the associated table
+        .throughJoinColumns("skill_id", "employee_id") // note order of join columns. owning join column is first
+        .populateProperty("employees") // property on owning class to populate
+        .execute(jdbcTemplateMapper);
  
-### Querying complex relationships with a single query
+```
+ 
+### Querying multiple relationships with a single query
 
-
-For querying complex relationships with a single query use SelectMapper with Spring ResultSetExtractor.
-
-SelectMapper allows generating the select columns string for the model and population of the model from a ResultSet.
-
+For querying multiple relationships with a single query use SelectMapper with Spring ResultSetExtractor.  
+SelectMapper allows generating the select columns string for the model and population of the model from a ResultSet.  
 An example for querying the following relationship: An Order has many OrderLine and each OrderLine has one Product.  
 
 ```
@@ -393,24 +469,20 @@ An example for querying the following relationship: An Order has many OrderLine 
        while (rs.next()) {				 					
          // orderSelectMapper.getResultSetModelIdColumnLabel() returns the id column alias 
          // which is 'o_id' for the sql above. 
-         
          Long orderId = rs.getLong(orderSelectMapper.getResultSetModelIdColumnLabel());
          Order order = idOrderMap.get(orderId);
          if (order == null) {
            order = orderSelectMapper.buildModel(rs);
            idOrderMap.put(order.getId(), order);
          }
-         
          // productSelectMapper.getResultSetModelIdColumnName() returns the id column alias 
          // which is 'p_id'for the sql above.
-         
-           Integer productId = rs.getInt(productSelectMapper.getResultSetModelIdColumnLabel());
-           Product product = idProductMap.get(productId);
-           if (product == null) {
-             product = productSelectMapper.buildModel(rs); 
-             idProductMap.put(product.getId(), product);
-           }
- 				    
+         Integer productId = rs.getInt(productSelectMapper.getResultSetModelIdColumnLabel());
+         Product product = idProductMap.get(productId);
+         if (product == null) {
+           product = productSelectMapper.buildModel(rs); 
+           idProductMap.put(product.getId(), product);
+         }
          OrderLine orderLine = orderLineSelectMapper.buildModel(rs);
          if(orderLine != null) {
            // wire up the relationships

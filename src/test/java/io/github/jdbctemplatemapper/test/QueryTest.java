@@ -231,6 +231,14 @@ public class QueryTest {
         assertTrue(orders.get(1).getOrderLines().size() == 1);
         
         
+        Query.type(Order.class)
+        .where("orders.status = ?", "IN PROCESS")
+        .orderBy("orders.order_id, order_line.order_line_id")
+        .hasMany(OrderLine.class) 
+        .joinColumn("order_id")
+        .populateProperty("orderLines") // list
+        .execute(jtm);
+        
       //@formatter:on
     }
 
@@ -321,6 +329,7 @@ public class QueryTest {
       //@formatter:on
     }
     
+    @Test
     public void hasMany_withoutWhereAndOrderBy_success_test() {
         //@formatter:off
           List<Order> orders = Query.type(Order.class)
@@ -331,5 +340,6 @@ public class QueryTest {
           
           assertTrue(orders.get(0).getOrderLines().size() > 0);
         //@formatter:on
+         
       }
 }
