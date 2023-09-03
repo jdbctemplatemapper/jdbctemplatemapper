@@ -1,5 +1,6 @@
 package io.github.jdbctemplatemapper.test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -27,6 +28,7 @@ import io.github.jdbctemplatemapper.model.Order6;
 import io.github.jdbctemplatemapper.model.Order7;
 import io.github.jdbctemplatemapper.model.OrderLine;
 import io.github.jdbctemplatemapper.model.OrderLine1;
+import io.github.jdbctemplatemapper.model.OrderLine7;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
@@ -317,5 +319,27 @@ public class QueryMergeTest {
         assertTrue("tony".equals(orders.get(0).getCustomer().getFirstName()));
         assertTrue("doe".equals(orders.get(1).getCustomer().getLastName()));
     }
+    
+    @Test
+    public void hasMany_nonDefaultNaming_success_test() {
+        //@formatter:off
+        List<Order7> orders = 
+                Query.type(Order7.class)
+        .where("orders.status = ?", "IN PROCESS")
+        .orderBy("orders.order_id")
+        .execute(jtm);       
+      //@formatter:on
+        
+      //@formatter:off
+        QueryMerge.type(Order7.class)
+        .hasMany(OrderLine7.class)
+        .joinColumn("order_id")
+        .populateProperty("orderLines")
+        .execute(jtm, orders);       
+      //@formatter:on
+        
+    }
+    
+    
     
 }
