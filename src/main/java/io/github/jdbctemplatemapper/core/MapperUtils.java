@@ -55,7 +55,7 @@ class MapperUtils {
      */
     
     @SuppressWarnings("rawtypes")
-    public Collection chunkTheCollection(Collection<?> collection, Integer chunkSize) {
+    public static Collection chunkTheCollection(Collection<?> collection, Integer chunkSize) {
         Assert.notNull(collection, "collection must not be null");
         AtomicInteger counter = new AtomicInteger();
         return collection.stream().filter(e -> e != null)

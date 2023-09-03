@@ -8,8 +8,12 @@ import java.util.Set;
 
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.util.Assert;
 
+import io.github.jdbctemplatemapper.exception.MapperException;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeFluent;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeHasMany;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeHasOne;
@@ -17,7 +21,7 @@ import io.github.jdbctemplatemapper.querymerge.IQueryMergeJoinColumn;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergePopulateProperty;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeType;
 
-public class QueryMerge<T> implements IQueryMergeFluent<T>{
+public class QueryMerge<T> implements IQueryMergeFluent<T> {
     private Class<T> ownerType;
     private RelationshipType relationshipType;
     private Class<?> relatedType;
@@ -46,15 +50,16 @@ public class QueryMerge<T> implements IQueryMergeFluent<T>{
         this.relatedType = relatedType;
         return this;
     }
+
     /**
-     * hasOne relationship:
-     *   The join column (the foreign key) is in the table of the owning model.
-     *   Example: Order hasOne Customer. The join column(foreign key) will be on the table order (owning model)
-     *   
-     *   
-     * hasMany relationship:
-     *   The join column( foreign key)  is in the table of the related model.
-     *   For example Order hasMay OrderLine then the join column will on the table order_line (related model)
+     * hasOne relationship: The join column (the foreign key) is in the table of the
+     * owning model. Example: Order hasOne Customer. The join column(foreign key)
+     * will be on the table order (owning model)
+     * 
+     * 
+     * hasMany relationship: The join column( foreign key) is in the table of the
+     * related model. For example Order hasMay OrderLine then the join column will
+     * on the table order_line (related model)
      *
      * @param joinColumn the join column
      */
@@ -73,13 +78,13 @@ public class QueryMerge<T> implements IQueryMergeFluent<T>{
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void execute(JdbcTemplateMapper jdbcTemplateMapper, List<T> mergeList) {
         Assert.notNull(jdbcTemplateMapper, "jdbcTemplateMapper cannot be null");
-        
+
         MappingHelper mappingHelper = jdbcTemplateMapper.getMappingHelper();
         TableMapping ownerTypeTableMapping = mappingHelper.getTableMapping(ownerType);
         TableMapping relatedTypeTableMapping = mappingHelper.getTableMapping(relatedType);
-        
-        QueryValidator.validate(jdbcTemplateMapper, ownerType, relationshipType, relatedType, joinColumn, propertyName, null, null,
-                null);
+
+        QueryValidator.validate(jdbcTemplateMapper, ownerType, relationshipType, relatedType, joinColumn, propertyName,
+                null, null, null);
 
         String joinPropertyName = relatedTypeTableMapping.getPropertyName(joinColumn);
 
@@ -91,7 +96,8 @@ public class QueryMerge<T> implements IQueryMergeFluent<T>{
             bwMergeList.add(bw);
         }
 
-        List relatedList = jdbcTemplateMapper.findByProperty(relatedType, joinPropertyName, params);
+        List<?> relatedList = getByPropertyMultipleValues(jdbcTemplateMapper, relatedType, joinPropertyName, params);
+
         List<BeanWrapper> bwRelatedList = new ArrayList<>(); // used to avoid excessive BeanWrapper creation
         for (Object obj : relatedList) {
             bwRelatedList.add(PropertyAccessorFactory.forBeanPropertyAccess(obj));
@@ -114,6 +120,50 @@ public class QueryMerge<T> implements IQueryMergeFluent<T>{
         }
     }
 
+    @SuppressWarnings("unchecked")
+    private <U> List<U> getByPropertyMultipleValues(JdbcTemplateMapper jtm, Class<U> clazz, String propertyName, Set<?> propertyValues) {
+
+        List<U> resultList = new ArrayList<>();
+        MappingHelper mappingHelper = jtm.getMappingHelper();
+        TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
+        String propColumnName = tableMapping.getColumnName(propertyName);
+        if (propColumnName == null) {
+            throw new MapperException(clazz.getSimpleName() + "." + propertyName
+                    + " is either invalid or does not have a corresponding column in database.");
+        }
+
+        if (MapperUtils.isEmpty(propertyValues)) {
+            return resultList;
+        }
+
+        // need to handle a null value in the set.
+        Set<?> localPropertyValues = new HashSet<>(propertyValues);
+        boolean hasNullInSet = localPropertyValues.remove(null);
+
+        String columnsSql = jtm.getColumnsSql(clazz);
+        String sql = "SELECT " + columnsSql + " FROM "
+                + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " WHERE ";
+
+        RowMapper<U> mapper = BeanPropertyRowMapper.newInstance(clazz);
+
+        // issue a IS NULL query to handle null in the set.
+        if (hasNullInSet) {
+            String sqlForNull = sql + propColumnName + " IS NULL";
+            resultList = jtm.getNamedParameterJdbcTemplate().query(sqlForNull, mapper);
+        }
+
+        if (MapperUtils.isNotEmpty(localPropertyValues)) {
+            sql += propColumnName + " IN (:propertyValues)";
+            Collection<List<?>> chunkedPropertyValues = MapperUtils.chunkTheCollection(propertyValues, 1);
+            for (List<?> propValues : chunkedPropertyValues) {
+                MapSqlParameterSource params = new MapSqlParameterSource("propertyValues", propValues);
+                resultList.addAll(jtm.getNamedParameterJdbcTemplate().query(sql, params, mapper));
+            }
+        }
+
+        return resultList;
+    }
+
     private Object getRelatedObject(List<BeanWrapper> relatedList, String propName, Object matchValue) {
         for (BeanWrapper bw : relatedList) {
             if (MapperUtils.equals(bw.getPropertyValue(propName), matchValue)) {
@@ -124,8 +174,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T>{
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private List getRelatedObjectList(List<BeanWrapper> relatedList, String joinPropertyName,
-            Object matchValue) {
+    private List getRelatedObjectList(List<BeanWrapper> relatedList, String joinPropertyName, Object matchValue) {
         List list = new ArrayList();
         for (BeanWrapper bw : relatedList) {
             if (MapperUtils.equals(bw.getPropertyValue(joinPropertyName), matchValue)) {
