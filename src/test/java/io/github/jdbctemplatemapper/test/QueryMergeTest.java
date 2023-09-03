@@ -36,15 +36,139 @@ public class QueryMergeTest {
     @Autowired
     private JdbcTemplateMapper jtm;
     
+    
+    @Test
+    public void hasOne_null_test() {
+        List<Order> orders = new ArrayList<>();
+        //@formatter:off  
+       Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+         QueryMerge.type(Order.class)
+         .hasOne(null)
+         .joinColumn("customer_id")
+         .populateProperty("customer")
+        .execute(jtm, orders);     
+       });
+       
+        //@formatter:on
+       assertTrue(exception.getMessage().contains("relatedType cannot be null"));
+    }
+    
+    @Test
+    public void hasMany_null_test() {
+        List<Order> orders = new ArrayList<>();
+        //@formatter:off  
+       Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+         QueryMerge.type(Order.class)
+         .hasMany(null)
+         .joinColumn("order_id")
+         .populateProperty("orderLines")
+        .execute(jtm, orders);     
+       });
+        //@formatter:on
+       assertTrue(exception.getMessage().contains("relatedType cannot be null"));
+    }
+    
+    @Test
+    public void hasOne_joinColumnNull_test() {
+        List<Order> orders = new ArrayList<>();
+        //@formatter:off  
+       Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+         QueryMerge.type(Order.class)
+         .hasOne(Customer.class)
+         .joinColumn(null)
+         .populateProperty("customer")
+        .execute(jtm, orders);     
+       });
+        //@formatter:on
+       assertTrue(exception.getMessage().contains("joinColumn cannot be null"));
+    }
+    
+    @Test
+    public void hasMany_joinColumnNull_test() {
+        List<Order> orders = new ArrayList<>();
+        //@formatter:off  
+       Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+         QueryMerge.type(Order.class)
+         .hasMany(OrderLine.class)
+         .joinColumn(null)
+         .populateProperty("orderLines")
+        .execute(jtm, orders);     
+       });
+        //@formatter:on
+       assertTrue(exception.getMessage().contains("joinColumn cannot be null"));
+    }
+    
+    @Test
+    public void hasOne_populatePropertyNull_test() {
+        List<Order> orders = new ArrayList<>();
+        //@formatter:off  
+       Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+         QueryMerge.type(Order.class)
+         .hasOne(Customer.class)
+         .joinColumn("customer_id")
+         .populateProperty(null)
+        .execute(jtm, orders);     
+       });
+        //@formatter:on
+       assertTrue(exception.getMessage().contains("propertyName cannot be null"));
+    }
+    
+    @Test
+    public void hasMany_populatePropertyNull_test() {
+        List<Order> orders = new ArrayList<>();
+        //@formatter:off  
+       Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+         QueryMerge.type(Order.class)
+         .hasMany(OrderLine.class)
+         .joinColumn("order_id")
+         .populateProperty(null)
+        .execute(jtm, orders);     
+       });
+        //@formatter:on
+       assertTrue(exception.getMessage().contains("propertyName cannot be null"));
+    }
+    
+    @Test
+    public void hasOne_jdbcTemplateMapperNull_test() {
+        List<Order> orders = new ArrayList<>();
+        //@formatter:off  
+       Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+         QueryMerge.type(Order.class)
+         .hasOne(Customer.class)
+         .joinColumn("customer_id")
+         .populateProperty("customer")
+        .execute(null, orders);     
+       });
+        //@formatter:on
+       assertTrue(exception.getMessage().contains("jdbcTemplateMapper cannot be null"));
+    }
+    
+    @Test
+    public void hasMany_jdbcTemplateMapperNull_test() {
+        List<Order> orders = new ArrayList<>();
+        //@formatter:off  
+       Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+         QueryMerge.type(Order.class)
+         .hasMany(OrderLine.class)
+         .joinColumn("order_id")
+         .populateProperty("orderLines")
+        .execute(null, orders);     
+       });
+        //@formatter:on
+       assertTrue(exception.getMessage().contains("jdbcTemplateMapper cannot be null"));
+    }
+    
+    
     @Test
     public void hasMany_joinTypeMismatch_test() {
+        List<Order5> orders = new ArrayList<>();
         //@formatter:off
         Exception exception = Assertions.assertThrows(QueryException.class, () -> {
-        Query.type(Order5.class)
+        QueryMerge.type(Order5.class)
         .hasMany(OrderLine1.class)
         .joinColumn("order_id")
         .populateProperty("orderLines")
-        .execute(jtm);       
+        .execute(jtm, orders);       
         });
         //@formatter:on     
         assertTrue(exception.getMessage()
@@ -53,13 +177,14 @@ public class QueryMergeTest {
     
     @Test
     public void hasOne_joinTypeMismatch_test() {
+        List<Order6> orders = new ArrayList<>();
         //@formatter:off
         Exception exception = Assertions.assertThrows(QueryException.class, () -> {
-        Query.type(Order6.class)
+        QueryMerge.type(Order6.class)
         .hasOne(Customer2.class)
         .joinColumn("customer_id")
         .populateProperty("customer")
-        .execute(jtm);       
+        .execute(jtm, orders);       
         });
         //@formatter:on     
         assertTrue(exception.getMessage()

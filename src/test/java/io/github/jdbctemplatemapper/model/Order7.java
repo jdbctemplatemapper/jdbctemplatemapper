@@ -14,11 +14,12 @@ import io.github.jdbctemplatemapper.annotation.UpdatedBy;
 import io.github.jdbctemplatemapper.annotation.UpdatedOn;
 import io.github.jdbctemplatemapper.annotation.Version;
 
-// has Customer2
+// non default naming
 @Table(name = "orders")
-public class Order6 {
+public class Order7 {
     @Id(type = IdType.AUTO_INCREMENT)
-    private Long orderId;
+    @Column(name = "order_id")
+    private Long id;
 
     @Column
     private LocalDateTime orderDate;
@@ -44,16 +45,16 @@ public class Order6 {
     @Version
     private Integer version;
 
-    private Customer2 customer;
+    private Customer7 customer;
 
-    private List<OrderLine> orderLines = new ArrayList<>();
+    private List<OrderLine7> orderLines = new ArrayList<>();
 
-    public Long getOrderId() {
-        return orderId;
+    public Long getId() {
+        return id;
     }
 
-    public void setOrderId(Long id) {
-        this.orderId = id;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public LocalDateTime getOrderDate() {
@@ -120,24 +121,16 @@ public class Order6 {
         this.version = version;
     }
 
-    public Customer2 getCustomer() {
+    public Customer7 getCustomer() {
         return customer;
     }
 
-    public void setCustomer(Customer2 customer) {
+    public void setCustomer(Customer7 customer) {
         this.customer = customer;
     }
 
-    public List<OrderLine> getOrderLines() {
+    public List<OrderLine7> getOrderLines() {
         return orderLines;
-    }
-
-    public void setOrderLines(List<OrderLine> orderLines) {
-        this.orderLines = orderLines;
-    }
-
-    public void addOrderLine(OrderLine orderLine) {
-        orderLines.add(orderLine);
     }
 
     public Person getPerson() {
@@ -150,3 +143,4 @@ public class Order6 {
 
     private Person person;
 }
+

@@ -1,33 +1,25 @@
 package io.github.jdbctemplatemapper.model;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 import io.github.jdbctemplatemapper.annotation.Column;
 import io.github.jdbctemplatemapper.annotation.CreatedBy;
 import io.github.jdbctemplatemapper.annotation.CreatedOn;
 import io.github.jdbctemplatemapper.annotation.Id;
-import io.github.jdbctemplatemapper.annotation.IdType;
 import io.github.jdbctemplatemapper.annotation.Table;
 import io.github.jdbctemplatemapper.annotation.UpdatedBy;
 import io.github.jdbctemplatemapper.annotation.UpdatedOn;
 import io.github.jdbctemplatemapper.annotation.Version;
 
-// has Customer2
-@Table(name = "orders")
-public class Order6 {
-    @Id(type = IdType.AUTO_INCREMENT)
-    private Long orderId;
-
+@Table(name = "product")
+public class Product7 {
+    @Id
+    @Column(name = "product_id")
+    private Integer id;
     @Column
-    private LocalDateTime orderDate;
-
+    private String name;
     @Column
-    private Integer customerId;
-
-    @Column
-    private String status;
+    private Double cost;
 
     @CreatedOn
     private LocalDateTime createdOn;
@@ -44,40 +36,28 @@ public class Order6 {
     @Version
     private Integer version;
 
-    private Customer2 customer;
-
-    private List<OrderLine> orderLines = new ArrayList<>();
-
-    public Long getOrderId() {
-        return orderId;
+    public Integer getId() {
+        return id;
     }
 
-    public void setOrderId(Long id) {
-        this.orderId = id;
+    public void setId(Integer id) {
+        this.id = id;
     }
 
-    public LocalDateTime getOrderDate() {
-        return orderDate;
+    public String getName() {
+        return name;
     }
 
-    public void setOrderDate(LocalDateTime orderDate) {
-        this.orderDate = orderDate;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public Integer getCustomerId() {
-        return customerId;
+    public Double getCost() {
+        return cost;
     }
 
-    public void setCustomerId(Integer customerId) {
-        this.customerId = customerId;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
+    public void setCost(Double cost) {
+        this.cost = cost;
     }
 
     public LocalDateTime getCreatedOn() {
@@ -119,34 +99,4 @@ public class Order6 {
     public void setVersion(Integer version) {
         this.version = version;
     }
-
-    public Customer2 getCustomer() {
-        return customer;
-    }
-
-    public void setCustomer(Customer2 customer) {
-        this.customer = customer;
-    }
-
-    public List<OrderLine> getOrderLines() {
-        return orderLines;
-    }
-
-    public void setOrderLines(List<OrderLine> orderLines) {
-        this.orderLines = orderLines;
-    }
-
-    public void addOrderLine(OrderLine orderLine) {
-        orderLines.add(orderLine);
-    }
-
-    public Person getPerson() {
-        return person;
-    }
-
-    public void setPerson(Person person) {
-        this.person = person;
-    }
-
-    private Person person;
 }

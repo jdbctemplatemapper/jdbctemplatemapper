@@ -13,7 +13,6 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.util.Assert;
 
-import io.github.jdbctemplatemapper.exception.MapperException;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeFluent;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeHasMany;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeHasOne;
@@ -155,9 +154,9 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         return resultList;
     }
 
-    private Object getRelatedObject(List<BeanWrapper> relatedList, String propName, Object matchValue) {
+    private Object getRelatedObject(List<BeanWrapper> relatedList, String matchPropertyName, Object matchValue) {
         for (BeanWrapper bw : relatedList) {
-            if (MapperUtils.equals(bw.getPropertyValue(propName), matchValue)) {
+            if (MapperUtils.equals(bw.getPropertyValue(matchPropertyName), matchValue)) {
                 return bw.getWrappedInstance();
             }
         }
@@ -165,10 +164,10 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private List getRelatedObjectList(List<BeanWrapper> relatedList, String joinPropertyName, Object matchValue) {
+    private List getRelatedObjectList(List<BeanWrapper> relatedList, String matchPropertyName, Object matchValue) {
         List list = new ArrayList();
         for (BeanWrapper bw : relatedList) {
-            if (MapperUtils.equals(bw.getPropertyValue(joinPropertyName), matchValue)) {
+            if (MapperUtils.equals(bw.getPropertyValue(matchPropertyName), matchValue)) {
                 list.add(bw.getWrappedInstance());
             }
         }

@@ -50,7 +50,7 @@ public class Query<T> implements IQueryFluent<T> {
     }
 
     public IQueryWhere<T> where(String whereClause, Object... params) {
-        Assert.notNull(whereClause, "WhereClause cannot be null");
+        Assert.notNull(whereClause, "whereClause cannot be null");
         this.whereClause = whereClause;
         this.whereParams = params;
         return this;

@@ -19,12 +19,15 @@ import io.github.jdbctemplatemapper.core.Query;
 import io.github.jdbctemplatemapper.exception.AnnotationException;
 import io.github.jdbctemplatemapper.exception.QueryException;
 import io.github.jdbctemplatemapper.model.Customer;
+import io.github.jdbctemplatemapper.model.Customer7;
 import io.github.jdbctemplatemapper.model.InvalidTableObject;
 import io.github.jdbctemplatemapper.model.NoTableAnnotationModel;
 import io.github.jdbctemplatemapper.model.Order;
 import io.github.jdbctemplatemapper.model.Order2;
 import io.github.jdbctemplatemapper.model.Order4;
+import io.github.jdbctemplatemapper.model.Order7;
 import io.github.jdbctemplatemapper.model.OrderLine;
+import io.github.jdbctemplatemapper.model.OrderLine7;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
@@ -35,6 +38,156 @@ public class QueryTest {
     @Autowired
     private JdbcTemplateMapper jtm;
 
+   
+    @Test
+    public void type_null_test() {
+        //@formatter:off  
+        Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+         Query.type(null)
+        .execute(jtm);     
+       });
+        //@formatter:on
+        assertTrue(exception.getMessage().contains("Type cannot be null"));
+    }
+    
+    @Test
+    public void where_null_test() {
+        //@formatter:off  
+        Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+         Query.type(Order.class)
+         .where(null)
+        .execute(jtm);     
+       });
+        //@formatter:on
+        assertTrue(exception.getMessage().contains("whereClause cannot be null"));
+    }
+    
+    @Test
+    public void orderBy_null_test() {
+        //@formatter:off  
+        Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+         Query.type(Order.class)
+         .orderBy(null)
+        .execute(jtm);     
+       });
+        //@formatter:on
+       assertTrue(exception.getMessage().contains("orderBy cannot be null"));
+    }
+    
+    @Test
+    public void hasOne_null_test() {
+        //@formatter:off  
+       Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+         Query.type(Order.class)
+         .hasOne(null)
+         .joinColumn("customer_id")
+         .populateProperty("customer")
+        .execute(jtm);     
+       });
+        //@formatter:on
+       assertTrue(exception.getMessage().contains("relatedType cannot be null"));
+    }
+    
+    @Test
+    public void hasMany_null_test() {
+        //@formatter:off  
+       Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+         Query.type(Order.class)
+         .hasMany(null)
+         .joinColumn("order_id")
+         .populateProperty("orderLines")
+        .execute(jtm);     
+       });
+        //@formatter:on
+       assertTrue(exception.getMessage().contains("relatedType cannot be null"));
+    }
+    
+    @Test
+    public void hasOne_joinColumnNull_test() {
+        //@formatter:off  
+       Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+         Query.type(Order.class)
+         .hasOne(Customer.class)
+         .joinColumn(null)
+         .populateProperty("customer")
+        .execute(jtm);     
+       });
+        //@formatter:on
+       assertTrue(exception.getMessage().contains("joinColumn cannot be null"));
+    }
+    
+    @Test
+    public void hasMany_joinColumnNull_test() {
+        //@formatter:off  
+       Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+         Query.type(Order.class)
+         .hasMany(OrderLine.class)
+         .joinColumn(null)
+         .populateProperty("orderLines")
+        .execute(jtm);     
+       });
+        //@formatter:on
+       assertTrue(exception.getMessage().contains("joinColumn cannot be null"));
+    }
+    
+    
+    @Test
+    public void hasOne_populatePropertyNull_test() {
+        //@formatter:off  
+       Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+         Query.type(Order.class)
+         .hasOne(Customer.class)
+         .joinColumn("customer_id")
+         .populateProperty(null)
+        .execute(jtm);     
+       });
+        //@formatter:on
+       assertTrue(exception.getMessage().contains("propertyName cannot be null"));
+    }
+    
+    @Test
+    public void hasMany_populatePropertyNull_test() {
+        //@formatter:off  
+       Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+         Query.type(Order.class)
+         .hasMany(OrderLine.class)
+         .joinColumn("order_id")
+         .populateProperty(null)
+        .execute(jtm);     
+       });
+        //@formatter:on
+       assertTrue(exception.getMessage().contains("propertyName cannot be null"));
+    }
+    
+    @Test
+    public void hasOne_jdbcTemplateMapperNull_test() {
+        //@formatter:off  
+       Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+         Query.type(Order.class)
+         .hasOne(Customer.class)
+         .joinColumn("customer_id")
+         .populateProperty("customer")
+        .execute(null);     
+       });
+        //@formatter:on
+       assertTrue(exception.getMessage().contains("jdbcTemplateMapper cannot be null"));
+    }
+    
+    @Test
+    public void hasMany_jdbcTemplateMapperNull_test() {
+        //@formatter:off  
+       Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+         Query.type(Order.class)
+         .hasMany(OrderLine.class)
+         .joinColumn("order_id")
+         .populateProperty("orderLines")
+        .execute(null);     
+       });
+        //@formatter:on
+       assertTrue(exception.getMessage().contains("jdbcTemplateMapper cannot be null"));
+    }
+    
+    
     @Test
     public void invalidType_test() {
         //@formatter:off  
@@ -229,15 +382,7 @@ public class QueryTest {
         assertTrue(orders.get(0).getOrderLines().size() == 2);
         assertEquals("IN PROCESS", orders.get(1).getStatus());
         assertTrue(orders.get(1).getOrderLines().size() == 1);
-        
-        
-        Query.type(Order.class)
-        .where("orders.status = ?", "IN PROCESS")
-        .orderBy("orders.order_id, order_line.order_line_id")
-        .hasMany(OrderLine.class) 
-        .joinColumn("order_id")
-        .populateProperty("orderLines") // list
-        .execute(jtm);
+       
         
       //@formatter:on
     }
@@ -342,4 +487,46 @@ public class QueryTest {
         //@formatter:on
          
       }
+   
+    
+    @Test
+    public void hasOne_nonDefaultNaming_success_test() {
+      //@formatter:off
+        List<Order7> orders = Query.type(Order7.class)
+             .where("orders.status = ?", "IN PROCESS")
+             .orderBy("orders.status    DESC")
+             .hasOne(Customer7.class)
+             .joinColumn("customer_id")
+             .populateProperty("customer")
+             .execute(jtm);
+        
+        assertTrue(orders.size() == 2);
+        assertTrue("tony".equals(orders.get(0).getCustomer().getFirstName()));
+        assertTrue("jane".equals(orders.get(1).getCustomer().getFirstName()));
+        
+        
+      //@formatter:on
+    }
+    
+    @Test
+    public void hasMany_NonDefaultNaming_success_test() {
+      //@formatter:off
+        List<Order7> orders = 
+        Query.type(Order7.class)
+        .where("orders.status = ?", "IN PROCESS")
+        .orderBy("orders.order_id, order_line.order_line_id")
+        .hasMany(OrderLine7.class) 
+        .joinColumn("order_id")
+        .populateProperty("orderLines") // list
+        .execute(jtm);
+
+        assertTrue(orders.size() == 2);
+        assertTrue(orders.get(0).getId() != null);
+        assertTrue(orders.get(0).getOrderLines().size() == 2);
+        assertTrue(orders.get(0).getOrderLines().get(0).getId() != null);
+        assertEquals("IN PROCESS", orders.get(1).getStatus());
+        assertTrue(orders.get(1).getOrderLines().size() == 1);
+        
+      //@formatter:on
+    }
 }

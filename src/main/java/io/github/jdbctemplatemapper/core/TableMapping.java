@@ -27,7 +27,7 @@ class TableMapping {
     // object property to database column mapping.
     private List<PropertyMapping> propertyMappings = new ArrayList<>();
 
-    // these 2 maps used for performance
+    // these maps used for performance
     private Map<String, PropertyMapping> columnNameMap = new HashMap<>();
     private Map<String, PropertyMapping> propertyNameMap = new HashMap<>();
 
@@ -57,7 +57,7 @@ class TableMapping {
                 if (propMapping.isUpdatedByAnnotation()) {
                     updatedByPropertyName = propMapping.getPropertyName();
                 }
-                // these 2 maps used for performance
+                // these maps used for performance
                 columnNameMap.put(propMapping.getColumnName(), propMapping);
                 propertyNameMap.put(propMapping.getPropertyName(), propMapping);
             }
@@ -68,6 +68,7 @@ class TableMapping {
         PropertyMapping propMapping = propertyNameMap.get(propertyName);
         return propMapping == null ? null : propMapping.getColumnName();
     }
+
 
     public String getPropertyName(String columnName) {
         PropertyMapping propMapping = columnNameMap.get(columnName);

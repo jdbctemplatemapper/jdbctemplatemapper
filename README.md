@@ -309,7 +309,7 @@ Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Produc
     @Column
     private String name;          // column name    
     @Column
-    private Double price;         // price
+    private Double price;         // column price
   }
   
   @Table(name="customer")
