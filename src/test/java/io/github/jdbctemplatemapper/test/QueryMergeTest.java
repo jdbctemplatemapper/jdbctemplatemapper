@@ -2,6 +2,7 @@ package io.github.jdbctemplatemapper.test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -63,7 +64,62 @@ public class QueryMergeTest {
         //@formatter:on     
         assertTrue(exception.getMessage()
                 .contains("Property type mismatch."));
-    }   
+    }  
+    
+    
+    @Test 
+    public void hasOne_mergeListNull_success(){
+     Assertions.assertDoesNotThrow(() -> {
+        QueryMerge.type(Order.class)
+        .hasOne(Customer.class)
+        .joinColumn("customer_id")
+        .populateProperty("customer")
+        .execute(jtm, null);
+      });
+    }
+    
+    @Test 
+    public void hasOne_mergeListEmpty_success(){
+        
+     List<Order> orders = new ArrayList<Order>();
+     Assertions.assertDoesNotThrow(() -> {
+        QueryMerge.type(Order.class)
+        .hasOne(Customer.class)
+        .joinColumn("customer_id")
+        .populateProperty("customer")
+        .execute(jtm, orders);
+      });
+     
+     assertTrue(orders.size() == 0); 
+     
+    }
+    
+    @Test 
+    public void hasMany_mergeListNull_success(){
+     Assertions.assertDoesNotThrow(() -> {
+        QueryMerge.type(Order.class)
+        .hasMany(OrderLine.class)
+        .joinColumn("order_id")
+        .populateProperty("orderLines")
+        .execute(jtm, null);
+      });
+    }
+    
+    @Test 
+    public void hasMany_mergeListEmpty_success(){
+        List<Order> orders = new ArrayList<Order>();
+     Assertions.assertDoesNotThrow(() -> {
+        QueryMerge.type(Order.class)
+        .hasMany(OrderLine.class)
+        .joinColumn("order_id")
+        .populateProperty("orderLines")
+        .execute(jtm, orders);
+      });
+     
+     assertTrue(orders.size() == 0); 
+     
+    }
+    
     
     @Test
     public void hasOne_success_test() {

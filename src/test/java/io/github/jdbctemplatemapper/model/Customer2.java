@@ -6,7 +6,7 @@ import io.github.jdbctemplatemapper.annotation.Column;
 import io.github.jdbctemplatemapper.annotation.Id;
 import io.github.jdbctemplatemapper.annotation.IdType;
 import io.github.jdbctemplatemapper.annotation.Table;
-
+// customerId is long
 @Table(name = "customer")
 public class Customer2 {
     @Id(type = IdType.AUTO_INCREMENT)

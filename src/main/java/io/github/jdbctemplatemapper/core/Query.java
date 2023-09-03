@@ -45,6 +45,7 @@ public class Query<T> implements IQueryFluent<T> {
     }
 
     public static <T> IQueryType<T> type(Class<T> type) {
+        Assert.notNull(type, "Type cannot be null");
         return new Query<T>(type);
     }
 

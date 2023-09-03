@@ -79,7 +79,9 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void execute(JdbcTemplateMapper jdbcTemplateMapper, List<T> mergeList) {
         Assert.notNull(jdbcTemplateMapper, "jdbcTemplateMapper cannot be null");
-
+        if (mergeList == null) {
+            return;
+        }
         MappingHelper mappingHelper = jdbcTemplateMapper.getMappingHelper();
         TableMapping ownerTypeTableMapping = mappingHelper.getTableMapping(ownerType);
         TableMapping relatedTypeTableMapping = mappingHelper.getTableMapping(relatedType);
@@ -116,52 +118,38 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
             } else if (relationshipType == RelationshipType.HAS_MANY) {
                 List matchedList = getRelatedObjectList(bwRelatedList, joinPropertyName,
                         bw.getPropertyValue(ownerTypeIdPropName));
-                Collection collection = (Collection) bw.getPropertyValue(propertyName);
-                collection.addAll(matchedList);
+                if (matchedList != null) {
+                    Collection collection = (Collection) bw.getPropertyValue(propertyName);
+                    collection.addAll(matchedList);
+                }
             }
         }
     }
 
     @SuppressWarnings("unchecked")
-    private <U> List<U> getByPropertyMultipleValues(JdbcTemplateMapper jtm, Class<U> clazz, String propertyName, Set<?> propertyValues) {
+    private <U> List<U> getByPropertyMultipleValues(JdbcTemplateMapper jtm, Class<U> clazz, String joinPropertyName,
+            Set<?> propertyValues) {
         List<U> resultList = new ArrayList<>();
         MappingHelper mappingHelper = jtm.getMappingHelper();
         TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
-        String propColumnName = tableMapping.getColumnName(propertyName);
-        if (propColumnName == null) {
-            throw new MapperException(clazz.getSimpleName() + "." + propertyName
-                    + " is either invalid or does not have a corresponding column in database.");
-        }
-
+        // already validated
+        String joinPropColumnName = tableMapping.getColumnName(joinPropertyName);
         if (MapperUtils.isEmpty(propertyValues)) {
             return resultList;
         }
 
-        // need to handle a null value in the set.
-        Set<?> localPropertyValues = new HashSet<>(propertyValues);
-        boolean hasNullInSet = localPropertyValues.remove(null);
-
-        String columnsSql = jtm.getColumnsSql(clazz);
-        String sql = "SELECT " + columnsSql + " FROM "
-                + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " WHERE ";
+        String sql = "SELECT " + jtm.getColumnsSql(clazz) + " FROM "
+                + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " WHERE " + joinPropColumnName
+                + " IN (:propertyValues)";
 
         RowMapper<U> mapper = BeanPropertyRowMapper.newInstance(clazz);
 
-        // issue a IS NULL query to handle null in the set.
-        if (hasNullInSet) {
-            String sqlForNull = sql + propColumnName + " IS NULL";
-            resultList = jtm.getNamedParameterJdbcTemplate().query(sqlForNull, mapper);
-        }
-
-        if (MapperUtils.isNotEmpty(localPropertyValues)) {
-            sql += propColumnName + " IN (:propertyValues)";          
-            // some databases have limits on number of entries in a 'IN' clause
-            // Chunk the collection of propertyValues and make multiple calls as needed.
-            Collection<List<?>> chunkedPropertyValues = MapperUtils.chunkTheCollection(propertyValues, inClauseChunkSize);
-            for (List<?> propValues : chunkedPropertyValues) {
-                MapSqlParameterSource params = new MapSqlParameterSource("propertyValues", propValues);
-                resultList.addAll(jtm.getNamedParameterJdbcTemplate().query(sql, params, mapper));
-            }
+        // some databases have limits on number of entries in a 'IN' clause
+        // Chunk the collection of propertyValues and make multiple calls as needed.
+        Collection<List<?>> chunkedPropertyValues = MapperUtils.chunkTheCollection(propertyValues, inClauseChunkSize);
+        for (List<?> propValues : chunkedPropertyValues) {
+            MapSqlParameterSource params = new MapSqlParameterSource("propertyValues", propValues);
+            resultList.addAll(jtm.getNamedParameterJdbcTemplate().query(sql, params, mapper));
         }
 
         return resultList;
@@ -184,6 +172,6 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
                 list.add(bw.getWrappedInstance());
             }
         }
-        return list;
+        return list.size() > 0 ? list : null;
     }
 }

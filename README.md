@@ -8,7 +8,7 @@
 ## Features
 
   1. One liners for CRUD.
-  2. Fluent style queries for relationships (hasOne, hasMany, hasMany through (many to many)
+  2. Fluent style queries for relationships (hasOne, hasMany, hasMany through (many to many)).
   3. Auto assign properties for models:
       * auto assign created on, updated on.
       * auto assign created by, updated by using an implementation of interface IRecordOperatorResolver.
