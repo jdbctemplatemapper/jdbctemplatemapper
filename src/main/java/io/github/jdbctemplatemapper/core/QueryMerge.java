@@ -22,6 +22,7 @@ import io.github.jdbctemplatemapper.querymerge.IQueryMergePopulateProperty;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeType;
 
 public class QueryMerge<T> implements IQueryMergeFluent<T> {
+    private int inClauseChunkSize = 100;
     private Class<T> ownerType;
     private RelationshipType relationshipType;
     private Class<?> relatedType;
@@ -86,6 +87,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         QueryValidator.validate(jdbcTemplateMapper, ownerType, relationshipType, relatedType, joinColumn, propertyName,
                 null, null, null);
 
+        // its already validated
         String joinPropertyName = relatedTypeTableMapping.getPropertyName(joinColumn);
 
         List<BeanWrapper> bwMergeList = new ArrayList<>(); // used to avoid excessive BeanWrapper creation
@@ -103,17 +105,17 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
             bwRelatedList.add(PropertyAccessorFactory.forBeanPropertyAccess(obj));
         }
 
-        String ownerTypeIdName = ownerTypeTableMapping.getIdPropertyName();
-        String relatedTypeIdName = relatedTypeTableMapping.getIdPropertyName();
+        String ownerTypeIdPropName = ownerTypeTableMapping.getIdPropertyName();
+        String relatedTypeIdPropName = relatedTypeTableMapping.getIdPropertyName();
 
         for (BeanWrapper bw : bwMergeList) {
             if (relationshipType == RelationshipType.HAS_ONE) {
-                Object relatedObj = getRelatedObject(bwRelatedList, relatedTypeIdName,
+                Object relatedObj = getRelatedObject(bwRelatedList, relatedTypeIdPropName,
                         bw.getPropertyValue(joinPropertyName));
                 bw.setPropertyValue(propertyName, relatedObj);
             } else if (relationshipType == RelationshipType.HAS_MANY) {
                 List matchedList = getRelatedObjectList(bwRelatedList, joinPropertyName,
-                        bw.getPropertyValue(ownerTypeIdName));
+                        bw.getPropertyValue(ownerTypeIdPropName));
                 Collection collection = (Collection) bw.getPropertyValue(propertyName);
                 collection.addAll(matchedList);
             }
@@ -122,7 +124,6 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
 
     @SuppressWarnings("unchecked")
     private <U> List<U> getByPropertyMultipleValues(JdbcTemplateMapper jtm, Class<U> clazz, String propertyName, Set<?> propertyValues) {
-
         List<U> resultList = new ArrayList<>();
         MappingHelper mappingHelper = jtm.getMappingHelper();
         TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
@@ -153,8 +154,10 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         }
 
         if (MapperUtils.isNotEmpty(localPropertyValues)) {
-            sql += propColumnName + " IN (:propertyValues)";
-            Collection<List<?>> chunkedPropertyValues = MapperUtils.chunkTheCollection(propertyValues, 1);
+            sql += propColumnName + " IN (:propertyValues)";          
+            // some databases have limits on number of entries in a 'IN' clause
+            // Chunk the collection of propertyValues and make multiple calls as needed.
+            Collection<List<?>> chunkedPropertyValues = MapperUtils.chunkTheCollection(propertyValues, inClauseChunkSize);
             for (List<?> propValues : chunkedPropertyValues) {
                 MapSqlParameterSource params = new MapSqlParameterSource("propertyValues", propValues);
                 resultList.addAll(jtm.getNamedParameterJdbcTemplate().query(sql, params, mapper));
