@@ -75,7 +75,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         return this;
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    //@SuppressWarnings({ "unchecked", "rawtypes" })
     public void execute(JdbcTemplateMapper jdbcTemplateMapper, List<T> mergeList) {
         Assert.notNull(jdbcTemplateMapper, "jdbcTemplateMapper cannot be null");
         if (mergeList == null) {
@@ -88,57 +88,27 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         QueryValidator.validate(jdbcTemplateMapper, ownerType, relationshipType, relatedType, joinColumn, propertyName,
                 null, null, null);
 
-        // its already validated
-        String joinPropertyName = relatedTypeTableMapping.getPropertyName(joinColumn);
-
-        List<BeanWrapper> bwMergeList = new ArrayList<>(); // used to avoid excessive BeanWrapper creation
-        Set params = new HashSet<>();
-        for (Object obj : mergeList) {
-            BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
-            params.add(bw.getPropertyValue(joinPropertyName));
-            bwMergeList.add(bw);
-        }
-
-        List<?> relatedList = getByPropertyMultipleValues(jdbcTemplateMapper, relatedType, joinPropertyName, params);
-
-        List<BeanWrapper> bwRelatedList = new ArrayList<>(); // used to avoid excessive BeanWrapper creation
-        for (Object obj : relatedList) {
-            bwRelatedList.add(PropertyAccessorFactory.forBeanPropertyAccess(obj));
-        }
-
-        String ownerTypeIdPropName = ownerTypeTableMapping.getIdPropertyName();
-        String relatedTypeIdPropName = relatedTypeTableMapping.getIdPropertyName();
-
-        for (BeanWrapper bw : bwMergeList) {
-            if (relationshipType == RelationshipType.HAS_ONE) {
-                Object relatedObj = getRelatedObject(bwRelatedList, relatedTypeIdPropName,
-                        bw.getPropertyValue(joinPropertyName));
-                bw.setPropertyValue(propertyName, relatedObj);
-            } else if (relationshipType == RelationshipType.HAS_MANY) {
-                List matchedList = getRelatedObjectList(bwRelatedList, joinPropertyName,
-                        bw.getPropertyValue(ownerTypeIdPropName));
-                if (matchedList != null) {
-                    Collection collection = (Collection) bw.getPropertyValue(propertyName);
-                    collection.addAll(matchedList);
-                }
-            }
+        if (relationshipType == RelationshipType.HAS_ONE) {
+            processHasOne(jdbcTemplateMapper, mergeList, ownerTypeTableMapping, relatedTypeTableMapping);
+        } else {
+            processHasMany(jdbcTemplateMapper, mergeList, ownerTypeTableMapping, relatedTypeTableMapping);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private <U> List<U> getByPropertyMultipleValues(JdbcTemplateMapper jtm, Class<U> clazz, String joinPropertyName,
+    private <U> List<U> getByPropertyMultipleValues(JdbcTemplateMapper jtm, Class<U> clazz, String propName,
             Set<?> propertyValues) {
         List<U> resultList = new ArrayList<>();
         MappingHelper mappingHelper = jtm.getMappingHelper();
         TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
         // already validated
-        String joinPropColumnName = tableMapping.getColumnName(joinPropertyName);
+        String propColumnName = tableMapping.getColumnName(propName);
         if (MapperUtils.isEmpty(propertyValues)) {
             return resultList;
         }
 
         String sql = "SELECT " + jtm.getColumnsSql(clazz) + " FROM "
-                + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " WHERE " + joinPropColumnName
+                + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " WHERE " + propColumnName
                 + " IN (:propertyValues)";
 
         RowMapper<U> mapper = BeanPropertyRowMapper.newInstance(clazz);
@@ -152,6 +122,68 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         }
 
         return resultList;
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private void processHasOne(JdbcTemplateMapper jtm, List<T> mergeList, TableMapping ownerTypeTableMapping,
+            TableMapping relatedTypeTableMapping) {
+
+        String joinPropertyName = ownerTypeTableMapping.getPropertyName(joinColumn);
+
+        List<BeanWrapper> bwMergeList = new ArrayList<>(); // used to avoid excessive BeanWrapper creation
+        Set params = new HashSet<>();
+        for (Object obj : mergeList) {
+            BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
+            params.add(bw.getPropertyValue(joinPropertyName));
+            bwMergeList.add(bw);
+        }
+
+        String relatedTypeIdPropName = relatedTypeTableMapping.getIdPropertyName();
+        List<?> relatedList = getByPropertyMultipleValues(jtm, relatedType, relatedTypeIdPropName, params);
+
+        List<BeanWrapper> bwRelatedList = new ArrayList<>(); // used to avoid excessive BeanWrapper creation
+        for (Object obj : relatedList) {
+            bwRelatedList.add(PropertyAccessorFactory.forBeanPropertyAccess(obj));
+        }
+
+        for (BeanWrapper bw : bwMergeList) {
+            Object relatedObj = getRelatedObject(bwRelatedList, relatedTypeIdPropName,
+                    bw.getPropertyValue(joinPropertyName));
+            bw.setPropertyValue(propertyName, relatedObj);
+        }
+
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private void processHasMany(JdbcTemplateMapper jtm, List<T> mergeList, TableMapping ownerTypeTableMapping,
+            TableMapping relatedTypeTableMapping) {
+
+        String joinPropertyName = relatedTypeTableMapping.getPropertyName(joinColumn);
+
+        String ownerTypeIdPropName = ownerTypeTableMapping.getIdPropertyName();
+
+        List<BeanWrapper> bwMergeList = new ArrayList<>(); // used to avoid excessive BeanWrapper creation
+        Set params = new HashSet<>();
+        for (Object obj : mergeList) {
+            BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
+            params.add(bw.getPropertyValue(ownerTypeIdPropName));
+            bwMergeList.add(bw);
+        }
+
+        List<?> relatedList = getByPropertyMultipleValues(jtm, relatedType, joinPropertyName, params);
+        List<BeanWrapper> bwRelatedList = new ArrayList<>(); // used to avoid excessive BeanWrapper creation
+        for (Object obj : relatedList) {
+            bwRelatedList.add(PropertyAccessorFactory.forBeanPropertyAccess(obj));
+        }
+        for (BeanWrapper bw : bwMergeList) {
+            List matchedList = getRelatedObjectList(bwRelatedList, joinPropertyName,
+                    bw.getPropertyValue(ownerTypeIdPropName));
+            if (matchedList != null) {
+                Collection collection = (Collection) bw.getPropertyValue(propertyName);
+                collection.addAll(matchedList);
+            }
+        }
+
     }
 
     private Object getRelatedObject(List<BeanWrapper> relatedList, String matchPropertyName, Object matchValue) {

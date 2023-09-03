@@ -1,10 +1,10 @@
 package io.github.jdbctemplatemapper.test;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -20,12 +20,13 @@ import io.github.jdbctemplatemapper.core.QueryMerge;
 import io.github.jdbctemplatemapper.exception.QueryException;
 import io.github.jdbctemplatemapper.model.Customer;
 import io.github.jdbctemplatemapper.model.Customer2;
+import io.github.jdbctemplatemapper.model.Customer7;
 import io.github.jdbctemplatemapper.model.Order;
 import io.github.jdbctemplatemapper.model.Order5;
 import io.github.jdbctemplatemapper.model.Order6;
+import io.github.jdbctemplatemapper.model.Order7;
 import io.github.jdbctemplatemapper.model.OrderLine;
 import io.github.jdbctemplatemapper.model.OrderLine1;
-import io.github.jdbctemplatemapper.model.Product;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
@@ -249,40 +250,33 @@ public class QueryMergeTest {
     @Test
     public void hasOne_success_test() {
         //@formatter:off
-        List<Order> orders = Query.type(Order.class)
+        List<Order> orders = 
+                Query.type(Order.class)
         .where("orders.status = ?", "IN PROCESS")
-        .orderBy("orders.status DESC")
-        .hasMany(OrderLine.class)
-        .joinColumn("order_id")
-        .populateProperty("orderLines")
+        .orderBy("orders.order_id DESC")
         .execute(jtm);       
       //@formatter:on
         
-        List<OrderLine> flatOrderLines = orders.stream()
-        .map(x -> x.getOrderLines())
-        .flatMap(list -> list.stream())
-        .collect(Collectors.toList());
-        
       //@formatter:off
-        QueryMerge.type(OrderLine.class)
-        .hasOne(Product.class)
-        .joinColumn("product_id")
-        .populateProperty("product")
-        .execute(jtm, flatOrderLines);       
+        QueryMerge.type(Order.class)
+        .hasOne(Customer.class)
+        .joinColumn("customer_id")
+        .populateProperty("customer")
+        .execute(jtm, orders);       
       //@formatter:on
+        
+        assertTrue("tony".equals(orders.get(0).getCustomer().getFirstName()));
+        assertTrue("doe".equals(orders.get(1).getCustomer().getLastName()));
     }
-    
     
     @Test
     public void hasMany_success_test() {
         //@formatter:off
-        List<Order> orders = Query.type(Order.class)
+        List<Order> orders = 
+                Query.type(Order.class)
         .where("orders.status = ?", "IN PROCESS")
-        .orderBy("orders.status DESC")
-        .hasOne(Customer.class)
-        .joinColumn("customer_id")
-        .populateProperty("customer")
-        .execute(jtm);       
+        .orderBy("orders.order_id DESC")
+        .execute(jtm);    
       //@formatter:on
         
       //@formatter:off
@@ -293,6 +287,35 @@ public class QueryMergeTest {
         .execute(jtm, orders);       
       //@formatter:on
         
+        assertTrue(orders.get(0).getOrderLines().size() == 2);
+        assertTrue(orders.get(1).getOrderLines().size() == 1);
+        
+        assertNotNull(orders.get(0).getOrderLines().get(0).getOrderLineId());
+        assertNotNull(orders.get(0).getOrderLines().get(1).getOrderLineId());
+        assertNotNull(orders.get(1).getOrderLines().get(0).getOrderLineId());
+        
+    }
+    
+    @Test
+    public void hasOne_nonDefaultNaming_success_test() {
+        //@formatter:off
+        List<Order7> orders = 
+                Query.type(Order7.class)
+        .where("orders.status = ?", "IN PROCESS")
+        .orderBy("orders.order_id")
+        .execute(jtm);       
+      //@formatter:on
+        
+      //@formatter:off
+        QueryMerge.type(Order7.class)
+        .hasOne(Customer7.class)
+        .joinColumn("customer_id")
+        .populateProperty("customer")
+        .execute(jtm, orders);       
+      //@formatter:on
+        
+        assertTrue("tony".equals(orders.get(0).getCustomer().getFirstName()));
+        assertTrue("doe".equals(orders.get(1).getCustomer().getLastName()));
     }
     
 }

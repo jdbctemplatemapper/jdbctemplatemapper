@@ -14,6 +14,7 @@ public class Customer7 {
     @Id(type = IdType.AUTO_INCREMENT)
     @Column(name = "customer_id")
     private Integer id;
+    
     @Column
     private String firstName;
     @Column

@@ -9,6 +9,7 @@ import io.github.jdbctemplatemapper.annotation.Table;
 public class OrderLine {
     @Id(type = IdType.AUTO_INCREMENT)
     private Integer orderLineId;
+    
     @Column
     private Long orderId;
     @Column

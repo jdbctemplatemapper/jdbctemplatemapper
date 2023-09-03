@@ -105,6 +105,7 @@ class MapperUtils {
         if (obj1 == null || obj2 == null) {
             return false;
         }
+        
         return obj1.equals(obj2);
     }
 }
