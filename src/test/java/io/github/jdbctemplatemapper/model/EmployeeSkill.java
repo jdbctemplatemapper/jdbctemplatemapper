@@ -19,6 +19,7 @@ public class EmployeeSkill {
     
     public EmployeeSkill(Integer employeeId, Integer skillId) {
         this.employeeId = employeeId;
+        this.skillId = skillId;
     }
         
     public Integer getId() {

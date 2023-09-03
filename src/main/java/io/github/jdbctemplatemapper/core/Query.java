@@ -76,14 +76,14 @@ public class Query<T> implements IQueryFluent<T> {
     }
 
     /**
-     * hasOne relationship:
-     *   The join column (the foreign key) is in the table of the owning model.
-     *   Example: Order hasOne Customer. The join column(foreign key) will be on the table order (of the owning model)
-     *   
-     *   
-     * hasMany relationship:
-     *   The join column( foreign key)  is in the table of the related model.
-     *   For example Order hasMay OrderLine then the join column will on the table order_line (of the related model)
+     * hasOne relationship: The join column (the foreign key) is in the table of the
+     * owning model. Example: Order hasOne Customer. The join column(foreign key)
+     * will be on the table order (of the owning model)
+     * 
+     * 
+     * hasMany relationship: The join column( foreign key) is in the table of the
+     * related model. For example Order hasMay OrderLine then the join column will
+     * on the table order_line (of the related model)
      *
      * @param joinColumn the join column
      */
@@ -116,20 +116,22 @@ public class Query<T> implements IQueryFluent<T> {
 
     public List<T> execute(JdbcTemplateMapper jdbcTemplateMapper) {
         Assert.notNull(jdbcTemplateMapper, "jdbcTemplateMapper cannot be null");
-        
+
         MappingHelper mappingHelper = jdbcTemplateMapper.getMappingHelper();
         TableMapping ownerTypeTableMapping = mappingHelper.getTableMapping(ownerType);
-        SelectMapper<?> ownerTypeSelectMapper = jdbcTemplateMapper.getSelectMapper(ownerType, ownerTypeTableMapping.getTableName());
-        
+        SelectMapper<?> ownerTypeSelectMapper = jdbcTemplateMapper.getSelectMapper(ownerType,
+                ownerTypeTableMapping.getTableName());
+
         TableMapping relatedTypeTableMapping = relatedType == null ? null : mappingHelper.getTableMapping(relatedType);
         // making it effectively final to be used in inner class ResultSetExtractor
-        SelectMapper<?> relatedTypeSelectMapper = relatedType == null ? null : jdbcTemplateMapper.getSelectMapper(relatedType, relatedTypeTableMapping.getTableName());
-  
+        SelectMapper<?> relatedTypeSelectMapper = relatedType == null ? null
+                : jdbcTemplateMapper.getSelectMapper(relatedType, relatedTypeTableMapping.getTableName());
+
         QueryValidator.validate(jdbcTemplateMapper, ownerType, relationshipType, relatedType, joinColumn, propertyName,
                 throughJoinTable, throughOwnerTypeJoinColumn, throughRelatedTypeJoinColumn);
 
         QueryValidator.validateWhereAndOrderBy(jdbcTemplateMapper, whereClause, orderBy, ownerType, relatedType);
-        
+
         String sql = "SELECT " + ownerTypeSelectMapper.getColumnsSql();
 
         String ownerTypeTableName = ownerTypeTableMapping.getTableName();
@@ -152,9 +154,9 @@ public class Query<T> implements IQueryFluent<T> {
                         + ownerTypeTableName + "." + ownerTypeTableMapping.getIdColumnName() + " = "
                         + relatedTypeTableName + "." + joinColumn;
             } else if (relationshipType == RelationshipType.HAS_MANY_THROUGH) {
-                sql += " LEFT JOIN " + mappingHelper.fullyQualifiedTableName(throughJoinTable) + " on " + ownerTypeTableName
-                        + "." + ownerTypeTableMapping.getIdColumnName() + " = " + throughJoinTable + "."
-                        + throughOwnerTypeJoinColumn + " JOIN "
+                sql += " LEFT JOIN " + mappingHelper.fullyQualifiedTableName(throughJoinTable) + " on "
+                        + ownerTypeTableName + "." + ownerTypeTableMapping.getIdColumnName() + " = " + throughJoinTable
+                        + "." + throughOwnerTypeJoinColumn + " LEFT JOIN "
                         + mappingHelper.fullyQualifiedTableName(relatedTypeTableName) + " on " + throughJoinTable + "."
                         + throughRelatedTypeJoinColumn + " = " + relatedTypeTableName + "."
                         + relatedTypeTableMapping.getIdColumnName();
@@ -183,11 +185,13 @@ public class Query<T> implements IQueryFluent<T> {
                             bw.setPropertyValue(propertyName, relatedModel);
                         } else if (RelationshipType.HAS_MANY == relationshipType
                                 || RelationshipType.HAS_MANY_THROUGH == relationshipType) {
-                            BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainModel);
-                            // the property has already been validated so we know it is a
-                            // collection that has been initialized
-                            Collection collection = (Collection) bw.getPropertyValue(propertyName);
-                            collection.add(relatedModel);
+                            if (relatedModel != null) {
+                                BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainModel);
+                                // the property has already been validated so we know it is a
+                                // collection that has been initialized
+                                Collection collection = (Collection) bw.getPropertyValue(propertyName);
+                                collection.add(relatedModel);
+                            }
                         }
                     }
                 }
@@ -204,11 +208,14 @@ public class Query<T> implements IQueryFluent<T> {
 
     private Object getModel(ResultSet rs, SelectMapper<?> selectMapper, Map<Object, Object> idToModelMap)
             throws SQLException {
+        Object model = null;
         Object id = rs.getObject(selectMapper.getResultSetModelIdColumnLabel());
-        Object model = idToModelMap.get(id);
-        if (model == null) {
-            model = selectMapper.buildModel(rs); // builds the model from resultSet
-            idToModelMap.put(id, model);
+        if (id != null) {
+            model = idToModelMap.get(id);
+            if (model == null) {
+                model = selectMapper.buildModel(rs); // builds the model from resultSet
+                idToModelMap.put(id, model);
+            }
         }
         return model;
     }
