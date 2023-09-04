@@ -30,13 +30,13 @@ public class QueryValidator {
 
         if (relatedType != null) {
             TableMapping relatedTypeTableMapping = mappingHelper.getTableMapping(relatedType);
-            Object mainModel = null;
+            Object ownerModel = null;
             try {
-                mainModel = ownerType.newInstance();
+                ownerModel = ownerType.newInstance();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-            BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainModel);
+            BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(ownerModel);
             if (!bw.isReadableProperty(propertyName)) {
                 throw new QueryException(
                         "Invalid property name " + propertyName + " for class " + ownerType.getSimpleName());
@@ -77,7 +77,7 @@ public class QueryValidator {
                             + " is of type " + relatedTypeIdPropertyType.getSimpleName());
                 }
             } else if (relationshipType == RelationshipType.HAS_MANY) {
-                validatePopulatePropertyForCollection(propertyName, mainModel, ownerType, relatedType);
+                validatePopulatePropertyForCollection(propertyName, ownerModel, ownerType, relatedType);
 
                 if (MapperUtils.isBlank(joinColumn)) {
                     throw new QueryException("joinColumn cannot be blank");
@@ -107,7 +107,7 @@ public class QueryValidator {
                             + " is of type " + ownerTypeIdPropertyType.getSimpleName());
                 }
             } else if (relationshipType == RelationshipType.HAS_MANY_THROUGH) {
-                validatePopulatePropertyForCollection(propertyName, mainModel, ownerType, relatedType);
+                validatePopulatePropertyForCollection(propertyName, ownerModel, ownerType, relatedType);
 
                 if (MapperUtils.isBlank(throughJoinTable)) {
                     throw new QueryException("throughJoinTable cannot be blank");
