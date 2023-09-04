@@ -33,13 +33,13 @@ public class TypeCheck {
     @Column
     private BigDecimal bigDecimalData;
 
-    //@Column
+    @Column
     private OffsetDateTime offsetDateTimeData; // mysql/oracle
 
-    @Column
+    //@Column
     private Boolean booleanVal; // postgres/mysql
 
-    @Column
+    //@Column
     private byte[] image; // postgres/mysql
 
     public Integer getId() {

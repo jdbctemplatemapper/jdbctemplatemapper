@@ -88,7 +88,25 @@ CREATE TABLE jdbctemplatemapper.no_id_object (
    something varchar(100)
 );
 
+CREATE TABLE jdbctemplatemapper.employee (
+	id NUMBER GENERATED ALWAYS AS IDENTITY,
+	first_name varchar(100) NOT NULL,
+	last_name varchar(100) NOT NULL,
+	CONSTRAINT employee_pk PRIMARY KEY (id)
+);
 
+CREATE TABLE jdbctemplatemapper.skill (
+	id NUMBER GENERATED ALWAYS AS IDENTITY,
+	name varchar(100) NOT NULL,
+	CONSTRAINT skill_pk PRIMARY KEY (id)
+);
+
+CREATE TABLE jdbctemplatemapper.employee_skill (
+	id NUMBER GENERATED ALWAYS AS IDENTITY,
+	employee_id integer,
+	skill_id integer,
+	CONSTRAINT employee_skill_pk PRIMARY KEY (id)
+);
 
 
 

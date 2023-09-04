@@ -123,14 +123,16 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
                 + jtm.getMappingHelper().fullyQualifiedTableName(relatedTypeTableMapping.getTableName()) + " WHERE "
                 + relatedTypeTableMapping.getIdColumnName() + " IN (:propertyValues)";
 
+        String relatedModelIdPropName = relatedTypeTableMapping.getIdPropertyName();
         Map<Object, Object> idToRelatedModelMap = new HashMap<>();
+        
         ResultSetExtractor<List<T>> rsExtractor = new ResultSetExtractor<List<T>>() {
             public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
                 while (rs.next()) {
-                    Object id = rs.getObject(selectMapper.getResultSetModelIdColumnLabel());
-                    if (id != null) {
-                        Object relatedModel = selectMapper.buildModel(rs);
-                        idToRelatedModelMap.put(id, relatedModel);
+                    Object relatedModel = selectMapper.buildModel(rs);
+                    if (relatedModel != null) {
+                        BeanWrapper bwRelatedModel = PropertyAccessorFactory.forBeanPropertyAccess(relatedModel);
+                        idToRelatedModelMap.put(bwRelatedModel.getPropertyValue(relatedModelIdPropName), relatedModel);
                     }
                 }
                 return null;
@@ -167,8 +169,10 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         for (Object obj : mergeList) {
             BeanWrapper bwOwnerModel = PropertyAccessorFactory.forBeanPropertyAccess(obj);
             Object idValue = bwOwnerModel.getPropertyValue(ownerTypeIdPropName);
-            params.add(idValue);
-            idToOwnerModelMap.put(idValue, bwOwnerModel);
+            if (idValue != null) {
+                params.add(idValue);
+                idToOwnerModelMap.put(idValue, bwOwnerModel);
+            }
         }
 
         if (MapperUtils.isEmpty(params)) {

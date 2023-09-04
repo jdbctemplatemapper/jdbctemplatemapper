@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -175,19 +176,19 @@ public class Query<T> implements IQueryFluent<T> {
         @SuppressWarnings({ "unchecked", "rawtypes" })
         ResultSetExtractor<List<T>> rsExtractor = new ResultSetExtractor<List<T>>() {
             public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
-                Map<Object, Object> idToOwnerModelMap = new HashMap<>();
+                Map<Object, Object> idToOwnerModelMap = new LinkedHashMap<>(); // to retain order
                 Map<Object, Object> idToRelatedModelMap = new HashMap<>();
                 while (rs.next()) {
-                    Object mainModel = getModel(rs, ownerTypeSelectMapper, idToOwnerModelMap);
+                    Object ownerModel = getModel(rs, ownerTypeSelectMapper, idToOwnerModelMap);
                     if (relatedType != null) {
                         Object relatedModel = getModel(rs, relatedTypeSelectMapper, idToRelatedModelMap);
                         if (RelationshipType.HAS_ONE == relationshipType) {
-                            BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainModel);
+                            BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(ownerModel);
                             bw.setPropertyValue(propertyName, relatedModel);
                         } else if (RelationshipType.HAS_MANY == relationshipType
                                 || RelationshipType.HAS_MANY_THROUGH == relationshipType) {
                             if (relatedModel != null) {
-                                BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainModel);
+                                BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(ownerModel);
                                 // the property has already been validated so we know it is a
                                 // collection that has been initialized
                                 Collection collection = (Collection) bw.getPropertyValue(propertyName);

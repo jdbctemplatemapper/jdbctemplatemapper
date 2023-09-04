@@ -463,7 +463,8 @@ public class QueryTest {
     @Test
     public void hasOne_withoutWhereAndOrderBy_success_test() {
       //@formatter:off
-        List<Order> orders = Query.type(Order.class)
+        List<Order> orders = 
+                Query.type(Order.class)
         .hasOne(Customer.class)
         .joinColumn("customer_id")
         .populateProperty("customer")

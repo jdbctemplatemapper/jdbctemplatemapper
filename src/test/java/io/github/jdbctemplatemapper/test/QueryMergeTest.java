@@ -266,8 +266,8 @@ public class QueryMergeTest {
         .execute(jtm, orders);       
       //@formatter:on
         
-        assertTrue("tony".equals(orders.get(0).getCustomer().getFirstName()));
-        assertTrue("doe".equals(orders.get(1).getCustomer().getLastName()));
+        assertTrue("jane".equals(orders.get(0).getCustomer().getFirstName()));
+        assertTrue("joe".equals(orders.get(1).getCustomer().getLastName()));
     }
     
     @Test
@@ -288,11 +288,11 @@ public class QueryMergeTest {
         .execute(jtm, orders);       
       //@formatter:on
         
-        assertTrue(orders.get(0).getOrderLines().size() == 2);
-        assertTrue(orders.get(1).getOrderLines().size() == 1);
+        assertTrue(orders.get(0).getOrderLines().size() == 1);
+        assertTrue(orders.get(1).getOrderLines().size() == 2);
         
         assertNotNull(orders.get(0).getOrderLines().get(0).getOrderLineId());
-        assertNotNull(orders.get(0).getOrderLines().get(1).getOrderLineId());
+        assertNotNull(orders.get(1).getOrderLines().get(1).getOrderLineId());
         assertNotNull(orders.get(1).getOrderLines().get(0).getOrderLineId());
         
     }

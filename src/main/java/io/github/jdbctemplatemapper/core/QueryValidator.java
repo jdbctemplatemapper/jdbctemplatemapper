@@ -173,8 +173,8 @@ public class QueryValidator {
                     if (arr.length == 2) {
                         String tmpTableName = arr[0];
                         String tmpColumnName = arr[1];
-                        if (validTableName(tmpTableName, ownerTypeTableName)) {
-                            if (!validTableColumn(ownerTypeTableMapping, tmpColumnName)) {
+                        if (isValidTableName(tmpTableName, ownerTypeTableName)) {
+                            if (!isValidTableColumn(ownerTypeTableMapping, tmpColumnName)) {
                                 throw new QueryException("orderBy() invalid column name " + tmpColumnName + " Table "
                                         + ownerTypeTableName + " for model "
                                         + ownerTypeTableMapping.getTableClass().getSimpleName()
@@ -182,8 +182,8 @@ public class QueryValidator {
                             }
                         } else {
                             if (relatedType != null) {
-                                if (validTableName(tmpTableName, relatedTypeTableName)) {
-                                    if (!validTableColumn(relatedTypeTableMapping, tmpColumnName)) {
+                                if (isValidTableName(tmpTableName, relatedTypeTableName)) {
+                                    if (!isValidTableColumn(relatedTypeTableMapping, tmpColumnName)) {
                                         throw new QueryException("orderBy() invalid column name " + tmpColumnName
                                                 + " Table " + relatedTypeTableName + " for model "
                                                 + relatedTypeTableMapping.getTableClass().getSimpleName()
@@ -252,11 +252,11 @@ public class QueryValidator {
         return null;
     }
 
-    private static boolean validTableName(String inputTableName, String tableName) {
-        return MapperUtils.equals(MapperUtils.toLowerCase(inputTableName), tableName);
+    private static boolean isValidTableName(String inputTableName, String tableName) {
+        return MapperUtils.equals(MapperUtils.toLowerCase(inputTableName), MapperUtils.toLowerCase(tableName));
     }
 
-    private static boolean validTableColumn(TableMapping tableMapping, String columnName) {
+    private static boolean isValidTableColumn(TableMapping tableMapping, String columnName) {
         if (tableMapping == null) {
             return true;
         }
