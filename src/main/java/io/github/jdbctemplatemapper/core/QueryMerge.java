@@ -69,7 +69,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
      */
     public IQueryMergeJoinColumn<T> joinColumn(String joinColumn) {
         Assert.notNull(joinColumn, "joinColumn cannot be null");
-        this.joinColumn = joinColumn;
+        this.joinColumn = MapperUtils.toLowerCase(joinColumn.trim());
         return this;
     }
 
@@ -79,26 +79,22 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         return this;
     }
 
-    // @SuppressWarnings({ "unchecked", "rawtypes" })
     public void execute(JdbcTemplateMapper jdbcTemplateMapper, List<T> mergeList) {
         Assert.notNull(jdbcTemplateMapper, "jdbcTemplateMapper cannot be null");
-        if (mergeList == null) {
-            return;
-        }
-        MappingHelper mappingHelper = jdbcTemplateMapper.getMappingHelper();
-        TableMapping ownerTypeTableMapping = mappingHelper.getTableMapping(ownerType);
-        TableMapping relatedTypeTableMapping = mappingHelper.getTableMapping(relatedType);
 
         QueryValidator.validate(jdbcTemplateMapper, ownerType, relationshipType, relatedType, joinColumn, propertyName,
                 null, null, null);
 
+        if (MapperUtils.isEmpty(mergeList)) {
+            return;
+        }
+
         if (relationshipType == RelationshipType.HAS_ONE) {
             processHasOne(jdbcTemplateMapper, mergeList, ownerType, relatedType);
         } else {
-            processHasMany(jdbcTemplateMapper, mergeList, ownerTypeTableMapping, relatedTypeTableMapping);
+            processHasMany(jdbcTemplateMapper, mergeList, ownerType, relatedType);
         }
     }
-
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private void processHasOne(JdbcTemplateMapper jtm, List<T> mergeList, Class<?> ownerType, Class<?> relatedType) {
@@ -108,14 +104,14 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         String joinPropertyName = ownerTypeTableMapping.getPropertyName(joinColumn);
 
         List<BeanWrapper> bwMergeList = new ArrayList<>(); // used to avoid excessive BeanWrapper creation
-
         Set queryParams = new HashSet<>();
-
         for (T obj : mergeList) {
             BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
             Object joinPropertyValue = bw.getPropertyValue(joinPropertyName);
-            queryParams.add(joinPropertyValue);
-            bwMergeList.add(bw);
+            if (joinPropertyValue != null) {
+                queryParams.add(joinPropertyValue);
+                bwMergeList.add(bw);
+            }
         }
 
         if (MapperUtils.isEmpty(queryParams)) {
@@ -123,13 +119,11 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         }
 
         SelectMapper<?> selectMapper = jtm.getSelectMapper(relatedType, relatedTypeTableMapping.getTableName());
-
         String sql = "SELECT " + selectMapper.getColumnsSql() + " FROM "
                 + jtm.getMappingHelper().fullyQualifiedTableName(relatedTypeTableMapping.getTableName()) + " WHERE "
                 + relatedTypeTableMapping.getIdColumnName() + " IN (:propertyValues)";
 
         Map<Object, Object> idToRelatedModelMap = new HashMap<>();
-
         ResultSetExtractor<List<T>> rsExtractor = new ResultSetExtractor<List<T>>() {
             public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
                 while (rs.next()) {
@@ -145,28 +139,29 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
 
         // some databases have limits on number of entries in a 'IN' clause
         // Chunk the collection of propertyValues and make multiple calls as needed.
-        Collection<List<?>> chunkedPropertyValues = MapperUtils.chunkTheCollection(queryParams,
-                inClauseChunkSize);
+        Collection<List<?>> chunkedPropertyValues = MapperUtils.chunkTheCollection(queryParams, inClauseChunkSize);
         for (List<?> propValues : chunkedPropertyValues) {
             MapSqlParameterSource params = new MapSqlParameterSource("propertyValues", propValues);
             jtm.getNamedParameterJdbcTemplate().query(sql, params, rsExtractor);
         }
-        
-        for(BeanWrapper bw : bwMergeList) {
+
+        for (BeanWrapper bw : bwMergeList) {
             // find the matching related model
             Object relatedModel = idToRelatedModelMap.get(bw.getPropertyValue(joinPropertyName));
-            if(relatedModel != null) {
+            if (relatedModel != null) {
                 bw.setPropertyValue(propertyName, relatedModel);
             }
         }
     }
-    
+
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    private void processHasMany(JdbcTemplateMapper jtm, List<T> mergeList, TableMapping ownerTypeTableMapping,
-            TableMapping relatedTypeTableMapping) {
-        
+    private void processHasMany(JdbcTemplateMapper jtm, List<T> mergeList, Class<?> ownerType, Class<?> relatedType) {
+
+        TableMapping ownerTypeTableMapping = jtm.getMappingHelper().getTableMapping(ownerType);
+        TableMapping relatedTypeTableMapping = jtm.getMappingHelper().getTableMapping(relatedType);
         String joinPropertyName = relatedTypeTableMapping.getPropertyName(joinColumn);
         String ownerTypeIdPropName = ownerTypeTableMapping.getIdPropertyName();
+
         Map<Object, BeanWrapper> idToOwnerModelMap = new HashMap<>();
         Set queryParams = new HashSet<>();
         for (Object obj : mergeList) {
@@ -175,16 +170,16 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
             queryParams.add(idValue);
             idToOwnerModelMap.put(idValue, bwOwnerModel);
         }
-        
+
         if (MapperUtils.isEmpty(queryParams)) {
             return;
         }
-        
+
         SelectMapper<?> selectMapper = jtm.getSelectMapper(relatedType, relatedTypeTableMapping.getTableName());
         String sql = "SELECT " + selectMapper.getColumnsSql() + " FROM "
                 + jtm.getMappingHelper().fullyQualifiedTableName(relatedTypeTableMapping.getTableName()) + " WHERE "
                 + joinColumn + " IN (:propertyValues)";
-        
+
         ResultSetExtractor<List<T>> rsExtractor = new ResultSetExtractor<List<T>>() {
             public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
                 while (rs.next()) {
@@ -192,7 +187,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
                     BeanWrapper bwRelatedModel = PropertyAccessorFactory.forBeanPropertyAccess(relatedModel);
                     Object joinPropertyValue = bwRelatedModel.getPropertyValue(joinPropertyName);
                     BeanWrapper bwOwnerModel = idToOwnerModelMap.get(joinPropertyValue);
-                    if(bwOwnerModel != null) {
+                    if (bwOwnerModel != null) {
                         // already validated so we know collection is initialized
                         Collection collection = (Collection) bwOwnerModel.getPropertyValue(propertyName);
                         collection.add(relatedModel);
@@ -201,11 +196,10 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
                 return null;
             }
         };
-        
+
         // some databases have limits on number of entries in a 'IN' clause
         // Chunk the collection of propertyValues and make multiple calls as needed.
-        Collection<List<?>> chunkedPropertyValues = MapperUtils.chunkTheCollection(queryParams,
-                inClauseChunkSize);
+        Collection<List<?>> chunkedPropertyValues = MapperUtils.chunkTheCollection(queryParams, inClauseChunkSize);
         for (List propValues : chunkedPropertyValues) {
             MapSqlParameterSource params = new MapSqlParameterSource("propertyValues", propValues);
             jtm.getNamedParameterJdbcTemplate().query(sql, params, rsExtractor);
