@@ -24,8 +24,8 @@ public class Order7 {
     @Column
     private LocalDateTime orderDate;
 
-    @Column
-    private Integer customerId;
+    @Column(name = "customer_id")
+    private Integer custId;
 
     @Column
     private String status;
@@ -65,12 +65,12 @@ public class Order7 {
         this.orderDate = orderDate;
     }
 
-    public Integer getCustomerId() {
-        return customerId;
+    public Integer getCustId() {
+        return custId;
     }
 
-    public void setCustomerId(Integer customerId) {
-        this.customerId = customerId;
+    public void setCustId(Integer custId) {
+        this.custId = custId;
     }
 
     public String getStatus() {

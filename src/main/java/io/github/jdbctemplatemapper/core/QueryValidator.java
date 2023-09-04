@@ -17,36 +17,36 @@ public class QueryValidator {
     private QueryValidator() {
     }
 
-    static void validate(JdbcTemplateMapper jtm, Class<?> mainClazz, RelationshipType relationshipType,
-            Class<?> relatedClazz, String joinColumn, String propertyName, String throughJoinTable,
-            String throughMainClazzJoinColumn, String throughRelatedClazzJoinColumn) {
+    static void validate(JdbcTemplateMapper jtm, Class<?> ownerType, RelationshipType relationshipType,
+            Class<?> relatedType, String joinColumn, String propertyName, String throughJoinTable,
+            String throughOwnerTypeJoinColumn, String throughRelatedTypeJoinColumn) {
         
         if(jtm == null) {
             throw new QueryException("JdbcTemplateMapper cannot be null");
         }
 
         MappingHelper mappingHelper = jtm.getMappingHelper();
-        TableMapping mainClazzTableMapping = mappingHelper.getTableMapping(mainClazz);
+        TableMapping ownerTypeTableMapping = mappingHelper.getTableMapping(ownerType);
 
-        if (relatedClazz != null) {
-            TableMapping relatedClazzTableMapping = mappingHelper.getTableMapping(relatedClazz);
+        if (relatedType != null) {
+            TableMapping relatedTypeTableMapping = mappingHelper.getTableMapping(relatedType);
             Object mainModel = null;
             try {
-                mainModel = mainClazz.newInstance();
+                mainModel = ownerType.newInstance();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
             BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainModel);
             if (!bw.isReadableProperty(propertyName)) {
                 throw new QueryException(
-                        "Invalid property name " + propertyName + " for class " + mainClazz.getSimpleName());
+                        "Invalid property name " + propertyName + " for class " + ownerType.getSimpleName());
             }
             if (relationshipType == RelationshipType.HAS_ONE) {
                 PropertyDescriptor pd = bw.getPropertyDescriptor(propertyName);
-                if (!relatedClazz.isAssignableFrom(pd.getPropertyType())) {
-                    throw new QueryException("property type conflict. property " + mainClazz.getSimpleName() + "."
+                if (!relatedType.isAssignableFrom(pd.getPropertyType())) {
+                    throw new QueryException("property type conflict. property " + ownerType.getSimpleName() + "."
                             + propertyName + " is of type " + pd.getPropertyType().getSimpleName()
-                            + " while type for hasOne relationship is " + relatedClazz.getSimpleName());
+                            + " while type for hasOne relationship is " + relatedType.getSimpleName());
                 }
 
                 if (MapperUtils.isBlank(joinColumn)) {
@@ -57,27 +57,27 @@ public class QueryValidator {
                 }
 
                 // hasOne join column is on main class
-                String joinColumnPropertyName = mainClazzTableMapping
+                String joinColumnPropertyName = ownerTypeTableMapping
                         .getPropertyName(MapperUtils.toLowerCase(joinColumn));
 
                 if (joinColumnPropertyName == null) {
                     throw new QueryException("Invalid join column " + joinColumn + " table "
-                            + mainClazzTableMapping.getTableName() + " for object " + mainClazz.getSimpleName()
+                            + ownerTypeTableMapping.getTableName() + " for object " + ownerType.getSimpleName()
                             + " does not have a column " + joinColumn);
                 }
 
-                Class<?> joinColumnPropertyType = mainClazzTableMapping.getPropertyType(joinColumnPropertyName);
-                Class<?> relatedClazzIdPropertyType = relatedClazzTableMapping.getIdPropertyMapping().getPropertyType();
+                Class<?> joinColumnPropertyType = ownerTypeTableMapping.getPropertyType(joinColumnPropertyName);
+                Class<?> relatedTypeIdPropertyType = relatedTypeTableMapping.getIdPropertyMapping().getPropertyType();
 
-                if (joinColumnPropertyType != relatedClazzIdPropertyType) {
+                if (joinColumnPropertyType != relatedTypeIdPropertyType) {
                     throw new QueryException("Property type mismatch. join column " + joinColumn + " property "
-                            + mainClazz.getSimpleName() + "." + joinColumnPropertyName + " is of type "
+                            + ownerType.getSimpleName() + "." + joinColumnPropertyName + " is of type "
                             + joinColumnPropertyType.getSimpleName() + " but the property being joined to "
-                            + relatedClazz.getSimpleName() + "." + relatedClazzTableMapping.getIdPropertyName()
-                            + " is of type " + relatedClazzIdPropertyType.getSimpleName());
+                            + relatedType.getSimpleName() + "." + relatedTypeTableMapping.getIdPropertyName()
+                            + " is of type " + relatedTypeIdPropertyType.getSimpleName());
                 }
             } else if (relationshipType == RelationshipType.HAS_MANY) {
-                validatePopulatePropertyForCollection(propertyName, mainModel, mainClazz, relatedClazz);
+                validatePopulatePropertyForCollection(propertyName, mainModel, ownerType, relatedType);
 
                 if (MapperUtils.isBlank(joinColumn)) {
                     throw new QueryException("joinColumn cannot be blank");
@@ -87,27 +87,27 @@ public class QueryValidator {
                 }
 
                 // hasMany() join column is on related class
-                String joinColumnPropertyName = relatedClazzTableMapping
+                String joinColumnPropertyName = relatedTypeTableMapping
                         .getPropertyName(MapperUtils.toLowerCase(joinColumn));
 
                 if (joinColumnPropertyName == null) {
                     throw new QueryException("Invalid join column " + joinColumn + " . table "
-                            + relatedClazzTableMapping.getTableName() + " for object " + relatedClazz.getSimpleName()
+                            + relatedTypeTableMapping.getTableName() + " for object " + relatedType.getSimpleName()
                             + " does not have a column " + joinColumn + " or that column has not been mapped");
                 }
 
-                Class<?> joinColumnPropertyType = relatedClazzTableMapping.getPropertyType(joinColumnPropertyName);
-                Class<?> mainClazzIdPropertyType = mainClazzTableMapping.getIdPropertyMapping().getPropertyType();
+                Class<?> joinColumnPropertyType = relatedTypeTableMapping.getPropertyType(joinColumnPropertyName);
+                Class<?> ownerTypeIdPropertyType = ownerTypeTableMapping.getIdPropertyMapping().getPropertyType();
 
-                if (joinColumnPropertyType != mainClazzIdPropertyType) {
+                if (joinColumnPropertyType != ownerTypeIdPropertyType) {
                     throw new QueryException("Property type mismatch. join column " + joinColumn + " property "
-                            + relatedClazz.getSimpleName() + "." + joinColumnPropertyName + " is of type "
+                            + relatedType.getSimpleName() + "." + joinColumnPropertyName + " is of type "
                             + joinColumnPropertyType.getSimpleName() + " but the property being joined to "
-                            + mainClazz.getSimpleName() + "." + mainClazzTableMapping.getIdPropertyName()
-                            + " is of type " + mainClazzIdPropertyType.getSimpleName());
+                            + ownerType.getSimpleName() + "." + ownerTypeTableMapping.getIdPropertyName()
+                            + " is of type " + ownerTypeIdPropertyType.getSimpleName());
                 }
             } else if (relationshipType == RelationshipType.HAS_MANY_THROUGH) {
-                validatePopulatePropertyForCollection(propertyName, mainModel, mainClazz, relatedClazz);
+                validatePopulatePropertyForCollection(propertyName, mainModel, ownerType, relatedType);
 
                 if (MapperUtils.isBlank(throughJoinTable)) {
                     throw new QueryException("throughJoinTable cannot be blank");
@@ -117,48 +117,50 @@ public class QueryValidator {
                     throw new QueryException("Invalid throughJoinTable " + throughJoinTable +" .It should have no prefixes");
                 }
 
-                if (MapperUtils.isBlank(throughMainClazzJoinColumn)) {
+                if (MapperUtils.isBlank(throughOwnerTypeJoinColumn)) {
                     throw new QueryException("Invalid throughJoinColumns. Cannot be blank");
 
                 }
-                if (throughMainClazzJoinColumn.contains(".")) {
-                    throw new QueryException("Invalid throughJoinColumns " + throughMainClazzJoinColumn + " .It should have no prefixes");
+                if (throughOwnerTypeJoinColumn.contains(".")) {
+                    throw new QueryException("Invalid throughJoinColumns " + throughOwnerTypeJoinColumn + " .It should have no prefixes");
                 }
 
-                if (MapperUtils.isBlank(throughRelatedClazzJoinColumn)) {
+                if (MapperUtils.isBlank(throughRelatedTypeJoinColumn)) {
                     throw new QueryException("Invalid throughJoinColumns. Cannot be blank");
                 }
-                if (throughRelatedClazzJoinColumn.contains(".")) {
-                    throw new QueryException("Invalid throughJoinColumns " + throughRelatedClazzJoinColumn + " .It should have no prefixes");
+                if (throughRelatedTypeJoinColumn.contains(".")) {
+                    throw new QueryException("Invalid throughJoinColumns " + throughRelatedTypeJoinColumn + " .It should have no prefixes");
                 }
             }
         }
     }
+    
+    
 
-    public static void validateWhereAndOrderBy(JdbcTemplateMapper jtm, String where, String orderBy, Class<?> mainClazz,
-            Class<?> relatedClazz) {
+    public static void validateWhereAndOrderBy(JdbcTemplateMapper jtm, String where, String orderBy, Class<?> ownerType,
+            Class<?> relatedType) {
 
         if (where != null) {
             if (MapperUtils.isBlank(where)) {
-                throw new QueryException("where() blank string is invalid. where() is an optional");
+                throw new QueryException("where() blank string is invalid. where() is optional");
             }
         }
 
         if (orderBy == null) {
             return;
         } else if (MapperUtils.isBlank(orderBy)) {
-            throw new QueryException("orderBy() blank string is invalid. orderBy() is an optional");
+            throw new QueryException("orderBy() blank string is invalid. orderBy() is optional");
         }
 
         MappingHelper mappingHelper = jtm.getMappingHelper();
-        TableMapping mainClazzTableMapping = mappingHelper.getTableMapping(mainClazz);
-        String mainClazzTableName = mainClazzTableMapping.getTableName();
+        TableMapping ownerTypeTableMapping = mappingHelper.getTableMapping(ownerType);
+        String ownerTypeTableName = ownerTypeTableMapping.getTableName();
 
-        TableMapping relatedClazzTableMapping = null;
-        String relatedClazzTableName = null;
-        if (relatedClazz != null) {
-            relatedClazzTableMapping = mappingHelper.getTableMapping(relatedClazz);
-            relatedClazzTableName = relatedClazzTableMapping.getTableName();
+        TableMapping relatedTypeTableMapping = null;
+        String relatedTypeTableName = null;
+        if (relatedType != null) {
+            relatedTypeTableMapping = mappingHelper.getTableMapping(relatedType);
+            relatedTypeTableName = relatedTypeTableMapping.getTableName();
         }
 
         String[] clauses = orderBy.split(",");
@@ -171,20 +173,20 @@ public class QueryValidator {
                     if (arr.length == 2) {
                         String tmpTableName = arr[0];
                         String tmpColumnName = arr[1];
-                        if (validTableName(tmpTableName, mainClazzTableName)) {
-                            if (!validTableColumn(mainClazzTableMapping, tmpColumnName)) {
+                        if (validTableName(tmpTableName, ownerTypeTableName)) {
+                            if (!validTableColumn(ownerTypeTableMapping, tmpColumnName)) {
                                 throw new QueryException("orderBy() invalid column name " + tmpColumnName + " Table "
-                                        + mainClazzTableName + " for model "
-                                        + mainClazzTableMapping.getTableClass().getSimpleName()
+                                        + ownerTypeTableName + " for model "
+                                        + ownerTypeTableMapping.getTableClass().getSimpleName()
                                         + " either does not have column " + tmpColumnName + " or is not mapped.");
                             }
                         } else {
-                            if (relatedClazz != null) {
-                                if (validTableName(tmpTableName, relatedClazzTableName)) {
-                                    if (!validTableColumn(relatedClazzTableMapping, tmpColumnName)) {
+                            if (relatedType != null) {
+                                if (validTableName(tmpTableName, relatedTypeTableName)) {
+                                    if (!validTableColumn(relatedTypeTableMapping, tmpColumnName)) {
                                         throw new QueryException("orderBy() invalid column name " + tmpColumnName
-                                                + " Table " + relatedClazzTableName + " for model "
-                                                + relatedClazzTableMapping.getTableClass().getSimpleName()
+                                                + " Table " + relatedTypeTableName + " for model "
+                                                + relatedTypeTableMapping.getTableClass().getSimpleName()
                                                 + " either does not have column " + tmpColumnName
                                                 + " or is not mapped.");
                                     }
@@ -210,29 +212,29 @@ public class QueryValidator {
         }
     }
 
-    private static void validatePopulatePropertyForCollection(String propertyName, Object mainModel, Class<?> mainClazz,
-            Class<?> relatedClazz) {
-        BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(mainModel);
+    private static void validatePopulatePropertyForCollection(String propertyName, Object ownerModel, Class<?> ownerType,
+            Class<?> relatedType) {
+        BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(ownerModel);
         PropertyDescriptor pd = bw.getPropertyDescriptor(propertyName);
         if (!Collection.class.isAssignableFrom(pd.getPropertyType())) {
-            throw new QueryException("property " + mainClazz.getSimpleName() + "." + propertyName
+            throw new QueryException("property " + ownerType.getSimpleName() + "." + propertyName
                     + " is not a collection. hasMany() relationship requires it to be a collection");
         }
-        Class<?> propertyType = getGenericTypeOfCollection(mainModel, propertyName);
+        Class<?> propertyType = getGenericTypeOfCollection(ownerModel, propertyName);
         if (propertyType == null) {
             throw new QueryException("Collections without generic types are not supported. Collection for property "
-                    + mainClazz.getSimpleName() + "." + propertyName + " does not have a generic type.");
+                    + ownerType.getSimpleName() + "." + propertyName + " does not have a generic type.");
         }
-        if (!propertyType.isAssignableFrom(relatedClazz)) {
+        if (!propertyType.isAssignableFrom(relatedType)) {
             throw new QueryException(
-                    "Collection generic type and hasMany relationship type mismatch. " + mainClazz.getSimpleName() + "."
+                    "Collection generic type and hasMany relationship type mismatch. " + ownerType.getSimpleName() + "."
                             + propertyName + " has generic type " + propertyType.getSimpleName()
-                            + " while the hasMany relationship is of type " + relatedClazz.getSimpleName());
+                            + " while the hasMany relationship is of type " + relatedType.getSimpleName());
         }
         Object value = bw.getPropertyValue(propertyName);
         if (value == null) {
             throw new QueryException("Query only works with initialized collections. Collection property "
-                    + mainClazz.getSimpleName() + "." + propertyName + " is not initialized");
+                    + ownerType.getSimpleName() + "." + propertyName + " is not initialized");
         }
     }
 
@@ -250,8 +252,8 @@ public class QueryValidator {
         return null;
     }
 
-    private static boolean validTableName(String modelClazzTableName, String tableName) {
-        return MapperUtils.toLowerCase(modelClazzTableName).equals(tableName);
+    private static boolean validTableName(String inputTableName, String tableName) {
+        return MapperUtils.equals(MapperUtils.toLowerCase(inputTableName), tableName);
     }
 
     private static boolean validTableColumn(TableMapping tableMapping, String columnName) {
