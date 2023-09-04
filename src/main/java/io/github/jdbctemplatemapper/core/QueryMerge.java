@@ -104,17 +104,17 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         String joinPropertyName = ownerTypeTableMapping.getPropertyName(joinColumn);
 
         List<BeanWrapper> bwMergeList = new ArrayList<>(); // used to avoid excessive BeanWrapper creation
-        Set queryParams = new HashSet<>();
+        Set params = new HashSet<>();
         for (T obj : mergeList) {
             BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
             Object joinPropertyValue = bw.getPropertyValue(joinPropertyName);
             if (joinPropertyValue != null) {
-                queryParams.add(joinPropertyValue);
+                params.add(joinPropertyValue);
                 bwMergeList.add(bw);
             }
         }
 
-        if (MapperUtils.isEmpty(queryParams)) {
+        if (MapperUtils.isEmpty(params)) {
             return;
         }
 
@@ -139,10 +139,10 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
 
         // some databases have limits on number of entries in a 'IN' clause
         // Chunk the collection of propertyValues and make multiple calls as needed.
-        Collection<List<?>> chunkedPropertyValues = MapperUtils.chunkTheCollection(queryParams, inClauseChunkSize);
+        Collection<List<?>> chunkedPropertyValues = MapperUtils.chunkTheCollection(params, inClauseChunkSize);
         for (List<?> propValues : chunkedPropertyValues) {
-            MapSqlParameterSource params = new MapSqlParameterSource("propertyValues", propValues);
-            jtm.getNamedParameterJdbcTemplate().query(sql, params, rsExtractor);
+            MapSqlParameterSource queryParams = new MapSqlParameterSource("propertyValues", propValues);
+            jtm.getNamedParameterJdbcTemplate().query(sql, queryParams, rsExtractor);
         }
 
         for (BeanWrapper bw : bwMergeList) {
@@ -163,15 +163,15 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         String ownerTypeIdPropName = ownerTypeTableMapping.getIdPropertyName();
 
         Map<Object, BeanWrapper> idToOwnerModelMap = new HashMap<>();
-        Set queryParams = new HashSet<>();
+        Set params = new HashSet<>();
         for (Object obj : mergeList) {
             BeanWrapper bwOwnerModel = PropertyAccessorFactory.forBeanPropertyAccess(obj);
             Object idValue = bwOwnerModel.getPropertyValue(ownerTypeIdPropName);
-            queryParams.add(idValue);
+            params.add(idValue);
             idToOwnerModelMap.put(idValue, bwOwnerModel);
         }
 
-        if (MapperUtils.isEmpty(queryParams)) {
+        if (MapperUtils.isEmpty(params)) {
             return;
         }
 
@@ -199,10 +199,10 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
 
         // some databases have limits on number of entries in a 'IN' clause
         // Chunk the collection of propertyValues and make multiple calls as needed.
-        Collection<List<?>> chunkedPropertyValues = MapperUtils.chunkTheCollection(queryParams, inClauseChunkSize);
+        Collection<List<?>> chunkedPropertyValues = MapperUtils.chunkTheCollection(params, inClauseChunkSize);
         for (List propValues : chunkedPropertyValues) {
-            MapSqlParameterSource params = new MapSqlParameterSource("propertyValues", propValues);
-            jtm.getNamedParameterJdbcTemplate().query(sql, params, rsExtractor);
+            MapSqlParameterSource queryParams = new MapSqlParameterSource("propertyValues", propValues);
+            jtm.getNamedParameterJdbcTemplate().query(sql, queryParams, rsExtractor);
         }
     }
 }
