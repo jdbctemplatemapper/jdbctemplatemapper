@@ -38,18 +38,25 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         this.ownerType = type;
     }
 
+    /**
+     * The type being merged with the new query. The execute method will populate a
+     * list of this type with the relationship
+     * 
+     * @param type The type
+     * @return interface with the next methods in the chain
+     */
     public static <T> IQueryMergeType<T> type(Class<T> type) {
         Assert.notNull(type, "Type cannot be null");
         return new QueryMerge<T>(type);
     }
 
-    public IQueryMergeHasMany<T> hasMany(Class<?> relatedType) {
-        Assert.notNull(relatedType, "relatedType cannot be null");
-        this.relationshipType = RelationshipType.HAS_MANY;
-        this.relatedType = relatedType;
-        return this;
-    }
-
+    /**
+     * hasOne relationship
+     *
+     * @param hasOne related type
+     * 
+     * @return interface with the next methods in the chain
+     */
     public IQueryMergeHasOne<T> hasOne(Class<?> relatedType) {
         Assert.notNull(relatedType, "relatedType cannot be null");
         this.relationshipType = RelationshipType.HAS_ONE;
@@ -58,40 +65,86 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     }
 
     /**
-     * hasOne relationship: The join column (the foreign key) is in the table of the
-     * owning model. Example: Order hasOne Customer. The join column(foreign key)
-     * will be on the table order (owning model)
-     * 
-     * 
-     * hasMany relationship: The join column( foreign key) is in the table of the
-     * related model. For example Order hasMay OrderLine then the join column will
-     * on the table order_line (related model)
+     * hasMany relationship
      *
-     * @param joinColumn the join column
+     * @param hasMany related type
+     * 
+     * @return interface with the next methods in the chain
+     */
+    public IQueryMergeHasMany<T> hasMany(Class<?> relatedType) {
+        Assert.notNull(relatedType, "relatedType cannot be null");
+        this.relationshipType = RelationshipType.HAS_MANY;
+        this.relatedType = relatedType;
+        return this;
+    }
+
+    /**
+     * Join column for hasOne relationship. The join column (the foreign key) is in
+     * the table of the owning model. Example: Order hasOne Customer. The join
+     * column(foreign key) will be on the table order (of the owning model)
+     * 
+     * The join column should not have a table prefix.
+     *
+     * @param joinColumnOwningSide the join column on the owning side (with no table
+     *                             prefix)
+     * 
+     * @return interface with the next methods in the chain
      */
     public IQueryMergeJoinColumnOwningSide<T> joinColumnOwningSide(String joinColumnOwningSide) {
         Assert.notNull(joinColumnOwningSide, "joinColumnOwningSide cannot be null");
         this.joinColumnOwningSide = MapperUtils.toLowerCase(joinColumnOwningSide.trim());
         return this;
     }
-    
+
+    /**
+     * Join column for hasMany relationship: The join column (the foreign key) is in
+     * the table of the many side. Example: Order hasMany OrderLine. The join column
+     * will be on the table order_line (the many side)
+     *
+     * The join column should not have a table prefix.
+     *
+     * @param joinColumnManySide the join column on the many side (with no table
+     *                           prefix)
+     * 
+     * @return interface with the next methods in the chain
+     */
     public IQueryMergeJoinColumnManySide<T> joinColumnManySide(String joinColumnManySide) {
         Assert.notNull(joinColumnManySide, "joinColumnManySide cannot be null");
         this.joinColumnManySide = MapperUtils.toLowerCase(joinColumnManySide.trim());
         return this;
     }
 
+    /**
+     * The relationship property that needs to be populated on the owning type
+     * 
+     * @param propertyName name of property that needs to be populated
+     * @return interface with the next methods in the chain
+     */
     public IQueryMergePopulateProperty<T> populateProperty(String propertyName) {
         Assert.notNull(propertyName, "propertyName cannot be null");
         this.propertyName = propertyName;
         return this;
     }
 
+    /**
+     * The query executes an sql 'IN' clause to get the related side objects and
+     * merges those with the objects in the mergeList
+     * 
+     * If the 'IN' clause gets large (ie your mergeList is large) multiple 'IN'
+     * clause queries will be issues behind the scenes since some databases have
+     * limits on size of 'IN' clause.
+     * 
+     * @param jdbcTemplateMapper the jdbcTemplateMapper
+     * @param mergeList          a list of objects of owning type.
+     * @return List<T> a list of the owning type with its relationship property
+     *         populated
+     */
+
     public void execute(JdbcTemplateMapper jdbcTemplateMapper, List<T> mergeList) {
         Assert.notNull(jdbcTemplateMapper, "jdbcTemplateMapper cannot be null");
 
-        QueryValidator.validate(jdbcTemplateMapper, ownerType, relationshipType, relatedType, joinColumnOwningSide, joinColumnManySide, propertyName,
-                null, null, null);
+        QueryValidator.validate(jdbcTemplateMapper, ownerType, relationshipType, relatedType, joinColumnOwningSide,
+                joinColumnManySide, propertyName, null, null, null);
 
         if (MapperUtils.isEmpty(mergeList)) {
             return;
@@ -148,9 +201,11 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
 
         // some databases have limits on number of entries in a 'IN' clause
         // Chunk the collection of propertyValues and make multiple calls as needed.
-        Collection<List<?>> chunkedJoinPropertyOwningSideValues = MapperUtils.chunkTheCollection(params, inClauseChunkSize);
+        Collection<List<?>> chunkedJoinPropertyOwningSideValues = MapperUtils.chunkTheCollection(params,
+                inClauseChunkSize);
         for (List<?> joinPropertyOwningSideValues : chunkedJoinPropertyOwningSideValues) {
-            MapSqlParameterSource queryParams = new MapSqlParameterSource("joinPropertyOwningSideValues", joinPropertyOwningSideValues);
+            MapSqlParameterSource queryParams = new MapSqlParameterSource("joinPropertyOwningSideValues",
+                    joinPropertyOwningSideValues);
             jtm.getNamedParameterJdbcTemplate().query(sql, queryParams, rsExtractor);
         }
 
