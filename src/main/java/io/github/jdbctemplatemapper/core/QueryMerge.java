@@ -189,7 +189,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         SelectMapper<?> selectMapper = jtm.getSelectMapper(relatedType, relatedTypeTableMapping.getTableName());
         String sql = "SELECT " + selectMapper.getColumnsSql() + " FROM "
                 + jtm.getMappingHelper().fullyQualifiedTableName(relatedTypeTableMapping.getTableName()) + " WHERE "
-                + joinColumnManySide + " IN (:mainTypeIds)";
+                + joinColumnManySide + " IN (:ownerTypeIds)";
 
         ResultSetExtractor<List<T>> rsExtractor = new ResultSetExtractor<List<T>>() {
             public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
@@ -210,9 +210,9 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
 
         // some databases have limits on number of entries in a 'IN' clause
         // Chunk the collection of propertyValues and make multiple calls as needed.
-        Collection<List<?>> chunkedMainTypeIds = MapperUtils.chunkTheCollection(params, inClauseChunkSize);
-        for (List mainTypeIds : chunkedMainTypeIds) {
-            MapSqlParameterSource queryParams = new MapSqlParameterSource("mainTypeIds", mainTypeIds);
+        Collection<List<?>> chunkedOwnerTypeIds = MapperUtils.chunkTheCollection(params, inClauseChunkSize);
+        for (List ownerTypeIds : chunkedOwnerTypeIds) {
+            MapSqlParameterSource queryParams = new MapSqlParameterSource("ownerTypeIds", ownerTypeIds);
             jtm.getNamedParameterJdbcTemplate().query(sql, queryParams, rsExtractor);
         }
     }
