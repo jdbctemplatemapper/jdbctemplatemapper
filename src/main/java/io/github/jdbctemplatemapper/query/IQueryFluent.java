@@ -4,7 +4,7 @@ package io.github.jdbctemplatemapper.query;
  * 
  * @author ajoseph
  *
- * @param <T>
+ * @param <T> the type
  */
 public interface IQueryFluent<T> extends IQueryType<T>, IQueryWhere<T>, IQueryOrderBy<T>, IQueryHasMany<T>, IQueryHasOne<T>,
 IQueryJoinColumnOwningSide<T>, IQueryJoinColumnManySide<T>,IQueryThroughJoinTable<T>, IQueryThroughJoinColumns<T>, IQueryPopulateProperty<T>,

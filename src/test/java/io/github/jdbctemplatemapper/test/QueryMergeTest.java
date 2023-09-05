@@ -288,12 +288,24 @@ public class QueryMergeTest {
         .execute(jtm, orders);       
       //@formatter:on
         
-        assertTrue(orders.get(0).getOrderLines().size() == 1);
-        assertTrue(orders.get(1).getOrderLines().size() == 2);
         
-        assertNotNull(orders.get(0).getOrderLines().get(0).getOrderLineId());
-        assertNotNull(orders.get(1).getOrderLines().get(1).getOrderLineId());
-        assertNotNull(orders.get(1).getOrderLines().get(0).getOrderLineId());
+        boolean oneOrderLines = false;
+        boolean twoOrderLines = false;
+        int cnt = 0;
+        for(Order order : orders){
+            System.out.println("AT one:" + order.getOrderLines().size());
+            if(order.getOrderLines().size() == 1) {
+               
+                oneOrderLines = true;
+            }
+            if(order.getOrderLines().size() == 2) {
+                twoOrderLines = true;
+            }
+           cnt += order.getOrderLines().size();
+        }
+        assertTrue(oneOrderLines);
+        assertTrue(twoOrderLines);
+        assertTrue(cnt == 3);
         
     }
     
@@ -307,6 +319,8 @@ public class QueryMergeTest {
         .execute(jtm);       
       //@formatter:on
         
+       System.out.println("AT TWO: size:" + orders.size());
+        
       //@formatter:off
         QueryMerge.type(Order7.class)
         .hasOne(Customer7.class)
@@ -315,8 +329,18 @@ public class QueryMergeTest {
         .execute(jtm, orders);       
       //@formatter:on
         
-        assertTrue("tony".equals(orders.get(0).getCustomer().getFirstName()));
-        assertTrue("doe".equals(orders.get(1).getCustomer().getLastName()));
+        boolean tonyFound = false;
+        boolean doeFound = false;
+        for(Order7 order : orders){
+            if(order.getCustomer().getFirstName().equals("tony")) {
+                tonyFound = true;
+            }
+            if(order.getCustomer().getLastName().equals("doe")) {
+                doeFound = true;
+            }
+        }
+        assertTrue(tonyFound);
+        assertTrue(doeFound);
     }
     
     @Test

@@ -26,9 +26,17 @@ import io.github.jdbctemplatemapper.query.IQueryThroughJoinColumns;
 import io.github.jdbctemplatemapper.query.IQueryThroughJoinTable;
 import io.github.jdbctemplatemapper.query.IQueryType;
 import io.github.jdbctemplatemapper.query.IQueryWhere;
+
 /**
- * Fluent style queries for relationships hasOne, hasMany, hasMany through (many to many).
+ * <pre>
+ * Fluent style queries for relationships hasOne, hasMany, hasMany through (many
+ * to many).
  *
+ * See <a href=
+ * "https://github.com/jdbctemplatemapper/jdbctemplatemapper#querying-relationships">Querying
+ * relationships</a> for more info
+ * </pre>
+ * 
  * @author ajoseph
  */
 public class Query<T> implements IQueryFluent<T> {
@@ -54,7 +62,8 @@ public class Query<T> implements IQueryFluent<T> {
     /**
      * The type being queried. The execute() method will return a list of this type.
      * 
-     * @param type The type
+     * @param <T>  The type
+     * @param type the type
      * @return interface with the next methods in the chain
      */
     public static <T> IQueryType<T> type(Class<T> type) {
@@ -100,7 +109,7 @@ public class Query<T> implements IQueryFluent<T> {
     /**
      * The hasOne relationship
      *
-     * @param hasOne related type
+     * @param relatedType the related type
      * 
      * @return interface with the next methods in the chain
      */
@@ -115,7 +124,7 @@ public class Query<T> implements IQueryFluent<T> {
      * The hasMany relationship. The 'populateProperty' should be a collection and
      * has to be initialized.
      *
-     * @param hasMany related type
+     * @param relatedType the related type
      * 
      * @return interface with the next methods in the chain
      */
@@ -150,7 +159,7 @@ public class Query<T> implements IQueryFluent<T> {
      * will be on the table order_line (the many side)
      *
      * The join column should not have a table prefix.
-     *
+     * 
      * @param joinColumnManySide the join column on the many side (with no table
      *                           prefix)
      * 
@@ -197,7 +206,7 @@ public class Query<T> implements IQueryFluent<T> {
      * <p>
      * For hasMany() this property has to be an initialized collection (cannot be
      * null) and the generic type should match the hasMany related type.
-     * <p>
+     * </p>
      * For hasOne this property has to be the same type as hasOne related type
      * 
      * @param propertyName name of property that needs to be populated
@@ -213,7 +222,7 @@ public class Query<T> implements IQueryFluent<T> {
      * Execute the query using the jdbcTemplateMapper
      * 
      * @param jdbcTemplateMapper the jdbcTemplateMapper
-     * @return List<T> a list of the owning type with its relationship property
+     * @return List a list of the owning type with its relationship property
      *         populated
      */
     public List<T> execute(JdbcTemplateMapper jdbcTemplateMapper) {

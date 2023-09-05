@@ -8,7 +8,7 @@ import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
  * 
  * @author ajoseph
  *
- * @param <T>
+ * @param <T> the type
  */
 public interface IQueryType<T> {
     IQueryWhere<T> where(String wherClause, Object ...params); 

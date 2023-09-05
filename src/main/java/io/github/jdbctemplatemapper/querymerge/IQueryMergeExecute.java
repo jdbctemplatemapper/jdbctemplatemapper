@@ -8,7 +8,7 @@ import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
  * 
  * @author ajoseph
  *
- * @param <T>
+ * @param <T> the type
  */
 public interface IQueryMergeExecute<T> {
     void execute(JdbcTemplateMapper jdbcTemplateMapper, List<T> mergeList);

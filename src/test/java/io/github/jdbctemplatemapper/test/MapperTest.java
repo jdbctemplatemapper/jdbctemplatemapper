@@ -196,6 +196,11 @@ public class MapperTest {
         assertEquals(2, order.getVersion()); // version incremented
         assertTrue(order.getUpdatedOn().isAfter(prevUpdatedOn));
         assertEquals("tester", order.getUpdatedBy());
+        
+        
+        // reset status for later tests to work. Refactor
+        order.setStatus("IN PROCESS");
+        jtm.update(order);
     }
 
     @Test

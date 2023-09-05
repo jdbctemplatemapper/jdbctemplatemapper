@@ -4,7 +4,7 @@ package io.github.jdbctemplatemapper.query;
  * 
  * @author ajoseph
  *
- * @param <T>
+ * @param <T> the type
  */
 public interface IQueryHasOne<T>{
     IQueryJoinColumnOwningSide<T> joinColumnOwningSide(String joinColumnOwningSide);
