@@ -26,7 +26,11 @@ import io.github.jdbctemplatemapper.query.IQueryThroughJoinColumns;
 import io.github.jdbctemplatemapper.query.IQueryThroughJoinTable;
 import io.github.jdbctemplatemapper.query.IQueryType;
 import io.github.jdbctemplatemapper.query.IQueryWhere;
-
+/**
+ * Fluent style queries for relationships hasOne, hasMany, hasMany through (many to many).
+ *
+ * @author ajoseph
+ */
 public class Query<T> implements IQueryFluent<T> {
     private Class<T> ownerType;
     private String whereClause;
@@ -60,8 +64,8 @@ public class Query<T> implements IQueryFluent<T> {
 
     /**
      * The where clause for the type. If you provide a where clause always
-     * parameterize it to avoid SQL injection. Columns should always be prefixed by
-     * table name.
+     * parameterize it to avoid SQL injection. Columns should always be prefixed
+     * with table name.
      * 
      * @param whereClause the whereClause for the type. It has to be prefixed with
      *                    table name.
@@ -76,10 +80,10 @@ public class Query<T> implements IQueryFluent<T> {
     }
 
     /**
-     * The orderBy clause for the query. Columns should always be prefixed by table
-     * name. If you are querying relationships (hasOne, hasMany, hasMany through)
-     * both the owning side and related side columns can be used in the orderBy
-     * clause
+     * The orderBy clause for the query. Columns should always be prefixed with
+     * table name. If you are querying relationships (hasOne, hasMany, hasMany
+     * through) both the owning side and related side columns can be used in the
+     * orderBy clause
      * 
      * orderBy is strictly validated to protect against SQL injection.
      * 
@@ -94,7 +98,7 @@ public class Query<T> implements IQueryFluent<T> {
     }
 
     /**
-     * hasOne relationship
+     * The hasOne relationship
      *
      * @param hasOne related type
      * 
@@ -108,7 +112,8 @@ public class Query<T> implements IQueryFluent<T> {
     }
 
     /**
-     * hasMany relationship
+     * The hasMany relationship. The 'populateProperty' should be a collection and
+     * has to be initialized.
      *
      * @param hasMany related type
      * 
@@ -140,9 +145,9 @@ public class Query<T> implements IQueryFluent<T> {
     }
 
     /**
-     * Join column for hasMany relationship: The join column (the foreign key) is in the table of the
-     * many side. Example: Order hasMany OrderLine. The join column will be on the
-     * table order_line (the many side)
+     * Join column for hasMany relationship: The join column (the foreign key) is in
+     * the table of the many side. Example: Order hasMany OrderLine. The join column
+     * will be on the table order_line (the many side)
      *
      * The join column should not have a table prefix.
      *
@@ -188,7 +193,12 @@ public class Query<T> implements IQueryFluent<T> {
     }
 
     /**
-     * The relationship property that needs to be populated on the owning type
+     * The relationship property that needs to be populated on the owning type.
+     * <p>
+     * For hasMany() this property has to be an initialized collection (cannot be
+     * null) and the generic type should match the hasMany related type.
+     * <p>
+     * For hasOne this property has to be the same type as hasOne related type
      * 
      * @param propertyName name of property that needs to be populated
      * @return interface with the next methods in the chain

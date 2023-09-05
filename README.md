@@ -8,7 +8,7 @@
 ## Features
 
   1. One liners for CRUD.
-  2. Fluent style queries for relationships (hasOne, hasMany, hasMany through (many to many)).
+  2. Fluent style queries for relationships hasOne, hasMany, hasMany through (many to many).
   3. Auto assign properties for models:
       * auto assign created on, updated on.
       * auto assign created by, updated by using an implementation of interface IRecordOperatorResolver.
@@ -229,14 +229,13 @@ The QueryMerge class allows the results of a previous query to be merged with re
 ### fluent style queries
 
 ```
-// this is equivalent to jdbcTemplate.findAll(Order.class);
+// Gets all orders. This is equivalent to jdbcTemplateMapper.findAll(Order.class);
 List<Order> orders = Query.type(Order.class)
                           .execute(jdbcTemplateMapper);
 
 // with where and orderBy
 // orderBy() is strictly validated and is protected against SQL injection.
-// where() has minimal validation since it is difficult to validate so make sure it is parameterized to prevent SQL injection.
-
+// make sure the whereClause is parameterized to prevent SQL injection.
 List<Order> orders = 
   Query.type(Order.class)
        .where("orders.status = ?", "IN PROCESS") // always prefix where() columns with table
@@ -249,7 +248,7 @@ List<Order> orders =
        .where("orders.status = ?", "IN PROCESS") // always prefix where() columns with table
        .orderBy("orders.id")  // always prefix orderBy() columns with table
        .hasOne(Customer.class) // related Class
-       .joinColumn("customer_id") // hasOne() join column is on owning side. No prefixes.
+       .joinColumnOwningSide("customer_id") // hasOne() join column is on owning side. No prefixes.
        .populateProperty("customer") // property on owning class to populate
        .execute(jdbcTemplateMapper); // execute with jdbcTemplateMapper
               
@@ -259,13 +258,24 @@ List<Order> orders =
        .where("orders.status = ?", "IN PROCESS") // always prefix where() columns with table
        .orderBy("orders.id, order_line.id")  // owning and related table columns can be used
        .hasMany(OrderLine.class) // related class
-       .joinColumn("order_id") // hasMany() join column will be on the related side. No prefixes
+       .joinColumnManySide("order_id") // hasMany() join column will be on the many side. No prefixes
        .populateProperty("orderLines") // the property to populate on the owning class
-       .execute(jdbcTemplateMapper); // execute with jdbcTemplateMapper                     
+       .execute(jdbcTemplateMapper); // execute with jdbcTemplateMapper   
+       
+ // employees hasMany skills through associated table 'employee_skill'
+ List<Employee> employees =  
+   Query.type(Employee.class) // owning class
+        .hasMany(Skill.class) // related class
+        .throughJoinTable("employee_skill") // the associated table
+        .throughJoinColumns("employee_id", "skill_id")  // note order of join columns. owning join column is first
+        .populateProperty("skills") // property on owning class to populate
+        .execute(jdbcTemplateMapper);                  
          
 ```
 
 ### fluent queries with QueryMerge
+
+Query api allows only one relationship to be queried. If multiple relationships need to be queried and its okay to issue multiple queries use QueryMerge. It merges the results from a query with results from another query.
 
 Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Product
 
@@ -330,7 +340,7 @@ Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Produc
          .where(orders.status = ?, "IN PROCESS") // always prefix columns with table name.
          .orderBy("orders.order_date DESC, order_line.id") // always prefix columns with table name.
          .hasMany(OrderLine.class) // the related class. Order hasMany OrderLine
-         .joinColumn("order_id") // for hasMany() the join column will be on the related side
+         .joinColumnManySide("order_id") // the join column will be on the many side. No prefixes
          .populateProperty("orderLines") // the property to populate on the owning class
          .execute(jdbcTemplateMapper); // execute with the jdbcTemplateMapper
  
@@ -343,7 +353,7 @@ Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Produc
   ``` 
    QueryMerge.type(Order.class) // owning class
              .hasOne(Customer.class) // related class
-             .joinColumn("customer_id") // for hasOne() the join column in on the owning side
+             .joinColumnOwningSide("customer_id") // the join column in on the owning side table. No prefixes
              .populateProperty("customer") // the property to populate on the owning class
              .execute(jdbcTemplateMapper, orders); // merges the query results with orders list
      
@@ -363,7 +373,7 @@ Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Produc
                  
    QueryMerge.type(OrderLine.class) // owning class
              .hasOne(Product.class) // related class
-             .joinColumn("product_id") // for hasOne the join column in on the order_line table
+             .joinColumnOwningSide("product_id") // the join column in on the  owning side table. No prefixes
              .populateProperty("product") // the property to populate on the owning class
              .execute(jdbcTemplateMapper, allOrderLines); // merges the query results with orderLines
              

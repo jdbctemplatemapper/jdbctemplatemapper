@@ -12,7 +12,7 @@ import org.springframework.util.StringUtils;
 
 import io.github.jdbctemplatemapper.exception.QueryException;
 
-public class QueryValidator {
+class QueryValidator {
 
     private QueryValidator() {
     }

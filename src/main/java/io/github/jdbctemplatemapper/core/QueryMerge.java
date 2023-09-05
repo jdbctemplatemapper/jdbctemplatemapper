@@ -25,6 +25,15 @@ import io.github.jdbctemplatemapper.querymerge.IQueryMergeJoinColumnOwningSide;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergePopulateProperty;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeType;
 
+/**
+ * QueryMerge allows query results to be merged with results of another query
+ * 
+ * <pre>
+ * Query api allows only one relationship to be queried. QueryMerge allows
+ * separate query results to be merged
+ *
+ * @author ajoseph
+ */
 public class QueryMerge<T> implements IQueryMergeFluent<T> {
     private int inClauseChunkSize = 100;
     private Class<T> ownerType;
@@ -115,7 +124,12 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     }
 
     /**
-     * The relationship property that needs to be populated on the owning type
+     * The relationship property that needs to be populated on the owning type.
+     * <p>
+     * For hasMany() this property has to be an initialized collection (cannot be
+     * null) and the generic type should match the hasMany related type.
+     * <p>
+     * For hasOne this property has to be the same type as hasOne related type
      * 
      * @param propertyName name of property that needs to be populated
      * @return interface with the next methods in the chain
@@ -129,9 +143,9 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     /**
      * The query executes an sql 'IN' clause to get the related side objects and
      * merges those with the objects in the mergeList
-     * 
-     * If the 'IN' clause gets large (ie your mergeList is large) multiple 'IN'
-     * clause queries will be issues behind the scenes since some databases have
+     * <pre>
+     * If the 'IN' clause gets large (ie the mergeList is large) multiple 'IN'
+     * clause queries will be issued to get the records since some databases have
      * limits on size of 'IN' clause.
      * 
      * @param jdbcTemplateMapper the jdbcTemplateMapper
