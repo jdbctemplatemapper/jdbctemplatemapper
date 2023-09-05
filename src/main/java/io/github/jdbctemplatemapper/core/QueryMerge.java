@@ -20,7 +20,8 @@ import org.springframework.util.Assert;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeFluent;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeHasMany;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeHasOne;
-import io.github.jdbctemplatemapper.querymerge.IQueryMergeJoinColumn;
+import io.github.jdbctemplatemapper.querymerge.IQueryMergeJoinColumnManySide;
+import io.github.jdbctemplatemapper.querymerge.IQueryMergeJoinColumnOwningSide;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergePopulateProperty;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeType;
 
@@ -30,7 +31,8 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     private RelationshipType relationshipType;
     private Class<?> relatedType;
     private String propertyName; // propertyName on ownerType that needs to be populated
-    private String joinColumn;
+    private String joinColumnOwningSide;
+    private String joinColumnManySide;
 
     private QueryMerge(Class<T> type) {
         this.ownerType = type;
@@ -67,9 +69,15 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
      *
      * @param joinColumn the join column
      */
-    public IQueryMergeJoinColumn<T> joinColumn(String joinColumn) {
-        Assert.notNull(joinColumn, "joinColumn cannot be null");
-        this.joinColumn = MapperUtils.toLowerCase(joinColumn.trim());
+    public IQueryMergeJoinColumnOwningSide<T> joinColumnOwningSide(String joinColumnOwningSide) {
+        Assert.notNull(joinColumnOwningSide, "joinColumnOwningSide cannot be null");
+        this.joinColumnOwningSide = MapperUtils.toLowerCase(joinColumnOwningSide.trim());
+        return this;
+    }
+    
+    public IQueryMergeJoinColumnManySide<T> joinColumnManySide(String joinColumnManySide) {
+        Assert.notNull(joinColumnManySide, "joinColumnManySide cannot be null");
+        this.joinColumnManySide = MapperUtils.toLowerCase(joinColumnManySide.trim());
         return this;
     }
 
@@ -82,7 +90,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     public void execute(JdbcTemplateMapper jdbcTemplateMapper, List<T> mergeList) {
         Assert.notNull(jdbcTemplateMapper, "jdbcTemplateMapper cannot be null");
 
-        QueryValidator.validate(jdbcTemplateMapper, ownerType, relationshipType, relatedType, joinColumn, propertyName,
+        QueryValidator.validate(jdbcTemplateMapper, ownerType, relationshipType, relatedType, joinColumnOwningSide, joinColumnManySide, propertyName,
                 null, null, null);
 
         if (MapperUtils.isEmpty(mergeList)) {
@@ -101,7 +109,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
 
         TableMapping ownerTypeTableMapping = jtm.getMappingHelper().getTableMapping(ownerType);
         TableMapping relatedTypeTableMapping = jtm.getMappingHelper().getTableMapping(relatedType);
-        String joinPropertyName = ownerTypeTableMapping.getPropertyName(joinColumn);
+        String joinPropertyName = ownerTypeTableMapping.getPropertyName(joinColumnOwningSide);
 
         List<BeanWrapper> bwMergeList = new ArrayList<>(); // used to avoid excessive BeanWrapper creation
         Set params = new HashSet<>();
@@ -161,7 +169,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
 
         TableMapping ownerTypeTableMapping = jtm.getMappingHelper().getTableMapping(ownerType);
         TableMapping relatedTypeTableMapping = jtm.getMappingHelper().getTableMapping(relatedType);
-        String joinPropertyName = relatedTypeTableMapping.getPropertyName(joinColumn);
+        String joinPropertyName = relatedTypeTableMapping.getPropertyName(joinColumnManySide);
         String ownerTypeIdPropName = ownerTypeTableMapping.getIdPropertyName();
 
         Map<Object, BeanWrapper> idToOwnerModelMap = new HashMap<>();
@@ -182,7 +190,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         SelectMapper<?> selectMapper = jtm.getSelectMapper(relatedType, relatedTypeTableMapping.getTableName());
         String sql = "SELECT " + selectMapper.getColumnsSql() + " FROM "
                 + jtm.getMappingHelper().fullyQualifiedTableName(relatedTypeTableMapping.getTableName()) + " WHERE "
-                + joinColumn + " IN (:propertyValues)";
+                + joinColumnManySide + " IN (:propertyValues)";
 
         ResultSetExtractor<List<T>> rsExtractor = new ResultSetExtractor<List<T>>() {
             public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {

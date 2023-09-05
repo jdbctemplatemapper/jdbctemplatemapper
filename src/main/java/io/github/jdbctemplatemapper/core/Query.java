@@ -18,7 +18,8 @@ import org.springframework.util.Assert;
 import io.github.jdbctemplatemapper.query.IQueryFluent;
 import io.github.jdbctemplatemapper.query.IQueryHasMany;
 import io.github.jdbctemplatemapper.query.IQueryHasOne;
-import io.github.jdbctemplatemapper.query.IQueryJoinColumn;
+import io.github.jdbctemplatemapper.query.IQueryJoinColumnManySide;
+import io.github.jdbctemplatemapper.query.IQueryJoinColumnOwningSide;
 import io.github.jdbctemplatemapper.query.IQueryOrderBy;
 import io.github.jdbctemplatemapper.query.IQueryPopulateProperty;
 import io.github.jdbctemplatemapper.query.IQueryThroughJoinColumns;
@@ -35,7 +36,9 @@ public class Query<T> implements IQueryFluent<T> {
     private RelationshipType relationshipType;
     private Class<?> relatedType;
     private String propertyName; // propertyName on main class that needs to be populated
-    private String joinColumn;
+    private String joinColumnX;
+    private String joinColumnOwningSide;
+    private String joinColumnManySide;
 
     private String throughJoinTable;
     private String throughOwnerTypeJoinColumn;
@@ -89,9 +92,15 @@ public class Query<T> implements IQueryFluent<T> {
      *
      * @param joinColumn the join column
      */
-    public IQueryJoinColumn<T> joinColumn(String joinColumn) {
-        Assert.notNull(joinColumn, "joinColumn cannot be null");
-        this.joinColumn = MapperUtils.toLowerCase(joinColumn.trim());
+    public IQueryJoinColumnOwningSide<T> joinColumnOwningSide(String joinColumnOwningSide) {
+        Assert.notNull(joinColumnOwningSide, "joinColumnOwningSide cannot be null");
+        this.joinColumnOwningSide = MapperUtils.toLowerCase(joinColumnOwningSide.trim());
+        return this;
+    }
+    
+    public IQueryJoinColumnManySide<T> joinColumnManySide(String joinColumnManySide) {
+        Assert.notNull(joinColumnManySide, "joinColumnManySide cannot be null");
+        this.joinColumnManySide = MapperUtils.toLowerCase(joinColumnManySide.trim());
         return this;
     }
 
@@ -129,7 +138,7 @@ public class Query<T> implements IQueryFluent<T> {
         SelectMapper<?> relatedTypeSelectMapper = relatedType == null ? null
                 : jdbcTemplateMapper.getSelectMapper(relatedType, relatedTypeTableMapping.getTableName());
 
-        QueryValidator.validate(jdbcTemplateMapper, ownerType, relationshipType, relatedType, joinColumn, propertyName,
+        QueryValidator.validate(jdbcTemplateMapper, ownerType, relationshipType, relatedType, joinColumnOwningSide, joinColumnManySide, propertyName,
                 throughJoinTable, throughOwnerTypeJoinColumn, throughRelatedTypeJoinColumn);
 
         QueryValidator.validateWhereAndOrderBy(jdbcTemplateMapper, whereClause, orderBy, ownerType, relatedType);
@@ -148,13 +157,13 @@ public class Query<T> implements IQueryFluent<T> {
             if (relationshipType == RelationshipType.HAS_ONE) {
                 // joinColumn is on owner table
                 sql += " LEFT JOIN " + mappingHelper.fullyQualifiedTableName(relatedTypeTableMapping.getTableName())
-                        + " on " + ownerTypeTableName + "." + joinColumn + " = " + relatedTypeTableName + "."
+                        + " on " + ownerTypeTableName + "." + joinColumnOwningSide + " = " + relatedTypeTableName + "."
                         + relatedTypeTableMapping.getIdColumnName();
             } else if (relationshipType == RelationshipType.HAS_MANY) {
                 // joinColumn is on related table
                 sql += " LEFT JOIN " + mappingHelper.fullyQualifiedTableName(relatedTypeTableName) + " on "
                         + ownerTypeTableName + "." + ownerTypeTableMapping.getIdColumnName() + " = "
-                        + relatedTypeTableName + "." + joinColumn;
+                        + relatedTypeTableName + "." + joinColumnManySide;
             } else if (relationshipType == RelationshipType.HAS_MANY_THROUGH) {
                 sql += " LEFT JOIN " + mappingHelper.fullyQualifiedTableName(throughJoinTable) + " on "
                         + ownerTypeTableName + "." + ownerTypeTableMapping.getIdColumnName() + " = " + throughJoinTable

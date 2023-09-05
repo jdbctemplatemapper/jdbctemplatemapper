@@ -80,7 +80,7 @@ public class QueryTest {
        Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
          Query.type(Order.class)
          .hasOne(null)
-         .joinColumn("customer_id")
+         .joinColumnOwningSide("customer_id")
          .populateProperty("customer")
         .execute(jtm);     
        });
@@ -94,7 +94,7 @@ public class QueryTest {
        Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
          Query.type(Order.class)
          .hasMany(null)
-         .joinColumn("order_id")
+         .joinColumnManySide("order_id")
          .populateProperty("orderLines")
         .execute(jtm);     
        });
@@ -108,12 +108,12 @@ public class QueryTest {
        Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
          Query.type(Order.class)
          .hasOne(Customer.class)
-         .joinColumn(null)
+         .joinColumnOwningSide(null)
          .populateProperty("customer")
         .execute(jtm);     
        });
         //@formatter:on
-       assertTrue(exception.getMessage().contains("joinColumn cannot be null"));
+       assertTrue(exception.getMessage().contains("joinColumnOwningSide cannot be null"));
     }
     
     @Test
@@ -122,12 +122,12 @@ public class QueryTest {
        Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
          Query.type(Order.class)
          .hasMany(OrderLine.class)
-         .joinColumn(null)
+         .joinColumnManySide(null)
          .populateProperty("orderLines")
         .execute(jtm);     
        });
         //@formatter:on
-       assertTrue(exception.getMessage().contains("joinColumn cannot be null"));
+       assertTrue(exception.getMessage().contains("joinColumnManySide cannot be null"));
     }
     
     
@@ -137,7 +137,7 @@ public class QueryTest {
        Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
          Query.type(Order.class)
          .hasOne(Customer.class)
-         .joinColumn("customer_id")
+         .joinColumnOwningSide("customer_id")
          .populateProperty(null)
         .execute(jtm);     
        });
@@ -151,7 +151,7 @@ public class QueryTest {
        Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
          Query.type(Order.class)
          .hasMany(OrderLine.class)
-         .joinColumn("order_id")
+         .joinColumnManySide("order_id")
          .populateProperty(null)
         .execute(jtm);     
        });
@@ -165,7 +165,7 @@ public class QueryTest {
        Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
          Query.type(Order.class)
          .hasOne(Customer.class)
-         .joinColumn("customer_id")
+         .joinColumnOwningSide("customer_id")
          .populateProperty("customer")
         .execute(null);     
        });
@@ -179,7 +179,7 @@ public class QueryTest {
        Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
          Query.type(Order.class)
          .hasMany(OrderLine.class)
-         .joinColumn("order_id")
+         .joinColumnManySide("order_id")
          .populateProperty("orderLines")
         .execute(null);     
        });
@@ -205,7 +205,7 @@ public class QueryTest {
         Exception exception = Assertions.assertThrows(AnnotationException.class, () -> {
             Query.type(Order.class)
                     .hasMany(NoTableAnnotationModel.class)
-                    .joinColumn("order_id")
+                    .joinColumnManySide("order_id")
                     .populateProperty("orderLines")
                     .execute(jtm);      
        });
@@ -219,7 +219,7 @@ public class QueryTest {
         Exception exception = Assertions.assertThrows(AnnotationException.class, () -> {
             Query.type(Order.class)
                     .hasOne(NoTableAnnotationModel.class)
-                    .joinColumn("order_id")
+                    .joinColumnOwningSide("order_id")
                     .populateProperty("orderLines")
                     .execute(jtm);      
        });
@@ -233,7 +233,7 @@ public class QueryTest {
         Exception exception = Assertions.assertThrows(QueryException.class, () -> {
             Query.type(Order.class)
                     .hasMany(OrderLine.class)
-                    .joinColumn("x")
+                    .joinColumnManySide("x")
                     .populateProperty("orderLines")
                     .execute(jtm);      
        });
@@ -247,7 +247,7 @@ public class QueryTest {
         Exception exception = Assertions.assertThrows(QueryException.class, () -> {
             Query.type(Order.class)
                     .hasMany(OrderLine.class)
-                    .joinColumn("order_line.order_id")
+                    .joinColumnManySide("order_line.order_id")
                     .populateProperty("orderLines")
                     .execute(jtm);      
        });
@@ -261,12 +261,12 @@ public class QueryTest {
         Exception exception = Assertions.assertThrows(QueryException.class, () -> {
             Query.type(Order.class)
                     .hasMany(OrderLine.class)
-                    .joinColumn("     ")
+                    .joinColumnManySide("     ")
                     .populateProperty("orderLines")
                     .execute(jtm);      
        });
         //@formatter:on
-        assertTrue(exception.getMessage().contains("joinColumn cannot be blank"));
+        assertTrue(exception.getMessage().contains("joinColumnManySide cannot be blank"));
     }
 
     @Test
@@ -275,7 +275,7 @@ public class QueryTest {
         Exception exception = Assertions.assertThrows(QueryException.class, () -> {
             Query.type(Order.class)
                     .hasOne(Customer.class)
-                    .joinColumn("order.customer_id")
+                    .joinColumnOwningSide("order.customer_id")
                     .populateProperty("customer")
                     .execute(jtm);      
        });
@@ -289,12 +289,12 @@ public class QueryTest {
         Exception exception = Assertions.assertThrows(QueryException.class, () -> {
             Query.type(Order.class)
                     .hasOne(Customer.class)
-                    .joinColumn("")
+                    .joinColumnOwningSide("")
                     .populateProperty("customer")
                     .execute(jtm);      
        });
         //@formatter:on
-        assertTrue(exception.getMessage().contains("joinColumn cannot be blank"));
+        assertTrue(exception.getMessage().contains("joinColumnOwningSide cannot be blank"));
     }
 
     @Test
@@ -303,7 +303,7 @@ public class QueryTest {
         Exception exception = Assertions.assertThrows(QueryException.class, () -> {
             Query.type(Order.class)
                     .hasOne(Customer.class)
-                    .joinColumn("x")
+                    .joinColumnOwningSide("x")
                     .populateProperty("customer")
                     .execute(jtm);      
        });
@@ -317,7 +317,7 @@ public class QueryTest {
         Exception exception = Assertions.assertThrows(QueryException.class, () -> {
             Query.type(Order.class)
                     .hasMany(OrderLine.class)
-                    .joinColumn("order_id")
+                    .joinColumnManySide("order_id")
                     .populateProperty("customer")
                     .execute(jtm);      
        });
@@ -331,7 +331,7 @@ public class QueryTest {
         Exception exception = Assertions.assertThrows(QueryException.class, () -> {
             Query.type(Order2.class)
                     .hasMany(OrderLine.class)
-                    .joinColumn("order_id")
+                    .joinColumnManySide("order_id")
                     .populateProperty("orderLines")
                     .execute(jtm);      
        });
@@ -345,7 +345,7 @@ public class QueryTest {
         Exception exception = Assertions.assertThrows(QueryException.class, () -> {
             Query.type(Order.class)
                     .hasMany(Customer.class)
-                    .joinColumn("customer_id")
+                    .joinColumnManySide("customer_id")
                     .populateProperty("orderLines")
                     .execute(jtm);      
        });
@@ -359,7 +359,7 @@ public class QueryTest {
         Exception exception = Assertions.assertThrows(QueryException.class, () -> {
             Query.type(Order.class)
                     .hasOne(Customer.class)
-                    .joinColumn("customer_id")
+                    .joinColumnOwningSide("customer_id")
                     .populateProperty("status")
                     .execute(jtm);      
        });
@@ -374,7 +374,7 @@ public class QueryTest {
         .where("orders.status = ?", "IN PROCESS")
         .orderBy("orders.order_id, order_line.order_line_id")
         .hasMany(OrderLine.class) 
-        .joinColumn("order_id")
+        .joinColumnManySide("order_id")
         .populateProperty("orderLines") // list
         .execute(jtm);
 
@@ -394,7 +394,7 @@ public class QueryTest {
         .where("orders.status = ?", "IN PROCESS")
         .orderBy("orders.order_id ASC")
         .hasMany(OrderLine.class)
-        .joinColumn("order_id")
+        .joinColumnManySide("order_id")
         .populateProperty("orderLines") //set
         .execute(jtm); 
         
@@ -411,7 +411,7 @@ public class QueryTest {
              .where("orders.status = ?", "IN PROCESS")
              .orderBy("orders.status    DESC")
              .hasOne(Customer.class)
-             .joinColumn("customer_id")
+             .joinColumnOwningSide("customer_id")
              .populateProperty("customer")
              .execute(jtm);
         
@@ -466,7 +466,7 @@ public class QueryTest {
         List<Order> orders = 
                 Query.type(Order.class)
         .hasOne(Customer.class)
-        .joinColumn("customer_id")
+        .joinColumnOwningSide("customer_id")
         .populateProperty("customer")
         .execute(jtm);
         
@@ -480,7 +480,7 @@ public class QueryTest {
         //@formatter:off
           List<Order> orders = Query.type(Order.class)
           .hasMany(OrderLine.class) 
-          .joinColumn("order_id")
+          .joinColumnManySide("order_id")
           .populateProperty("orderLines") // list
           .execute(jtm);
           
@@ -497,7 +497,7 @@ public class QueryTest {
              .where("orders.status = ?", "IN PROCESS")
              .orderBy("orders.status    DESC")
              .hasOne(Customer7.class)
-             .joinColumn("customer_id")
+             .joinColumnOwningSide("customer_id")
              .populateProperty("customer")
              .execute(jtm);
         
@@ -517,8 +517,8 @@ public class QueryTest {
         .where("orders.status = ?", "IN PROCESS")
         .orderBy("orders.order_id, order_line.order_line_id")
         .hasMany(OrderLine7.class) 
-        .joinColumn("order_id")
-        .populateProperty("orderLines") // list
+        .joinColumnManySide("order_id")
+        .populateProperty("orderLines")
         .execute(jtm);
 
         assertTrue(orders.size() == 2);

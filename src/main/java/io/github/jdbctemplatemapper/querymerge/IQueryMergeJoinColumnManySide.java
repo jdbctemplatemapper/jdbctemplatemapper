@@ -1,5 +1,5 @@
 package io.github.jdbctemplatemapper.querymerge;
 
-public interface IQueryMergeJoinColumn<T> {
+public interface IQueryMergeJoinColumnManySide<T> {
     IQueryMergePopulateProperty<T> populateProperty(String propertyName);
 }
