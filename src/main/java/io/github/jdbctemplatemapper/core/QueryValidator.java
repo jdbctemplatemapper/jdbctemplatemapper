@@ -170,13 +170,11 @@ public class QueryValidator {
 
     public static void validateWhereAndOrderBy(JdbcTemplateMapper jtm, String where, String orderBy, Class<?> ownerType,
             Class<?> relatedType) {
-
         if (where != null) {
             if (MapperUtils.isBlank(where)) {
                 throw new QueryException("where() blank string is invalid. where() is optional");
             }
         }
-
         if (orderBy == null) {
             return;
         } else if (MapperUtils.isBlank(orderBy)) {
