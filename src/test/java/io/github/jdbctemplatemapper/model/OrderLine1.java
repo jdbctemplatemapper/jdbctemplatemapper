@@ -5,13 +5,13 @@ import io.github.jdbctemplatemapper.annotation.Id;
 import io.github.jdbctemplatemapper.annotation.IdType;
 import io.github.jdbctemplatemapper.annotation.Table;
 
+// orderId type integer
 @Table(name = "order_line")
-public class OrderLine {
+public class OrderLine1 {
     @Id(type = IdType.AUTO_INCREMENT)
     private Integer orderLineId;
-    
     @Column
-    private Long orderId;
+    private Integer orderId;
     @Column
     private Integer productId;
     @Column
@@ -31,11 +31,11 @@ public class OrderLine {
         this.orderLineId = id;
     }
 
-    public Long getOrderId() {
+    public Integer getOrderId() {
         return orderId;
     }
 
-    public void setOrderId(Long orderId) {
+    public void setOrderId(Integer orderId) {
         this.orderId = orderId;
     }
 
@@ -79,3 +79,4 @@ public class OrderLine {
         this.status = status;
     }
 }
+

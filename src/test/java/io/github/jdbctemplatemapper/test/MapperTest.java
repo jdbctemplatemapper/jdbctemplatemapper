@@ -75,7 +75,6 @@ public class MapperTest {
     @Test
     public void insert_integerAutoIncrementId_withNoVersionAndCreatedInfoTest() {
 
-        // Customer table does not have version, create_on, created_by etc
         Customer customer = new Customer();
         customer.setFirstName("aaa");
         customer.setLastName("bbb");
@@ -104,7 +103,7 @@ public class MapperTest {
     }
 
     @Test
-    public void insertWithManualIntegerId_Test() {
+    public void insert_WithManualIntegerId_Test() {
         Product product = new Product();
         product.setProductId(1001);
         product.setName("hat");
@@ -130,7 +129,7 @@ public class MapperTest {
         assertEquals("tester", product.getCreatedBy());
         assertEquals("tester", product.getUpdatedBy());
     }
-
+    
     @Test
     public void insert_withManualStringId_Test() {
 
@@ -197,6 +196,11 @@ public class MapperTest {
         assertEquals(2, order.getVersion()); // version incremented
         assertTrue(order.getUpdatedOn().isAfter(prevUpdatedOn));
         assertEquals("tester", order.getUpdatedBy());
+        
+        
+        // reset status for later tests to work. Refactor
+        order.setStatus("IN PROCESS");
+        jtm.update(order);
     }
 
     @Test
@@ -275,7 +279,7 @@ public class MapperTest {
         assertNotNull(order.getUpdatedOn());
         assertNotNull(order.getVersion());
     }
-
+    
     @Test
     public void findAll_Test() {
         List<Order> orders = jtm.findAll(Order.class);
@@ -380,9 +384,10 @@ public class MapperTest {
         assertTrue(exception.getMessage()
                 .contains("is either invalid or does not have a corresponding column in database"));
     }
+ 
 
     @Test
-    public void loadMapping_uccess_Test() {
+    public void loadMapping_success_Test() {
         Assertions.assertDoesNotThrow(() -> {
             jtm.loadMapping(Order.class);
         });
@@ -396,7 +401,7 @@ public class MapperTest {
     }
 
     @Test
-    public void getColumnName_Test() {
+    public void getColumnName_Success_Test() {
         String columnName = jtm.getColumnName(Order.class, "status");
         assertEquals("status", columnName);
     }
@@ -408,7 +413,7 @@ public class MapperTest {
     }
 
     @Test
-    public void selectMapper_Test() {
+    public void selectMapper_Success_Test() {
         SelectMapper<Order> orderSelectMapper = jtm.getSelectMapper(Order.class, "o");
         SelectMapper<OrderLine> orderLineSelectMapper = jtm.getSelectMapper(OrderLine.class, "ol");
         SelectMapper<Product> productSelectMapper = jtm.getSelectMapper(Product.class, "p");

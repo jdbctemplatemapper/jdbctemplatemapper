@@ -32,12 +32,12 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
 "https://github.com/jdbctemplatemapper/jdbctemplatemapper#jdbctemplatemapper">JdbcTemplateMapper documentation</a> for more info
  * </pre>
  * 
- * <b> Note: JdbcTemplateMapper is thread safe.</b>
+ * <b> Note: An instance of JdbcTemplateMapper is thread safe.</b>
  * 
  * @author ajoseph
  * 
  */
-public class JdbcTemplateMapper {
+public final class JdbcTemplateMapper {
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate npJdbcTemplate;
 
@@ -180,7 +180,7 @@ public class JdbcTemplateMapper {
     }
 
     /**
-     * Returns the object by Id. Return null if not found
+     * finds the object by Id. Return null if not found
      * 
      * @param <T>   the type
      * @param clazz Class of object
@@ -395,10 +395,19 @@ public class JdbcTemplateMapper {
         }
 
         MapSqlParameterSource mapSqlParameterSource = new MapSqlParameterSource();
-        for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
-            mapSqlParameterSource.addValue(propMapping.getColumnName(),
-                    bw.getPropertyValue(propMapping.getPropertyName()),
-                    tableMapping.getPropertySqlType(propMapping.getPropertyName()));
+
+        if (mappingHelper.getForcePostgresTimestampWithTimezone()) {
+            // propertySqlTypes are included in this case.
+            for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
+                mapSqlParameterSource.addValue(propMapping.getColumnName(),
+                        bw.getPropertyValue(propMapping.getPropertyName()),
+                        tableMapping.getPropertySqlType(propMapping.getPropertyName()));
+            }
+        } else {
+            for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
+                mapSqlParameterSource.addValue(propMapping.getColumnName(),
+                        bw.getPropertyValue(propMapping.getPropertyName()));
+            }
         }
 
         SimpleJdbcInsert jdbcInsert = simpleJdbcInsertCache.get(obj.getClass());
@@ -532,10 +541,10 @@ public class JdbcTemplateMapper {
     }
 
     /**
-     * Returns the SelectMapper
+     * Gets a SelectMapper for the class and table alias.
      * 
      * @param <T>        the type for the SelectMapper
-     * @param type      the class
+     * @param type       the class
      * @param tableAlias the table alias used in the query.
      * @return the SelectMapper
      */
@@ -558,13 +567,14 @@ public class JdbcTemplateMapper {
 
     /**
      * returns a string which can be used in a sql select statement with all the
-     * properties which have corresponding database columns. The column alias will be the
-     * underscore case name of property name, so it works well with JdbcTemplate's BeanPropertyRowMapper
+     * properties which are mapped. The column alias will be the underscore case
+     * name of property name, so it works well with JdbcTemplate's
+     * BeanPropertyRowMapper
      * 
-     * Will return something like below:
+     * Will return something like below if name property is mapped to last_name:
      * 
      * <pre>
-     * "id as id, last_name as last_name"
+     * "id as id, last_name as name"
      * </pre>
      * 
      * @param clazz the class
@@ -575,14 +585,19 @@ public class JdbcTemplateMapper {
     }
 
     /**
-     * Model mappings are loaded when they are used for the first time. This method
-     * is provided so that the mappings can be loaded during Spring application
-     * startup so any mapping issues can be known at startup.
+     * Loads the mapping for a class. Model mappings are loaded when they are used
+     * for the first time. This method is provided so that the mappings can be
+     * loaded during Spring application startup so any mapping issues can be known
+     * at startup.
      * 
      * @param clazz the class
      */
     public void loadMapping(Class<?> clazz) {
         mappingHelper.getTableMapping(clazz);
+    }
+
+    MappingHelper getMappingHelper() {
+        return mappingHelper;
     }
 
     private SqlAndParams buildSqlAndParamsForUpdate(TableMapping tableMapping) {

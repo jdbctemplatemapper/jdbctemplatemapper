@@ -92,6 +92,27 @@ CREATE TABLE jdbctemplatemapper.no_id_object (
 );
 
 
+CREATE TABLE jdbctemplatemapper.employee (
+	id integer NOT NULL AUTO_INCREMENT,
+	first_name varchar(100) NOT NULL,
+	last_name varchar(100) NOT NULL,
+	CONSTRAINT employee_pk PRIMARY KEY (id)
+);
+
+CREATE TABLE jdbctemplatemapper.skill (
+	id integer NOT NULL AUTO_INCREMENT,
+	name varchar(100) NOT NULL,
+	CONSTRAINT skill_pk PRIMARY KEY (id)
+);
+
+CREATE TABLE jdbctemplatemapper.employee_skill (
+	id integer NOT NULL AUTO_INCREMENT,
+	employee_id integer,
+	skill_id integer,
+	CONSTRAINT employee_skill_pk PRIMARY KEY (id)
+);
+
+
 
 
 

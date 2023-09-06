@@ -25,23 +25,16 @@ public class JdbcTemplateMapperConfig {
     }
 
     @Bean
-    @Primary
     public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
         String schemaName = getSchemaName();
         JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate, schemaName);
         jdbcTemplateMapper.withRecordOperatorResolver(new RecordOperatorResolver());
-
-        // postgres driver bug where database meta data returns TIMESTAMP instead of
-        // TIMESTAMP_WITH_TIME_ZONE for timestamptz field.
-        // THis flag forces fixs that for now.
-        if (jdbcDriver.contains("postgres")) {
-            jdbcTemplateMapper.forcePostgresTimestampWithTimezone(true);
-        }
-
+        
         return jdbcTemplateMapper;
     }
 
     private String getSchemaName() {
+        // Test databases setup
         String schemaName = "jdbctemplatemapper"; // default
         if (jdbcDriver.contains("mysql")) {
             schemaName = null; // mysql does not have schema.

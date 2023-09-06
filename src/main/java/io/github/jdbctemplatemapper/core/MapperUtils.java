@@ -2,8 +2,11 @@ package io.github.jdbctemplatemapper.core;
 
 import java.util.Collection;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.springframework.jdbc.support.JdbcUtils;
+import org.springframework.util.Assert;
 
 class MapperUtils {
     /**
@@ -42,6 +45,40 @@ class MapperUtils {
         return result.toString();
     }
 
+    /**
+     * Splits the list into multiple lists of chunk size. Used to split the sql IN
+     * clauses since some databases have a limitation of 1024.
+     *
+     * @param list      The list of Long
+     * @param chunkSize The size of each chunk
+     * @return Collection of lists broken down by chunkSize
+     */
+    
+    @SuppressWarnings("rawtypes")
+    public static Collection chunkTheCollection(Collection<?> collection, Integer chunkSize) {
+        Assert.notNull(collection, "collection must not be null");
+        AtomicInteger counter = new AtomicInteger();
+        return collection.stream().filter(e -> e != null)
+                .collect(Collectors.groupingBy(it -> counter.getAndIncrement() / chunkSize)).values();
+    }
+
+    public static boolean isBlank(final CharSequence cs) {
+        int strLen;
+        if (cs == null || (strLen = cs.length()) == 0) {
+            return true;
+        }
+        for (int i = 0; i < strLen; i++) {
+            if (!Character.isWhitespace(cs.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean isNotBlank(final CharSequence cs) {
+        return !isBlank(cs);
+    }
+
     public static boolean isEmpty(String str) {
         return str == null || str.length() == 0;
     }
@@ -62,5 +99,13 @@ class MapperUtils {
 
     public static String toLowerCase(String str) {
         return str != null ? str.toLowerCase(Locale.US) : null;
+    }
+   
+    public static boolean equals(Object obj1, Object obj2) {
+        if (obj1 == null || obj2 == null) {
+            return false;
+        }
+        
+        return obj1.equals(obj2);
     }
 }

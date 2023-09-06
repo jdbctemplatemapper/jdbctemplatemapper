@@ -256,6 +256,10 @@ class MappingHelper {
         }
         return tableName;
     }
+    
+    boolean getForcePostgresTimestampWithTimezone() {
+        return forcePostgresTimestampWithTimezone;
+    }
 
     private <T extends Annotation> void processAnnotation(Class<T> annotationClazz, Field field, String tableName,
             Map<String, PropertyMapping> propNameToPropertyMapping, Map<String, ColumnInfo> columnNameToColumnInfo) {
