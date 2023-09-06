@@ -494,6 +494,7 @@ An example for querying the following relationship: An Order has many OrderLine 
            product = productSelectMapper.buildModel(rs); 
            idProductMap.put(product.getId(), product);
          }
+
          OrderLine orderLine = orderLineSelectMapper.buildModel(rs);
          if(orderLine != null) {
            // wire up the relationships
