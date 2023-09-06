@@ -180,7 +180,7 @@ public final class JdbcTemplateMapper {
     }
 
     /**
-     * Returns the object by Id. Return null if not found
+     * finds the object by Id. Return null if not found
      * 
      * @param <T>   the type
      * @param clazz Class of object
@@ -541,7 +541,7 @@ public final class JdbcTemplateMapper {
     }
 
     /**
-     * Returns the SelectMapper
+     * Gets a SelectMapper for the class and table alias.
      * 
      * @param <T>        the type for the SelectMapper
      * @param type       the class
@@ -585,9 +585,10 @@ public final class JdbcTemplateMapper {
     }
 
     /**
-     * Model mappings are loaded when they are used for the first time. This method
-     * is provided so that the mappings can be loaded during Spring application
-     * startup so any mapping issues can be known at startup.
+     * Loads the mapping for a class. Model mappings are loaded when they are used
+     * for the first time. This method is provided so that the mappings can be
+     * loaded during Spring application startup so any mapping issues can be known
+     * at startup.
      * 
      * @param clazz the class
      */

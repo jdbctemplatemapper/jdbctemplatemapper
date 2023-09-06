@@ -48,6 +48,7 @@
  product.setName("some product name");
  product.setPrice(10.25);
  product.setAvailableDate(LocalDateTime.now());
+ 
  jdbcTemplateMapper.insert(product); // because id type is auto increment, id value will be set on insert.
 
  product = jdbcTemplateMapper.findById(Product.class, product.getId());
@@ -59,6 +60,7 @@
  List<Product> list = jdbcTemplateMapper.findByProperty(Product.class, "name", "some product name");
 
  jdbcTemplateMapper.delete(product);
+ 
  jdbcTemplateMapper.delete(Product.class, 5); // delete using id
  
  // for methods which help make querying relationships less verbose see section 'Querying relationships' further below
@@ -235,7 +237,7 @@ List<Order> orders = Query.type(Order.class)
 
 // with where and orderBy
 // orderBy() is strictly validated and is protected against SQL injection.
-// make sure the whereClause is parameterized to prevent SQL injection.
+// Its always a good practice to parameterize the where clause.
 List<Order> orders = 
   Query.type(Order.class)
        .where("orders.status = ?", "IN PROCESS") // always prefix where() columns with table
@@ -273,9 +275,9 @@ List<Order> orders =
          
 ```
 
-### fluent queries with QueryMerge
+### Merging query results with QueryMerge
 
-Query api allows only one relationship to be queried. If multiple relationships need to be queried and its okay to issue multiple queries use QueryMerge. It merges the results from a query with results from another query.
+The Query api allows only one relationship to be queried at a time. If multiple relationships need to be queried using QueryMerge is an option. It merges the results from a query with results from another query.
 
 Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Product
 
@@ -347,8 +349,7 @@ Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Produc
  ```
    
  2) Populate the Order hasOne Customer relationship for the above orders.
-    For this use QueryMerge. It merges the results of a query with the orders list from previous query. 
-    QueryMerge issues an 'IN' sql clause.
+    For this use QueryMerge. It merges the results of a query with the orders list from previous query. QueryMerge issues an 'IN' sql clause.
     
   ``` 
    QueryMerge.type(Order.class) // owning class
@@ -473,7 +474,7 @@ An example for querying the following relationship: An Order has many OrderLine 
      @Override
      public List<Order> extractData(ResultSet rs) throws SQLException, DataAccessException {
        // below logic is specific to this use case. Your logic will be different.
-       // The thing to note is the model gets populated by selectMapper.build().
+       // The thing to note is the model gets built by selectMapper.build(rs).
        Map<Long, Order> idOrderMap = new LinkedHashMap<>(); // LinkedHashMap to retain record order
        Map<Integer, Product> idProductMap = new HashMap<>();
        while (rs.next()) {				 					
