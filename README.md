@@ -346,7 +346,7 @@ Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Produc
  
  ```
    
- 2) Populate the Order hasOne customer relationship for the above orders.
+ 2) Populate the Order hasOne Customer relationship for the above orders.
     For this use QueryMerge. It merges the results of a query with the orders list from previous query. 
     QueryMerge issues an 'IN' sql clause.
     
@@ -423,7 +423,7 @@ public class EmployeeSkill {
    Query.type(Employee.class) // owning class
         .hasMany(Skill.class) // related class
         .throughJoinTable("employee_skill") // the associated table
-        .throughJoinColumns("employee_id", "skill_id")  // note order of join columns. owning join column is first
+        .throughJoinColumns("employee_id", "skill_id") // note order of join columns. owning join column is first
         .populateProperty("skills") // property on owning class to populate
         .execute(jdbcTemplateMapper);
  
