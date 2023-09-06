@@ -350,7 +350,7 @@ public class QueryTest {
                     .execute(jtm);      
        });
         //@formatter:on
-        assertTrue(exception.getMessage().contains("Collection generic type and hasMany relationship type mismatch"));
+       assertTrue(exception.getMessage().contains("Collection generic type and hasMany relationship type mismatch"));
     }
 
     @Test

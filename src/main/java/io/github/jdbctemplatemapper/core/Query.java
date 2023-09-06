@@ -136,7 +136,7 @@ public class Query<T> implements IQueryFluent<T> {
     }
 
     /**
-     * Join column for hasOne relationship. The join column (the foreign key) is in
+     * Join column for hasOne relationship: The join column (the foreign key) is in
      * the table of the owning model. Example: Order hasOne Customer. The join
      * column(foreign key) will be on the table order (of the owning model)
      * 

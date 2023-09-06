@@ -26,11 +26,8 @@ import io.github.jdbctemplatemapper.querymerge.IQueryMergePopulateProperty;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeType;
 
 /**
- *  <pre>
- * QueryMerge allows query results to be merged with results of another query
- * 
- * Query api allows only one relationship to be queried. QueryMerge allows
- * separate query results to be merged
+ * <pre>
+ * QueryMerge allows query results to be merged with results of another query. 
  * 
  * See <a href=
 "https://github.com/jdbctemplatemapper/jdbctemplatemapper#querying-relationships">Querying relationships</a> for more info
@@ -55,7 +52,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
      * The type being merged with the new query. The execute method will populate a
      * list of this type with the relationship
      * 
-     * @param <T> the type
+     * @param <T>  the type
      * @param type The type
      * @return interface with the next methods in the chain
      */
@@ -116,6 +113,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
      * will be on the table order_line (the many side)
      *
      * The join column should not have a table prefix.
+     * 
      * @param joinColumnManySide the join column on the many side (with no table
      *                           prefix)
      * 
@@ -145,13 +143,15 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     }
 
     /**
-     * The query executes an sql 'IN' clause to get the related side objects and
-     * merges those with the objects in the mergeList
+     * The query executes an sql 'IN' clause to get the related side (hasOne,
+     * hasMany) objects and merges those with the objects in the mergeList
+     * 
      * <pre>
      * If the 'IN' clause gets large (ie the mergeList is large) multiple 'IN'
      * clause queries will be issued to get the records since some databases have
      * limits on size of 'IN' clause.
      * </pre>
+     * 
      * @param jdbcTemplateMapper the jdbcTemplateMapper
      * @param mergeList          a list of objects of owning type.
      */

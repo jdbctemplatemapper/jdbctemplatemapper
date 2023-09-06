@@ -41,7 +41,7 @@ class QueryValidator {
             }
         }
     }
-    
+
     private static void validateCommon(JdbcTemplateMapper jtm, Class<?> ownerType, Class<?> relatedType,
             String propertyName) {
         if (jtm == null) {
@@ -68,7 +68,7 @@ class QueryValidator {
 
         BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(ownerModel);
         PropertyDescriptor pd = bw.getPropertyDescriptor(propertyName);
-        if (!relatedType.isAssignableFrom(pd.getPropertyType())) {
+        if (relatedType != pd.getPropertyType()) {
             throw new QueryException("property type conflict. property " + ownerType.getSimpleName() + "."
                     + propertyName + " is of type " + pd.getPropertyType().getSimpleName()
                     + " while type for hasOne relationship is " + relatedType.getSimpleName());
@@ -129,7 +129,11 @@ class QueryValidator {
 
         Class<?> joinColumnPropertyType = relatedTypeTableMapping.getPropertyType(joinColumnPropertyName);
         Class<?> ownerTypeIdPropertyType = ownerTypeTableMapping.getIdPropertyMapping().getPropertyType();
-        if (joinColumnPropertyType != ownerTypeIdPropertyType) {
+        
+        // During development some plugins (ex devTools) could use different class loaders.
+        // Since this is just a check we use full class name. Assigning the value is done
+        // using reflection so its not a problem
+        if (! joinColumnPropertyType.getName().equals(ownerTypeIdPropertyType.getName())) {
             throw new QueryException("Property type mismatch. join column " + joinColumnManySide + " property "
                     + relatedType.getSimpleName() + "." + joinColumnPropertyName + " is of type "
                     + joinColumnPropertyType.getSimpleName() + " but the property being joined to "
@@ -254,7 +258,10 @@ class QueryValidator {
             throw new QueryException("Collections without generic types are not supported. Collection for property "
                     + ownerType.getSimpleName() + "." + propertyName + " does not have a generic type.");
         }
-        if (!propertyType.isAssignableFrom(relatedType)) {
+        // During development some plugins (ex devTools) could use different class loaders.
+        // Since this is just a check we use full class name. Assigning the value is done
+        // using reflection so its not a problem
+        if (!propertyType.getName().equals(relatedType.getName())) {
             throw new QueryException(
                     "Collection generic type and hasMany relationship type mismatch. " + ownerType.getSimpleName() + "."
                             + propertyName + " has generic type " + propertyType.getSimpleName()
