@@ -1,4 +1,5 @@
 package io.github.jdbctemplatemapper.querymerge;
+
 /**
  * interface with the next methods in the chain
  * 

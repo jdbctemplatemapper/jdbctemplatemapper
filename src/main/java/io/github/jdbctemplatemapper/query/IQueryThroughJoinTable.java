@@ -1,4 +1,5 @@
 package io.github.jdbctemplatemapper.query;
+
 /**
  * interface with the next methods in the chain
  * 

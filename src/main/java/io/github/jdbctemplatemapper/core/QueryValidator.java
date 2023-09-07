@@ -95,7 +95,10 @@ class QueryValidator {
         Class<?> joinColumnPropertyType = ownerTypeTableMapping.getPropertyType(joinColumnPropertyName);
         Class<?> relatedTypeIdPropertyType = relatedTypeTableMapping.getIdPropertyMapping().getPropertyType();
 
-        if (joinColumnPropertyType != relatedTypeIdPropertyType) {
+        // During development some IDE plugins (ex devTools) could use different class loaders.
+        // Since this is just a check we use full class name. Assigning the value is done
+        // using reflection so its not a problem
+        if (! joinColumnPropertyType.getName().equals(relatedTypeIdPropertyType.getName())) {
             throw new QueryException("Property type mismatch. join column " + joinColumnOwningSide + " property "
                     + ownerType.getSimpleName() + "." + joinColumnPropertyName + " is of type "
                     + joinColumnPropertyType.getSimpleName() + " but the property being joined to "
@@ -130,7 +133,7 @@ class QueryValidator {
         Class<?> joinColumnPropertyType = relatedTypeTableMapping.getPropertyType(joinColumnPropertyName);
         Class<?> ownerTypeIdPropertyType = ownerTypeTableMapping.getIdPropertyMapping().getPropertyType();
         
-        // During development some plugins (ex devTools) could use different class loaders.
+        // During development some IDE plugins (ex devTools) could use different class loaders.
         // Since this is just a check we use full class name. Assigning the value is done
         // using reflection so its not a problem
         if (! joinColumnPropertyType.getName().equals(ownerTypeIdPropertyType.getName())) {
@@ -258,7 +261,7 @@ class QueryValidator {
             throw new QueryException("Collections without generic types are not supported. Collection for property "
                     + ownerType.getSimpleName() + "." + propertyName + " does not have a generic type.");
         }
-        // During development some plugins (ex devTools) could use different class loaders.
+        // During development some IDE plugins (ex devTools) could use different class loaders.
         // Since this is just a check we use full class name. Assigning the value is done
         // using reflection so its not a problem
         if (!propertyType.getName().equals(relatedType.getName())) {

@@ -371,11 +371,11 @@ public class QueryTest {
     public void hasMany_List_success_test() {
       //@formatter:off
         List<Order> orders = Query.type(Order.class)
-        .where("orders.status = ?", "IN PROCESS")
-        .orderBy("orders.order_id, order_line.order_line_id")
         .hasMany(OrderLine.class) 
         .joinColumnManySide("order_id")
         .populateProperty("orderLines") // list
+        .where("orders.status = ?", "IN PROCESS")
+        .orderBy("orders.order_id, order_line.order_line_id")
         .execute(jtm);
 
         assertTrue(orders.size() == 2);
@@ -391,11 +391,11 @@ public class QueryTest {
     public void hasMany_Set_success_test() {
       //@formatter:off
         List<Order4> orders = Query.type(Order4.class)
-        .where("orders.status = ?", "IN PROCESS")
-        .orderBy("orders.order_id ASC")
         .hasMany(OrderLine.class)
         .joinColumnManySide("order_id")
         .populateProperty("orderLines") //set
+        .where("orders.status = ?", "IN PROCESS")
+        .orderBy("orders.order_id ASC")
         .execute(jtm); 
         
         assertTrue(orders.size() == 2);
@@ -408,11 +408,11 @@ public class QueryTest {
     public void hasOne_success_test() {
       //@formatter:off
         List<Order> orders = Query.type(Order.class)
-             .where("orders.status = ?", "IN PROCESS")
-             .orderBy("orders.status    DESC")
              .hasOne(Customer.class)
              .joinColumnOwningSide("customer_id")
              .populateProperty("customer")
+             .where("orders.status = ?", "IN PROCESS")
+             .orderBy("orders.status    DESC")
              .execute(jtm);
         
         assertTrue(orders.size() == 2);
@@ -494,11 +494,11 @@ public class QueryTest {
     public void hasOne_nonDefaultNaming_success_test() {
       //@formatter:off
         List<Order7> orders = Query.type(Order7.class)
-             .where("orders.status = ?", "IN PROCESS")
-             .orderBy("orders.status    DESC")
              .hasOne(Customer7.class)
              .joinColumnOwningSide("customer_id")
              .populateProperty("customer")
+             .where("orders.status = ?", "IN PROCESS")
+             .orderBy("orders.status    DESC")
              .execute(jtm);
         
         assertTrue(orders.size() == 2);
@@ -514,11 +514,11 @@ public class QueryTest {
       //@formatter:off
         List<Order7> orders = 
         Query.type(Order7.class)
-        .where("orders.status = ?", "IN PROCESS")
-        .orderBy("orders.order_id, order_line.order_line_id")
         .hasMany(OrderLine7.class) 
         .joinColumnManySide("order_id")
         .populateProperty("orderLines")
+        .where("orders.status = ?", "IN PROCESS")
+        .orderBy("orders.order_id, order_line.order_line_id")
         .execute(jtm);
 
         assertTrue(orders.size() == 2);

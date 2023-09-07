@@ -171,12 +171,12 @@ public class HasManyThroughTest {
     
     @Test
     public void hasManyThrough_sucess_test() {
-        List<Employee> employees = Query.type(Employee.class)
-        .orderBy("employee.id")
+        List<Employee> employees = Query.type(Employee.class)     
         .hasMany(Skill.class)
         .throughJoinTable("employee_skill")
         .throughJoinColumns("employee_id", "skill_id")
         .populateProperty("skills")
+        .orderBy("employee.id")
         .execute(jtm);
                 
         assertTrue(employees.size() == 5);
@@ -190,11 +190,11 @@ public class HasManyThroughTest {
     @Test
     public void hasManyThrough2_success_test() {
         List<Skill> skills = Query.type(Skill.class)
-                .orderBy("skill.id")
         .hasMany(Employee.class)
         .throughJoinTable("employee_skill")
         .throughJoinColumns("skill_id", "employee_id")
         .populateProperty("employees")
+        .orderBy("skill.id")
         .execute(jtm);
         
         assertTrue(skills.size() == 4);

@@ -1,4 +1,5 @@
 package io.github.jdbctemplatemapper.query;
+
 /**
  * interface with the next methods in the chain
  * 
@@ -6,7 +7,8 @@ package io.github.jdbctemplatemapper.query;
  *
  * @param <T> the type
  */
-public interface IQueryHasMany <T>{
+public interface IQueryHasMany<T> {
     IQueryJoinColumnManySide<T> joinColumnManySide(String joinColumnManySide);
+
     IQueryThroughJoinTable<T> throughJoinTable(String tableName);
 }

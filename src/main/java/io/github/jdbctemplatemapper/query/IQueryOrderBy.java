@@ -11,7 +11,5 @@ import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
  * @param <T> the type
  */
 public interface IQueryOrderBy<T> {
-    IQueryHasMany<T> hasMany(Class<?> relatedType);
-    IQueryHasOne<T> hasOne(Class<?> relatedType);
     List<T> execute(JdbcTemplateMapper jdbcTemplateMapper);
 }

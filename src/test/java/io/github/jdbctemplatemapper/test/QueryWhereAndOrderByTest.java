@@ -109,11 +109,11 @@ public class QueryWhereAndOrderByTest {
         //@formatter:off
         Exception exception = Assertions.assertThrows(QueryException.class, () -> {
         Query.type(Order.class)
-        .where("orders.status = ?", "IN PROCESS")
-        .orderBy("orders.status ,  order_linex.num_of_units DESC")
         .hasMany(OrderLine.class) 
         .joinColumnManySide("order_id")
         .populateProperty("orderLines")
+        .where("orders.status = ?", "IN PROCESS")
+        .orderBy("orders.status ,  order_linex.num_of_units DESC")
         .execute(jtm); 
         });
         
@@ -148,11 +148,11 @@ public class QueryWhereAndOrderByTest {
     public void orderBy_relationshipColumn_hasMany_success_Test() {
         //@formatter:off
         List<Order> list = Query.type(Order.class)
-        .where("orders.status = ?", "IN PROCESS")
-        .orderBy(" orders.status  ASC,  order_line.num_of_units DESC")
         .hasMany(OrderLine.class) 
         .joinColumnManySide("order_id")
         .populateProperty("orderLines")
+        .where("orders.status = ?", "IN PROCESS")
+        .orderBy(" orders.status  ASC,  order_line.num_of_units DESC")
         .execute(jtm); 
            //@formatter:on
       } 

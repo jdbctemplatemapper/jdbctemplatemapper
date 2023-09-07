@@ -1,4 +1,5 @@
 package io.github.jdbctemplatemapper.querymerge;
+
 /**
  * interface with the next methods in the chain
  * 
@@ -8,5 +9,6 @@ package io.github.jdbctemplatemapper.querymerge;
  */
 public interface IQueryMergeType<T> {
     IQueryMergeHasMany<T> hasMany(Class<?> relatedType);
+
     IQueryMergeHasOne<T> hasOne(Class<?> relatedType);
 }

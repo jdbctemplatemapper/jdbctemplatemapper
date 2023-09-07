@@ -11,9 +11,9 @@ import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
  * @param <T> the type
  */
 public interface IQueryType<T> {
-    IQueryWhere<T> where(String wherClause, Object ...params); 
-    IQueryOrderBy<T> orderBy(String orderBy);
     IQueryHasMany<T> hasMany(Class<?> relatedType);
     IQueryHasOne<T> hasOne(Class<?> relatedType);
+    IQueryWhere<T> where(String whereClause, Object ...params); 
+    IQueryOrderBy<T> orderBy(String orderBy);
     List<T> execute(JdbcTemplateMapper jdbcTemplateMapper);    
 }
