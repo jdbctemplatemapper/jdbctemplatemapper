@@ -63,9 +63,9 @@
  
  jdbcTemplateMapper.delete(Product.class, 5); // delete using id
  
- // for methods which help make querying relationships less verbose see section 'Querying relationships' further below
- 
  ```
+ 
+ See [Querying Relationships](#querying-relationships) for query features of the library.
  
 ## Maven coordinates
 
@@ -228,7 +228,7 @@ Fluent style queries allow querying of hasOne, hasMany and hasMany through (many
 The IDE will provide suggestions to help chain the methods. Turn logging on (see logging section) to see the generated queries.  
 The QueryMerge class allows the results of a previous query to be merged with results of a new query.
 
-### fluent style queries
+### Fluent style queries
 
 ```
 // Gets all orders. This is equivalent to jdbcTemplateMapper.findAll(Order.class);
@@ -264,7 +264,7 @@ List<Order> orders =
        .populateProperty("orderLines") // the property to populate on the owning class
        .execute(jdbcTemplateMapper); // execute with jdbcTemplateMapper   
        
- // employees hasMany skills through associated table 'employee_skill'
+ // employees hasMany skills through associated table 'employee_skill' (many to many)
  List<Employee> employees =  
    Query.type(Employee.class) // owning class
         .hasMany(Skill.class) // related class
