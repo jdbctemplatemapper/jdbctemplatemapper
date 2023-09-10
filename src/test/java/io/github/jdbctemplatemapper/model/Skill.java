@@ -10,44 +10,40 @@ import io.github.jdbctemplatemapper.annotation.Table;
 
 @Table(name = "skill")
 public class Skill {
-    @Id(type = IdType.AUTO_INCREMENT)
-    private Integer id;
-    
-    @Column
-    private String name;
-    
-    private List<Employee> employees = new ArrayList<>();
-    
-    public Skill() {}
-    
-    public Skill(String name) {
-        this.name = name;
-    }
+  @Id(type = IdType.AUTO_INCREMENT)
+  private Integer id;
 
-    public Integer getId() {
-        return id;
-    }
+  @Column private String name;
 
-    public void setId(Integer id) {
-        this.id = id;
-    }
+  private List<Employee> employees = new ArrayList<>();
 
-    public String getName() {
-        return name;
-    }
+  public Skill() {}
 
-    public void setName(String name) {
-        this.name = name;
-    }
+  public Skill(String name) {
+    this.name = name;
+  }
 
-    public List<Employee> getEmployees() {
-        return employees;
-    }
+  public Integer getId() {
+    return id;
+  }
 
-    public void setEmployees(List<Employee> employees) {
-        this.employees = employees;
-    }
-    
-    
+  public void setId(Integer id) {
+    this.id = id;
+  }
 
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public List<Employee> getEmployees() {
+    return employees;
+  }
+
+  public void setEmployees(List<Employee> employees) {
+    this.employees = employees;
+  }
 }

@@ -12,113 +12,106 @@ import io.github.jdbctemplatemapper.annotation.Table;
 
 @Table(name = "type_check")
 public class TypeCheck {
-    @Id(type = IdType.AUTO_INCREMENT)
-    private Integer id;
+  @Id(type = IdType.AUTO_INCREMENT)
+  private Integer id;
 
-    @Column
-    private LocalDate localDateData;
+  @Column private LocalDate localDateData;
 
-    @Column
-    private java.util.Date javaUtilDateData;
+  @Column private java.util.Date javaUtilDateData;
 
-    @Column
-    private LocalDateTime localDateTimeData;
+  @Column private LocalDateTime localDateTimeData;
 
-    @Column
-    private java.util.Date javaUtilDateTsData; // postgres/mysql/oracle
+  @Column private java.util.Date javaUtilDateTsData; // postgres/mysql/oracle
 
-    //@Column
-    private java.util.Date javaUtilDateDtData; // SqlServer
+  // @Column
+  private java.util.Date javaUtilDateDtData; // SqlServer
 
-    @Column
-    private BigDecimal bigDecimalData;
+  @Column private BigDecimal bigDecimalData;
 
-    //@Column
-    private OffsetDateTime offsetDateTimeData; // mysql/oracle
+  // @Column
+  private OffsetDateTime offsetDateTimeData; // mysql/oracle
 
-    @Column
-    private Boolean booleanVal; // postgres/mysql
+  @Column private Boolean booleanVal; // postgres/mysql
 
-    @Column
-    private byte[] image; // postgres/mysql
+  @Column private byte[] image; // postgres/mysql
 
-    public Integer getId() {
-        return id;
-    }
+  public Integer getId() {
+    return id;
+  }
 
-    public void setId(Integer id) {
-        this.id = id;
-    }
+  public void setId(Integer id) {
+    this.id = id;
+  }
 
-    public LocalDate getLocalDateData() {
-        return localDateData;
-    }
+  public LocalDate getLocalDateData() {
+    return localDateData;
+  }
 
-    public void setLocalDateData(LocalDate localDateData) {
-        this.localDateData = localDateData;
-    }
+  public void setLocalDateData(LocalDate localDateData) {
+    this.localDateData = localDateData;
+  }
 
-    public java.util.Date getJavaUtilDateData() {
-        return javaUtilDateData;
-    }
+  public java.util.Date getJavaUtilDateData() {
+    return javaUtilDateData;
+  }
 
-    public void setJavaUtilDateData(java.util.Date javaUtilDateData) {
-        this.javaUtilDateData = javaUtilDateData;
-    }
+  public void setJavaUtilDateData(java.util.Date javaUtilDateData) {
+    this.javaUtilDateData = javaUtilDateData;
+  }
 
-    public LocalDateTime getLocalDateTimeData() {
-        return localDateTimeData;
-    }
+  public LocalDateTime getLocalDateTimeData() {
+    return localDateTimeData;
+  }
 
-    public void setLocalDateTimeData(LocalDateTime localDateTimeData) {
-        this.localDateTimeData = localDateTimeData;
-    }
+  public void setLocalDateTimeData(LocalDateTime localDateTimeData) {
+    this.localDateTimeData = localDateTimeData;
+  }
 
-    public java.util.Date getJavaUtilDateTsData() {
-        return javaUtilDateTsData;
-    }
+  public java.util.Date getJavaUtilDateTsData() {
+    return javaUtilDateTsData;
+  }
 
-    public void setJavaUtilDateTsData(java.util.Date javaUtilDateTsData) {
-        this.javaUtilDateTsData = javaUtilDateTsData;
-    }
+  public void setJavaUtilDateTsData(java.util.Date javaUtilDateTsData) {
+    this.javaUtilDateTsData = javaUtilDateTsData;
+  }
 
-    public java.util.Date getJavaUtilDateDtData() {
-        return javaUtilDateDtData;
-    }
+  public java.util.Date getJavaUtilDateDtData() {
+    return javaUtilDateDtData;
+  }
 
-    public void setJavaUtilDateDtData(java.util.Date javaUtilDateDtData) {
-        this.javaUtilDateDtData = javaUtilDateDtData;
-    }
+  public void setJavaUtilDateDtData(java.util.Date javaUtilDateDtData) {
+    this.javaUtilDateDtData = javaUtilDateDtData;
+  }
 
-    public BigDecimal getBigDecimalData() {
-        return bigDecimalData;
-    }
+  public BigDecimal getBigDecimalData() {
+    return bigDecimalData;
+  }
 
-    public void setBigDecimalData(BigDecimal bigDecimalData) {
-        this.bigDecimalData = bigDecimalData;
-    }
+  public void setBigDecimalData(BigDecimal bigDecimalData) {
+    this.bigDecimalData = bigDecimalData;
+  }
 
-    public Boolean getBooleanVal() {
-        return booleanVal;
-    }
+  public Boolean getBooleanVal() {
+    return booleanVal;
+  }
 
-    public void setBooleanVal(Boolean booleanVal) {
-        this.booleanVal = booleanVal;
-    }
+  public void setBooleanVal(Boolean booleanVal) {
+    this.booleanVal = booleanVal;
+  }
 
-    public byte[] getImage() {
-        return image;
-    }
+  public byte[] getImage() {
+    return image;
+  }
 
-    public void setImage(byte[] image) {
-        this.image = image;
-    }
+  public void setImage(byte[] image) {
+    this.image = image;
+  }
 
-    public OffsetDateTime getOffsetDateTimeData() {
-        return offsetDateTimeData;
-    }
+  public OffsetDateTime getOffsetDateTimeData() {
+    return offsetDateTimeData;
+  }
 
-    public void setOffsetDateTimeData(OffsetDateTime offsetDateTimeData) {
-        this.offsetDateTimeData = offsetDateTimeData;
-    }
+  public void setOffsetDateTimeData(OffsetDateTime offsetDateTimeData) {
+    this.offsetDateTimeData = offsetDateTimeData;
+  }
 }

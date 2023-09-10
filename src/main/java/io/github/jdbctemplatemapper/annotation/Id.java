@@ -6,9 +6,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ *
+ *
  * <pre>
  * Annotation for Identifier.
- * 
+ *
  * For auto increment id:
  * {@literal @}Table(name="products")
  *  class Product {
@@ -17,7 +19,7 @@ import java.lang.annotation.Target;
  *    ...
  *  }
  * After a successful insert() operation the productId property will be populated with the new id.
- * 
+ *
  * For NON auto increment id:
  * {@literal @}Table(name="customer")
  *  class Customer {
@@ -33,5 +35,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface Id {
-    IdType type() default IdType.MANUAL;
+  IdType type() default IdType.MANUAL;
 }

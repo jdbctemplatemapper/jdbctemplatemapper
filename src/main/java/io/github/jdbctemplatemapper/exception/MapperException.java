@@ -2,14 +2,13 @@ package io.github.jdbctemplatemapper.exception;
 
 /**
  * Generic Mapper Exception
- * 
- * @author ajoseph
  *
+ * @author ajoseph
  */
 public class MapperException extends RuntimeException {
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    public MapperException(String message) {
-        super(message);
-    }
+  public MapperException(String message) {
+    super(message);
+  }
 }

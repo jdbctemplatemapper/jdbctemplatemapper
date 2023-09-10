@@ -8,15 +8,12 @@ import io.github.jdbctemplatemapper.annotation.Table;
 
 @Table(name = "annotation_check")
 public class DuplicateCreatedByAnnotaition {
-    @Id(type = IdType.AUTO_INCREMENT)
-    private Integer id;
+  @Id(type = IdType.AUTO_INCREMENT)
+  private Integer id;
 
-    @CreatedBy
-    private String createdBy1;
+  @CreatedBy private String createdBy1;
 
-    @CreatedBy
-    private String createdBy2;
+  @CreatedBy private String createdBy2;
 
-    @Column
-    private String something;
+  @Column private String something;
 }

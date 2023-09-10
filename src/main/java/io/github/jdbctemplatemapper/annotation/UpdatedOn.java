@@ -5,10 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * On updates the property will be set. It has to be of type LocalDateTime.
- */
+/** On updates the property will be set. It has to be of type LocalDateTime. */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface UpdatedOn {
-}
+public @interface UpdatedOn {}

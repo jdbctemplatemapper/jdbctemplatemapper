@@ -11,13 +11,10 @@ import io.github.jdbctemplatemapper.annotation.UpdatedOn;
 
 @Table(name = "annotation_check")
 public class ConflictAnnotation2 {
-    @Id(type = IdType.AUTO_INCREMENT)
-    private Integer id;
+  @Id(type = IdType.AUTO_INCREMENT)
+  private Integer id;
 
-    @Column
-    private String something;
+  @Column private String something;
 
-    @CreatedOn
-    @UpdatedOn
-    private LocalDateTime createdOn1;
+  @CreatedOn @UpdatedOn private LocalDateTime createdOn1;
 }

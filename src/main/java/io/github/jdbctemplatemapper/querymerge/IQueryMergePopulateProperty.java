@@ -6,11 +6,10 @@ import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
 
 /**
  * interface with the next methods in the chain
- * 
- * @author ajoseph
  *
+ * @author ajoseph
  * @param <T> the type
  */
 public interface IQueryMergePopulateProperty<T> {
-    void execute(JdbcTemplateMapper jdbcTemplateMapper, List<T> mergeList);
+  void execute(JdbcTemplateMapper jdbcTemplateMapper, List<T> mergeList);
 }

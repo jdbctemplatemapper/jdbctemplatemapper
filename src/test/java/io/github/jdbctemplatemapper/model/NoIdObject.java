@@ -5,6 +5,5 @@ import io.github.jdbctemplatemapper.annotation.Table;
 
 @Table(name = "no_id_object")
 public class NoIdObject {
-    @Column
-    private String something;
+  @Column private String something;
 }

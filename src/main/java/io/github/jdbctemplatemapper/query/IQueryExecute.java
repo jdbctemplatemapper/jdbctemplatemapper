@@ -6,11 +6,10 @@ import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
 
 /**
  * The execute interface
- * 
- * @author ajoseph
  *
+ * @author ajoseph
  * @param <T> the type
  */
 public interface IQueryExecute<T> {
-    List<T> execute(JdbcTemplateMapper jdbcTemplateMapper);
+  List<T> execute(JdbcTemplateMapper jdbcTemplateMapper);
 }

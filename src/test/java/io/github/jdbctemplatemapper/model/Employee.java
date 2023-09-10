@@ -10,54 +10,50 @@ import io.github.jdbctemplatemapper.annotation.Table;
 
 @Table(name = "employee")
 public class Employee {
-    @Id(type = IdType.AUTO_INCREMENT)
-    private Integer id;
-    
-    @Column
-    private String lastName;
-    @Column
-    private String firstName;
-    
-    private List<Skill> skills = new ArrayList<>();
-    
-    public Employee() {}
-    
-    public Employee(String firstName, String lastName) {
-        this.lastName = lastName;
-        this.firstName = firstName;
-    }
+  @Id(type = IdType.AUTO_INCREMENT)
+  private Integer id;
 
-    public Integer getId() {
-        return id;
-    }
+  @Column private String lastName;
+  @Column private String firstName;
 
-    public void setId(Integer id) {
-        this.id = id;
-    }
+  private List<Skill> skills = new ArrayList<>();
 
-    public String getLastName() {
-        return lastName;
-    }
+  public Employee() {}
 
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
+  public Employee(String firstName, String lastName) {
+    this.lastName = lastName;
+    this.firstName = firstName;
+  }
 
-    public String getFirstName() {
-        return firstName;
-    }
+  public Integer getId() {
+    return id;
+  }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
+  public void setId(Integer id) {
+    this.id = id;
+  }
 
-    public List<Skill> getSkills() {
-        return skills;
-    }
+  public String getLastName() {
+    return lastName;
+  }
 
-    public void setSkills(List<Skill> skills) {
-        this.skills = skills;
-    }
-    
+  public void setLastName(String lastName) {
+    this.lastName = lastName;
+  }
 
+  public String getFirstName() {
+    return firstName;
+  }
+
+  public void setFirstName(String firstName) {
+    this.firstName = firstName;
+  }
+
+  public List<Skill> getSkills() {
+    return skills;
+  }
+
+  public void setSkills(List<Skill> skills) {
+    this.skills = skills;
+  }
 }

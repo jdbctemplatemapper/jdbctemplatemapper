@@ -13,89 +13,81 @@ import io.github.jdbctemplatemapper.annotation.Version;
 
 @Table(name = "product")
 public class Product {
-    @Id
-    private Integer productId;
-    @Column
-    private String name;
-    @Column
-    private Double cost;
+  @Id private Integer productId;
+  @Column private String name;
+  @Column private Double cost;
 
-    @CreatedOn
-    private LocalDateTime createdOn;
+  @CreatedOn private LocalDateTime createdOn;
 
-    @CreatedBy
-    private String createdBy;
+  @CreatedBy private String createdBy;
 
-    @UpdatedOn
-    private LocalDateTime updatedOn;
+  @UpdatedOn private LocalDateTime updatedOn;
 
-    @UpdatedBy
-    private String updatedBy;
+  @UpdatedBy private String updatedBy;
 
-    @Version
-    private Integer version;
+  @Version private Integer version;
 
-    public Integer getProductId() {
-        return productId;
-    }
+  public Integer getProductId() {
+    return productId;
+  }
 
-    public void setProductId(Integer id) {
-        this.productId = id;
-    }
+  public void setProductId(Integer id) {
+    this.productId = id;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+  public void setName(String name) {
+    this.name = name;
+  }
 
-    public Double getCost() {
-        return cost;
-    }
+  public Double getCost() {
+    return cost;
+  }
 
-    public void setCost(Double cost) {
-        this.cost = cost;
-    }
+  public void setCost(Double cost) {
+    this.cost = cost;
+  }
 
-    public LocalDateTime getCreatedOn() {
-        return createdOn;
-    }
+  public LocalDateTime getCreatedOn() {
+    return createdOn;
+  }
 
-    public void setCreatedOn(LocalDateTime createdOn) {
-        this.createdOn = createdOn;
-    }
+  public void setCreatedOn(LocalDateTime createdOn) {
+    this.createdOn = createdOn;
+  }
 
-    public String getCreatedBy() {
-        return createdBy;
-    }
+  public String getCreatedBy() {
+    return createdBy;
+  }
 
-    public void setCreatedBy(String createdBy) {
-        this.createdBy = createdBy;
-    }
+  public void setCreatedBy(String createdBy) {
+    this.createdBy = createdBy;
+  }
 
-    public LocalDateTime getUpdatedOn() {
-        return updatedOn;
-    }
+  public LocalDateTime getUpdatedOn() {
+    return updatedOn;
+  }
 
-    public void setUpdatedOn(LocalDateTime updatedOn) {
-        this.updatedOn = updatedOn;
-    }
+  public void setUpdatedOn(LocalDateTime updatedOn) {
+    this.updatedOn = updatedOn;
+  }
 
-    public String getUpdatedBy() {
-        return updatedBy;
-    }
+  public String getUpdatedBy() {
+    return updatedBy;
+  }
 
-    public void setUpdatedBy(String updatedBy) {
-        this.updatedBy = updatedBy;
-    }
+  public void setUpdatedBy(String updatedBy) {
+    this.updatedBy = updatedBy;
+  }
 
-    public Integer getVersion() {
-        return version;
-    }
+  public Integer getVersion() {
+    return version;
+  }
 
-    public void setVersion(Integer version) {
-        this.version = version;
-    }
+  public void setVersion(Integer version) {
+    this.version = version;
+  }
 }

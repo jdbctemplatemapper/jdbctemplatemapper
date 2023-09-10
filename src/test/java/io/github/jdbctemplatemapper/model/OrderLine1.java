@@ -8,75 +8,72 @@ import io.github.jdbctemplatemapper.annotation.Table;
 // orderId type integer
 @Table(name = "order_line")
 public class OrderLine1 {
-    @Id(type = IdType.AUTO_INCREMENT)
-    private Integer orderLineId;
-    @Column
-    private Integer orderId;
-    @Column
-    private Integer productId;
-    @Column
-    private Integer numOfUnits;
+  @Id(type = IdType.AUTO_INCREMENT)
+  private Integer orderLineId;
 
-    private Order order;
+  @Column private Integer orderId;
+  @Column private Integer productId;
+  @Column private Integer numOfUnits;
 
-    private Product product;
+  private Order order;
 
-    private String status;
+  private Product product;
 
-    public Integer getOrderLineId() {
-        return orderLineId;
-    }
+  private String status;
 
-    public void setOrderLineId(Integer id) {
-        this.orderLineId = id;
-    }
+  public Integer getOrderLineId() {
+    return orderLineId;
+  }
 
-    public Integer getOrderId() {
-        return orderId;
-    }
+  public void setOrderLineId(Integer id) {
+    this.orderLineId = id;
+  }
 
-    public void setOrderId(Integer orderId) {
-        this.orderId = orderId;
-    }
+  public Integer getOrderId() {
+    return orderId;
+  }
 
-    public Integer getProductId() {
-        return productId;
-    }
+  public void setOrderId(Integer orderId) {
+    this.orderId = orderId;
+  }
 
-    public void setProductId(Integer productId) {
-        this.productId = productId;
-    }
+  public Integer getProductId() {
+    return productId;
+  }
 
-    public Integer getNumOfUnits() {
-        return numOfUnits;
-    }
+  public void setProductId(Integer productId) {
+    this.productId = productId;
+  }
 
-    public void setNumOfUnits(Integer numOfUnits) {
-        this.numOfUnits = numOfUnits;
-    }
+  public Integer getNumOfUnits() {
+    return numOfUnits;
+  }
 
-    public Order getOrder() {
-        return order;
-    }
+  public void setNumOfUnits(Integer numOfUnits) {
+    this.numOfUnits = numOfUnits;
+  }
 
-    public void setOrder(Order order) {
-        this.order = order;
-    }
+  public Order getOrder() {
+    return order;
+  }
 
-    public Product getProduct() {
-        return product;
-    }
+  public void setOrder(Order order) {
+    this.order = order;
+  }
 
-    public void setProduct(Product product) {
-        this.product = product;
-    }
+  public Product getProduct() {
+    return product;
+  }
 
-    public String getStatus() {
-        return status;
-    }
+  public void setProduct(Product product) {
+    this.product = product;
+  }
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
+  public String getStatus() {
+    return status;
+  }
+
+  public void setStatus(String status) {
+    this.status = status;
+  }
 }
-

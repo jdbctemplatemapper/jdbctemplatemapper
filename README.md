@@ -14,7 +14,7 @@
       * auto assign created by, updated by using an implementation of interface IRecordOperatorResolver.
       * optimistic locking feature for updates.
   4. For transaction management use Spring transactions since the library uses JdbcTemplate behind the scenes.
-  5. To log the SQL statements it uses the same logging configurations as JdbcTemplate. See the logging section.
+  5. To log the SQL statements use the same logging configurations as JdbcTemplate. See the logging section.
   6. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with other relational databases. 
   
 ## Example code
@@ -25,7 +25,8 @@
  public class Product {
      // @Id annotation is required.
      // For auto increment database id use @Id(type=IdType.AUTO_INCREMENT)
-     // For non auto increment id use @Id. In this case you will have to manually set the id value before invoking insert().
+     // For non auto increment id use @Id. In this case the id value will have to be manually set 
+     // before invoking insert(). Non auto increment id type can be something other than a Number.
  
      @Id(type=IdType.AUTO_INCREMENT)
      private Integer id; 
@@ -98,7 +99,7 @@ public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
 
 **@Table**
 
-Required class level annotation. It can be any name and should match a table in the database
+Required class level annotation. It should match a table in the database
 
 ```java
 @Table(name="product")
@@ -188,9 +189,8 @@ class Product {
  @Column
  private String productDescription // defaults to column product_description 
  
- @Column(name="created_timestamp")
  @CreatedOn 
- private LocalDateTime createdAt;  // maps to column created_timestamp. Property type should be LocalDateTime 
+ private LocalDateTime createdTimestamp;  // defaults to column created_timestamp. Property type should be LocalDateTime 
   
  @CreatedBy
  private String createdByUser;     // defaults to column created_by_user. 
@@ -289,7 +289,8 @@ List<Order> orders =
 
 ### Merging query results with QueryMerge
 
-The Query api allows only one relationship to be queried at a time. If multiple relationships need to be queried, using QueryMerge is an option. It merges the results from a query with results from another query.
+The Query api allows only one relationship to be queried at a time. If multiple relationships need to be queried, using QueryMerge is an option. It merges the results of a query with results from another query.  
+Note that QueryMerge uses an sql 'IN' clause to retrieve records so can be inefficient for large number of records. A general rule of thumb is use QueryMerge if you are dealing with record sizes less that 1000. See section 'Querying multiple relationships with a single query' further below for more efficient querying for larger record sets.
 
 Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Product
 
@@ -487,7 +488,7 @@ An example for querying the following relationship: An Order has many OrderLine 
      @Override
      public List<Order> extractData(ResultSet rs) throws SQLException, DataAccessException {
        // below logic is specific to this use case. Your logic will be different.
-       // The thing to note is that each model gets built by selectMapper.build(rs).
+       // The thing to note is that each model gets built by selectMapper.buildModel(rs).
        Map<Integer, Order> idOrderMap = new LinkedHashMap<>(); // LinkedHashMap to retain record order
        Map<Integer, Product> idProductMap = new HashMap<>();
        while (rs.next()) {				 					

@@ -6,13 +6,12 @@ import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
 
 /**
  * interface with the next methods in the chain
- * 
- * @author ajoseph
  *
+ * @author ajoseph
  * @param <T> the type
  */
 public interface IQueryWhere<T> {
-    IQueryOrderBy<T> orderBy(String orderBy);
+  IQueryOrderBy<T> orderBy(String orderBy);
 
-    List<T> execute(JdbcTemplateMapper jdbcTemplateMapper);
+  List<T> execute(JdbcTemplateMapper jdbcTemplateMapper);
 }

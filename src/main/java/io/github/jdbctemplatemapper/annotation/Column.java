@@ -6,13 +6,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Properties that need be persisted to the database will need this annotation
- * unless the property is already annotated with one of the other annotations
- * 
+ * Properties that need be persisted to the database will need this annotation unless the property
+ * is already annotated with one of the other annotations
  */
-
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface Column {
-    String name() default "[DEFAULT]";
+  String name() default "[DEFAULT]";
 }

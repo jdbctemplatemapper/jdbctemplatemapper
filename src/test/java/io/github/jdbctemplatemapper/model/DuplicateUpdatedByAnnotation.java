@@ -8,15 +8,12 @@ import io.github.jdbctemplatemapper.annotation.UpdatedBy;
 
 @Table(name = "annotation_check")
 public class DuplicateUpdatedByAnnotation {
-    @Id(type = IdType.AUTO_INCREMENT)
-    private Integer id;
+  @Id(type = IdType.AUTO_INCREMENT)
+  private Integer id;
 
-    @UpdatedBy
-    private String updatedBy1;
+  @UpdatedBy private String updatedBy1;
 
-    @UpdatedBy
-    private String updatedBy2;
+  @UpdatedBy private String updatedBy2;
 
-    @Column
-    private String something;
+  @Column private String something;
 }

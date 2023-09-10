@@ -5,6 +5,5 @@ import io.github.jdbctemplatemapper.annotation.Table;
 
 @Table(name = "    ")
 public class BlankTableObject {
-    @Id
-    private Integer id;
+  @Id private Integer id;
 }

@@ -5,11 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * When record is created the property will be set. It has to be of type
- * LocalDateTime.
- */
+/** When record is created the property will be set. It has to be of type LocalDateTime. */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface CreatedOn {
-}
+public @interface CreatedOn {}

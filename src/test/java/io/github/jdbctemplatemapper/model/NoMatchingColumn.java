@@ -6,10 +6,7 @@ import io.github.jdbctemplatemapper.annotation.Table;
 
 @Table(name = "product")
 public class NoMatchingColumn {
-    @Id
-    private Integer idSomething;
+  @Id private Integer idSomething;
 
-    @Column
-    private Double cost;
-
+  @Column private Double cost;
 }
