@@ -25,11 +25,9 @@ import io.github.jdbctemplatemapper.exception.MapperException;
 import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
 
 /**
- *
- *
- * <pre>
  * CRUD methods and configuration for JdbcTemplateMapper
  *
+ * <pre>
  * See <a href=
  * "https://github.com/jdbctemplatemapper/jdbctemplatemapper#jdbctemplatemapper">JdbcTemplateMapper documentation</a> for more info
  * </pre>

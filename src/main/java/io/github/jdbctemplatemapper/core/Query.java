@@ -29,12 +29,9 @@ import io.github.jdbctemplatemapper.query.IQueryType;
 import io.github.jdbctemplatemapper.query.IQueryWhere;
 
 /**
- *
+ * Fluent style queries for relationships hasOne, hasMany, hasMany through (many to many).
  *
  * <pre>
- * Fluent style queries for relationships hasOne, hasMany, hasMany through (many
- * to many).
- *
  * See <a href=
  * "https://github.com/jdbctemplatemapper/jdbctemplatemapper#querying-relationships">Querying
  * relationships</a> for more info

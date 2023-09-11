@@ -1,8 +1,8 @@
 package io.github.jdbctemplatemapper.exception;
 
 /**
- * When JdbcTemplateMapper is configured with a version property and the model has that property,
- * updates with stale data will throw this exception
+ * updates with stale data will throw this exception when model property is annotated with
+ * {@literal @}Version,
  */
 public class OptimisticLockingException extends RuntimeException {
   private static final long serialVersionUID = 1L;

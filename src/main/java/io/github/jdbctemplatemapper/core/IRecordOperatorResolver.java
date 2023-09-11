@@ -1,8 +1,8 @@
 package io.github.jdbctemplatemapper.core;
 
 /**
- * An implementation of this interface should return the value used to populate created by, updated
- * by fields when using JdbcTemplateMapper
+ * An implementation of this interface should return the value used to populate properties annotated
+ * with {@literal @}CreatedBy and {@literal @}UpdatedBy
  *
  * @author ajoseph
  */

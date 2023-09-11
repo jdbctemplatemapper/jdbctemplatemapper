@@ -6,11 +6,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *
- *
- * <pre>
  * Annotation for Identifier.
  *
+ * <pre>
  * For auto increment id:
  * {@literal @}Table(name="products")
  *  class Product {

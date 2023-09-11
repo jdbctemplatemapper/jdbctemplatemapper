@@ -27,10 +27,9 @@ import io.github.jdbctemplatemapper.querymerge.IQueryMergePopulateProperty;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeType;
 
 /**
- *
+ * QueryMerge allows query results to be merged with results of another query.
  *
  * <pre>
- * QueryMerge allows query results to be merged with results of another query.
  *
  * See <a href=
  * "https://github.com/jdbctemplatemapper/jdbctemplatemapper#querying-relationships">Querying relationships</a> for more info

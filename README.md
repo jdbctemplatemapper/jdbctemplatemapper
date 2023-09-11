@@ -289,8 +289,8 @@ List<Order> orders =
 
 ### Merging query results with QueryMerge
 
-The Query api allows only one relationship to be queried at a time. If multiple relationships need to be queried, using QueryMerge is an option. It merges the results of a query with results from another query.  
-Note that QueryMerge uses an sql 'IN' clause to retrieve records so can be inefficient for large number of records. A general rule of thumb is use QueryMerge if you are dealing with record sizes less that 1000. See section 'Querying multiple relationships with a single query' further below for more efficient querying for larger record sets.
+The Query api allows one relationship to be queried at a time. If multiple relationships need to be queried, using QueryMerge is an option. It merges the results of a query with results from another query.  
+Note that QueryMerge uses an sql 'IN' clause to retrieve records so can be inefficient for large number of records. A general rule of thumb is use QueryMerge if you are dealing with record sizes less that 1000. See section 'Querying multiple relationships with a single query' further below for querying larger record sets.
 
 Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Product
 
@@ -455,8 +455,8 @@ public class EmployeeSkill {
 ### Querying multiple relationships with a single query
 
 For querying multiple relationships with a single query use SelectMapper with Spring ResultSetExtractor.  
-SelectMapper allows generating the select columns string for the model and population of the model from a ResultSet.  
-An example for querying the following relationship: An Order has many OrderLine and each OrderLine has one Product.  
+SelectMapper allows generating the select columns string for the model and population of the model from a ResultSet.    
+An example og querying the following relationship: An Order has many OrderLine and each OrderLine has one Product.  
 
 ```
  // The second argument to getSelectMapper() below is the table alias used in the query.
@@ -545,7 +545,7 @@ Uses the same logging configurations as Spring's JdbcTemplate to log the SQL. In
 ## Notes
  1. If insert/update fails do not reuse the object since it could be in an inconsistent state.
  2. Database changes will require a restart of the application since JdbcTemplateMapper caches table metadata.
- 3. When using @Column(name="some_column_name") to map a property to a non default column it will impact using "SELECT * " with Spring BeanPropertyRowMapper in custom queries. The mismatch of column and property names will cause BeanPropertyRowMapper to ignore these properties. Use "SELECT " + jdbcTemplateMapper.getColumnsSql(Class) which will create column aliases to match property names so will work with BeanPropertyRowMapper.
+ 3. When using @Column(name="some_column_name") to map a property to a non default column it will impact using "SELECT * " with Spring BeanPropertyRowMapper in custom queries. The mismatch of column and property names will cause Spring BeanPropertyRowMapper to ignore these properties. Use "SELECT " + jdbcTemplateMapper.getColumnsSql(Class) which will create column aliases to match property names so will work with BeanPropertyRowMapper.
  4. Models should have a no argument constructor so they can be instantiated and properties set.
  5. For Oracle/SqlServer no support for blob/clob. Use JdbcTemplate directly for this with recommended custom code
  

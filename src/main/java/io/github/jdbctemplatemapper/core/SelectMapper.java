@@ -13,10 +13,10 @@ import org.springframework.util.Assert;
 import io.github.jdbctemplatemapper.exception.MapperException;
 
 /**
- *
+ * Allows population of the model from a ResultSet and generating the select columns string for the
+ * model
  *
  * <pre>
- * Allows population of the model from a ResultSet and generating the select columns string for the model
  *
  * See <a href=
  * "https://github.com/jdbctemplatemapper/jdbctemplatemapper#querying-relationships">Querying relationships</a> for more info
