@@ -32,7 +32,7 @@ class QueryValidator {
 
     Object ownerModel = null;
     try {
-      ownerModel = ownerType.newInstance();
+      ownerModel = ownerType.getConstructor().newInstance();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -64,7 +64,7 @@ class QueryValidator {
     if (relatedType != null) {
       Object ownerModel = null;
       try {
-        ownerModel = ownerType.newInstance();
+        ownerModel = ownerType.getConstructor().newInstance();
       } catch (Exception e) {
         throw new RuntimeException(e);
       }

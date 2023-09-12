@@ -2,8 +2,6 @@ package io.github.jdbctemplatemapper.test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.List;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,13 +20,14 @@ import io.github.jdbctemplatemapper.model.OrderLine;
 @ExtendWith(SpringExtension.class)
 public class QueryWhereAndOrderByTest {
 
-  @Value("${spring.datasource.driver-class-name}")
-  private String jdbcDriver;
+    @Value("${spring.datasource.driver-class-name}")
+    private String jdbcDriver;
 
-  @Autowired private JdbcTemplateMapper jtm;
+    @Autowired
+    private JdbcTemplateMapper jtm;
 
-  @Test
-  public void query_where_invalidBlank_test() {
+    @Test
+    public void query_where_invalidBlank_test() {
     // @formatter:off
 
     Exception exception =
@@ -38,11 +37,11 @@ public class QueryWhereAndOrderByTest {
               Query.type(Order.class).where("").execute(jtm);
             });
     // @formatter:on
-    assertTrue(exception.getMessage().contains("where() blank string is invalid"));
-  }
+        assertTrue(exception.getMessage().contains("where() blank string is invalid"));
+    }
 
-  @Test
-  public void query_orderBy_invalidWithJustPeriod_test() {
+    @Test
+    public void query_orderBy_invalidWithJustPeriod_test() {
     // @formatter:off
 
     Exception exception =
@@ -52,11 +51,11 @@ public class QueryWhereAndOrderByTest {
               Query.type(Order.class).orderBy(".").execute(jtm);
             });
     // @formatter:on
-    assertTrue(exception.getMessage().contains("orderBy() invalid table alias"));
-  }
+        assertTrue(exception.getMessage().contains("orderBy() invalid table alias"));
+    }
 
-  @Test
-  public void query_orderBy_multiClauseInvalidColumn_test() {
+    @Test
+    public void query_orderBy_multiClauseInvalidColumn_test() {
     // @formatter:off
     Exception exception =
         Assertions.assertThrows(
@@ -67,11 +66,11 @@ public class QueryWhereAndOrderByTest {
                   .execute(jtm);
             });
     // @formatter:on
-    assertTrue(exception.getMessage().contains("orderBy() invalid column name "));
-  }
+        assertTrue(exception.getMessage().contains("orderBy() invalid column name "));
+    }
 
-  @Test
-  public void query_orderBy_invalidNoTableAlias_test() {
+    @Test
+    public void query_orderBy_invalidNoTableAlias_test() {
     // @formatter:off
     Exception exception =
         Assertions.assertThrows(
@@ -80,15 +79,12 @@ public class QueryWhereAndOrderByTest {
               Query.type(Order.class).orderBy("status DESC").execute(jtm);
             });
     // @formatter:on
-    assertTrue(
-        exception
-            .getMessage()
-            .contains(
-                "Invalid orderBy(). Note that the column name should be prefixed by table alias"));
-  }
+        assertTrue(exception.getMessage()
+                .contains("Invalid orderBy(). Note that the column name should be prefixed by table alias"));
+    }
 
-  @Test
-  public void query_orderBy_invalidTableAlias_test() {
+    @Test
+    public void query_orderBy_invalidTableAlias_test() {
     // @formatter:off
     Exception exception =
         Assertions.assertThrows(
@@ -97,11 +93,11 @@ public class QueryWhereAndOrderByTest {
               Query.type(Order.class).orderBy(" xyz.status DESC ").execute(jtm);
             });
     // @formatter:on
-    assertTrue(exception.getMessage().contains("orderBy() invalid table alias"));
-  }
+        assertTrue(exception.getMessage().contains("orderBy() invalid table alias"));
+    }
 
-  @Test
-  public void query_orderBy_invalidBlankValue_test() {
+    @Test
+    public void query_orderBy_invalidBlankValue_test() {
     // @formatter:off
     Exception exception =
         Assertions.assertThrows(
@@ -110,11 +106,11 @@ public class QueryWhereAndOrderByTest {
               Query.type(Order.class).orderBy(" ").execute(jtm);
             });
     // @formatter:on
-    assertTrue(exception.getMessage().contains("orderBy() blank string is invalid"));
-  }
+        assertTrue(exception.getMessage().contains("orderBy() blank string is invalid"));
+    }
 
-  @Test
-  public void orderBy_invalidRelatedTable_Test() {
+    @Test
+    public void orderBy_invalidRelatedTable_Test() {
     // @formatter:off
     Exception exception =
         Assertions.assertThrows(
@@ -131,11 +127,11 @@ public class QueryWhereAndOrderByTest {
 
     // @formatter:on
 
-    assertTrue(exception.getMessage().contains("orderBy() invalid table alias"));
-  }
+        assertTrue(exception.getMessage().contains("orderBy() invalid table alias"));
+    }
 
-  @Test
-  public void orderBy_Success_Test() {
+    @Test
+    public void orderBy_Success_Test() {
     // @formatter:off
     Query.type(Order.class).orderBy("orders.status").execute(jtm);
 
@@ -146,12 +142,11 @@ public class QueryWhereAndOrderByTest {
     Query.type(Order.class).orderBy("orders.STATUS ASC  ,  orders.order_id   Desc").execute(jtm);
 
     // @formatter:on
-  }
+    }
 
-  @Test
-  public void orderBy_relationshipColumn_hasMany_success_Test() {
+    @Test
+    public void orderBy_relationshipColumn_hasMany_success_Test() {
     // @formatter:off
-    List<Order> list =
         Query.type(Order.class)
             .hasMany(OrderLine.class)
             .joinColumnManySide("order_id")
@@ -160,5 +155,5 @@ public class QueryWhereAndOrderByTest {
             .orderBy(" orders.status  ASC,  order_line.num_of_units DESC")
             .execute(jtm);
     // @formatter:on
-  }
+    }
 }

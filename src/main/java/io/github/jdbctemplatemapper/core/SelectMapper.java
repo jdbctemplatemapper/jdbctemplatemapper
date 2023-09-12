@@ -128,7 +128,7 @@ public class SelectMapper<T> {
   // excessive creation of bean wrappers.
   BeanWrapper buildBeanWrapperModel(ResultSet rs) {
     try {
-      Object obj = clazz.newInstance();
+      Object obj = clazz.getConstructor().newInstance();
       TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
       BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
       // need below for java.sql.Timestamp to java.time.LocalDateTime conversion etc
