@@ -523,6 +523,7 @@ An example of querying the following relationship: Order hasOne Customer, Order 
            *******************************************/
            // above code refactored
            Customer customer = getModel(rs, customerSelectMapper, idCustomerMap); // see definition of getModel() further down
+           
            order.setCustomer(customer);
            idOrderMap.put(order.getId(), order);
          }
