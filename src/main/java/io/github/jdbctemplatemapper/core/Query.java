@@ -312,7 +312,7 @@ public class Query<T> implements IQueryFluent<T> {
         sql += " WHERE " + whereClause;
       }
       if (MapperUtils.isNotBlank(orderBy)) {
-        sql = sql + " ORDER BY " + orderBy;
+        sql += " ORDER BY " + orderBy;
       }
     } else {
       sql = successQuerySqlCache.get(cacheKey);
@@ -326,7 +326,7 @@ public class Query<T> implements IQueryFluent<T> {
             Map<Object, Object> idToRelatedModelMap = new HashMap<>();
             while (rs.next()) {
               Object ownerModel = getModel(rs, ownerTypeSelectMapper, idToOwnerModelMap);
-              if (relatedType != null) {
+              if (relatedType != null && ownerModel != null) {
                 Object relatedModel = getModel(rs, relatedTypeSelectMapper, idToRelatedModelMap);
                 if (RelationshipType.HAS_ONE == relationshipType) {
                   BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(ownerModel);
@@ -366,6 +366,7 @@ public class Query<T> implements IQueryFluent<T> {
       throws SQLException {
     Object model = null;
     Object id = rs.getObject(selectMapper.getResultSetModelIdColumnLabel());
+    id = rs.wasNull() ? null : id; // some drivers are goofy
     if (id != null) {
       model = idToModelMap.get(id);
       if (model == null) {

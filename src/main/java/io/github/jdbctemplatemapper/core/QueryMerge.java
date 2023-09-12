@@ -199,11 +199,13 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         new ArrayList<>(); // used to avoid excessive BeanWrapper creation
     Set params = new HashSet<>();
     for (T obj : mergeList) {
-      BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
-      Object joinPropertyValue = bw.getPropertyValue(joinPropertyName);
-      if (joinPropertyValue != null) {
-        params.add(joinPropertyValue);
-        bwMergeList.add(bw);
+      if (obj != null) {
+        BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
+        Object joinPropertyValue = bw.getPropertyValue(joinPropertyName);
+        if (joinPropertyValue != null) {
+          params.add(joinPropertyValue);
+          bwMergeList.add(bw);
+        }
       }
     }
     if (MapperUtils.isEmpty(params)) {
@@ -280,11 +282,13 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     Map<Object, BeanWrapper> idToBeanWrapperOwnerModelMap = new HashMap<>();
     Set params = new HashSet<>();
     for (Object obj : mergeList) {
-      BeanWrapper bwOwnerModel = PropertyAccessorFactory.forBeanPropertyAccess(obj);
-      Object idValue = bwOwnerModel.getPropertyValue(ownerTypeIdPropName);
-      if (idValue != null) {
-        params.add(idValue);
-        idToBeanWrapperOwnerModelMap.put(idValue, bwOwnerModel);
+      if(obj != null) {
+        BeanWrapper bwOwnerModel = PropertyAccessorFactory.forBeanPropertyAccess(obj);
+        Object idValue = bwOwnerModel.getPropertyValue(ownerTypeIdPropName);
+        if (idValue != null) {
+          params.add(idValue);
+          idToBeanWrapperOwnerModelMap.put(idValue, bwOwnerModel);
+        }
       }
     }
     if (MapperUtils.isEmpty(params)) {
@@ -309,12 +313,14 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
           public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
             while (rs.next()) {
               BeanWrapper bwRelatedModel = selectMapper.buildBeanWrapperModel(rs);
-              Object joinPropertyValue = bwRelatedModel.getPropertyValue(joinPropertyName);
-              BeanWrapper bwOwnerModel = idToBeanWrapperOwnerModelMap.get(joinPropertyValue);
-              if (bwOwnerModel != null) {
-                // already validated so we know collection is initialized
-                Collection collection = (Collection) bwOwnerModel.getPropertyValue(propertyName);
-                collection.add(bwRelatedModel.getWrappedInstance());
+              if(bwRelatedModel != null) {
+                Object joinPropertyValue = bwRelatedModel.getPropertyValue(joinPropertyName);
+                BeanWrapper bwOwnerModel = idToBeanWrapperOwnerModelMap.get(joinPropertyValue);
+                if (bwOwnerModel != null) {
+                  // already validated so we know collection is initialized
+                  Collection collection = (Collection) bwOwnerModel.getPropertyValue(propertyName);
+                  collection.add(bwRelatedModel.getWrappedInstance());
+                }
               }
             }
             return null;
