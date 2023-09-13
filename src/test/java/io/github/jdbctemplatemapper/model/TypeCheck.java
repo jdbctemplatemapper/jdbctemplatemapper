@@ -24,18 +24,18 @@ public class TypeCheck {
   @Column 
   private java.util.Date javaUtilDateTsData; // postgres/mysql/oracle
 
-  // @Column
+  //@Column
   private java.util.Date javaUtilDateDtData; // SqlServer
 
   @Column private BigDecimal bigDecimalData;
 
-  @Column
+  //@Column
   private OffsetDateTime offsetDateTimeData; // mysql/oracle
 
-  //@Column 
+  @Column 
   private Boolean booleanVal; // postgres/mysql
 
- // @Column 
+ @Column 
   private byte[] image; // postgres/mysql
 
   public Integer getId() {
