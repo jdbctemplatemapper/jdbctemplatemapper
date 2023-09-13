@@ -2,16 +2,15 @@ package io.github.jdbctemplatemapper.core;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.util.Assert;
@@ -322,28 +321,32 @@ public class Query<T> implements IQueryFluent<T> {
     ResultSetExtractor<List<T>> rsExtractor =
         new ResultSetExtractor<List<T>>() {
           public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
-            Map<Object, Object> idToOwnerModelMap = new LinkedHashMap<>(); // to retain order
-            Map<Object, Object> idToRelatedModelMap = new HashMap<>();
+            Map<Object, BeanWrapper> idToBeanWrapperOwnerModelMap = new LinkedHashMap<>(); // to retain order
+            Map<Object, BeanWrapper> idToBeanWrapperRelatedModelMap = new HashMap<>();
             while (rs.next()) {
-              Object ownerModel = getModel(rs, ownerTypeSelectMapper, idToOwnerModelMap);
-              if (relatedType != null && ownerModel != null) {
-                Object relatedModel = getModel(rs, relatedTypeSelectMapper, idToRelatedModelMap);
+              BeanWrapper bwOwnerModel = getBeanWrapperModel(rs, ownerTypeSelectMapper, idToBeanWrapperOwnerModelMap);
+              if (relatedType != null && bwOwnerModel != null) {
+                BeanWrapper bwRelatedModel = getBeanWrapperModel(rs, relatedTypeSelectMapper, idToBeanWrapperRelatedModelMap);
+                Object relatedModel = bwRelatedModel == null ? null : bwRelatedModel.getWrappedInstance();
                 if (RelationshipType.HAS_ONE == relationshipType) {
-                  BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(ownerModel);
-                  bw.setPropertyValue(propertyName, relatedModel);
+                  bwOwnerModel.setPropertyValue(propertyName, relatedModel);
                 } else if (RelationshipType.HAS_MANY == relationshipType
                     || RelationshipType.HAS_MANY_THROUGH == relationshipType) {
                   if (relatedModel != null) {
-                    BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(ownerModel);
                     // the property has already been validated so we know it is a
                     // collection that has been initialized
-                    Collection collection = (Collection) bw.getPropertyValue(propertyName);
+                    Collection collection = (Collection) bwOwnerModel.getPropertyValue(propertyName);
                     collection.add(relatedModel);
                   }
                 }
               }
             }
-            return (List<T>) new ArrayList<>(idToOwnerModelMap.values());
+            
+            return idToBeanWrapperOwnerModelMap.values().stream()
+                        .map(bw -> (T) bw.getWrappedInstance())
+                        .collect(Collectors.toList());
+            
+            //return (List<T>) new ArrayList<>(idToBeanWrapperOwnerModelMap.values());
           }
         };
 
@@ -361,20 +364,20 @@ public class Query<T> implements IQueryFluent<T> {
     return resultList;
   }
 
-  private Object getModel(
-      ResultSet rs, SelectMapper<?> selectMapper, Map<Object, Object> idToModelMap)
+  private BeanWrapper getBeanWrapperModel(
+      ResultSet rs, SelectMapper<?> selectMapper, Map<Object, BeanWrapper> idToBeanWrapperModelMap)
       throws SQLException {
-    Object model = null;
+    BeanWrapper bwModel = null;
     Object id = rs.getObject(selectMapper.getResultSetModelIdColumnLabel());
     id = rs.wasNull() ? null : id; // some drivers are goofy
     if (id != null) {
-      model = idToModelMap.get(id);
-      if (model == null) {
-        model = selectMapper.buildModel(rs); // builds the model from resultSet
-        idToModelMap.put(id, model);
+      bwModel = idToBeanWrapperModelMap.get(id);
+      if (bwModel == null) {
+        bwModel = selectMapper.buildBeanWrapperModel(rs); // builds the model from resultSet
+        idToBeanWrapperModelMap.put(id, bwModel);
       }
     }
-    return model;
+    return bwModel;
   }
 
   private String getQueryCacheKey(JdbcTemplateMapper jdbcTemplateMapper) {
