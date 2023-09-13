@@ -21,19 +21,22 @@ public class TypeCheck {
 
   @Column private LocalDateTime localDateTimeData;
 
-  @Column private java.util.Date javaUtilDateTsData; // postgres/mysql/oracle
+  @Column 
+  private java.util.Date javaUtilDateTsData; // postgres/mysql/oracle
 
   // @Column
   private java.util.Date javaUtilDateDtData; // SqlServer
 
   @Column private BigDecimal bigDecimalData;
 
-  // @Column
+  @Column
   private OffsetDateTime offsetDateTimeData; // mysql/oracle
 
-  @Column private Boolean booleanVal; // postgres/mysql
+  //@Column 
+  private Boolean booleanVal; // postgres/mysql
 
-  @Column private byte[] image; // postgres/mysql
+ // @Column 
+  private byte[] image; // postgres/mysql
 
   public Integer getId() {
     return id;

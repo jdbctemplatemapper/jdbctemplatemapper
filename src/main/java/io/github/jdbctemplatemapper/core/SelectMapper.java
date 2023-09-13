@@ -107,8 +107,16 @@ public class SelectMapper<T> {
    * @return the column alias of the models id in sql statement
    */
   public String getResultSetModelIdColumnLabel() {
-    TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
-    return colAliasPrefix + tableMapping.getIdColumnName();
+    return colAliasPrefix + mappingHelper.getTableMapping(clazz).getIdColumnName();
+  }
+  
+  /**
+   * Get the models id type
+   *
+   * @return the type
+   */
+  public Class<?> getModelIdType() {
+    return mappingHelper.getTableMapping(clazz).getIdPropertyMapping().getPropertyType();
   }
 
   /**

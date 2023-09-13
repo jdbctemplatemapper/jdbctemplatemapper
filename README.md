@@ -16,8 +16,7 @@
   4. For transaction management use Spring transactions since the library uses JdbcTemplate behind the scenes.
   5. To log the SQL statements use the same logging configurations as JdbcTemplate. See the logging section.
   6. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with other relational databases. 
-  7. Works with java LTS releases java8, java11, java17
-  
+
 ## Example code
  
   ```java 
@@ -241,7 +240,7 @@ List<Order> orders = Query.type(Order.class)
 // Its always a good practice to parameterize the where clause.
 List<Order> orders = 
   Query.type(Order.class)
-       .where("orders.status = ?", "IN PROCESS") // always prefix where() columns with table
+       .where("orders.status = ?", "COMPLETE") // always prefix where() columns with table
        .execute(jdbcTemplateMapper); // execute with jdbcTemplateMapper
        
 // with orderBy. orderBy() is strictly validated and is protected against SQL injection.
@@ -253,7 +252,7 @@ List<Order> orders =
 // with where and orderBy
 List<Order> orders = 
   Query.type(Order.class)
-       .where("orders.status = ?", "IN PROCESS") // always prefix where() columns with table
+       .where("orders.status = ?", "COMPLETE") // always prefix where() columns with table
        .orderBy("orders.id desc")  // always prefix orderBy() columns with table
        .execute(jdbcTemplateMapper); // execute with jdbcTemplateMapper
 
@@ -261,9 +260,9 @@ List<Order> orders =
 List<Order> orders = 
   Query.type(Order.class) // owning class
        .hasOne(Customer.class) // related Class
-       .joinColumnOwningSide("customer_id") // hasOne() join column is on owning side table. No prefixes.
+       .joinColumnOwningSide("customer_id") // hasOne() join column is on owning side table. No table prefixes.
        .populateProperty("customer") // property on owning class to populate
-       .where("orders.status = ?", "IN PROCESS") // always prefix where() columns with table
+       .where("orders.status = ?", "COMPLETE") // always prefix where() columns with table
        .orderBy("orders.id DESC, customer.id")  // owning and related table columns can be used
        .execute(jdbcTemplateMapper); // execute with jdbcTemplateMapper
               
@@ -271,9 +270,9 @@ List<Order> orders =
 List<Order> orders = 
   Query.type(Order.class) // owning class
        .hasMany(OrderLine.class) // related class
-       .joinColumnManySide("order_id") // hasMany() join column is on the many side table. No prefixes
+       .joinColumnManySide("order_id") // hasMany() join column is on the many side table. No table prefixes
        .populateProperty("orderLines") // the property to populate on the owning class
-       .where("orders.status = ?", "IN PROCESS") // always prefix where() columns with table
+       .where("orders.status = ?", "COMPLETE") // always prefix where() columns with table
        .orderBy("orders.id, order_line.id")  // owning and related table columns can be used
        .execute(jdbcTemplateMapper); // execute with jdbcTemplateMapper   
        
@@ -291,7 +290,7 @@ List<Order> orders =
 ### Merging query results with QueryMerge
 
 The Query api allows one relationship to be queried at a time. If multiple relationships need to be queried, using QueryMerge is an option. It merges the results of a query with results from another query.  
-Note that QueryMerge uses an sql 'IN' clause to retrieve records so can be inefficient for large number of records. A general rule of thumb is use QueryMerge if you are dealing with record sizes up to a few 100s. See section 'Querying multiple relationships with a single query' further below for querying larger record sets.
+Note that QueryMerge uses an sql 'IN' clause to retrieve records so can be inefficient for large number of records. A general rule of thumb is use QueryMerge if you are dealing with record sizes up to a few 100s. For querying larger record sets see section 'Querying multiple relationships with a single query' further below.
 
 Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Product
 
@@ -356,7 +355,7 @@ Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Produc
          .hasMany(OrderLine.class) // the related class. Order hasMany OrderLine
          .joinColumnManySide("order_id") // the join column is on the many side table. No prefixes
          .populateProperty("orderLines") // the property to populate on the owning class
-         .where(orders.status = ?, "IN PROCESS") // always prefix columns with table name.
+         .where(orders.status = ?, "COMPLETE") // always prefix columns with table name.
          .orderBy("orders.order_date DESC, order_line.id") // always prefix columns with table name.
          .execute(jdbcTemplateMapper); // execute with the jdbcTemplateMapper
  
@@ -461,7 +460,7 @@ SelectMapper allows generating the select columns string for the model and popul
 An example of querying the following relationship: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Product  
 
 ```
- // The second argument to getSelectMapper() below is the table alias in the query. 
+ // The second argument to getSelectMapper() below is the table alias in the query and should match what is exactly used in query
  // For the query below the 'orders' table alias is 'o', 'customer' table alias is 'c', 'order_line' table alias 
  // is 'ol' and the product table alias is 'p'
  // SelectMapper.getColumnsSql() aliases all columns with the prefix; table alias + "_" so that there are no conflicts in sql
@@ -486,6 +485,7 @@ An example of querying the following relationship: Order hasOne Customer, Order 
                + " left join customer c on o.customer_id = c.id
                + " left join order_line ol on o.id = ol.order_id"
                + " left join product p on p.id = ol.product_id"
+               + " where o.status = ?"
                + " order by o.id, ol.id";
   
  // using Spring ResultSetExtractor                                      	
@@ -496,6 +496,7 @@ An example of querying the following relationship: Order hasOne Customer, Order 
        // The thing to note is that each model gets built by selectMapper.buildModel(rs).
        
        // using maps below to prevent multiple instantiation of same Order, Customer and Product 
+       // key - id
        Map<Object, Order> idOrderMap = new LinkedHashMap<>(); // LinkedHashMap to retain result order
        Map<Object, Customer> idCustomerMap = new HashMap<>();
        Map<Object, Project> idProductMap = new HashMap<>();
@@ -507,7 +508,6 @@ An example of querying the following relationship: Order hasOne Customer, Order 
          Order order = idOrderMap.get(orderId);
          if (order == null) {
            order = orderSelectMapper.buildModel(rs); 
-           
            /******************************************     
            // customerSelectMapper.getResultSetModelIdColumnName() returns the id column alias 
            // which is 'c_id'for the sql above.
@@ -517,34 +517,34 @@ An example of querying the following relationship: Order hasOne Customer, Order 
              customer = idCustomerMap.get(customerId);
              if (customer == null) {
                customer = customerSelectMapper.buildModel(rs); 
-               idCustomerMap.put(customer.getId(), customer);
+               idCustomerMap.put(customerId, customer);
              }
            }
            *******************************************/
            // above code refactored
-           Customer customer = getModel(rs, customerSelectMapper, idCustomerMap); // see definition of getModel() further down
+           Customer customer = getModel(rs, customerSelectMapper, idCustomerMap); // see definition of getModel() further below
            
            order.setCustomer(customer);
-           idOrderMap.put(order.getId(), order);
+           idOrderMap.put(orderId, order);
          }
 
          OrderLine orderLine = orderLineSelectMapper.buildModel(rs);
          if(orderLine != null) {
            /******************************************
-           Product product = null;
            // productSelectMapper.getResultSetModelIdColumnName() returns the id column alias 
            // which is 'p_id'for the sql above.
+           Product product = null;
            Object productId = rs.getObject(productSelectMapper.getResultSetModelIdColumnLabel());
            if(productId != null){
              Product product = idProductMap.get(productId);
              if (product == null) {
                product = productSelectMapper.buildModel(rs); 
-               idProductMap.put(product.getId(), product);
+               idProductMap.put(productId, product);
              }
            }
            *******************************************/
             // above code refactored
-           Product product = getModel(rs, productSelectMapper, idProductMap); // see definition of getModel() further down
+           Product product = getModel(rs, productSelectMapper, idProductMap); // see definition of getModel() further below
            
            // wire up the relationships
            orderLine.setProduct(product); 
@@ -556,7 +556,7 @@ An example of querying the following relationship: Order hasOne Customer, Order 
   };
  
   // execute the JdbcTemplate query	
-  List<Order> orders = jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor);
+  List<Order> orders = jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor, "COMPLETE");
   
   ...
   
@@ -595,7 +595,7 @@ Uses the same logging configurations as Spring's JdbcTemplate to log the SQL. In
  ```
  
 ## Notes
- 1. Models should have a no argument constructor so they can be instantiated and properties set.
+ 1. Models should have a no argument constructor so they can be instantiated.
  2. Database changes will require a restart of the application since JdbcTemplateMapper caches table metadata.
  3. When using @Column(name="some_column_name") to map a property to a non default column, it will impact using "SELECT * " with Spring BeanPropertyRowMapper in custom queries. The mismatch of column and property names will cause Spring BeanPropertyRowMapper to ignore these properties. Use "SELECT " + jdbcTemplateMapper.getColumnsSql(Class) which will create column aliases to match property names so will work with BeanPropertyRowMapper.
  4. If insert/update fails do not reuse the object since it could be in an inconsistent state.

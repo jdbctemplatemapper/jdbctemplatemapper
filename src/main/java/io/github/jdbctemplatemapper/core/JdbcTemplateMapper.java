@@ -141,6 +141,22 @@ public final class JdbcTemplateMapper {
     this.recordOperatorResolver = recordOperatorResolver;
     return this;
   }
+  
+  /**
+   * Get the schema name
+   * @return the schema name
+   */
+  public String getSchemaName() {
+      return mappingHelper.getSchemaName();
+  }
+  
+  /**
+   * Get the catalog name
+   * @return the catalog name
+   */
+  public String getCatalogName() {
+      return mappingHelper.getCatalogName();
+  }
 
   /**
    * Exposing the conversion service used so if necessary new converters can be added
