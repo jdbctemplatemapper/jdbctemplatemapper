@@ -84,7 +84,7 @@ public class Query<T> implements IQueryFluent<T> {
    * @return interface with the next methods in the chain
    */
   public IQueryWhere<T> where(String whereClause, Object... params) {
-    if(MapperUtils.isBlank(whereClause)) {
+    if (MapperUtils.isBlank(whereClause)) {
       throw new IllegalArgumentException("whereClause cannot be null or blank");
     }
     this.whereClause = whereClause;
@@ -97,13 +97,14 @@ public class Query<T> implements IQueryFluent<T> {
    * querying relationships (hasOne, hasMany, hasMany through) both the owning side and related side
    * columns can be used in the orderBy clause
    *
-   * <p>orderBy is strictly validated which protects it from SQL injection.
+   * <p>
+   * orderBy is strictly validated which protects it from SQL injection.
    *
    * @param orderBy the orderBy clause. It has to be prefixed with table name.
    * @return interface with the next methods in the chain
    */
   public IQueryOrderBy<T> orderBy(String orderBy) {
-    if(MapperUtils.isBlank(orderBy)) {
+    if (MapperUtils.isBlank(orderBy)) {
       throw new IllegalArgumentException("orderBy cannot be null or blank");
     }
     this.orderBy = orderBy;
@@ -142,13 +143,14 @@ public class Query<T> implements IQueryFluent<T> {
    * owning model. Example: Order hasOne Customer. The join column(foreign key) will be on the table
    * order (of the owning model)
    *
-   * <p>The join column should not have a table prefix.
+   * <p>
+   * The join column should not have a table prefix.
    *
    * @param joinColumnOwningSide the join column on the owning side (with no table prefix)
    * @return interface with the next methods in the chain
    */
   public IQueryJoinColumnOwningSide<T> joinColumnOwningSide(String joinColumnOwningSide) {
-    if(MapperUtils.isBlank(joinColumnOwningSide)) {
+    if (MapperUtils.isBlank(joinColumnOwningSide)) {
       throw new IllegalArgumentException("joinColumnOwningSide cannot be null or blank");
     }
     this.joinColumnOwningSide = MapperUtils.toLowerCase(joinColumnOwningSide.trim());
@@ -160,13 +162,14 @@ public class Query<T> implements IQueryFluent<T> {
    * many side. Example: Order hasMany OrderLine. The join column will be on the table order_line
    * (the many side)
    *
-   * <p>The join column should not have a table prefix.
+   * <p>
+   * The join column should not have a table prefix.
    *
    * @param joinColumnManySide the join column on the many side (with no table prefix)
    * @return interface with the next methods in the chain
    */
   public IQueryJoinColumnManySide<T> joinColumnManySide(String joinColumnManySide) {
-    if(MapperUtils.isBlank(joinColumnManySide)) {
+    if (MapperUtils.isBlank(joinColumnManySide)) {
       throw new IllegalArgumentException("joinColumnManySide cannot be null or blank");
     }
     this.joinColumnManySide = MapperUtils.toLowerCase(joinColumnManySide.trim());
@@ -180,7 +183,7 @@ public class Query<T> implements IQueryFluent<T> {
    * @return interface with the next methods in the chain
    */
   public IQueryThroughJoinTable<T> throughJoinTable(String tableName) {
-    if(MapperUtils.isBlank(tableName)) {
+    if (MapperUtils.isBlank(tableName)) {
       throw new IllegalArgumentException("throughJoinTable() tableName cannot be null or blank");
     }
     this.relationshipType = RelationshipType.HAS_MANY_THROUGH;
@@ -195,13 +198,15 @@ public class Query<T> implements IQueryFluent<T> {
    * @param relatedTypeJoinColumn the join column for the related side
    * @return interface with the next methods in the chain
    */
-  public IQueryThroughJoinColumns<T> throughJoinColumns(
-      String ownerTypeJoinColumn, String relatedTypeJoinColumn) {
-    if(MapperUtils.isBlank(ownerTypeJoinColumn)) {
-      throw new IllegalArgumentException("throughJoinColumns() ownerTypeJoinColumn cannot be null or blank");
+  public IQueryThroughJoinColumns<T> throughJoinColumns(String ownerTypeJoinColumn,
+      String relatedTypeJoinColumn) {
+    if (MapperUtils.isBlank(ownerTypeJoinColumn)) {
+      throw new IllegalArgumentException(
+          "throughJoinColumns() ownerTypeJoinColumn cannot be null or blank");
     }
-    if(MapperUtils.isBlank(relatedTypeJoinColumn)) {
-      throw new IllegalArgumentException("throughJoinColumns() relatedTypeJoinColumn cannot be null or blank");
+    if (MapperUtils.isBlank(relatedTypeJoinColumn)) {
+      throw new IllegalArgumentException(
+          "throughJoinColumns() relatedTypeJoinColumn cannot be null or blank");
     }
     this.throughOwnerTypeJoinColumn = ownerTypeJoinColumn;
     this.throughRelatedTypeJoinColumn = relatedTypeJoinColumn;
@@ -211,7 +216,8 @@ public class Query<T> implements IQueryFluent<T> {
   /**
    * The relationship property that needs to be populated on the owning type.
    *
-   * <p>For hasMany() this property has to be an initialized collection (cannot be null) and the
+   * <p>
+   * For hasMany() this property has to be an initialized collection (cannot be null) and the
    * generic type should match the hasMany related type. For hasOne this property has to be the same
    * type as hasOne related type
    *
@@ -219,7 +225,7 @@ public class Query<T> implements IQueryFluent<T> {
    * @return interface with the next methods in the chain
    */
   public IQueryPopulateProperty<T> populateProperty(String propertyName) {
-    if(MapperUtils.isBlank(propertyName)) {
+    if (MapperUtils.isBlank(propertyName)) {
       throw new IllegalArgumentException("propertyName cannot be null or blank");
     }
     this.propertyName = propertyName;
@@ -243,28 +249,17 @@ public class Query<T> implements IQueryFluent<T> {
     TableMapping relatedTypeTableMapping =
         relatedType == null ? null : mappingHelper.getTableMapping(relatedType);
     // making it effectively final to be used in inner class ResultSetExtractor
-    SelectMapper<?> relatedTypeSelectMapper =
-        relatedType == null
-            ? null
-            : jdbcTemplateMapper.getSelectMapper(
-                relatedType, relatedTypeTableMapping.getTableName());
+    SelectMapper<?> relatedTypeSelectMapper = relatedType == null ? null
+        : jdbcTemplateMapper.getSelectMapper(relatedType, relatedTypeTableMapping.getTableName());
 
     String sql = null;
     String cacheKey = getQueryCacheKey(jdbcTemplateMapper);
     if (!previouslySuccessfulQuery(cacheKey)) {
-      QueryValidator.validate(
-          jdbcTemplateMapper,
-          ownerType,
-          relationshipType,
-          relatedType,
-          joinColumnOwningSide,
-          joinColumnManySide,
-          propertyName,
-          throughJoinTable,
-          throughOwnerTypeJoinColumn,
-          throughRelatedTypeJoinColumn);
-      QueryValidator.validateQueryWhereAndOrderBy(
-          jdbcTemplateMapper, whereClause, orderBy, ownerType, relatedType);
+      QueryValidator.validate(jdbcTemplateMapper, ownerType, relationshipType, relatedType,
+          joinColumnOwningSide, joinColumnManySide, propertyName, throughJoinTable,
+          throughOwnerTypeJoinColumn, throughRelatedTypeJoinColumn);
+      QueryValidator.validateQueryWhereAndOrderBy(jdbcTemplateMapper, whereClause, orderBy,
+          ownerType, relatedType);
 
       sql = "SELECT " + ownerTypeSelectMapper.getColumnsSql();
       String ownerTypeTableName = ownerTypeTableMapping.getTableName();
@@ -276,52 +271,22 @@ public class Query<T> implements IQueryFluent<T> {
         String relatedTypeTableName = relatedTypeTableMapping.getTableName();
         if (relationshipType == RelationshipType.HAS_ONE) {
           // joinColumn is on owner table
-          sql +=
-              " LEFT JOIN "
-                  + mappingHelper.fullyQualifiedTableName(relatedTypeTableMapping.getTableName())
-                  + " on "
-                  + ownerTypeTableName
-                  + "."
-                  + joinColumnOwningSide
-                  + " = "
-                  + relatedTypeTableName
-                  + "."
-                  + relatedTypeTableMapping.getIdColumnName();
+          sql += " LEFT JOIN "
+              + mappingHelper.fullyQualifiedTableName(relatedTypeTableMapping.getTableName())
+              + " on " + ownerTypeTableName + "." + joinColumnOwningSide + " = "
+              + relatedTypeTableName + "." + relatedTypeTableMapping.getIdColumnName();
         } else if (relationshipType == RelationshipType.HAS_MANY) {
           // joinColumn is on related table
-          sql +=
-              " LEFT JOIN "
-                  + mappingHelper.fullyQualifiedTableName(relatedTypeTableName)
-                  + " on "
-                  + ownerTypeTableName
-                  + "."
-                  + ownerTypeTableMapping.getIdColumnName()
-                  + " = "
-                  + relatedTypeTableName
-                  + "."
-                  + joinColumnManySide;
+          sql += " LEFT JOIN " + mappingHelper.fullyQualifiedTableName(relatedTypeTableName)
+              + " on " + ownerTypeTableName + "." + ownerTypeTableMapping.getIdColumnName() + " = "
+              + relatedTypeTableName + "." + joinColumnManySide;
         } else if (relationshipType == RelationshipType.HAS_MANY_THROUGH) {
-          sql +=
-              " LEFT JOIN "
-                  + mappingHelper.fullyQualifiedTableName(throughJoinTable)
-                  + " on "
-                  + ownerTypeTableName
-                  + "."
-                  + ownerTypeTableMapping.getIdColumnName()
-                  + " = "
-                  + throughJoinTable
-                  + "."
-                  + throughOwnerTypeJoinColumn
-                  + " LEFT JOIN "
-                  + mappingHelper.fullyQualifiedTableName(relatedTypeTableName)
-                  + " on "
-                  + throughJoinTable
-                  + "."
-                  + throughRelatedTypeJoinColumn
-                  + " = "
-                  + relatedTypeTableName
-                  + "."
-                  + relatedTypeTableMapping.getIdColumnName();
+          sql += " LEFT JOIN " + mappingHelper.fullyQualifiedTableName(throughJoinTable) + " on "
+              + ownerTypeTableName + "." + ownerTypeTableMapping.getIdColumnName() + " = "
+              + throughJoinTable + "." + throughOwnerTypeJoinColumn + " LEFT JOIN "
+              + mappingHelper.fullyQualifiedTableName(relatedTypeTableName) + " on "
+              + throughJoinTable + "." + throughRelatedTypeJoinColumn + " = " + relatedTypeTableName
+              + "." + relatedTypeTableMapping.getIdColumnName();
         }
       }
       if (MapperUtils.isNotBlank(whereClause)) {
@@ -335,34 +300,36 @@ public class Query<T> implements IQueryFluent<T> {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    ResultSetExtractor<List<T>> rsExtractor =
-        new ResultSetExtractor<List<T>>() {
-          public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
-            Map<Object, BeanWrapper> idToBeanWrapperOwnerModelMap = new LinkedHashMap<>(); // to retain order
-            Map<Object, BeanWrapper> idToBeanWrapperRelatedModelMap = new HashMap<>();
-            while (rs.next()) {
-              BeanWrapper bwOwnerModel = getBeanWrapperModel(rs, ownerTypeSelectMapper, idToBeanWrapperOwnerModelMap);
-              if (relatedType != null && bwOwnerModel != null) {
-                BeanWrapper bwRelatedModel = getBeanWrapperModel(rs, relatedTypeSelectMapper, idToBeanWrapperRelatedModelMap);
-                Object relatedModel = bwRelatedModel == null ? null : bwRelatedModel.getWrappedInstance();
-                if (RelationshipType.HAS_ONE == relationshipType) {
-                  bwOwnerModel.setPropertyValue(propertyName, relatedModel);
-                } else if (RelationshipType.HAS_MANY == relationshipType
-                    || RelationshipType.HAS_MANY_THROUGH == relationshipType) {
-                  if (relatedModel != null) {
-                    // the property has already been validated so we know it is a
-                    // collection that has been initialized
-                    Collection collection = (Collection) bwOwnerModel.getPropertyValue(propertyName);
-                    collection.add(relatedModel);
-                  }
-                }
+    ResultSetExtractor<List<T>> rsExtractor = new ResultSetExtractor<List<T>>() {
+      public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
+        Map<Object, BeanWrapper> idToBeanWrapperOwnerModelMap = new LinkedHashMap<>(); // to retain
+                                                                                       // order
+        Map<Object, BeanWrapper> idToBeanWrapperRelatedModelMap = new HashMap<>();
+        while (rs.next()) {
+          BeanWrapper bwOwnerModel =
+              getBeanWrapperModel(rs, ownerTypeSelectMapper, idToBeanWrapperOwnerModelMap);
+          if (relatedType != null && bwOwnerModel != null) {
+            BeanWrapper bwRelatedModel =
+                getBeanWrapperModel(rs, relatedTypeSelectMapper, idToBeanWrapperRelatedModelMap);
+            Object relatedModel =
+                bwRelatedModel == null ? null : bwRelatedModel.getWrappedInstance();
+            if (RelationshipType.HAS_ONE == relationshipType) {
+              bwOwnerModel.setPropertyValue(propertyName, relatedModel);
+            } else if (RelationshipType.HAS_MANY == relationshipType
+                || RelationshipType.HAS_MANY_THROUGH == relationshipType) {
+              if (relatedModel != null) {
+                // the property has already been validated so we know it is a
+                // collection that has been initialized
+                Collection collection = (Collection) bwOwnerModel.getPropertyValue(propertyName);
+                collection.add(relatedModel);
               }
             }
-            return idToBeanWrapperOwnerModelMap.values().stream()
-                        .map(bw -> (T) bw.getWrappedInstance())
-                        .collect(Collectors.toList());
-           }
-        };
+          }
+        }
+        return idToBeanWrapperOwnerModelMap.values().stream().map(bw -> (T) bw.getWrappedInstance())
+            .collect(Collectors.toList());
+      }
+    };
 
     List<T> resultList = null;
     if (whereParams == null) {
@@ -378,9 +345,8 @@ public class Query<T> implements IQueryFluent<T> {
     return resultList;
   }
 
-  private BeanWrapper getBeanWrapperModel(
-      ResultSet rs, SelectMapper<?> selectMapper, Map<Object, BeanWrapper> idToBeanWrapperModelMap)
-      throws SQLException {
+  private BeanWrapper getBeanWrapperModel(ResultSet rs, SelectMapper<?> selectMapper,
+      Map<Object, BeanWrapper> idToBeanWrapperModelMap) throws SQLException {
     BeanWrapper bwModel = null;
     Object id = rs.getObject(selectMapper.getResultSetModelIdColumnLabel());
     id = rs.wasNull() ? null : id; // some drivers are goofy
@@ -416,10 +382,10 @@ public class Query<T> implements IQueryFluent<T> {
   private boolean previouslySuccessfulQuery(String key) {
     return successQuerySqlCache.containsKey(key);
   }
-  
+
   private void addToCache(String key, String sql) {
-    if(successQuerySqlCache.size() < CACHE_MAX_ENTRIES) {
-      successQuerySqlCache.put(key,  sql);
+    if (successQuerySqlCache.size() < CACHE_MAX_ENTRIES) {
+      successQuerySqlCache.put(key, sql);
     }
   }
 }

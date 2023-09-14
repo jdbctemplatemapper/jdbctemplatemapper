@@ -164,7 +164,8 @@ public class MapperTest {
       jtm.insert(product);
     });
 
-    assertTrue(exception.getMessage().contains("cannot be null since it is not an auto increment id"));
+    assertTrue(
+        exception.getMessage().contains("cannot be null since it is not an auto increment id"));
   }
 
   @Test
@@ -363,8 +364,8 @@ public class MapperTest {
     Exception exception = Assertions.assertThrows(MapperException.class, () -> {
       jtm.findByProperty(OrderLine.class, "x", 1);
     });
-    assertTrue(
-        exception.getMessage().contains("is either invalid or does not have a corresponding column in database"));
+    assertTrue(exception.getMessage()
+        .contains("is either invalid or does not have a corresponding column in database"));
   }
 
   @Test
@@ -380,8 +381,8 @@ public class MapperTest {
     Exception exception = Assertions.assertThrows(MapperException.class, () -> {
       jtm.findByProperty(OrderLine.class, "orderId", 1, "x");
     });
-    assertTrue(
-        exception.getMessage().contains("is either invalid or does not have a corresponding column in database"));
+    assertTrue(exception.getMessage()
+        .contains("is either invalid or does not have a corresponding column in database"));
   }
 
   @Test
@@ -442,7 +443,8 @@ public class MapperTest {
       @Override
       public List<Order> extractData(ResultSet rs) throws SQLException, DataAccessException {
 
-        Map<Object, Order> orderByIdMap = new LinkedHashMap<>(); // LinkedHashMap to retain result order
+        Map<Object, Order> orderByIdMap = new LinkedHashMap<>(); // LinkedHashMap to retain result
+                                                                 // order
         Map<Object, Customer> customerByIdMap = new HashMap<>();
         Map<Object, Product> productByIdMap = new HashMap<>();
 
@@ -486,7 +488,8 @@ public class MapperTest {
 
   // This method is not part of the distribution. You will need to copy it for use
   // in your code.
-  private <U> U getModel(ResultSet rs, SelectMapper<U> selectMapper, Map<Object, U> idToModelMap) throws SQLException {
+  private <U> U getModel(ResultSet rs, SelectMapper<U> selectMapper, Map<Object, U> idToModelMap)
+      throws SQLException {
     U model = null;
     Object id = rs.getObject(selectMapper.getResultSetModelIdColumnLabel());
     if (id != null) {
