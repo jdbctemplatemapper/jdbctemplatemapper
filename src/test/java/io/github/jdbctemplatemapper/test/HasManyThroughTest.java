@@ -90,7 +90,7 @@ public class HasManyThroughTest {
   public void hasManyThrough_invalidJoinTableBlank_test() {
     Exception exception =
         Assertions.assertThrows(
-            QueryException.class,
+            IllegalArgumentException.class,
             () -> {
               Query.type(Employee.class)
                   .hasMany(Skill.class)
@@ -99,7 +99,7 @@ public class HasManyThroughTest {
                   .populateProperty("skills")
                   .execute(jtm);
             });
-    assertTrue(exception.getMessage().contains("throughJoinTable cannot be blank"));
+    assertTrue(exception.getMessage().contains("throughJoinTable() tableName cannot be null or blank"));
   }
 
   @Test
@@ -138,7 +138,7 @@ public class HasManyThroughTest {
   public void hasManyThrough_invalidFirstJoinColumnBlank_test() {
     Exception exception =
         Assertions.assertThrows(
-            QueryException.class,
+            IllegalArgumentException.class,
             () -> {
               Query.type(Employee.class)
                   .hasMany(Skill.class)
@@ -147,7 +147,7 @@ public class HasManyThroughTest {
                   .populateProperty("skills")
                   .execute(jtm);
             });
-    assertTrue(exception.getMessage().contains("Invalid throughJoinColumns. Cannot be blank"));
+    assertTrue(exception.getMessage().contains("throughJoinColumns() ownerTypeJoinColumn cannot be null or blank"));
   }
 
   @Test
@@ -170,7 +170,7 @@ public class HasManyThroughTest {
   public void hasManyThrough_invalidSecondJoinColumnBlank_test() {
     Exception exception =
         Assertions.assertThrows(
-            QueryException.class,
+            IllegalArgumentException.class,
             () -> {
               Query.type(Employee.class)
                   .hasMany(Skill.class)
@@ -179,7 +179,7 @@ public class HasManyThroughTest {
                   .populateProperty("skills")
                   .execute(jtm);
             });
-    assertTrue(exception.getMessage().contains("Invalid throughJoinColumns. Cannot be blank"));
+    assertTrue(exception.getMessage().contains("throughJoinColumns() relatedTypeJoinColumn cannot be null or blank"));
   }
 
   @Test

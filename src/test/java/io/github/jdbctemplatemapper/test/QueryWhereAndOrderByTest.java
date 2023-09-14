@@ -32,12 +32,12 @@ public class QueryWhereAndOrderByTest {
 
     Exception exception =
         Assertions.assertThrows(
-            QueryException.class,
+            IllegalArgumentException.class,
             () -> {
               Query.type(Order.class).where("").execute(jtm);
             });
     // @formatter:on
-        assertTrue(exception.getMessage().contains("where() blank string is invalid"));
+        assertTrue(exception.getMessage().contains("whereClause cannot be null or blank"));
     }
 
     @Test
@@ -101,12 +101,12 @@ public class QueryWhereAndOrderByTest {
     // @formatter:off
     Exception exception =
         Assertions.assertThrows(
-            QueryException.class,
+            IllegalArgumentException.class,
             () -> {
               Query.type(Order.class).orderBy(" ").execute(jtm);
             });
     // @formatter:on
-        assertTrue(exception.getMessage().contains("orderBy() blank string is invalid"));
+        assertTrue(exception.getMessage().contains("orderBy cannot be null or blank"));
     }
 
     @Test

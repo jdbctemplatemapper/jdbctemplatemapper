@@ -298,7 +298,7 @@ public class QueryTest {
     // @formatter:off
     Exception exception =
         Assertions.assertThrows(
-            QueryException.class,
+            IllegalArgumentException.class,
             () -> {
               Query.type(Order.class)
                   .hasMany(OrderLine.class)
@@ -307,7 +307,7 @@ public class QueryTest {
                   .execute(jtm);
             });
     // @formatter:on
-    assertTrue(exception.getMessage().contains("joinColumnManySide cannot be blank"));
+    assertTrue(exception.getMessage().contains("joinColumnManySide cannot be null or blank"));
   }
 
   @Test
@@ -332,7 +332,7 @@ public class QueryTest {
     // @formatter:off
     Exception exception =
         Assertions.assertThrows(
-            QueryException.class,
+            IllegalArgumentException.class,
             () -> {
               Query.type(Order.class)
                   .hasOne(Customer.class)
@@ -341,7 +341,7 @@ public class QueryTest {
                   .execute(jtm);
             });
     // @formatter:on
-    assertTrue(exception.getMessage().contains("joinColumnOwningSide cannot be blank"));
+    assertTrue(exception.getMessage().contains("joinColumnOwningSide cannot be null or blank"));
   }
 
   @Test

@@ -98,9 +98,6 @@ class QueryValidator {
               + relatedType.getSimpleName());
     }
 
-    if (MapperUtils.isBlank(joinColumnOwningSide)) {
-      throw new QueryException("joinColumnOwningSide cannot be blank");
-    }
     if (joinColumnOwningSide.contains(".")) {
       throw new QueryException("Invalid joinColumnOwningSide. It should have no table prefix");
     }
@@ -126,7 +123,7 @@ class QueryValidator {
     Class<?> relatedTypeIdPropertyType =
         relatedTypeTableMapping.getIdPropertyMapping().getPropertyType();
 
-    // During development some IDE plugins (ex devTools) could use different class loaders.
+    // During development some IDE plugins (ex Spring Tools) could use different class loaders.
     // Since this is just a check we use full class name. Assigning the value is done
     // using reflection so its not a problem
     if (!joinColumnPropertyType.getName().equals(relatedTypeIdPropertyType.getName())) {
@@ -158,9 +155,6 @@ class QueryValidator {
 
     validatePopulatePropertyForCollection(propertyName, ownerModel, ownerType, relatedType);
 
-    if (MapperUtils.isBlank(joinColumnManySide)) {
-      throw new QueryException("joinColumnManySide cannot be blank");
-    }
     if (joinColumnManySide.contains(".")) {
       throw new QueryException("Invalid joinColumnManySide. It should have no table prefix");
     }
@@ -187,7 +181,7 @@ class QueryValidator {
     Class<?> ownerTypeIdPropertyType =
         ownerTypeTableMapping.getIdPropertyMapping().getPropertyType();
 
-    // During development some IDE plugins (ex devTools) could use different class loaders.
+    // During development some IDE plugins (ex Spring Tools) could use different class loaders.
     // Since this is just a check we use full class name. Assigning the value is done
     // using reflection so its not a problem
     if (!joinColumnPropertyType.getName().equals(ownerTypeIdPropertyType.getName())) {
@@ -219,25 +213,15 @@ class QueryValidator {
       Object ownerModel) {
     validatePopulatePropertyForCollection(propertyName, ownerModel, ownerType, relatedType);
 
-    if (MapperUtils.isBlank(throughJoinTable)) {
-      throw new QueryException("throughJoinTable cannot be blank");
-    }
     if (throughJoinTable.contains(".")) {
       throw new QueryException(
           "Invalid throughJoinTable " + throughJoinTable + " .It should have no prefixes");
-    }
-
-    if (MapperUtils.isBlank(throughOwnerTypeJoinColumn)) {
-      throw new QueryException("Invalid throughJoinColumns. Cannot be blank");
     }
     if (throughOwnerTypeJoinColumn.contains(".")) {
       throw new QueryException(
           "Invalid throughJoinColumns "
               + throughOwnerTypeJoinColumn
               + " .It should have no prefixes");
-    }
-    if (MapperUtils.isBlank(throughRelatedTypeJoinColumn)) {
-      throw new QueryException("Invalid throughJoinColumns. Cannot be blank");
     }
     if (throughRelatedTypeJoinColumn.contains(".")) {
       throw new QueryException(
@@ -247,7 +231,7 @@ class QueryValidator {
     }
   }
 
-  public static void validateWhereAndOrderBy(
+  public static void validateQueryWhereAndOrderBy(
       JdbcTemplateMapper jtm,
       String where,
       String orderBy,
@@ -357,7 +341,7 @@ class QueryValidator {
               + propertyName
               + " does not have a generic type.");
     }
-    // During development some IDE plugins (ex devTools) could use different class loaders.
+    // During development some IDE plugins (ex Spring Tools) could use different class loaders.
     // Since this is just a check we use full class name. Assigning the value is done
     // using reflection so its not a problem
     if (!propertyType.getName().equals(relatedType.getName())) {

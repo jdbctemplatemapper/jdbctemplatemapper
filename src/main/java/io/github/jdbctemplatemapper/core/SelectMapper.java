@@ -132,8 +132,7 @@ public class SelectMapper<T> {
   }
 
   // returns model object wrapped in BeanWrapper. Used also by Query and QueryMerge processing to
-  // prevent
-  // excessive creation of bean wrappers.
+  // prevent excessive creation of bean wrappers.
   BeanWrapper buildBeanWrapperModel(ResultSet rs) {
     try {
       Object obj = clazz.getConstructor().newInstance();

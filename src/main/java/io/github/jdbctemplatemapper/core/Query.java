@@ -39,6 +39,7 @@ import io.github.jdbctemplatemapper.query.IQueryWhere;
  * @author ajoseph
  */
 public class Query<T> implements IQueryFluent<T> {
+  private static final int CACHE_MAX_ENTRIES = 1000;
   // key - cacheKey
   // value - sql
   private static Map<String, String> successQuerySqlCache = new ConcurrentHashMap<>();
@@ -83,7 +84,9 @@ public class Query<T> implements IQueryFluent<T> {
    * @return interface with the next methods in the chain
    */
   public IQueryWhere<T> where(String whereClause, Object... params) {
-    Assert.notNull(whereClause, "whereClause cannot be null");
+    if(MapperUtils.isBlank(whereClause)) {
+      throw new IllegalArgumentException("whereClause cannot be null or blank");
+    }
     this.whereClause = whereClause;
     this.whereParams = params;
     return this;
@@ -94,13 +97,15 @@ public class Query<T> implements IQueryFluent<T> {
    * querying relationships (hasOne, hasMany, hasMany through) both the owning side and related side
    * columns can be used in the orderBy clause
    *
-   * <p>orderBy is strictly validated to protect against SQL injection.
+   * <p>orderBy is strictly validated which protects it from SQL injection.
    *
    * @param orderBy the orderBy clause. It has to be prefixed with table name.
    * @return interface with the next methods in the chain
    */
   public IQueryOrderBy<T> orderBy(String orderBy) {
-    Assert.notNull(orderBy, "orderBy cannot be null");
+    if(MapperUtils.isBlank(orderBy)) {
+      throw new IllegalArgumentException("orderBy cannot be null or blank");
+    }
     this.orderBy = orderBy;
     return this;
   }
@@ -143,7 +148,9 @@ public class Query<T> implements IQueryFluent<T> {
    * @return interface with the next methods in the chain
    */
   public IQueryJoinColumnOwningSide<T> joinColumnOwningSide(String joinColumnOwningSide) {
-    Assert.notNull(joinColumnOwningSide, "joinColumnOwningSide cannot be null");
+    if(MapperUtils.isBlank(joinColumnOwningSide)) {
+      throw new IllegalArgumentException("joinColumnOwningSide cannot be null or blank");
+    }
     this.joinColumnOwningSide = MapperUtils.toLowerCase(joinColumnOwningSide.trim());
     return this;
   }
@@ -159,7 +166,9 @@ public class Query<T> implements IQueryFluent<T> {
    * @return interface with the next methods in the chain
    */
   public IQueryJoinColumnManySide<T> joinColumnManySide(String joinColumnManySide) {
-    Assert.notNull(joinColumnManySide, "joinColumnManySide cannot be null");
+    if(MapperUtils.isBlank(joinColumnManySide)) {
+      throw new IllegalArgumentException("joinColumnManySide cannot be null or blank");
+    }
     this.joinColumnManySide = MapperUtils.toLowerCase(joinColumnManySide.trim());
     return this;
   }
@@ -171,7 +180,9 @@ public class Query<T> implements IQueryFluent<T> {
    * @return interface with the next methods in the chain
    */
   public IQueryThroughJoinTable<T> throughJoinTable(String tableName) {
-    Assert.notNull(tableName, "tableName cannot be null");
+    if(MapperUtils.isBlank(tableName)) {
+      throw new IllegalArgumentException("throughJoinTable() tableName cannot be null or blank");
+    }
     this.relationshipType = RelationshipType.HAS_MANY_THROUGH;
     this.throughJoinTable = tableName;
     return this;
@@ -186,8 +197,12 @@ public class Query<T> implements IQueryFluent<T> {
    */
   public IQueryThroughJoinColumns<T> throughJoinColumns(
       String ownerTypeJoinColumn, String relatedTypeJoinColumn) {
-    Assert.notNull(ownerTypeJoinColumn, "ownerTypeJoinColumn cannot be null");
-    Assert.notNull(relatedTypeJoinColumn, "relatedTypeJoinColumn cannot be null");
+    if(MapperUtils.isBlank(ownerTypeJoinColumn)) {
+      throw new IllegalArgumentException("throughJoinColumns() ownerTypeJoinColumn cannot be null or blank");
+    }
+    if(MapperUtils.isBlank(relatedTypeJoinColumn)) {
+      throw new IllegalArgumentException("throughJoinColumns() relatedTypeJoinColumn cannot be null or blank");
+    }
     this.throughOwnerTypeJoinColumn = ownerTypeJoinColumn;
     this.throughRelatedTypeJoinColumn = relatedTypeJoinColumn;
     return this;
@@ -204,7 +219,9 @@ public class Query<T> implements IQueryFluent<T> {
    * @return interface with the next methods in the chain
    */
   public IQueryPopulateProperty<T> populateProperty(String propertyName) {
-    Assert.notNull(propertyName, "propertyName cannot be null");
+    if(MapperUtils.isBlank(propertyName)) {
+      throw new IllegalArgumentException("propertyName cannot be null or blank");
+    }
     this.propertyName = propertyName;
     return this;
   }
@@ -246,7 +263,7 @@ public class Query<T> implements IQueryFluent<T> {
           throughJoinTable,
           throughOwnerTypeJoinColumn,
           throughRelatedTypeJoinColumn);
-      QueryValidator.validateWhereAndOrderBy(
+      QueryValidator.validateQueryWhereAndOrderBy(
           jdbcTemplateMapper, whereClause, orderBy, ownerType, relatedType);
 
       sql = "SELECT " + ownerTypeSelectMapper.getColumnsSql();
@@ -341,13 +358,10 @@ public class Query<T> implements IQueryFluent<T> {
                 }
               }
             }
-            
             return idToBeanWrapperOwnerModelMap.values().stream()
                         .map(bw -> (T) bw.getWrappedInstance())
                         .collect(Collectors.toList());
-            
-            //return (List<T>) new ArrayList<>(idToBeanWrapperOwnerModelMap.values());
-          }
+           }
         };
 
     List<T> resultList = null;
@@ -359,7 +373,7 @@ public class Query<T> implements IQueryFluent<T> {
 
     // code reaches here query success, handle caching
     if (!previouslySuccessfulQuery(cacheKey)) {
-      successQuerySqlCache.put(cacheKey, sql);
+      addToCache(cacheKey, sql);
     }
     return resultList;
   }
@@ -385,8 +399,8 @@ public class Query<T> implements IQueryFluent<T> {
     return String.join(
         "-",
         ownerType.getName(),
-        relatedType == null ? "" : relatedType.getName(),
-        relationshipType == null ? "" : relationshipType.toString(),
+        relatedType == null ? null : relatedType.getName(),
+        relationshipType == null ? null : relationshipType.toString(),
         propertyName,
         joinColumnOwningSide,
         joinColumnManySide,
@@ -401,5 +415,11 @@ public class Query<T> implements IQueryFluent<T> {
 
   private boolean previouslySuccessfulQuery(String key) {
     return successQuerySqlCache.containsKey(key);
+  }
+  
+  private void addToCache(String key, String sql) {
+    if(successQuerySqlCache.size() < CACHE_MAX_ENTRIES) {
+      successQuerySqlCache.put(key,  sql);
+    }
   }
 }

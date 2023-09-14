@@ -38,6 +38,7 @@ import io.github.jdbctemplatemapper.querymerge.IQueryMergeType;
  * @author ajoseph
  */
 public class QueryMerge<T> implements IQueryMergeFluent<T> {
+  private static final int CACHE_MAX_ENTRIES = 1000;
   // key - cacheKey
   // value - Sql
   private static Map<String, String> successQueryMergeSqlCache = new ConcurrentHashMap<>();
@@ -104,7 +105,9 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
    * @return interface with the next methods in the chain
    */
   public IQueryMergeJoinColumnOwningSide<T> joinColumnOwningSide(String joinColumnOwningSide) {
-    Assert.notNull(joinColumnOwningSide, "joinColumnOwningSide cannot be null");
+    if(MapperUtils.isBlank(joinColumnOwningSide)) {
+      throw new IllegalArgumentException("joinColumnOwningSide cannot be null or blank");
+    }
     this.joinColumnOwningSide = MapperUtils.toLowerCase(joinColumnOwningSide.trim());
     return this;
   }
@@ -120,7 +123,9 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
    * @return interface with the next methods in the chain
    */
   public IQueryMergeJoinColumnManySide<T> joinColumnManySide(String joinColumnManySide) {
-    Assert.notNull(joinColumnManySide, "joinColumnManySide cannot be null");
+    if(MapperUtils.isBlank(joinColumnManySide)) {
+      throw new IllegalArgumentException("joinColumnManySide cannot be null or blank");
+    }
     this.joinColumnManySide = MapperUtils.toLowerCase(joinColumnManySide.trim());
     return this;
   }
@@ -137,7 +142,9 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
    * @return interface with the next methods in the chain
    */
   public IQueryMergePopulateProperty<T> populateProperty(String propertyName) {
-    Assert.notNull(propertyName, "propertyName cannot be null");
+    if(MapperUtils.isBlank(propertyName)) {
+      throw new IllegalArgumentException("propertyName cannot be null or blank");
+    }
     this.propertyName = propertyName;
     return this;
   }
@@ -148,7 +155,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
    *
    * <pre>
    * Some databases have limits on size of 'IN' clause.
-   * If the the mergeList is large multiple 'IN' queries will be issued with each query
+   * If the the mergeList is large, multiple 'IN' queries will be issued with each query
    * having up to 100 IN clause parameters to get the records.
    * </pre>
    *
@@ -262,7 +269,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     }
     // code reaches here query success, handle caching
     if (!previouslySuccessfulQuery(cacheKey)) {
-      successQueryMergeSqlCache.put(cacheKey, sql);
+      addToCache(cacheKey, sql);
     }
   }
 
@@ -338,7 +345,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
 
     // code reaches here query success, handle caching
     if (!previouslySuccessfulQuery(cacheKey)) {
-      successQueryMergeSqlCache.put(cacheKey, sql);
+      addToCache(cacheKey, sql);
     }
   }
 
@@ -347,8 +354,8 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     return String.join(
         "-",
         ownerType.getName(),
-        relatedType == null ? "" : relatedType.getName(),
-        relationshipType == null ? "" : relationshipType.toString(),
+        relatedType == null ? null : relatedType.getName(),
+        relationshipType == null ? null : relationshipType.toString(),
         propertyName,
         joinColumnOwningSide,
         joinColumnManySide,
@@ -358,5 +365,11 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
 
   private boolean previouslySuccessfulQuery(String key) {
     return successQueryMergeSqlCache.containsKey(key);
+  }
+  
+  private void addToCache(String key, String sql) {
+    if(successQueryMergeSqlCache.size() < CACHE_MAX_ENTRIES) {
+      successQueryMergeSqlCache.put(key,  sql);
+    }
   }
 }
