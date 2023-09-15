@@ -3,7 +3,7 @@
  A simple library to make the usage of Spring JdbcTemplate less verbose for features like CRUD and relationship queries.
  Use it where appropriate and for other functionality keep using JdbcTemplate as you normally would.
  
- [Javadoc](https://jdbctemplatemapper.github.io/jdbctemplatemapper/javadoc/javadoc.html) 
+ github project at [JdbcTemplateMapper](https://github.com/jdbctemplatemapper/jdbctemplatemapper) 
  
 ## Features
 
