@@ -1,7 +1,3 @@
----
-title: Using Spring JdbcTemplate with JdbcTemplateMapper
----
-
 # JdbcTemplateMapper #
  
  A simple library to make the usage of Spring JdbcTemplate less verbose for features like CRUD and relationship queries.
