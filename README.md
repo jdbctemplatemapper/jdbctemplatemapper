@@ -3,7 +3,9 @@
  A simple library to make the usage of Spring JdbcTemplate less verbose for features like CRUD and relationship queries.
  Use it where appropriate and for other functionality keep using JdbcTemplate as you normally would.
  
- github project at [JdbcTemplateMapper](https://github.com/jdbctemplatemapper/jdbctemplatemapper) 
+[Javadoc](https://jdbctemplatemapper.github.io/jdbctemplatemapper/javadoc.html)
+ 
+[Website](https://jdbctemplatemapper.github.io/jdbctemplatemapper/)
  
 ## Features
 
@@ -19,7 +21,6 @@
   7. Distribution is compiled with java8. Works with java8, java11, java17 
 
 ## Example code
- 
   ```java 
  //@Table annotation is required
  @Table(name="product")
@@ -70,7 +71,6 @@
  See [Querying Relationships](#querying-relationships) for query features of the library.
  
 ## Maven coordinates
-
  ``` 
   <dependency>
     <groupId>io.github.jdbctemplatemapper</groupId>
