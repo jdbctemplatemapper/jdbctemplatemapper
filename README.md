@@ -15,7 +15,8 @@
       * optimistic locking feature for updates.
   4. For transaction management use Spring transactions since the library uses JdbcTemplate behind the scenes.
   5. To log the SQL statements use the same logging configurations as JdbcTemplate. See the logging section.
-  6. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with other relational databases. 
+  6. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with other relational databases.
+  7. Distribution is compiled with java8. Works with java8, java11, java17 
 
 ## Example code
  
@@ -74,7 +75,7 @@
   <dependency>
     <groupId>io.github.jdbctemplatemapper</groupId>
     <artifactId>jdbctemplatemapper</artifactId>
-    <version>2.1.0</version>
+    <version>2.1.1</version>
  </dependency>
  ```
  
@@ -380,7 +381,7 @@ Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Produc
     To get all the orderLines as a list we need to flatten the list of lists.
  
   ```       
-   List<OrderLine> allOrderLines = orders.stream()
+   List<OrderLine> consolidatedOrderLines = orders.stream()
                                          .map(o -> o.getOrderLines())
                                          .flatMap(list -> list.stream())
                                          .collect(Collectors.toList());
@@ -389,7 +390,7 @@ Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Produc
              .hasOne(Product.class) // related class
              .joinColumnOwningSide("product_id") // the join column is on the  owning side table. No prefixes
              .populateProperty("product") // the property to populate on the owning class
-             .execute(jdbcTemplateMapper, allOrderLines); // merges the query results with orderLines
+             .execute(jdbcTemplateMapper, consolidatedOrderLines); // merges the query results with orderLines
              
  ```
  
