@@ -302,8 +302,8 @@ public class Query<T> implements IQueryFluent<T> {
     @SuppressWarnings({"unchecked", "rawtypes"})
     ResultSetExtractor<List<T>> rsExtractor = new ResultSetExtractor<List<T>>() {
       public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
-        Map<Object, BeanWrapper> idToBeanWrapperOwnerModelMap = new LinkedHashMap<>(); // to retain
-                                                                                       // order
+        // linkedhashmap to retain record order
+        Map<Object, BeanWrapper> idToBeanWrapperOwnerModelMap = new LinkedHashMap<>();
         Map<Object, BeanWrapper> idToBeanWrapperRelatedModelMap = new HashMap<>();
         while (rs.next()) {
           BeanWrapper bwOwnerModel =
