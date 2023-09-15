@@ -362,15 +362,13 @@ public class Query<T> implements IQueryFluent<T> {
 
   private String getQueryCacheKey(JdbcTemplateMapper jdbcTemplateMapper) {
     // @formatter:off
-    return String.join(
-        "-",
-        ownerType.getName(),
+    return String.join("-", 
+        ownerType.getName(), 
         relatedType == null ? null : relatedType.getName(),
-        relationshipType == null ? null : relationshipType.toString(),
-        propertyName,
-        joinColumnOwningSide,
-        joinColumnManySide,
-        throughJoinTable,
+        relationshipType == null ? null : relationshipType.toString(), propertyName,
+        joinColumnOwningSide, 
+        joinColumnManySide, 
+        throughJoinTable, 
         throughOwnerTypeJoinColumn,
         throughRelatedTypeJoinColumn,
         whereClause,
@@ -385,6 +383,12 @@ public class Query<T> implements IQueryFluent<T> {
 
   private void addToCache(String key, String sql) {
     if (successQuerySqlCache.size() < CACHE_MAX_ENTRIES) {
+      successQuerySqlCache.put(key, sql);
+    } else {
+      // remove a random entry from cache and add new entry
+      String k = successQuerySqlCache.keySet().iterator().next();
+      successQuerySqlCache.remove(k);
+
       successQuerySqlCache.put(key, sql);
     }
   }

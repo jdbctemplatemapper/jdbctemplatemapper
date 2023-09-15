@@ -381,7 +381,7 @@ Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Produc
     To get all the orderLines as a list we need to flatten the list of lists.
  
   ```       
-   List<OrderLine> allOrderLines = orders.stream()
+   List<OrderLine> consolidatedOrderLines = orders.stream()
                                          .map(o -> o.getOrderLines())
                                          .flatMap(list -> list.stream())
                                          .collect(Collectors.toList());
@@ -390,7 +390,7 @@ Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Produc
              .hasOne(Product.class) // related class
              .joinColumnOwningSide("product_id") // the join column is on the  owning side table. No prefixes
              .populateProperty("product") // the property to populate on the owning class
-             .execute(jdbcTemplateMapper, allOrderLines); // merges the query results with orderLines
+             .execute(jdbcTemplateMapper, consolidatedOrderLines); // merges the query results with orderLines
              
  ```
  

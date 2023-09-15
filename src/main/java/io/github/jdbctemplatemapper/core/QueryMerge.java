@@ -325,7 +325,6 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   }
 
   private String getQueryMergeCacheKey(JdbcTemplateMapper jdbcTemplateMapper) {
-    // @formatter:off
     return String.join(
         "-",
         ownerType.getName(),
@@ -335,7 +334,6 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         joinColumnOwningSide,
         joinColumnManySide,
         jdbcTemplateMapper.toString());
-    // @formatter:on
   }
 
   private boolean previouslySuccessfulQuery(String key) {
@@ -344,6 +342,13 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
 
   private void addToCache(String key, String sql) {
     if (successQueryMergeSqlCache.size() < CACHE_MAX_ENTRIES) {
+      successQueryMergeSqlCache.put(key, sql);
+    }
+    else {
+      // remove a random entry from cache and add new entry
+      String k = successQueryMergeSqlCache.keySet().iterator().next();
+      successQueryMergeSqlCache.remove(k);
+      
       successQueryMergeSqlCache.put(key, sql);
     }
   }
