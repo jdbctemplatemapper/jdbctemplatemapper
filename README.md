@@ -13,7 +13,7 @@
       * auto assign created on, updated on.
       * auto assign created by, updated by using an implementation of interface IRecordOperatorResolver.
       * optimistic locking feature for updates.
-  4. For transaction management use Spring transactions since the library uses JdbcTemplate for all database access.
+  4. For transaction management use Spring transactions since the library uses JdbcTemplate for database access.
   5. To log the SQL statements use the same logging configurations as JdbcTemplate. See the logging section.
   6. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with other relational databases.
   7. Distribution is compiled with java8. Works with java8, java11, java17 
