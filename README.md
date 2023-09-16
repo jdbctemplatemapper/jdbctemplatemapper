@@ -579,7 +579,7 @@ An example of querying the following relationship: Order hasOne Customer, Order 
 
 ## Logging
  
-Uses the same logging configurations as Spring's JdbcTemplate to log the SQL. In applications.properties:
+Uses the same logging configurations as Spring's JdbcTemplate to log the SQL. In application.properties:
  
  ```
  # log the SQL
