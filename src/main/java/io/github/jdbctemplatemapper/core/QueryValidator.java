@@ -5,11 +5,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collection;
-
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.util.StringUtils;
-
+import io.github.jdbctemplatemapper.exception.MapperException;
 import io.github.jdbctemplatemapper.exception.QueryException;
 
 class QueryValidator {
@@ -34,7 +33,7 @@ class QueryValidator {
     try {
       ownerModel = ownerType.getConstructor().newInstance();
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      throw new MapperException(e);
     }
 
     if (relatedType != null) {
@@ -66,7 +65,7 @@ class QueryValidator {
       try {
         ownerModel = ownerType.getConstructor().newInstance();
       } catch (Exception e) {
-        throw new RuntimeException(e);
+        throw new MapperException(e);
       }
       BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(ownerModel);
       if (!bw.isReadableProperty(propertyName)) {

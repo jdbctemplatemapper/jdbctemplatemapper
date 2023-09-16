@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.core.annotation.AnnotationUtils;
@@ -34,6 +33,7 @@ import io.github.jdbctemplatemapper.annotation.UpdatedBy;
 import io.github.jdbctemplatemapper.annotation.UpdatedOn;
 import io.github.jdbctemplatemapper.annotation.Version;
 import io.github.jdbctemplatemapper.exception.AnnotationException;
+import io.github.jdbctemplatemapper.exception.MapperException;
 
 class MappingHelper {
   // Map key - object class
@@ -262,7 +262,7 @@ class MappingHelper {
             }
           });
     } catch (Exception e) {
-      throw new RuntimeException();
+      throw new MapperException(e);
     }
   }
 
