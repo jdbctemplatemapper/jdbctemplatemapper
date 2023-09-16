@@ -199,12 +199,11 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     for (T obj : mergeList) {
       if (obj != null) {
         BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
+        bw.setPropertyValue(propertyName, null);
         bwMergeList.add(bw);
         Object joinPropertyValue = bw.getPropertyValue(joinPropertyName);
         if (joinPropertyValue != null) {
           params.add(joinPropertyValue);
-        } else {
-          bw.setPropertyValue(propertyName, null);
         }
       }
     }
@@ -279,7 +278,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
           params.add(idValue);
           // init collection to address edge case where collection is initialized with values
           Collection collection = (Collection) bwOwnerModel.getPropertyValue(propertyName);
-          if(collection.size() > 0) {
+          if (collection.size() > 0) {
             collection.clear();
           }
           idToBeanWrapperOwnerModelMap.put(idValue, bwOwnerModel);
