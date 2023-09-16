@@ -307,10 +307,10 @@ public class Query<T> implements IQueryFluent<T> {
         Map<Object, BeanWrapper> idToBeanWrapperRelatedModelMap = new HashMap<>();
         while (rs.next()) {
           BeanWrapper bwOwnerModel =
-              getBeanWrapperModel(rs, ownerTypeSelectMapper, idToBeanWrapperOwnerModelMap);
+              getBeanWrapperModel(rs, ownerTypeSelectMapper, idToBeanWrapperOwnerModelMap, true);
           if (relatedType != null && bwOwnerModel != null) {
-            BeanWrapper bwRelatedModel =
-                getBeanWrapperModel(rs, relatedTypeSelectMapper, idToBeanWrapperRelatedModelMap);
+            BeanWrapper bwRelatedModel = getBeanWrapperModel(rs, relatedTypeSelectMapper,
+                idToBeanWrapperRelatedModelMap, false);
             Object relatedModel =
                 bwRelatedModel == null ? null : bwRelatedModel.getWrappedInstance();
             if (RelationshipType.HAS_ONE == relationshipType) {
@@ -345,8 +345,9 @@ public class Query<T> implements IQueryFluent<T> {
     return resultList;
   }
 
+  @SuppressWarnings("rawtypes")
   private BeanWrapper getBeanWrapperModel(ResultSet rs, SelectMapper<?> selectMapper,
-      Map<Object, BeanWrapper> idToBeanWrapperModelMap) throws SQLException {
+      Map<Object, BeanWrapper> idToBeanWrapperModelMap, boolean isOwningModel) throws SQLException {
     BeanWrapper bwModel = null;
     Object id = rs.getObject(selectMapper.getResultSetModelIdColumnLabel());
     id = rs.wasNull() ? null : id; // some drivers are goofy
@@ -354,6 +355,14 @@ public class Query<T> implements IQueryFluent<T> {
       bwModel = idToBeanWrapperModelMap.get(id);
       if (bwModel == null) {
         bwModel = selectMapper.buildBeanWrapperModel(rs); // builds the model from resultSet
+        if (isOwningModel && (RelationshipType.HAS_MANY == relationshipType
+            || RelationshipType.HAS_MANY_THROUGH == relationshipType)) {
+          // first time seeing the owning model. Make sure collection is clear.
+          Collection collection = (Collection) bwModel.getPropertyValue(propertyName);
+          if (collection.size() > 0) {
+            collection.clear();
+          }
+        }
         idToBeanWrapperModelMap.put(id, bwModel);
       }
     }

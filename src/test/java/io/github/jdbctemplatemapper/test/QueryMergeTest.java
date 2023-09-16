@@ -301,7 +301,7 @@ public class QueryMergeTest {
   public void hasOne_success_withEdgeCaseCustomerIntialized_test() {
     // @formatter:off
     List<Order8> orders =
-        Query.type(Order8.class)  // Customer is initialzed but since query returns null should be set to null
+        Query.type(Order8.class)  // Customer is initialized but since query returns null should be set to null
             .where("orders.order_id = ?", 3)
             .execute(jtm);
     // @formatter:on
@@ -357,7 +357,7 @@ public class QueryMergeTest {
   
   @Test
   public void hasMany_EdgeCaseOrderLinesInitializedWithValues_test() {
-    Order order = new Order();
+    Order9 order = new Order9();
     order.setOrderDate(LocalDateTime.now());
     order.setCustomerId(2);
     jtm.insert(order);
@@ -378,6 +378,8 @@ public class QueryMergeTest {
     // @formatter:on
     
     assertEquals(0, orders.get(0).getOrderLines().size());
+    
+    jtm.delete(order);
     
   }
 
