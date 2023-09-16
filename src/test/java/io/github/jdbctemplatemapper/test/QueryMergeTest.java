@@ -1,8 +1,10 @@
 package io.github.jdbctemplatemapper.test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
@@ -24,6 +26,7 @@ import io.github.jdbctemplatemapper.model.Order5;
 import io.github.jdbctemplatemapper.model.Order6;
 import io.github.jdbctemplatemapper.model.Order7;
 import io.github.jdbctemplatemapper.model.Order8;
+import io.github.jdbctemplatemapper.model.Order9;
 import io.github.jdbctemplatemapper.model.OrderLine;
 import io.github.jdbctemplatemapper.model.OrderLine1;
 import io.github.jdbctemplatemapper.model.OrderLine7;
@@ -350,6 +353,32 @@ public class QueryMergeTest {
     assertTrue(oneOrderLines);
     assertTrue(twoOrderLines);
     assertTrue(cnt == 3);
+  }
+  
+  @Test
+  public void hasMany_EdgeCaseOrderLinesInitializedWithValues_test() {
+    Order order = new Order();
+    order.setOrderDate(LocalDateTime.now());
+    order.setCustomerId(2);
+    jtm.insert(order);
+    
+    // @formatter:off
+    List<Order9> orders =
+        Query.type(Order9.class) // order9.orderLines initialized with value while query returns null.
+            .where("orders.order_id = ?", order.getOrderId())
+            .execute(jtm);
+    // @formatter:on
+
+    // @formatter:off
+    QueryMerge.type(Order9.class)
+        .hasMany(OrderLine.class)
+        .joinColumnManySide("order_id")
+        .populateProperty("orderLines")
+        .execute(jtm, orders);
+    // @formatter:on
+    
+    assertEquals(0, orders.get(0).getOrderLines().size());
+    
   }
 
   @Test

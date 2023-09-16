@@ -14,9 +14,9 @@ import io.github.jdbctemplatemapper.annotation.UpdatedBy;
 import io.github.jdbctemplatemapper.annotation.UpdatedOn;
 import io.github.jdbctemplatemapper.annotation.Version;
 
-// edge case: customer initialized
+// edge case: order with OrderLine initialzed with some value
 @Table(name = "orders")
-public class Order8 {
+public class Order9 {
   @Id(type = IdType.AUTO_INCREMENT)
   private Long orderId;
 
@@ -44,9 +44,15 @@ public class Order8 {
   @Version
   private Integer version;
 
-  private Customer customer = new Customer();
+  private Customer customer;
+
 
   private List<OrderLine> orderLines = new ArrayList<>();
+
+  public Order9() {
+    orderLines.add(new OrderLine());
+  }
+
 
   public Long getOrderId() {
     return orderId;
