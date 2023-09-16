@@ -23,7 +23,7 @@ import org.springframework.jdbc.support.DatabaseMetaDataCallback;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.jdbc.support.MetaDataAccessException;
 import org.springframework.util.Assert;
-
+import org.springframework.util.StringUtils;
 import io.github.jdbctemplatemapper.annotation.Column;
 import io.github.jdbctemplatemapper.annotation.CreatedBy;
 import io.github.jdbctemplatemapper.annotation.CreatedOn;
@@ -318,7 +318,7 @@ class MappingHelper {
       }
 
       BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(propMapping);
-      bw.setPropertyValue(annotationClazz.getSimpleName() + "Annotation", true);
+      bw.setPropertyValue(StringUtils.uncapitalize(annotationClazz.getSimpleName()) + "Annotation", true);
     }
   }
 
