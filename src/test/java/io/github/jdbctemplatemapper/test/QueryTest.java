@@ -3,9 +3,8 @@ package io.github.jdbctemplatemapper.test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
+import java.time.LocalDateTime;
 import java.util.List;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-
 import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
 import io.github.jdbctemplatemapper.core.Query;
 import io.github.jdbctemplatemapper.exception.AnnotationException;
@@ -26,6 +24,7 @@ import io.github.jdbctemplatemapper.model.Order;
 import io.github.jdbctemplatemapper.model.Order2;
 import io.github.jdbctemplatemapper.model.Order4;
 import io.github.jdbctemplatemapper.model.Order7;
+import io.github.jdbctemplatemapper.model.Order9;
 import io.github.jdbctemplatemapper.model.OrderLine;
 import io.github.jdbctemplatemapper.model.OrderLine7;
 
@@ -434,6 +433,29 @@ public class QueryTest {
   }
 
   @Test
+  public void hasMany_OrderLinesInitializedWithValues_test() {
+    Order9 order = new Order9();
+    order.setOrderDate(LocalDateTime.now());
+    order.setCustomerId(2);
+    jtm.insert(order);
+    
+    // @formatter:off
+    List<Order9> orders =
+        Query.type(Order9.class)
+            .hasMany(OrderLine.class)
+            .joinColumnManySide("order_id")
+            .populateProperty("orderLines") // list
+            .where("orders.order_id = ?", order.getOrderId())
+            .execute(jtm);
+
+    assertEquals(0, orders.get(0).getOrderLines().size());
+    
+    jtm.delete(order);
+
+    // @formatter:on
+  }
+  
+  @Test
   public void hasMany_List_success_test() {
     // @formatter:off
     List<Order> orders =
@@ -451,8 +473,8 @@ public class QueryTest {
     assertTrue(orders.get(1).getOrderLines().size() == 1);
 
     // @formatter:on
-  }
-
+  } 
+  
   @Test
   public void hasMany_Set_success_test() {
     // @formatter:off

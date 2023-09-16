@@ -193,16 +193,17 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     TableMapping relatedTypeTableMapping = jtm.getMappingHelper().getTableMapping(relatedType);
     String joinPropertyName = ownerTypeTableMapping.getPropertyName(joinColumnOwningSide);
 
-    List<BeanWrapper> bwMergeList = new ArrayList<>(); // used to avoid excessive BeanWrapper
-                                                       // creation
+    // used to avoid excessive BeanWrapper creation
+    List<BeanWrapper> bwMergeList = new ArrayList<>();
     Set params = new HashSet<>();
     for (T obj : mergeList) {
       if (obj != null) {
         BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
+        bw.setPropertyValue(propertyName, null);
+        bwMergeList.add(bw);
         Object joinPropertyValue = bw.getPropertyValue(joinPropertyName);
         if (joinPropertyValue != null) {
           params.add(joinPropertyValue);
-          bwMergeList.add(bw);
         }
       }
     }
@@ -223,6 +224,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
 
     String relatedModelIdPropName = relatedTypeTableMapping.getIdPropertyName();
     Map<Object, Object> idToRelatedModelMap = new HashMap<>();
+
     ResultSetExtractor<List<T>> rsExtractor = new ResultSetExtractor<List<T>>() {
       public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
         while (rs.next()) {
@@ -249,9 +251,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     for (BeanWrapper bw : bwMergeList) {
       // find the matching related model
       Object relatedModel = idToRelatedModelMap.get(bw.getPropertyValue(joinPropertyName));
-      if (relatedModel != null) {
-        bw.setPropertyValue(propertyName, relatedModel);
-      }
+      bw.setPropertyValue(propertyName, relatedModel);
     }
     // code reaches here query success, handle caching
     if (!previouslySuccessfulQuery(cacheKey)) {
@@ -276,6 +276,11 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         Object idValue = bwOwnerModel.getPropertyValue(ownerTypeIdPropName);
         if (idValue != null) {
           params.add(idValue);
+          // init collection to address edge case where collection is initialized with values
+          Collection collection = (Collection) bwOwnerModel.getPropertyValue(propertyName);
+          if (collection.size() > 0) {
+            collection.clear();
+          }
           idToBeanWrapperOwnerModelMap.put(idValue, bwOwnerModel);
         }
       }
@@ -325,15 +330,9 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   }
 
   private String getQueryMergeCacheKey(JdbcTemplateMapper jdbcTemplateMapper) {
-    return String.join(
-        "-",
-        ownerType.getName(),
-        relatedType == null ? null : relatedType.getName(),
-        relationshipType == null ? null : relationshipType.toString(),
-        propertyName,
-        joinColumnOwningSide,
-        joinColumnManySide,
-        jdbcTemplateMapper.toString());
+    return String.join("-", ownerType.getName(), relatedType == null ? null : relatedType.getName(),
+        relationshipType == null ? null : relationshipType.toString(), propertyName,
+        joinColumnOwningSide, joinColumnManySide, jdbcTemplateMapper.toString());
   }
 
   private boolean previouslySuccessfulQuery(String key) {
@@ -343,12 +342,11 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   private void addToCache(String key, String sql) {
     if (successQueryMergeSqlCache.size() < CACHE_MAX_ENTRIES) {
       successQueryMergeSqlCache.put(key, sql);
-    }
-    else {
+    } else {
       // remove a random entry from cache and add new entry
       String k = successQueryMergeSqlCache.keySet().iterator().next();
       successQueryMergeSqlCache.remove(k);
-      
+
       successQueryMergeSqlCache.put(key, sql);
     }
   }

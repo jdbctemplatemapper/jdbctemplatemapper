@@ -5,8 +5,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.springframework.util.Assert;
+import io.github.jdbctemplatemapper.exception.MapperException;
 
 /**
  * The database table mapping details on an object
@@ -116,7 +116,7 @@ class TableMapping {
     if (propMapping != null) {
       return propMapping;
     } else {
-      throw new RuntimeException(
+      throw new MapperException(
           "For @Id property "
               + idPropertyName
               + " could not find corresponding column in database table "
