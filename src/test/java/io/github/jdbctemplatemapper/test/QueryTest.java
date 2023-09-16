@@ -473,28 +473,8 @@ public class QueryTest {
     assertTrue(orders.get(1).getOrderLines().size() == 1);
 
     // @formatter:on
-  }  @Test
-  public void hasMany_failure_test() {
-    // @formatter:off
-    List<Order> orders =
-        Query.type(Order.class)
-            .hasMany(OrderLine.class)
-            .joinColumnManySide("order_id")
-            .populateProperty("orderLines") // list
-            .where("orders.status = ?", "IN PROCESS")
-            .orderBy("orders.order_id, order_line.order_line_id")
-            .execute(jtm);
-
-    assertTrue(orders.size() == 2);
-    assertTrue(orders.get(0).getOrderLines().size() == 2);
-    assertEquals("IN PROCESS", orders.get(1).getStatus());
-    assertTrue(orders.get(1).getOrderLines().size() == 1);
-
-    // @formatter:on
-  }
+  } 
   
-  
-
   @Test
   public void hasMany_Set_success_test() {
     // @formatter:off
