@@ -193,16 +193,19 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     TableMapping relatedTypeTableMapping = jtm.getMappingHelper().getTableMapping(relatedType);
     String joinPropertyName = ownerTypeTableMapping.getPropertyName(joinColumnOwningSide);
 
-    List<BeanWrapper> bwMergeList = new ArrayList<>(); // used to avoid excessive BeanWrapper
-                                                       // creation
+    // used to avoid excessive BeanWrapper creation
+    List<BeanWrapper> bwMergeList = new ArrayList<>(); 
     Set params = new HashSet<>();
     for (T obj : mergeList) {
       if (obj != null) {
         BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
+        bwMergeList.add(bw);
         Object joinPropertyValue = bw.getPropertyValue(joinPropertyName);
         if (joinPropertyValue != null) {
           params.add(joinPropertyValue);
-          bwMergeList.add(bw);
+        }
+        else {
+          bw.setPropertyValue(propertyName, null);
         }
       }
     }
@@ -223,6 +226,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
 
     String relatedModelIdPropName = relatedTypeTableMapping.getIdPropertyName();
     Map<Object, Object> idToRelatedModelMap = new HashMap<>();
+    
     ResultSetExtractor<List<T>> rsExtractor = new ResultSetExtractor<List<T>>() {
       public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
         while (rs.next()) {
@@ -249,9 +253,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     for (BeanWrapper bw : bwMergeList) {
       // find the matching related model
       Object relatedModel = idToRelatedModelMap.get(bw.getPropertyValue(joinPropertyName));
-      if (relatedModel != null) {
-        bw.setPropertyValue(propertyName, relatedModel);
-      }
+      bw.setPropertyValue(propertyName, relatedModel);
     }
     // code reaches here query success, handle caching
     if (!previouslySuccessfulQuery(cacheKey)) {

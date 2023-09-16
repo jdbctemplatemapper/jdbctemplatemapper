@@ -1,11 +1,10 @@
 package io.github.jdbctemplatemapper.test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.util.ArrayList;
 import java.util.List;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-
 import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
 import io.github.jdbctemplatemapper.core.Query;
 import io.github.jdbctemplatemapper.core.QueryMerge;
@@ -25,6 +23,7 @@ import io.github.jdbctemplatemapper.model.Order;
 import io.github.jdbctemplatemapper.model.Order5;
 import io.github.jdbctemplatemapper.model.Order6;
 import io.github.jdbctemplatemapper.model.Order7;
+import io.github.jdbctemplatemapper.model.Order8;
 import io.github.jdbctemplatemapper.model.OrderLine;
 import io.github.jdbctemplatemapper.model.OrderLine1;
 import io.github.jdbctemplatemapper.model.OrderLine7;
@@ -294,6 +293,28 @@ public class QueryMergeTest {
     assertTrue("jane".equals(orders.get(0).getCustomer().getFirstName()));
     assertTrue("joe".equals(orders.get(1).getCustomer().getLastName()));
   }
+  
+  @Test
+  public void hasOne_success_withEdgeCaseCustomerIntialized_test() {
+    // @formatter:off
+    List<Order8> orders =
+        Query.type(Order8.class)  // Customer is initialzed but since query returns null should be set to null
+            .where("orders.order_id = ?", 3)
+            .execute(jtm);
+    // @formatter:on
+
+    // @formatter:off
+    QueryMerge.type(Order8.class)
+        .hasOne(Customer.class)
+        .joinColumnOwningSide("customer_id")
+        .populateProperty("customer")
+        .execute(jtm, orders);
+    // @formatter:on
+
+    assertNull(orders.get(0).getCustomer());
+  }
+  
+  
 
   @Test
   public void hasMany_success_test() {
