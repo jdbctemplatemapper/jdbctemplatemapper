@@ -173,7 +173,7 @@ If IRecordOperatorResolver is implemented and configured with JdbcTemplateMapper
 If IRecordOperatorResolver is implemented and configured with JdbcTemplateMapper the value will be set to value returned by implementation when the record is updated. Without configuration no values will be set. The type returned should match the type of the property. @Column annotation can be used with this to map to a different column name.
   
 
-Example of the annotations:
+Example for annotations:
 
 ```java
 @Table(name="product")
