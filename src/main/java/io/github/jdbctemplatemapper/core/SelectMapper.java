@@ -137,7 +137,7 @@ public class SelectMapper<T> {
       obj = clazz.getConstructor().newInstance();
     }
     catch(Exception e) {
-       throw new MapperException("Failed to instantiate " + clazz.getName() + " with no argument constructor." ,e);
+       throw new MapperException("Failed to instantiate " + clazz.getName() + "  No default constructor found." ,e);
     }
     try {
       TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
