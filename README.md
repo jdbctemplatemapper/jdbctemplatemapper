@@ -352,7 +352,7 @@ Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Produc
  List<Order> order = 
     Query.type(Order.class) // owning class
          .hasMany(OrderLine.class) // the related class. Order hasMany OrderLine
-         .joinColumnManySide("order_id") // the join column is on the many side table. No prefixes
+         .joinColumnManySide("order_id") // the join column is on the many side table. No table prefixes
          .populateProperty("orderLines") // the property to populate on the owning class
          .where(orders.status = ?, "COMPLETE") // always prefix columns with table name.
          .orderBy("orders.order_date DESC, order_line.id") // always prefix columns with table name.
@@ -366,7 +366,7 @@ Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Produc
   ``` 
    QueryMerge.type(Order.class) // owning class
              .hasOne(Customer.class) // related class
-             .joinColumnOwningSide("customer_id") // the join column is on the owning side table. No prefixes
+             .joinColumnOwningSide("customer_id") // the join column is on the owning side table. No table prefixes
              .populateProperty("customer") // the property to populate on the owning class
              .execute(jdbcTemplateMapper, orders); // merges the query results with orders list
      
@@ -386,7 +386,7 @@ Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Produc
                  
    QueryMerge.type(OrderLine.class) // owning class
              .hasOne(Product.class) // related class
-             .joinColumnOwningSide("product_id") // the join column is on the  owning side table. No prefixes
+             .joinColumnOwningSide("product_id") // the join column is on the  owning side table. No table prefixes
              .populateProperty("product") // the property to populate on the owning class
              .execute(jdbcTemplateMapper, consolidatedOrderLines); // merges the query results with orderLines
              
