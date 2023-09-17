@@ -251,7 +251,9 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     for (BeanWrapper bw : bwMergeList) {
       // find the matching related model
       Object relatedModel = idToRelatedModelMap.get(bw.getPropertyValue(joinPropertyName));
-      bw.setPropertyValue(propertyName, relatedModel);
+      if(relatedModel != null) {
+        bw.setPropertyValue(propertyName, relatedModel);
+      }
     }
     // code reaches here query success, handle caching
     if (!previouslySuccessfulQuery(cacheKey)) {

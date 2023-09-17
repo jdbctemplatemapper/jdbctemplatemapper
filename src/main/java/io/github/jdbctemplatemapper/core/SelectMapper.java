@@ -3,13 +3,11 @@ package io.github.jdbctemplatemapper.core;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.StringJoiner;
-
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.util.Assert;
-
 import io.github.jdbctemplatemapper.exception.MapperException;
 
 /**
@@ -134,8 +132,14 @@ public class SelectMapper<T> {
   // returns model object wrapped in BeanWrapper. Used also by Query and QueryMerge processing to
   // prevent excessive creation of bean wrappers.
   BeanWrapper buildBeanWrapperModel(ResultSet rs) {
+    Object obj = null;
     try {
-      Object obj = clazz.getConstructor().newInstance();
+      obj = clazz.getConstructor().newInstance();
+    }
+    catch(Exception e) {
+       throw new MapperException("Failed to instantiate " + clazz.getName() + "  No default constructor found." ,e);
+    }
+    try {
       TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
       BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
       // need below for java.sql.Timestamp to java.time.LocalDateTime conversion etc

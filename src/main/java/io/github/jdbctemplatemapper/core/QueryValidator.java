@@ -33,7 +33,7 @@ class QueryValidator {
     try {
       ownerModel = ownerType.getConstructor().newInstance();
     } catch (Exception e) {
-      throw new MapperException(e);
+      throw new MapperException("Failed to instantiate " + ownerType.getName() + " No default constructor found." ,e);
     }
 
     if (relatedType != null) {
@@ -65,7 +65,7 @@ class QueryValidator {
       try {
         ownerModel = ownerType.getConstructor().newInstance();
       } catch (Exception e) {
-        throw new MapperException(e);
+        throw new MapperException("Failed to instantiate " + ownerType.getName() + "  No default constructor found." ,e);
       }
       BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(ownerModel);
       if (!bw.isReadableProperty(propertyName)) {
