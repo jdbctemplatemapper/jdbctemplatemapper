@@ -33,7 +33,7 @@ class QueryValidator {
     try {
       ownerModel = ownerType.getConstructor().newInstance();
     } catch (Exception e) {
-      throw new MapperException(e);
+      throw new MapperException("Failed to instantiate " + ownerType.getName() + " with no argument constructor." ,e);
     }
 
     if (relatedType != null) {
@@ -65,7 +65,7 @@ class QueryValidator {
       try {
         ownerModel = ownerType.getConstructor().newInstance();
       } catch (Exception e) {
-        throw new MapperException(e);
+        throw new MapperException("Failed to instantiate " + ownerType.getName() + " with no argument constructor." ,e);
       }
       BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(ownerModel);
       if (!bw.isReadableProperty(propertyName)) {
