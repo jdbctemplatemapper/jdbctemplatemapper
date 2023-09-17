@@ -24,7 +24,7 @@
  @Table(name="product")
  public class Product {
      // @Id annotation is required.
-     // For auto increment database id use @Id(type=IdType.AUTO_INCREMENT)
+     // For auto increment database id use @Id(type=IdType.AUTO_INCREMENT). id value will be set on insert
      // For non auto increment id use @Id. In this case the id value will have to be manually set 
      // before invoking insert(). Non auto increment id type can be something other than a Number.
  
