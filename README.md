@@ -599,7 +599,7 @@ Uses the same logging configurations as Spring's JdbcTemplate to log the SQL. In
  3. When using @Column(name="some_column_name") to map a property to a non default column, it will impact using "SELECT * " with Spring BeanPropertyRowMapper in custom queries. The mismatch of column and property names will cause Spring BeanPropertyRowMapper to ignore these properties. Use "SELECT " + jdbcTemplateMapper.getColumnsSql(Class) which will create column aliases to match property names so will work with BeanPropertyRowMapper.
  4. If insert/update fails do not reuse the object since it could be in an inconsistent state.
  5. For Oracle/SqlServer no support for blob/clob. Use JdbcTemplate directly for this with recommended custom code
- 6. MySQL jdbc drivers have a nasty feature where if multiple databases have the same table name, the database metadata for the table returns information for all the tables with the same name. To avoid this always use 'nullDatabaseMeansCurrent=true' in the connection string for MySQL when using JdbcTemplateMapper. The connection url will look something like below:  
+ 6. MySQL jdbc drivers have a nasty feature where when multiple databases have tables with same table name, the database metadata for the table returns information of all the tables combined. To avoid this always use 'nullDatabaseMeansCurrent=true' in the connection string for MySQL when using JdbcTemplateMapper. The connection url will look something like below:  
  jdbc:mysql://localhost:3306/yourdatabasename?nullDatabaseMeansCurrent=true
  
 ## TroubleShooting
