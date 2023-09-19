@@ -607,4 +607,7 @@ Make sure you can connect to your database and issue a simple query using Spring
 
 ## New features/bugs
 Please open a [issues ticket](https://github.com/jdbctemplatemapper/jdbctemplatemapper/issues) 
+
+## Discussions
+Discussions [here](https://github.com/jdbctemplatemapper/jdbctemplatemapper/discussions)
   
