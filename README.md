@@ -593,7 +593,7 @@ Uses the same logging configurations as Spring's JdbcTemplate to log the SQL. In
  
  ```
  
-## Notes
+## Important Notes
  1. Models should have a no argument constructor so they can be instantiated.
  2. Database changes will require a restart of the application since JdbcTemplateMapper caches table metadata.
  3. When using @Column(name="some_column_name") to map a property to a non default column, it will impact using "SELECT * " with Spring BeanPropertyRowMapper in custom queries. The mismatch of column and property names will cause Spring BeanPropertyRowMapper to ignore these properties. Use "SELECT " + jdbcTemplateMapper.getColumnsSql(Class) which will create column aliases to match property names so will work with BeanPropertyRowMapper.
