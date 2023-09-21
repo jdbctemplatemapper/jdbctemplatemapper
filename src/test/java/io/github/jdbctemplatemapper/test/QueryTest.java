@@ -34,7 +34,8 @@ public class QueryTest {
   @Value("${spring.datasource.driver-class-name}")
   private String jdbcDriver;
 
-  @Autowired private JdbcTemplateMapper jtm;
+  @Autowired
+  private JdbcTemplateMapper jtm;
 
   @Test
   public void type_null_test() {
@@ -73,6 +74,19 @@ public class QueryTest {
             });
     // @formatter:on
     assertTrue(exception.getMessage().contains("orderBy cannot be null"));
+  }
+
+  @Test
+  public void limitClause_null_test() {
+    // @formatter:off
+    Exception exception =
+        Assertions.assertThrows(
+            IllegalArgumentException.class,
+            () -> {
+              Query.type(Order.class).limitClause(null).execute(jtm);
+            });
+    // @formatter:on
+    assertTrue(exception.getMessage().contains("limitClause cannot be null"));
   }
 
   @Test
@@ -409,10 +423,8 @@ public class QueryTest {
                   .execute(jtm);
             });
     // @formatter:on
-    assertTrue(
-        exception
-            .getMessage()
-            .contains("Collection generic type and hasMany relationship type mismatch"));
+    assertTrue(exception.getMessage()
+        .contains("Collection generic type and hasMany relationship type mismatch"));
   }
 
   @Test
@@ -438,7 +450,7 @@ public class QueryTest {
     order.setOrderDate(LocalDateTime.now());
     order.setCustomerId(2);
     jtm.insert(order);
-    
+
     // @formatter:off
     List<Order9> orders =
         Query.type(Order9.class)
@@ -454,7 +466,7 @@ public class QueryTest {
 
     // @formatter:on
   }
-  
+
   @Test
   public void hasMany_List_success_test() {
     // @formatter:off
@@ -473,8 +485,8 @@ public class QueryTest {
     assertTrue(orders.get(1).getOrderLines().size() == 1);
 
     // @formatter:on
-  } 
-  
+  }
+
   @Test
   public void hasMany_Set_success_test() {
     // @formatter:off
@@ -616,4 +628,78 @@ public class QueryTest {
 
     // @formatter:on
   }
+
+
+  @Test
+  public void hasMany_limitClause_failure_test() {
+    // @formatter:off
+    Exception exception = Assertions.assertThrows(IllegalStateException.class, () -> {
+      Query.type(Order.class)
+           .hasMany(OrderLine.class)
+           .joinColumnManySide("order_id")
+           .populateProperty("orderLines")
+           .limitClause("OFFSET 0 ROWS FETCH FIRST 10 ROWS ONLY")
+           .execute(jtm);
+    });
+    // @formatter:on
+    assertTrue(exception.getMessage()
+        .contains("limitClause is not supported for hasMany and hasMany through relationships."));
+  }
+
+  @Test
+  public void limitClauseOnly_success_test() {
+    String limitClause = null;
+    if (jdbcDriver.contains("postgres")) {
+      limitClause = "OFFSET 0 ROWS FETCH FIRST 10 ROWS ONLY";
+    }
+    if (jdbcDriver.contains("mysql")) {
+      limitClause = "LIMIT 10 OFFSET 0";
+    }
+    if (jdbcDriver.contains("oracle")) {
+      limitClause = "OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY";
+    }
+    if (jdbcDriver.contains("sqlserver")) {
+      limitClause = "OFFSET 0 ROWS FETCH FIRST 5 ROWS ONLY";
+    }
+    // @formatter:off
+    List<Order> orders =
+        Query.type(Order.class)
+             .limitClause(limitClause).execute(jtm);
+
+    assertTrue(orders.size() == 3);
+
+    // @formatter:on
+  }
+  
+  @Test
+  public void hasOne_limitClause_success_test() {
+    String limitClause = null;
+    if (jdbcDriver.contains("postgres")) {
+      limitClause = "OFFSET 0 ROWS FETCH FIRST 10 ROWS ONLY";
+    }
+    if (jdbcDriver.contains("mysql")) {
+      limitClause = "LIMIT 10 OFFSET 0";
+    }
+    if (jdbcDriver.contains("oracle")) {
+      limitClause = "OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY";
+    }
+    if (jdbcDriver.contains("sqlserver")) {
+      limitClause = "OFFSET 0 ROWS FETCH FIRST 5 ROWS ONLY";
+    }
+    // @formatter:off
+    List<Order> orders =
+        Query.type(Order.class)
+             .hasOne(Customer.class)
+             .joinColumnOwningSide("customer_id")
+             .populateProperty("customer")
+             .orderBy("customer.customer_id")
+             .limitClause(limitClause)
+             .execute(jtm);
+
+    assertTrue(orders.size() == 3);
+
+    // @formatter:on
+  }
+
+
 }

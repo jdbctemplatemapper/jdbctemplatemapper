@@ -9,17 +9,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-
 import org.springframework.beans.BeanWrapper;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.util.Assert;
-
 import io.github.jdbctemplatemapper.query.IQueryFluent;
 import io.github.jdbctemplatemapper.query.IQueryHasMany;
 import io.github.jdbctemplatemapper.query.IQueryHasOne;
 import io.github.jdbctemplatemapper.query.IQueryJoinColumnManySide;
 import io.github.jdbctemplatemapper.query.IQueryJoinColumnOwningSide;
+import io.github.jdbctemplatemapper.query.IQueryLimitClause;
 import io.github.jdbctemplatemapper.query.IQueryOrderBy;
 import io.github.jdbctemplatemapper.query.IQueryPopulateProperty;
 import io.github.jdbctemplatemapper.query.IQueryThroughJoinColumns;
@@ -40,6 +39,8 @@ import io.github.jdbctemplatemapper.query.IQueryWhere;
  */
 public class Query<T> implements IQueryFluent<T> {
   private static final int CACHE_MAX_ENTRIES = 1000;
+
+  // Cached SQL does not include limit clause
   // key - cacheKey
   // value - sql
   private static Map<String, String> successQuerySqlCache = new ConcurrentHashMap<>();
@@ -48,6 +49,7 @@ public class Query<T> implements IQueryFluent<T> {
   private String whereClause;
   private Object[] whereParams;
   private String orderBy;
+  private String limitClause;
 
   private RelationshipType relationshipType;
   private Class<?> relatedType;
@@ -76,38 +78,22 @@ public class Query<T> implements IQueryFluent<T> {
   }
 
   /**
-   * The where clause for the type. If you provide a where clause always parameterize it to avoid
-   * SQL injection. Columns should always be prefixed with table name.
+   * The limit clause for the query.
+   * 
+   * The limit clause for hasMany relationship is not supported. To achieve similar functionality one
+   * option is to issue a query for the owning class with the limit clause and then use QueryMerge
+   * to populate the hasMany/hasMany through side of the relationship.
+   * 
+   * Syntax of the limit clause is different for different databases.
    *
-   * @param whereClause the whereClause for the type. It has to be prefixed with table name.
-   * @param params varArgs for the whereClause.
+   * @param limitClause the limit clause.
    * @return interface with the next methods in the chain
    */
-  public IQueryWhere<T> where(String whereClause, Object... params) {
-    if (MapperUtils.isBlank(whereClause)) {
-      throw new IllegalArgumentException("whereClause cannot be null or blank");
+  public IQueryLimitClause<T> limitClause(String limitClause) {
+    if (MapperUtils.isBlank(limitClause)) {
+      throw new IllegalArgumentException("limitClause cannot be null or blank");
     }
-    this.whereClause = whereClause;
-    this.whereParams = params;
-    return this;
-  }
-
-  /**
-   * The orderBy clause for the query. Columns should always be prefixed with table name. If you are
-   * querying relationships (hasOne, hasMany, hasMany through) both the owning side and related side
-   * columns can be used in the orderBy clause
-   *
-   * <p>
-   * orderBy is strictly validated which protects it from SQL injection.
-   *
-   * @param orderBy the orderBy clause. It has to be prefixed with table name.
-   * @return interface with the next methods in the chain
-   */
-  public IQueryOrderBy<T> orderBy(String orderBy) {
-    if (MapperUtils.isBlank(orderBy)) {
-      throw new IllegalArgumentException("orderBy cannot be null or blank");
-    }
-    this.orderBy = orderBy;
+    this.limitClause = limitClause;
     return this;
   }
 
@@ -231,6 +217,40 @@ public class Query<T> implements IQueryFluent<T> {
     this.propertyName = propertyName;
     return this;
   }
+  
+  /**
+   * The where clause for the type. If you provide a where clause always parameterize it to avoid
+   * SQL injection. Columns should be prefixed with table name to avoid sql ambiguous error. The
+   * where clause is not validated
+   *
+   * @param whereClause the whereClause for the type. It has to be prefixed with table name.
+   * @param params varArgs for the whereClause.
+   * @return interface with the next methods in the chain
+   */
+  public IQueryWhere<T> where(String whereClause, Object... params) {
+    if (MapperUtils.isBlank(whereClause)) {
+      throw new IllegalArgumentException("whereClause cannot be null or blank");
+    }
+    this.whereClause = whereClause;
+    this.whereParams = params;
+    return this;
+  }
+
+  /**
+   * The orderBy clause for the query. When querying relationships (hasOne, hasMany, hasMany through) 
+   * both the owning side and related side columns can be used in the orderBy clause.
+   *
+   * @param orderBy the orderBy clause. It has to be prefixed with table name.
+   * @return interface with the next methods in the chain
+   */
+  public IQueryOrderBy<T> orderBy(String orderBy) {
+    if (MapperUtils.isBlank(orderBy)) {
+      throw new IllegalArgumentException("orderBy cannot be null or blank");
+    }
+    this.orderBy = orderBy;
+    return this;
+  }
+
 
   /**
    * Execute the query using the jdbcTemplateMapper
@@ -258,8 +278,6 @@ public class Query<T> implements IQueryFluent<T> {
       QueryValidator.validate(jdbcTemplateMapper, ownerType, relationshipType, relatedType,
           joinColumnOwningSide, joinColumnManySide, propertyName, throughJoinTable,
           throughOwnerTypeJoinColumn, throughRelatedTypeJoinColumn);
-      QueryValidator.validateQueryWhereAndOrderBy(jdbcTemplateMapper, whereClause, orderBy,
-          ownerType, relatedType);
 
       sql = "SELECT " + ownerTypeSelectMapper.getColumnsSql();
       String ownerTypeTableName = ownerTypeTableMapping.getTableName();
@@ -297,6 +315,15 @@ public class Query<T> implements IQueryFluent<T> {
       }
     } else {
       sql = successQuerySqlCache.get(cacheKey);
+    }
+    
+    // cache the sql without the limit clause.
+    String sqlForCache = sql;
+    
+    // limitClause is not part of the cached sql. add it here
+    if (MapperUtils.isNotBlank(limitClause)) {
+      QueryValidator.validateQueryLimitClause(relationshipType, limitClause);
+      sql += " " + limitClause;
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -340,7 +367,7 @@ public class Query<T> implements IQueryFluent<T> {
 
     // code reaches here query success, handle caching
     if (!previouslySuccessfulQuery(cacheKey)) {
-      addToCache(cacheKey, sql);
+      addToCache(cacheKey, sqlForCache);
     }
     return resultList;
   }
@@ -380,6 +407,7 @@ public class Query<T> implements IQueryFluent<T> {
         throughJoinTable, 
         throughOwnerTypeJoinColumn,
         throughRelatedTypeJoinColumn,
+        propertyName,
         whereClause,
         orderBy,
         jdbcTemplateMapper.toString());

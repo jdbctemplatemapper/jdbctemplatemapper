@@ -242,17 +242,17 @@ List<Order> orders =
        .where("orders.status = ?", "COMPLETE") // always prefix where() columns with table
        .execute(jdbcTemplateMapper); // execute with jdbcTemplateMapper
        
-// with orderBy. orderBy() is strictly validated and is protected against SQL injection.
+// with orderBy.
 List<Order> orders = 
   Query.type(Order.class)
-       .orderBy("orders.id")  // always prefix orderBy() columns with table
+       .orderBy("orders.id")  // good practice to prefix columns with table
        .execute(jdbcTemplateMapper); // execute with jdbcTemplateMapper
 
 // with where and orderBy
 List<Order> orders = 
   Query.type(Order.class)
-       .where("orders.status = ?", "COMPLETE") // always prefix where() columns with table
-       .orderBy("orders.id desc")  // always prefix orderBy() columns with table
+       .where("orders.status = ?", "COMPLETE") // good practice to prefix columns with table
+       .orderBy("orders.id desc")  // good practice to prefix columns with table
        .execute(jdbcTemplateMapper); // execute with jdbcTemplateMapper
 
 // hasOne relationship         
@@ -261,7 +261,7 @@ List<Order> orders =
        .hasOne(Customer.class) // related Class
        .joinColumnOwningSide("customer_id") // hasOne() join column is on owning side table. No table prefixes.
        .populateProperty("customer") // property on owning class to populate
-       .where("orders.status = ?", "COMPLETE") // always prefix where() columns with table
+       .where("orders.status = ?", "COMPLETE") // good practice to prefix columns with table
        .orderBy("orders.id DESC, customer.id")  // owning and related table columns can be used
        .execute(jdbcTemplateMapper); // execute with jdbcTemplateMapper
               
@@ -271,7 +271,7 @@ List<Order> orders =
        .hasMany(OrderLine.class) // related class
        .joinColumnManySide("order_id") // hasMany() join column is on the many side table. No table prefixes
        .populateProperty("orderLines") // the property to populate on the owning class
-       .where("orders.status = ?", "COMPLETE") // always prefix where() columns with table
+       .where("orders.status = ?", "COMPLETE") // good practice to prefix columns with table
        .orderBy("orders.id, order_line.id")  // owning and related table columns can be used
        .execute(jdbcTemplateMapper); // execute with jdbcTemplateMapper   
        
@@ -354,8 +354,8 @@ Example: Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne Produc
          .hasMany(OrderLine.class) // the related class. Order hasMany OrderLine
          .joinColumnManySide("order_id") // the join column is on the many side table. No table prefixes
          .populateProperty("orderLines") // the property to populate on the owning class
-         .where(orders.status = ?, "COMPLETE") // always prefix columns with table name.
-         .orderBy("orders.order_date DESC, order_line.id") // always prefix columns with table name.
+         .where(orders.status = ?, "COMPLETE") // good practice to prefix columns with table
+         .orderBy("orders.order_date DESC, order_line.id") // good practice to prefix columns with table
          .execute(jdbcTemplateMapper); // execute with the jdbcTemplateMapper
  
  ```
@@ -576,6 +576,13 @@ An example of querying the following relationship: Order hasOne Customer, Order 
 ...
 
 ```
+### limitClause
+Limit clauses are supported only for no relationship queries and hasOne relationship queries.    
+Limit clause is NOT supported for hasMany relationships.
+To achieve similar functionality one option is to issue a query for the owning class with the limit clause and then use QueryMerge
+to populate the hasMany side of the relationship.
+Another option is to use SelectMapper with custom queries.  
+
 
 ## Logging
  

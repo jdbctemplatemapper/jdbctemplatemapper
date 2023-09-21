@@ -12,5 +12,8 @@ public interface IQueryMergeFluent<T>
         IQueryMergeHasOne<T>,
         IQueryMergeJoinColumnOwningSide<T>,
         IQueryMergeJoinColumnManySide<T>,
+        IQueryMergeThroughJoinTable<T>,
+        IQueryMergeThroughJoinColumns<T>,
         IQueryMergePopulateProperty<T>,
+        IQueryMergeOrderBy<T>,
         IQueryMergeExecute<T> {}

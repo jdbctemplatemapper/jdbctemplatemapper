@@ -440,4 +440,57 @@ public class QueryMergeTest {
     assertNotNull(orders.get(0).getOrderLines().get(1).getId());
     assertNotNull(orders.get(1).getOrderLines().get(0).getId());
   }
+  
+  
+  @Test
+  public void hasOne_orderByIsNotSupported_test() {
+    // @formatter:off
+    List<Order> orders =
+        Query.type(Order.class)
+            .execute(jtm);
+    // @formatter:on
+
+    Exception exception =
+        Assertions.assertThrows(
+            IllegalStateException.class,
+            () -> {
+    // @formatter:off
+    QueryMerge.type(Order.class)
+        .hasOne(Customer.class)
+        .joinColumnOwningSide("customer_id")
+        .populateProperty("customer")
+        .orderBy("customer_id")
+        .execute(jtm, orders);
+            });
+    assertTrue(exception.getMessage().contains("For QueryMerge hasOne relationships orderBy is not supported"));
+    
+    // @formatter:on
+  }
+  
+  
+  
+  @Test
+  public void hasMany_withOrderBy_success_test() {
+    // @formatter:off
+    List<Order> orders =
+        Query.type(Order.class)
+            .where("orders.status = ?", "IN PROCESS")
+            .orderBy("orders.order_id")
+            .execute(jtm);
+    // @formatter:on
+
+    // @formatter:off
+    QueryMerge.type(Order.class)
+        .hasMany(OrderLine.class)
+        .joinColumnManySide("order_id")
+        .populateProperty("orderLines")
+        .orderBy("order_line_id")
+        .execute(jtm, orders);
+    // @formatter:on
+    
+    assertTrue(orders.get(0).getOrderLines().size() == 2);
+    assertTrue(orders.get(1).getOrderLines().size() == 1);
+    
+  }
+  
 }

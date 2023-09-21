@@ -1,7 +1,6 @@
 package io.github.jdbctemplatemapper.query;
 
 import java.util.List;
-
 import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
 
 /**
@@ -10,10 +9,6 @@ import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
  * @author ajoseph
  * @param <T> the type
  */
-public interface IQueryWhere<T> {
-  IQueryOrderBy<T> orderBy(String orderBy);
-  
-  IQueryLimitClause<T> limitClause(String orderBy);
-
+public interface IQueryLimitClause<T> {
   List<T> execute(JdbcTemplateMapper jdbcTemplateMapper);
 }

@@ -10,20 +10,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.util.Assert;
-
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeFluent;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeHasMany;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeHasOne;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeJoinColumnManySide;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeJoinColumnOwningSide;
+import io.github.jdbctemplatemapper.querymerge.IQueryMergeOrderBy;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergePopulateProperty;
+import io.github.jdbctemplatemapper.querymerge.IQueryMergeThroughJoinColumns;
+import io.github.jdbctemplatemapper.querymerge.IQueryMergeThroughJoinTable;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeType;
 
 /**
@@ -50,6 +51,11 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   private String propertyName; // propertyName on ownerType that needs to be populated
   private String joinColumnOwningSide;
   private String joinColumnManySide;
+
+  private String throughJoinTable;
+  private String throughOwnerTypeJoinColumn;
+  private String throughRelatedTypeJoinColumn;
+  private String orderBy;
 
   private QueryMerge(Class<T> type) {
     this.ownerType = type;
@@ -132,6 +138,45 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     return this;
   }
 
+
+  /**
+   * The join table (associative table) for the hasMany through (many to many) relationship
+   *
+   * @param tableName the associative table name
+   * @return interface with the next methods in the chain
+   */
+  public IQueryMergeThroughJoinTable<T> throughJoinTable(String tableName) {
+    if (MapperUtils.isBlank(tableName)) {
+      throw new IllegalArgumentException("throughJoinTable() tableName cannot be null or blank");
+    }
+    this.relationshipType = RelationshipType.HAS_MANY_THROUGH;
+    this.throughJoinTable = tableName;
+    return this;
+  }
+
+  /**
+   * The join columns for the owning side and the related side for hasMany through relationship
+   *
+   * @param ownerTypeJoinColumn the join column for the owning side
+   * @param relatedTypeJoinColumn the join column for the related side
+   * @return interface with the next methods in the chain
+   */
+  public IQueryMergeThroughJoinColumns<T> throughJoinColumns(String ownerTypeJoinColumn,
+      String relatedTypeJoinColumn) {
+    if (MapperUtils.isBlank(ownerTypeJoinColumn)) {
+      throw new IllegalArgumentException(
+          "throughJoinColumns() ownerTypeJoinColumn cannot be null or blank");
+    }
+    if (MapperUtils.isBlank(relatedTypeJoinColumn)) {
+      throw new IllegalArgumentException(
+          "throughJoinColumns() relatedTypeJoinColumn cannot be null or blank");
+    }
+    this.throughOwnerTypeJoinColumn = ownerTypeJoinColumn;
+    this.throughRelatedTypeJoinColumn = relatedTypeJoinColumn;
+    return this;
+  }
+
+
   /**
    * The relationship property that needs to be populated on the owning type.
    *
@@ -154,6 +199,23 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   }
 
   /**
+   * The orderBy clause for QueryMerge. For QueryMerge orderBy is only supported for hasMany and
+   * hasMany through. For others it makes sense because the order it determined by the mergeList
+   * 
+   * orderBy columns have to be on the table of the hasMany/hasMany through side.
+   * 
+   * @param orderBy the orderBy clause.
+   * @return interface with the next methods in the chain
+   */
+  public IQueryMergeOrderBy<T> orderBy(String orderBy) {
+    if (MapperUtils.isBlank(orderBy)) {
+      throw new IllegalArgumentException("orderBy cannot be null or blank");
+    }
+    this.orderBy = orderBy;
+    return this;
+  }
+
+  /**
    * The query executes an sql 'IN' clause to get the related side (hasOne, hasMany) objects and
    * merges those with the objects in the mergeList
    *
@@ -172,16 +234,24 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     String cacheKey = getQueryMergeCacheKey(jdbcTemplateMapper);
     if (!previouslySuccessfulQuery(cacheKey)) {
       QueryValidator.validate(jdbcTemplateMapper, ownerType, relationshipType, relatedType,
-          joinColumnOwningSide, joinColumnManySide, propertyName, null, null, null);
+          joinColumnOwningSide, joinColumnManySide, propertyName, throughJoinTable,
+          throughOwnerTypeJoinColumn, throughRelatedTypeJoinColumn);
     }
     if (MapperUtils.isEmpty(mergeList)) {
       return;
     }
 
     if (relationshipType == RelationshipType.HAS_ONE) {
+      if (MapperUtils.isNotBlank(orderBy)) {
+        throw new IllegalStateException(
+            "For QueryMerge hasOne relationships orderBy is not supported."
+                + " The order is already dictated by the mergeList");
+      }
       processHasOne(jdbcTemplateMapper, mergeList, ownerType, relatedType, cacheKey);
-    } else {
+    } else if (relationshipType == RelationshipType.HAS_MANY) {
       processHasMany(jdbcTemplateMapper, mergeList, ownerType, relatedType, cacheKey);
+    } else if (relationshipType == RelationshipType.HAS_MANY_THROUGH) {
+      processHasManyThrough(jdbcTemplateMapper, mergeList, ownerType, relatedType, cacheKey);
     }
   }
 
@@ -251,7 +321,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     for (BeanWrapper bw : bwMergeList) {
       // find the matching related model
       Object relatedModel = idToRelatedModelMap.get(bw.getPropertyValue(joinPropertyName));
-      if(relatedModel != null) {
+      if (relatedModel != null) {
         bw.setPropertyValue(propertyName, relatedModel);
       }
     }
@@ -297,6 +367,10 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
       sql = "SELECT " + selectMapper.getColumnsSql() + " FROM "
           + jtm.getMappingHelper().fullyQualifiedTableName(relatedTypeTableMapping.getTableName())
           + " WHERE " + joinColumnManySide + " IN (:ownerTypeIds)";
+
+      if (MapperUtils.isNotBlank(orderBy)) {
+        sql += " ORDER BY " + orderBy;
+      }
     }
     ResultSetExtractor<List<T>> rsExtractor = new ResultSetExtractor<List<T>>() {
       public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
@@ -331,10 +405,115 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     }
   }
 
+
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  private void processHasManyThrough(JdbcTemplateMapper jtm, List<T> mergeList, Class<?> ownerType,
+      Class<?> relatedType, String cacheKey) {
+
+    MappingHelper mappingHelper = jtm.getMappingHelper();
+    TableMapping ownerTypeTableMapping = mappingHelper.getTableMapping(ownerType);
+    TableMapping relatedTypeTableMapping = mappingHelper.getTableMapping(relatedType);
+
+    String ownerTypeTableName = ownerTypeTableMapping.getTableName();
+    String relatedTypeTableName = relatedTypeTableMapping.getTableName();
+    String ownerTypeIdPropName = ownerTypeTableMapping.getIdPropertyName();
+
+    // key - ownerTypeId, value - bean wrapped owner model from mergeList
+    Map<Object, BeanWrapper> idToBeanWrapperOwnerModelMap = new HashMap<>();
+    Set params = new HashSet<>();
+    for (Object obj : mergeList) {
+      if (obj != null) {
+        BeanWrapper bwOwnerModel = PropertyAccessorFactory.forBeanPropertyAccess(obj);
+        Object idValue = bwOwnerModel.getPropertyValue(ownerTypeIdPropName);
+        if (idValue != null) {
+          params.add(idValue);
+          // init collection to address edge case where collection is initialized with values
+          Collection collection = (Collection) bwOwnerModel.getPropertyValue(propertyName);
+          if (collection.size() > 0) {
+            collection.clear();
+          }
+          idToBeanWrapperOwnerModelMap.put(idValue, bwOwnerModel);
+        }
+      }
+    }
+    if (MapperUtils.isEmpty(params)) {
+      return;
+    }
+
+    // Hack to get the ownerType id value. The select statement is build in such a way the
+    // buildBeanWrapperModel(rs)
+    // returns the ownerType id value.
+    SelectMapper<?> selectMapperOwnerType = jtm.getSelectMapper(ownerType, ownerTypeTableName);
+
+    SelectMapper<?> selectMapperRelatedType =
+        jtm.getSelectMapper(relatedType, relatedTypeTableMapping.getTableName());
+
+    String sql = successQueryMergeSqlCache.get(cacheKey);
+    if (sql == null) {
+      sql = "SELECT " + throughJoinTable + "." + throughOwnerTypeJoinColumn + " as "
+          + ownerTypeTableName + "_" + ownerTypeTableMapping.getIdColumnName() + ", "
+          + selectMapperRelatedType.getColumnsSql() + " FROM "
+          + jtm.getMappingHelper().fullyQualifiedTableName(throughJoinTable) + " LEFT JOIN "
+          + mappingHelper.fullyQualifiedTableName(relatedTypeTableName) + " on " + throughJoinTable
+          + "." + throughRelatedTypeJoinColumn + " = " + relatedTypeTableName + "."
+          + relatedTypeTableMapping.getIdColumnName() + " WHERE " + throughJoinTable + "."
+          + throughOwnerTypeJoinColumn + " IN (:ownerTypeIds)";
+
+      if (MapperUtils.isNotBlank(orderBy)) {
+        sql += " ORDER BY " + orderBy;
+      }
+    }
+
+    ResultSetExtractor<List<T>> rsExtractor = new ResultSetExtractor<List<T>>() {
+      public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
+        while (rs.next()) {
+          BeanWrapper bwOwnerType = selectMapperOwnerType.buildBeanWrapperModel(rs);
+          if (bwOwnerType != null) {
+            BeanWrapper bwRelatedModel = selectMapperRelatedType.buildBeanWrapperModel(rs);
+            if (bwRelatedModel != null) {
+              Object ownerTypeIdValue = bwOwnerType.getPropertyValue(ownerTypeIdPropName);
+              if (idToBeanWrapperOwnerModelMap.containsKey(ownerTypeIdValue)) {
+                BeanWrapper bw = idToBeanWrapperOwnerModelMap.get(ownerTypeIdValue);
+                Collection collection = (Collection) bw.getPropertyValue(propertyName);
+                collection.add(bwRelatedModel.getWrappedInstance());
+              }
+            }
+          }
+        }
+        return null;
+      }
+    };
+
+    // some databases have limits on number of entries in a 'IN' clause
+    // Chunk the collection and make multiple calls as needed.
+    Collection<List<?>> chunkedOwnerTypeIds =
+        MapperUtils.chunkTheCollection(params, inClauseChunkSize);
+    for (List ownerTypeIds : chunkedOwnerTypeIds) {
+      MapSqlParameterSource queryParams = new MapSqlParameterSource("ownerTypeIds", ownerTypeIds);
+      jtm.getNamedParameterJdbcTemplate().query(sql, queryParams, rsExtractor);
+    }
+
+    // code reaches here query success, handle caching
+    if (!previouslySuccessfulQuery(cacheKey)) {
+      addToCache(cacheKey, sql);
+    }
+  }
+
   private String getQueryMergeCacheKey(JdbcTemplateMapper jdbcTemplateMapper) {
-    return String.join("-", ownerType.getName(), relatedType == null ? null : relatedType.getName(),
-        relationshipType == null ? null : relationshipType.toString(), propertyName,
-        joinColumnOwningSide, joinColumnManySide, jdbcTemplateMapper.toString());
+ // @formatter:off
+    return String.join("-", 
+        ownerType.getName(),
+        relatedType == null ? null : relatedType.getName(),
+        relationshipType == null ? null : relationshipType.toString(),
+        joinColumnOwningSide,
+        joinColumnManySide,
+        throughJoinTable, 
+        throughOwnerTypeJoinColumn,
+        throughRelatedTypeJoinColumn,
+        propertyName,
+        orderBy,
+        jdbcTemplateMapper.toString());
+ // @formatter:on
   }
 
   private boolean previouslySuccessfulQuery(String key) {

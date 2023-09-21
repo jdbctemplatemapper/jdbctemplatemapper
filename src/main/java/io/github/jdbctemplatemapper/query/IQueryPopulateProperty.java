@@ -14,6 +14,8 @@ public interface IQueryPopulateProperty<T> {
   IQueryWhere<T> where(String whereClause, Object... params);
 
   IQueryOrderBy<T> orderBy(String orderBy);
+  
+  IQueryLimitClause<T> limitClause(String orderBy);
 
   List<T> execute(JdbcTemplateMapper jdbcTemplateMapper);
 }
