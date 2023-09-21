@@ -16,6 +16,6 @@ public interface IQueryFluent<T> extends IQueryType<T>,
     IQueryPopulateProperty<T>,
     IQueryWhere<T>,
     IQueryOrderBy<T>,
-    IQueryLimitClause<T>,
+    IQueryLimitOffsetClause<T>,
     IQueryExecute<T> {
 }

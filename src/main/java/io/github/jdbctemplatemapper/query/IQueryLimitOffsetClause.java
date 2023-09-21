@@ -9,6 +9,6 @@ import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
  * @author ajoseph
  * @param <T> the type
  */
-public interface IQueryLimitClause<T> {
+public interface IQueryLimitOffsetClause<T> {
   List<T> execute(JdbcTemplateMapper jdbcTemplateMapper);
 }

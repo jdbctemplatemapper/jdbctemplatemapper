@@ -51,13 +51,13 @@ class QueryValidator {
     }
   }
 
-  public static void validateQueryLimitClause(RelationshipType relationshipType,
-      String limitClause) {
+  public static void validateQueryLimitOffsetClause(RelationshipType relationshipType,
+      String limitOffsetClause) {
     if (relationshipType == RelationshipType.HAS_MANY
         || relationshipType == RelationshipType.HAS_MANY_THROUGH) {
-      if (MapperUtils.isNotBlank(limitClause)) {
+      if (MapperUtils.isNotBlank(limitOffsetClause)) {
         throw new IllegalStateException(
-            "limitClause is not supported for hasMany and hasMany through relationships. "
+            "limitOffsetClause is not supported for hasMany and hasMany through relationships. "
                 + "See documentation to achieve similar functionality.");
       }
     }

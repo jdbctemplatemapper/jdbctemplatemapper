@@ -101,7 +101,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   }
 
   /**
-   * Join column for hasOne relationship. The join column (the foreign key) is in the table of the
+   * Join column for hasOne relationship. The join column (the foreign key) is on the table of the
    * owning model. Example: Order hasOne Customer. The join column(foreign key) will be on the table
    * order (of the owning model)
    *
@@ -120,7 +120,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   }
 
   /**
-   * Join column for hasMany relationship: The join column (the foreign key) is in the table of the
+   * Join column for hasMany relationship: The join column (the foreign key) is on the table of the
    * many side. Example: Order hasMany OrderLine. The join column will be on the table order_line
    * (the many side)
    *
@@ -263,7 +263,6 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     TableMapping relatedTypeTableMapping = jtm.getMappingHelper().getTableMapping(relatedType);
     String joinPropertyName = ownerTypeTableMapping.getPropertyName(joinColumnOwningSide);
 
-    // used to avoid excessive BeanWrapper creation
     List<BeanWrapper> bwMergeList = new ArrayList<>();
     Set params = new HashSet<>();
     for (T obj : mergeList) {
@@ -440,9 +439,8 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
       return;
     }
 
-    // Hack to get the ownerType id value. The select statement is build in such a way the
-    // buildBeanWrapperModel(rs)
-    // returns the ownerType id value.
+    // The select statement is build in such a way the buildBeanWrapperModel(rs) returns the
+    // ownerType id value.
     SelectMapper<?> selectMapperOwnerType = jtm.getSelectMapper(ownerType, ownerTypeTableName);
 
     SelectMapper<?> selectMapperRelatedType =

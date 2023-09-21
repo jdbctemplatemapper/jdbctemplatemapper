@@ -13,7 +13,7 @@ import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
 public interface IQueryWhere<T> {
   IQueryOrderBy<T> orderBy(String orderBy);
   
-  IQueryLimitClause<T> limitClause(String orderBy);
+  IQueryLimitOffsetClause<T> limitOffsetClause(String limitOffsetClaue);
 
   List<T> execute(JdbcTemplateMapper jdbcTemplateMapper);
 }

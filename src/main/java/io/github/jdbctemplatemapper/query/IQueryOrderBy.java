@@ -10,6 +10,6 @@ import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
  * @param <T> the type
  */
 public interface IQueryOrderBy<T> {
-  IQueryLimitClause<T> limitClause(String orderBy);
+  IQueryLimitOffsetClause<T> limitOffsetClause(String limitOffsetClause);
   List<T> execute(JdbcTemplateMapper jdbcTemplateMapper);
 }

@@ -18,7 +18,7 @@ import io.github.jdbctemplatemapper.query.IQueryHasMany;
 import io.github.jdbctemplatemapper.query.IQueryHasOne;
 import io.github.jdbctemplatemapper.query.IQueryJoinColumnManySide;
 import io.github.jdbctemplatemapper.query.IQueryJoinColumnOwningSide;
-import io.github.jdbctemplatemapper.query.IQueryLimitClause;
+import io.github.jdbctemplatemapper.query.IQueryLimitOffsetClause;
 import io.github.jdbctemplatemapper.query.IQueryOrderBy;
 import io.github.jdbctemplatemapper.query.IQueryPopulateProperty;
 import io.github.jdbctemplatemapper.query.IQueryThroughJoinColumns;
@@ -49,7 +49,7 @@ public class Query<T> implements IQueryFluent<T> {
   private String whereClause;
   private Object[] whereParams;
   private String orderBy;
-  private String limitClause;
+  private String limitOffsetClause;
 
   private RelationshipType relationshipType;
   private Class<?> relatedType;
@@ -75,26 +75,6 @@ public class Query<T> implements IQueryFluent<T> {
   public static <T> IQueryType<T> type(Class<T> type) {
     Assert.notNull(type, "Type cannot be null");
     return new Query<T>(type);
-  }
-
-  /**
-   * The limit clause for the query.
-   * 
-   * The limit clause for hasMany relationship is not supported. To achieve similar functionality one
-   * option is to issue a query for the owning class with the limit clause and then use QueryMerge
-   * to populate the hasMany/hasMany through side of the relationship.
-   * 
-   * Syntax of the limit clause is different for different databases.
-   *
-   * @param limitClause the limit clause.
-   * @return interface with the next methods in the chain
-   */
-  public IQueryLimitClause<T> limitClause(String limitClause) {
-    if (MapperUtils.isBlank(limitClause)) {
-      throw new IllegalArgumentException("limitClause cannot be null or blank");
-    }
-    this.limitClause = limitClause;
-    return this;
   }
 
   /**
@@ -125,7 +105,7 @@ public class Query<T> implements IQueryFluent<T> {
   }
 
   /**
-   * Join column for hasOne relationship: The join column (the foreign key) is in the table of the
+   * Join column for hasOne relationship: The join column (the foreign key) is on the table of the
    * owning model. Example: Order hasOne Customer. The join column(foreign key) will be on the table
    * order (of the owning model)
    *
@@ -144,7 +124,7 @@ public class Query<T> implements IQueryFluent<T> {
   }
 
   /**
-   * Join column for hasMany relationship: The join column (the foreign key) is in the table of the
+   * Join column for hasMany relationship: The join column (the foreign key) is on the table of the
    * many side. Example: Order hasMany OrderLine. The join column will be on the table order_line
    * (the many side)
    *
@@ -251,7 +231,26 @@ public class Query<T> implements IQueryFluent<T> {
     return this;
   }
 
-
+  /**
+   * The limit Offset clause for the query.
+   * 
+   * The limit offset clause for hasMany relationship is not supported. To achieve similar functionality one
+   * option is to issue a query for the owning class with the limit clause and then use QueryMerge
+   * to populate the hasMany/hasMany through side of the relationship.
+   * 
+   * Syntax of the limit offset clause is different for different databases.
+   *
+   * @param limitOffsetClause the limit clause.
+   * @return interface with the next methods in the chain
+   */
+  public IQueryLimitOffsetClause<T> limitOffsetClause(String limitOffsetClause) {
+    if (MapperUtils.isBlank(limitOffsetClause)) {
+      throw new IllegalArgumentException("limitOffsetClause cannot be null or blank");
+    }
+    this.limitOffsetClause = limitOffsetClause;
+    return this;
+  }
+  
   /**
    * Execute the query using the jdbcTemplateMapper
    *
@@ -317,13 +316,12 @@ public class Query<T> implements IQueryFluent<T> {
       sql = successQuerySqlCache.get(cacheKey);
     }
     
-    // cache the sql without the limit clause.
+    // sql stored in cache does not include limit clause.
     String sqlForCache = sql;
     
-    // limitClause is not part of the cached sql. add it here
-    if (MapperUtils.isNotBlank(limitClause)) {
-      QueryValidator.validateQueryLimitClause(relationshipType, limitClause);
-      sql += " " + limitClause;
+    if (MapperUtils.isNotBlank(limitOffsetClause)) {
+      QueryValidator.validateQueryLimitOffsetClause(relationshipType, limitOffsetClause);
+      sql += " " + limitOffsetClause;
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

@@ -18,7 +18,7 @@ public interface IQueryType<T> {
 
   IQueryOrderBy<T> orderBy(String orderBy);
   
-  IQueryLimitClause<T> limitClause(String orderBy);
+  IQueryLimitOffsetClause<T> limitOffsetClause(String limitOffsetClause);
 
   List<T> execute(JdbcTemplateMapper jdbcTemplateMapper);
 }

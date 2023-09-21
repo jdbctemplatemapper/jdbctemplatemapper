@@ -77,16 +77,16 @@ public class QueryTest {
   }
 
   @Test
-  public void limitClause_null_test() {
+  public void limitOffsetClause_null_test() {
     // @formatter:off
     Exception exception =
         Assertions.assertThrows(
             IllegalArgumentException.class,
             () -> {
-              Query.type(Order.class).limitClause(null).execute(jtm);
+              Query.type(Order.class).limitOffsetClause(null).execute(jtm);
             });
     // @formatter:on
-    assertTrue(exception.getMessage().contains("limitClause cannot be null"));
+    assertTrue(exception.getMessage().contains("limitOffsetClause cannot be null"));
   }
 
   @Test
@@ -631,40 +631,40 @@ public class QueryTest {
 
 
   @Test
-  public void hasMany_limitClause_failure_test() {
+  public void hasMany_limitOffsetClause_failure_test() {
     // @formatter:off
     Exception exception = Assertions.assertThrows(IllegalStateException.class, () -> {
       Query.type(Order.class)
            .hasMany(OrderLine.class)
            .joinColumnManySide("order_id")
            .populateProperty("orderLines")
-           .limitClause("OFFSET 0 ROWS FETCH FIRST 10 ROWS ONLY")
+           .limitOffsetClause("OFFSET 0 ROWS FETCH FIRST 10 ROWS ONLY")
            .execute(jtm);
     });
     // @formatter:on
     assertTrue(exception.getMessage()
-        .contains("limitClause is not supported for hasMany and hasMany through relationships."));
+        .contains("limitOffsetClause is not supported for hasMany and hasMany through relationships."));
   }
 
   @Test
-  public void limitClauseOnly_success_test() {
-    String limitClause = null;
+  public void limitOffsetClauseOnly_success_test() {
+    String limitOffsetClause = null;
     if (jdbcDriver.contains("postgres")) {
-      limitClause = "OFFSET 0 ROWS FETCH FIRST 10 ROWS ONLY";
+      limitOffsetClause = "OFFSET 0 ROWS FETCH FIRST 10 ROWS ONLY";
     }
     if (jdbcDriver.contains("mysql")) {
-      limitClause = "LIMIT 10 OFFSET 0";
+      limitOffsetClause = "LIMIT 10 OFFSET 0";
     }
     if (jdbcDriver.contains("oracle")) {
-      limitClause = "OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY";
+      limitOffsetClause = "OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY";
     }
     if (jdbcDriver.contains("sqlserver")) {
-      limitClause = "OFFSET 0 ROWS FETCH FIRST 5 ROWS ONLY";
+      limitOffsetClause = "OFFSET 0 ROWS FETCH FIRST 10 ROWS ONLY";
     }
     // @formatter:off
     List<Order> orders =
         Query.type(Order.class)
-             .limitClause(limitClause).execute(jtm);
+             .limitOffsetClause(limitOffsetClause).execute(jtm);
 
     assertTrue(orders.size() == 3);
 
@@ -672,19 +672,19 @@ public class QueryTest {
   }
   
   @Test
-  public void hasOne_limitClause_success_test() {
-    String limitClause = null;
+  public void hasOne_limitOffsetClause_success_test() {
+    String limitOffsetClause = null;
     if (jdbcDriver.contains("postgres")) {
-      limitClause = "OFFSET 0 ROWS FETCH FIRST 10 ROWS ONLY";
+      limitOffsetClause = "OFFSET 0 ROWS FETCH FIRST 10 ROWS ONLY";
     }
     if (jdbcDriver.contains("mysql")) {
-      limitClause = "LIMIT 10 OFFSET 0";
+      limitOffsetClause = "LIMIT 10 OFFSET 0";
     }
     if (jdbcDriver.contains("oracle")) {
-      limitClause = "OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY";
+      limitOffsetClause = "OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY";
     }
     if (jdbcDriver.contains("sqlserver")) {
-      limitClause = "OFFSET 0 ROWS FETCH FIRST 5 ROWS ONLY";
+      limitOffsetClause = "OFFSET 0 ROWS FETCH FIRST 5 ROWS ONLY";
     }
     // @formatter:off
     List<Order> orders =
@@ -693,7 +693,7 @@ public class QueryTest {
              .joinColumnOwningSide("customer_id")
              .populateProperty("customer")
              .orderBy("customer.customer_id")
-             .limitClause(limitClause)
+             .limitOffsetClause(limitOffsetClause)
              .execute(jtm);
 
     assertTrue(orders.size() == 3);
