@@ -664,9 +664,13 @@ public final class JdbcTemplateMapper {
   public void loadMapping(Class<?> clazz) {
     mappingHelper.getTableMapping(clazz);
   }
-
-  MappingHelper getMappingHelper() {
-    return mappingHelper;
+  
+  TableMapping getTableMapping(Class<?> clazz) {
+    return mappingHelper.getTableMapping(clazz);
+  }
+  
+  String fullyQualifiedTableName(String tableName) {
+    return mappingHelper.fullyQualifiedTableName(tableName);
   }
 
   private SqlAndParams buildSqlAndParamsForUpdate(TableMapping tableMapping) {

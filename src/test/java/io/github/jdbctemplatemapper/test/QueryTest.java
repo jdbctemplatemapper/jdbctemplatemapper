@@ -659,11 +659,12 @@ public class QueryTest {
       limitOffsetClause = "OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY";
     }
     if (jdbcDriver.contains("sqlserver")) {
-      limitOffsetClause = "OFFSET 0 ROWS FETCH FIRST 10 ROWS ONLY";
+      limitOffsetClause = "OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY";
     }
     // @formatter:off
     List<Order> orders =
         Query.type(Order.class)
+             .orderBy("orders.order_id") // SQLServer needs orderBy to work with offset
              .limitOffsetClause(limitOffsetClause).execute(jtm);
 
     assertTrue(orders.size() == 3);
@@ -684,7 +685,7 @@ public class QueryTest {
       limitOffsetClause = "OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY";
     }
     if (jdbcDriver.contains("sqlserver")) {
-      limitOffsetClause = "OFFSET 0 ROWS FETCH FIRST 5 ROWS ONLY";
+      limitOffsetClause = "OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY";
     }
     // @formatter:off
     List<Order> orders =
@@ -700,6 +701,86 @@ public class QueryTest {
 
     // @formatter:on
   }
+  
+  
+  @Test
+  public void query_methodChainingSequenceTest_success_test() {
+    String limitOffsetClause = null;
+    if (jdbcDriver.contains("postgres")) {
+      limitOffsetClause = "OFFSET 0 ROWS FETCH FIRST 10 ROWS ONLY";
+    }
+    if (jdbcDriver.contains("mysql")) {
+      limitOffsetClause = "LIMIT 10 OFFSET 0";
+    }
+    if (jdbcDriver.contains("oracle")) {
+      limitOffsetClause = "OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY";
+    }
+    if (jdbcDriver.contains("sqlserver")) {
+      limitOffsetClause = "OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY";
+    }
+    
+    Query.type(Order.class)
+         .execute(jtm);
+    
+    Query.type(Order.class)
+    .where("orders.status = ?", "IN PROCESS")
+    .execute(jtm);
+    
+    Query.type(Order.class)
+    .orderBy("orders.order_id")
+    .execute(jtm);
+    
+    Query.type(Order.class)
+    .orderBy("orders.order_id")
+    .limitOffsetClause(limitOffsetClause)
+    .execute(jtm);
+    
+    Query.type(Order.class)
+    .where("orders.status = ?", "IN PROCESS")
+    .orderBy("orders.order_id")
+    .execute(jtm);
+    
+    Query.type(Order.class)
+    .where("orders.status = ?", "IN PROCESS")
+    .orderBy("orders.order_id")
+    .limitOffsetClause(limitOffsetClause)
+    .execute(jtm);
+    
+    Query.type(Order.class)
+    .hasOne(Customer.class)
+    .joinColumnOwningSide("customer_id")
+    .populateProperty("customer")
+    .where("orders.status = ?", "IN PROCESS")
+    .execute(jtm);
+    
+    Query.type(Order.class)
+    .hasOne(Customer.class)
+    .joinColumnOwningSide("customer_id")
+    .populateProperty("customer")
+    .orderBy("customer.customer_id")
+    .execute(jtm);
+    
+    Query.type(Order.class)
+    .hasOne(Customer.class)
+    .joinColumnOwningSide("customer_id")
+    .populateProperty("customer")
+    .orderBy("orders.order_id")
+    .limitOffsetClause(limitOffsetClause)
+    .execute(jtm);
+    
+    Query.type(Order.class)
+             .hasOne(Customer.class)
+             .joinColumnOwningSide("customer_id")
+             .populateProperty("customer")
+             .where("orders.status = ?", "IN PROCESS")
+             .orderBy("customer.customer_id")
+             .limitOffsetClause(limitOffsetClause)
+             .execute(jtm);
+
+    // @formatter:on
+  }
+  
+
 
 
 }

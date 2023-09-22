@@ -41,8 +41,7 @@ public class Query<T> implements IQueryFluent<T> {
   private static final int CACHE_MAX_ENTRIES = 1000;
 
   // Cached SQL does not include limit clause
-  // key - cacheKey
-  // value - sql
+  // key - cacheKey, value - sql
   private static Map<String, String> successQuerySqlCache = new ConcurrentHashMap<>();
 
   private Class<T> ownerType;
@@ -91,8 +90,8 @@ public class Query<T> implements IQueryFluent<T> {
   }
 
   /**
-   * The hasMany relationship. The 'populateProperty' should be a collection and has to be
-   * initialized.
+   * The hasMany relationship. The 'populateProperty' for hasMany relationship should be a
+   * collection and has to be initialized.
    *
    * @param relatedType the related type
    * @return interface with the next methods in the chain
@@ -197,13 +196,11 @@ public class Query<T> implements IQueryFluent<T> {
     this.propertyName = propertyName;
     return this;
   }
-  
+
   /**
-   * The where clause for the type. If you provide a where clause always parameterize it to avoid
-   * SQL injection. Columns should be prefixed with table name to avoid sql ambiguous error. The
-   * where clause is not validated
+   * The where clause for the type.
    *
-   * @param whereClause the whereClause for the type. It has to be prefixed with table name.
+   * @param whereClause the whereClause for the type.
    * @param params varArgs for the whereClause.
    * @return interface with the next methods in the chain
    */
@@ -217,10 +214,10 @@ public class Query<T> implements IQueryFluent<T> {
   }
 
   /**
-   * The orderBy clause for the query. When querying relationships (hasOne, hasMany, hasMany through) 
-   * both the owning side and related side columns can be used in the orderBy clause.
+   * The orderBy clause for the query. When querying relationships (hasOne, hasMany, hasMany
+   * through) both the owning side and related side columns can be used in the orderBy clause.
    *
-   * @param orderBy the orderBy clause. It has to be prefixed with table name.
+   * @param orderBy the orderBy clause.
    * @return interface with the next methods in the chain
    */
   public IQueryOrderBy<T> orderBy(String orderBy) {
@@ -232,14 +229,16 @@ public class Query<T> implements IQueryFluent<T> {
   }
 
   /**
-   * The limit Offset clause for the query.
+   * The limit Offset clause for the query specific to the database being used.
    * 
-   * The limit offset clause for hasMany relationship is not supported. To achieve similar functionality one
-   * option is to issue a query for the owning class with the limit clause and then use QueryMerge
-   * to populate the hasMany/hasMany through side of the relationship.
+   * The limit offset clause for hasMany/hasMany through relationship is not supported.
    * 
-   * Syntax of the limit offset clause is different for different databases.
-   *
+   * <pre>
+   * See <a href=
+   * "https://github.com/jdbctemplatemapper/jdbctemplatemapper#limitoffsetclause">LimitOffsetClause
+   * </a> for more info
+   * </pre>
+   * 
    * @param limitOffsetClause the limit clause.
    * @return interface with the next methods in the chain
    */
@@ -250,7 +249,7 @@ public class Query<T> implements IQueryFluent<T> {
     this.limitOffsetClause = limitOffsetClause;
     return this;
   }
-  
+
   /**
    * Execute the query using the jdbcTemplateMapper
    *
@@ -260,65 +259,29 @@ public class Query<T> implements IQueryFluent<T> {
   public List<T> execute(JdbcTemplateMapper jdbcTemplateMapper) {
     Assert.notNull(jdbcTemplateMapper, "jdbcTemplateMapper cannot be null");
 
-    MappingHelper mappingHelper = jdbcTemplateMapper.getMappingHelper();
-    TableMapping ownerTypeTableMapping = mappingHelper.getTableMapping(ownerType);
+    TableMapping ownerTypeTableMapping = jdbcTemplateMapper.getTableMapping(ownerType);
     SelectMapper<?> ownerTypeSelectMapper =
         jdbcTemplateMapper.getSelectMapper(ownerType, ownerTypeTableMapping.getTableName());
 
     TableMapping relatedTypeTableMapping =
-        relatedType == null ? null : mappingHelper.getTableMapping(relatedType);
+        relatedType == null ? null : jdbcTemplateMapper.getTableMapping(relatedType);
     // making it effectively final to be used in inner class ResultSetExtractor
     SelectMapper<?> relatedTypeSelectMapper = relatedType == null ? null
         : jdbcTemplateMapper.getSelectMapper(relatedType, relatedTypeTableMapping.getTableName());
 
-    String sql = null;
-    String cacheKey = getQueryCacheKey(jdbcTemplateMapper);
-    if (!previouslySuccessfulQuery(cacheKey)) {
+    String cacheKey = getCacheKey(jdbcTemplateMapper);
+    String sql = getSqlFromCache(cacheKey);
+    if (sql == null) {
       QueryValidator.validate(jdbcTemplateMapper, ownerType, relationshipType, relatedType,
           joinColumnOwningSide, joinColumnManySide, propertyName, throughJoinTable,
           throughOwnerTypeJoinColumn, throughRelatedTypeJoinColumn);
 
-      sql = "SELECT " + ownerTypeSelectMapper.getColumnsSql();
-      String ownerTypeTableName = ownerTypeTableMapping.getTableName();
-      if (relatedType != null) {
-        sql += "," + relatedTypeSelectMapper.getColumnsSql();
-      }
-      sql += " FROM " + mappingHelper.fullyQualifiedTableName(ownerTypeTableName);
-      if (relatedType != null) {
-        String relatedTypeTableName = relatedTypeTableMapping.getTableName();
-        if (relationshipType == RelationshipType.HAS_ONE) {
-          // joinColumn is on owner table
-          sql += " LEFT JOIN "
-              + mappingHelper.fullyQualifiedTableName(relatedTypeTableMapping.getTableName())
-              + " on " + ownerTypeTableName + "." + joinColumnOwningSide + " = "
-              + relatedTypeTableName + "." + relatedTypeTableMapping.getIdColumnName();
-        } else if (relationshipType == RelationshipType.HAS_MANY) {
-          // joinColumn is on related table
-          sql += " LEFT JOIN " + mappingHelper.fullyQualifiedTableName(relatedTypeTableName)
-              + " on " + ownerTypeTableName + "." + ownerTypeTableMapping.getIdColumnName() + " = "
-              + relatedTypeTableName + "." + joinColumnManySide;
-        } else if (relationshipType == RelationshipType.HAS_MANY_THROUGH) {
-          sql += " LEFT JOIN " + mappingHelper.fullyQualifiedTableName(throughJoinTable) + " on "
-              + ownerTypeTableName + "." + ownerTypeTableMapping.getIdColumnName() + " = "
-              + throughJoinTable + "." + throughOwnerTypeJoinColumn + " LEFT JOIN "
-              + mappingHelper.fullyQualifiedTableName(relatedTypeTableName) + " on "
-              + throughJoinTable + "." + throughRelatedTypeJoinColumn + " = " + relatedTypeTableName
-              + "." + relatedTypeTableMapping.getIdColumnName();
-        }
-      }
-      if (MapperUtils.isNotBlank(whereClause)) {
-        sql += " WHERE " + whereClause;
-      }
-      if (MapperUtils.isNotBlank(orderBy)) {
-        sql += " ORDER BY " + orderBy;
-      }
-    } else {
-      sql = successQuerySqlCache.get(cacheKey);
+      sql = generateQuerySql(jdbcTemplateMapper);
     }
-    
-    // sql stored in cache does not include limit clause.
+
+    // sql stored in cache does not include limit offset clause.
     String sqlForCache = sql;
-    
+
     if (MapperUtils.isNotBlank(limitOffsetClause)) {
       QueryValidator.validateQueryLimitOffsetClause(relationshipType, limitOffsetClause);
       sql += " " + limitOffsetClause;
@@ -327,7 +290,7 @@ public class Query<T> implements IQueryFluent<T> {
     @SuppressWarnings({"unchecked", "rawtypes"})
     ResultSetExtractor<List<T>> rsExtractor = new ResultSetExtractor<List<T>>() {
       public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
-        // linkedhashmap to retain record order
+        // LinkedHashMap to retain record order
         Map<Object, BeanWrapper> idToBeanWrapperOwnerModelMap = new LinkedHashMap<>();
         Map<Object, BeanWrapper> idToBeanWrapperRelatedModelMap = new HashMap<>();
         while (rs.next()) {
@@ -394,7 +357,55 @@ public class Query<T> implements IQueryFluent<T> {
     return bwModel;
   }
 
-  private String getQueryCacheKey(JdbcTemplateMapper jdbcTemplateMapper) {
+  private String generateQuerySql(JdbcTemplateMapper jtm) {
+
+    TableMapping ownerTypeTableMapping = jtm.getTableMapping(ownerType);
+    SelectMapper<?> ownerTypeSelectMapper =
+        jtm.getSelectMapper(ownerType, ownerTypeTableMapping.getTableName());
+    String ownerTypeTableName = ownerTypeTableMapping.getTableName();
+
+    TableMapping relatedTypeTableMapping =
+        relatedType == null ? null : jtm.getTableMapping(relatedType);
+    SelectMapper<?> relatedTypeSelectMapper = relatedType == null ? null
+        : jtm.getSelectMapper(relatedType, relatedTypeTableMapping.getTableName());
+
+    String sql = "SELECT " + ownerTypeSelectMapper.getColumnsSql();
+    if (relatedType != null) {
+      sql += "," + relatedTypeSelectMapper.getColumnsSql();
+    }
+
+    sql += " FROM " + jtm.fullyQualifiedTableName(ownerTypeTableName);
+    if (relatedType != null) {
+      String relatedTypeTableName = relatedTypeTableMapping.getTableName();
+      if (relationshipType == RelationshipType.HAS_ONE) {
+        // joinColumn is on owner table
+        sql += " LEFT JOIN " + jtm.fullyQualifiedTableName(relatedTypeTableMapping.getTableName())
+            + " on " + ownerTypeTableName + "." + joinColumnOwningSide + " = "
+            + relatedTypeTableName + "." + relatedTypeTableMapping.getIdColumnName();
+      } else if (relationshipType == RelationshipType.HAS_MANY) {
+        // joinColumn is on related table
+        sql += " LEFT JOIN " + jtm.fullyQualifiedTableName(relatedTypeTableName) + " on "
+            + ownerTypeTableName + "." + ownerTypeTableMapping.getIdColumnName() + " = "
+            + relatedTypeTableName + "." + joinColumnManySide;
+      } else if (relationshipType == RelationshipType.HAS_MANY_THROUGH) {
+        sql += " LEFT JOIN " + jtm.fullyQualifiedTableName(throughJoinTable) + " on "
+            + ownerTypeTableName + "." + ownerTypeTableMapping.getIdColumnName() + " = "
+            + throughJoinTable + "." + throughOwnerTypeJoinColumn + " LEFT JOIN "
+            + jtm.fullyQualifiedTableName(relatedTypeTableName) + " on " + throughJoinTable + "."
+            + throughRelatedTypeJoinColumn + " = " + relatedTypeTableName + "."
+            + relatedTypeTableMapping.getIdColumnName();
+      }
+    }
+    if (MapperUtils.isNotBlank(whereClause)) {
+      sql += " WHERE " + whereClause;
+    }
+    if (MapperUtils.isNotBlank(orderBy)) {
+      sql += " ORDER BY " + orderBy;
+    }
+    return sql;
+  }
+
+  private String getCacheKey(JdbcTemplateMapper jdbcTemplateMapper) {
     // @formatter:off
     return String.join("-", 
         ownerType.getName(), 
@@ -412,6 +423,10 @@ public class Query<T> implements IQueryFluent<T> {
     // @formatter:on
   }
 
+  private String getSqlFromCache(String cacheKey) {
+    return successQuerySqlCache.get(cacheKey);
+  }
+
   private boolean previouslySuccessfulQuery(String key) {
     return successQuerySqlCache.containsKey(key);
   }
@@ -427,4 +442,5 @@ public class Query<T> implements IQueryFluent<T> {
       successQuerySqlCache.put(key, sql);
     }
   }
+
 }

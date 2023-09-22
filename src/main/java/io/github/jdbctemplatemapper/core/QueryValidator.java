@@ -51,7 +51,30 @@ class QueryValidator {
     }
   }
 
-  public static void validateQueryLimitOffsetClause(RelationshipType relationshipType,
+  static void validateQueryCount(JdbcTemplateMapper jtm, Class<?> ownerType,
+      RelationshipType relationshipType, Class<?> relatedType, String joinColumnOwningSide) {
+
+    if (jtm == null) {
+      throw new QueryException("JdbcTemplateMapper cannot be null");
+    }
+
+    Object ownerModel = null;
+    try {
+      ownerModel = ownerType.getConstructor().newInstance();
+    } catch (Exception e) {
+      throw new MapperException(
+          "Failed to instantiate " + ownerType.getName() + " No default constructor found.", e);
+    }
+
+    if (relatedType != null) {
+      if (relationshipType == RelationshipType.HAS_ONE) {
+        BeanWrapper bwOwnerModel = PropertyAccessorFactory.forBeanPropertyAccess(ownerModel);
+        validateHasOne(jtm, ownerType, relatedType, joinColumnOwningSide, null, bwOwnerModel);
+      }
+    }
+  }
+
+  static void validateQueryLimitOffsetClause(RelationshipType relationshipType,
       String limitOffsetClause) {
     if (relationshipType == RelationshipType.HAS_MANY
         || relationshipType == RelationshipType.HAS_MANY_THROUGH) {
@@ -66,19 +89,22 @@ class QueryValidator {
   private static void validateHasOne(JdbcTemplateMapper jtm, Class<?> ownerType,
       Class<?> relatedType, String joinColumnOwningSide, String propertyName,
       BeanWrapper bwOwnerModel) {
-    PropertyDescriptor pd = bwOwnerModel.getPropertyDescriptor(propertyName);
-    if (relatedType != pd.getPropertyType()) {
-      throw new QueryException("property type conflict. property " + ownerType.getSimpleName() + "."
-          + propertyName + " is of type " + pd.getPropertyType().getSimpleName()
-          + " while type for hasOne relationship is " + relatedType.getSimpleName());
+
+    if (propertyName != null) {
+      PropertyDescriptor pd = bwOwnerModel.getPropertyDescriptor(propertyName);
+      if (relatedType != pd.getPropertyType()) {
+        throw new QueryException("property type conflict. property " + ownerType.getSimpleName()
+            + "." + propertyName + " is of type " + pd.getPropertyType().getSimpleName()
+            + " while type for hasOne relationship is " + relatedType.getSimpleName());
+      }
     }
 
     if (joinColumnOwningSide.contains(".")) {
       throw new QueryException("Invalid joinColumnOwningSide. It should have no table prefix");
     }
 
-    TableMapping ownerTypeTableMapping = jtm.getMappingHelper().getTableMapping(ownerType);
-    TableMapping relatedTypeTableMapping = jtm.getMappingHelper().getTableMapping(relatedType);
+    TableMapping ownerTypeTableMapping = jtm.getTableMapping(ownerType);
+    TableMapping relatedTypeTableMapping = jtm.getTableMapping(relatedType);
     String joinColumnPropertyName =
         ownerTypeTableMapping.getPropertyName(MapperUtils.toLowerCase(joinColumnOwningSide));
 
@@ -115,8 +141,8 @@ class QueryValidator {
       throw new QueryException("Invalid joinColumnManySide. It should have no table prefix");
     }
 
-    TableMapping ownerTypeTableMapping = jtm.getMappingHelper().getTableMapping(ownerType);
-    TableMapping relatedTypeTableMapping = jtm.getMappingHelper().getTableMapping(relatedType);
+    TableMapping ownerTypeTableMapping = jtm.getTableMapping(ownerType);
+    TableMapping relatedTypeTableMapping = jtm.getTableMapping(relatedType);
     String joinColumnPropertyName =
         relatedTypeTableMapping.getPropertyName(MapperUtils.toLowerCase(joinColumnManySide));
     if (joinColumnPropertyName == null) {

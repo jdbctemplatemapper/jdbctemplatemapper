@@ -27,9 +27,7 @@ public class JdbcTemplateMapperConfig {
   public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
     String schemaName = getSchemaName();
     JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate, schemaName);
-    jdbcTemplateMapper.withRecordOperatorResolver(new RecordOperatorResolver());
-
-    return jdbcTemplateMapper;
+    return jdbcTemplateMapper.withRecordOperatorResolver(new RecordOperatorResolver());
   }
 
   private String getSchemaName() {

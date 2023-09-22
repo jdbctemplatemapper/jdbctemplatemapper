@@ -493,4 +493,42 @@ public class QueryMergeTest {
     
   }
   
+  @Test
+  public void queryMerge_methodChainingSequence_test() {
+    // @formatter:off
+    List<Order> orders =
+        Query.type(Order.class)
+            .execute(jtm);
+    // @formatter:on
+    
+    QueryMerge.type(Order.class)
+    .hasMany(OrderLine.class)
+    .joinColumnManySide("order_id")
+    .populateProperty("orderLines")
+    .execute(jtm, orders);
+    
+    QueryMerge.type(Order.class)
+    .hasMany(OrderLine.class)
+    .joinColumnManySide("order_id")
+    .populateProperty("orderLines")
+    .execute(jtm, orders);
+
+    // @formatter:off
+    QueryMerge.type(Order.class)
+        .hasMany(OrderLine.class)
+        .joinColumnManySide("order_id")
+        .populateProperty("orderLines")
+        .orderBy("order_line_id")
+        .execute(jtm, orders);
+    
+    QueryMerge.type(Order.class)
+    .hasMany(OrderLine.class)
+    .joinColumnManySide("order_id")
+    .populateProperty("orderLines")
+    .orderBy("order_line_id")
+    .execute(jtm, orders);
+    
+    // @formatter:on
+    
+  }
 }
