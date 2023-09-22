@@ -38,7 +38,7 @@ public class Order3 {
 
   private Customer customer;
 
-  private List<OrderLine> orderLines;
+  private List<OrderLine> orderLines; // not initialized
 
   public Long getOrderId() {
     return orderId;

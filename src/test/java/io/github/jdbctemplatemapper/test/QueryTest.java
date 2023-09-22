@@ -22,6 +22,7 @@ import io.github.jdbctemplatemapper.model.InvalidTableObject;
 import io.github.jdbctemplatemapper.model.NoTableAnnotationModel;
 import io.github.jdbctemplatemapper.model.Order;
 import io.github.jdbctemplatemapper.model.Order2;
+import io.github.jdbctemplatemapper.model.Order3;
 import io.github.jdbctemplatemapper.model.Order4;
 import io.github.jdbctemplatemapper.model.Order7;
 import io.github.jdbctemplatemapper.model.Order9;
@@ -407,6 +408,24 @@ public class QueryTest {
     // @formatter:on
     assertTrue(
         exception.getMessage().contains("Collections without generic types are not supported"));
+  }
+  
+  @Test
+  public void hasMany_populatePropertyCollectionNotInitialized_test() {
+    // @formatter:off
+    Exception exception =
+        Assertions.assertThrows(
+            QueryException.class,
+            () -> {
+              Query.type(Order3.class)
+                  .hasMany(OrderLine.class)
+                  .joinColumnManySide("order_id")
+                  .populateProperty("orderLines")
+                  .execute(jtm);
+            });
+    // @formatter:on
+    assertTrue(
+        exception.getMessage().contains("Only initialized collections can be populated by queries"));
   }
 
   @Test

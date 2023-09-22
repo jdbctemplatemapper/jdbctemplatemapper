@@ -215,8 +215,8 @@ class QueryValidator {
     }
     Object value = bwOwnerModel.getPropertyValue(propertyName);
     if (value == null) {
-      throw new QueryException("Query only works with initialized collections. Collection property "
-          + ownerType.getSimpleName() + "." + propertyName + " is not initialized");
+      throw new QueryException("Only initialized collections can be populated by queries. Collection property "
+          + ownerType.getSimpleName() + "." + propertyName + " is not initialized.");
     }
   }
 
