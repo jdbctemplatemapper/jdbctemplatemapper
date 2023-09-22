@@ -3,7 +3,7 @@ name: Deploy Javadoc for JdbcTemplateMapper
 on:
   push:
     branches:
-      - nobranches
+      - master
 jobs:
   publish:
     runs-on: ubuntu-latest
