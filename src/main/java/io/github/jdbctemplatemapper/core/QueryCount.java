@@ -13,9 +13,9 @@ import io.github.jdbctemplatemapper.querycount.IQueryCountWhere;
  * Gets the count of the records for a query. This is to mainly support pagination counts
  *
  * <pre>
- *
  * See <a href=
- * "https://github.com/jdbctemplatemapper/jdbctemplatemapper#querying-relationships">Querying relationships</a> for more info
+ * "https://github.com/jdbctemplatemapper/jdbctemplatemapper#paginated-queries">Paginated Queries
+ * </a>
  * </pre>
  *
  * @author ajoseph

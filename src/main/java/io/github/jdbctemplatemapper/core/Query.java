@@ -235,7 +235,7 @@ public class Query<T> implements IQueryFluent<T> {
    * 
    * <pre>
    * See <a href=
-   * "https://github.com/jdbctemplatemapper/jdbctemplatemapper#limitoffsetclause">LimitOffsetClause
+   * "https://github.com/jdbctemplatemapper/jdbctemplatemapper#paginated-queries">Paginated Queries
    * </a> for more info
    * </pre>
    * 
