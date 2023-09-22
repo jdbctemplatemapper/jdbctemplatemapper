@@ -717,7 +717,7 @@ Discussions [here](https://github.com/jdbctemplatemapper/jdbctemplatemapper/disc
   
 [Issues ticket](https://github.com/jdbctemplatemapper/jdbctemplatemapper/issues). 
  
-When opening ticket please provide the following:
+When opening a ticket please provide the following:
 jdbcTemplateMapper version, Database name/version, jdbc driver version, version of java, version of Spring Boot
 
 
