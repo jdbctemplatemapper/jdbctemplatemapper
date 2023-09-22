@@ -715,10 +715,10 @@ Make sure you can connect to your database and issue a simple query using Spring
 ## Discussions/bugs
 Discussions [here](https://github.com/jdbctemplatemapper/jdbctemplatemapper/discussions)
   
-Please open a [issues ticket](https://github.com/jdbctemplatemapper/jdbctemplatemapper/issues). 
+[Issues ticket](https://github.com/jdbctemplatemapper/jdbctemplatemapper/issues). 
  
-When opening bugs please provide the following:
-jdbctemplateMapper version, Database name/version, jdbc driver version, version of java, version of Spring Boot
+When opening ticket please provide the following:
+jdbcTemplateMapper version, Database name/version, jdbc driver version, version of java, version of Spring Boot
 
 
   
