@@ -296,7 +296,7 @@ public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
 ```
  
 ## Querying relationships
-The library provides multiple ways to query relationships. Keep in mind that you can always use Spring JdbcTemplate if JdbcTemplateMapper lacks features you need.   
+The library provides multiple ways to query relationships.
 Fluent style queries allow querying of hasOne, hasMany and hasMany through (many to many using an associated table) relationships.
 The IDE will provide suggestions to help chain the methods. Turn logging on (see logging section) to see the generated queries.  
 The QueryMerge class allows the results of a previous query to be merged with results of a new query.
@@ -686,6 +686,14 @@ An example for querying the following relationship: Order hasOne Customer, Order
 ...
 
 ```
+
+## Accessing JdbcTemplate
+
+jdbcTemplateMapper.getJdbcTemplate() // gets you the JdbcTemplate of the JdbcTemplateMapper
+jdbcTemplateMapper.getNamedParameterJdbcTemplate() // gets you the NamedParameterJdbcTemplate of the JdbcTemplateMapper
+
+
+
 ## Logging
  
 Uses the same logging configurations as Spring's JdbcTemplate to log the SQL. In application.properties:
