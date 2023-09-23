@@ -97,7 +97,7 @@
   // See examples for different databases below.
   
 ```
-Example configurations:
+Example configurations:  
 Depending on the versions of the database/driver changes may be required for the properties.
 
 **PostgresSQL**
