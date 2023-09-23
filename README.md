@@ -98,7 +98,7 @@
   
 ```
 Example configurations:
-Depending on the versions of the database/drivers changes may be required for the properties.
+Depending on the versions of the database/driver changes may be required for the properties.
 
 **PostgresSQL**
 
@@ -689,10 +689,10 @@ An example for querying the following relationship: Order hasOne Customer, Order
 
 ## Accessing JdbcTemplate
 
-jdbcTemplateMapper.getJdbcTemplate() // gets you the JdbcTemplate of the JdbcTemplateMapper
-jdbcTemplateMapper.getNamedParameterJdbcTemplate() // gets you the NamedParameterJdbcTemplate of the JdbcTemplateMapper
-
-
+```
+  jdbcTemplateMapper.getJdbcTemplate(); // gets you the JdbcTemplate of the JdbcTemplateMapper
+  jdbcTemplateMapper.getNamedParameterJdbcTemplate(); // gets you the NamedParameterJdbcTemplate of the JdbcTemplateMapper
+```
 
 ## Logging
  
