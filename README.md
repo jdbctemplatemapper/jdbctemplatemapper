@@ -99,11 +99,13 @@
 ```
 Example configurations:  
 Depending on the versions of the database/driver changes may be required for the properties.
+Take a look at [Tutorial application](https://github.com/jdbctemplatemapper/using-spring-jdbctemplate-with-jdbctemplatemapper) to see how JdbcTemplateMapper is configured on a working application.
+
 
 **PostgresSQL**
 
 ```  
-// application.properties
+# application.properties
 spring.datasource.jdbc-url=jdbc:postgresql://HOST:PORT/THE_DATABASE_NAME?currentSchema=THE_SCHEMA_NAME
 spring.datasource.username=username
 spring.datasource.password=password
@@ -119,7 +121,7 @@ spring.datasource.driver-class-name=org.postgresql.Driver
 **MySQL**
 
 ```  
-// application.properties
+# application.properties
 # VERY IMPORTANT to include 'nullDatabaseMeansCurrent=true' in url
 spring.datasource.jdbc-url=jdbc:mysql://HOST:PORT/THE_DATABASE_NAME?nullDatabaseMeansCurrent=true
 spring.datasource.username=username
@@ -137,7 +139,7 @@ spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 **Oracle**
 
 ```
-// application.properties
+## application.properties
 spring.datasource.jdbc-url=jdbc:oracle:thin:@HOST:PORT/THE_SERVICE_NAME
 spring.datasource.username=username
 spring.datasource.password=password
@@ -154,7 +156,7 @@ spring.datasource.driver-class-name=oracle.jdbc.driver.OracleDriver
 **SQLServer**
 
 ```
-// application.properties
+## application.properties
 spring.datasource.jdbc-url=jdbc:sqlserver://HOSTt:PORT;databaseName=THE_DATABASE_NAME;encrypt=true;trustServerCertificate=true;
 spring.datasource.username=username
 spring.datasource.password=password
