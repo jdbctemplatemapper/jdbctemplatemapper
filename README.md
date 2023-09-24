@@ -139,7 +139,7 @@ spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 **Oracle**
 
 ```
-## application.properties
+# application.properties
 spring.datasource.jdbc-url=jdbc:oracle:thin:@HOST:PORT/THE_SERVICE_NAME
 spring.datasource.username=username
 spring.datasource.password=password
@@ -156,7 +156,7 @@ spring.datasource.driver-class-name=oracle.jdbc.driver.OracleDriver
 **SQLServer**
 
 ```
-## application.properties
+# application.properties
 spring.datasource.jdbc-url=jdbc:sqlserver://HOSTt:PORT;databaseName=THE_DATABASE_NAME;encrypt=true;trustServerCertificate=true;
 spring.datasource.username=username
 spring.datasource.password=password
