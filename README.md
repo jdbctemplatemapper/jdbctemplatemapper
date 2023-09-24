@@ -594,7 +594,7 @@ An example for querying the following relationship: Order hasOne Customer, Order
                + " from orders o" 
                + " left join customer c on o.customer_id = c.id
                + " left join order_line ol on o.id = ol.order_id"
-               + " left join product p on p.id = ol.product_id"
+               + " left join product p on ol.product_id = p.id"
                + " where o.status = ?"
                + " order by o.id, ol.id";
   
