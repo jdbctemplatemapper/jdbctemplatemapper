@@ -15,7 +15,7 @@
       * optimistic locking feature for updates.
   4. For transaction management use Spring transactions since the library uses JdbcTemplate for database access.
   5. To log the SQL statements use the same logging configurations as JdbcTemplate. See the logging section.
-  6. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with other relational databases.
+  6. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with other relational databases. The jdbc drivers have to be jdbc 4.x compliant.
   7. Distribution is compiled with java8. Works with java8, java11, java17 
 
 ## Example code
