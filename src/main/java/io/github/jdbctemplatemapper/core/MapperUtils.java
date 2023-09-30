@@ -4,11 +4,11 @@ import java.util.Collection;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.util.Assert;
 
 class MapperUtils {
+  
   /**
    * Converts underscore case to camel case. Ex: user_last_name gets converted to userLastName.
    *

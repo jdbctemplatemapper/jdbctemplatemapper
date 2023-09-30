@@ -15,6 +15,8 @@ import io.github.jdbctemplatemapper.exception.MapperException;
  */
 class TableMapping {
   private Class<?> tableClass;
+  private String catalogName;
+  private String schemaName;
   private String tableName;
   private String idPropertyName;
   private boolean idAutoIncrement = false;
@@ -34,6 +36,8 @@ class TableMapping {
   public TableMapping(
       Class<?> tableClass,
       String tableName,
+      String schemaName,
+      String catalogName,
       String idPropertyName,
       List<PropertyMapping> propertyMappings) {
     Assert.notNull(tableClass, "tableClass must not be null");
@@ -95,6 +99,22 @@ class TableMapping {
     return tableName;
   }
 
+  public String getCatalogName() {
+    return catalogName;
+  }
+
+  public void setCatalogName(String catalogName) {
+    this.catalogName = catalogName;
+  }
+
+  public String getSchemaName() {
+    return schemaName;
+  }
+
+  public void setSchemaName(String schemaName) {
+    this.schemaName = schemaName;
+  }
+
   public String getIdPropertyName() {
     return getIdPropertyMapping().getPropertyName();
   }
@@ -127,6 +147,10 @@ class TableMapping {
   public List<PropertyMapping> getPropertyMappings() {
     return propertyMappings;
   }
+  
+  public PropertyMapping getPropertyMappingByColumnName(String columnName) {
+    return columnNameMap.get(columnName);
+  }
 
   public PropertyMapping getVersionPropertyMapping() {
     return versionPropertyName != null ? propertyNameMap.get(versionPropertyName) : null;
@@ -147,4 +171,5 @@ class TableMapping {
   public PropertyMapping getUpdatedByPropertyMapping() {
     return updatedByPropertyName != null ? propertyNameMap.get(updatedByPropertyName) : null;
   }
+  
 }

@@ -25,8 +25,16 @@ public class JdbcTemplateMapperConfig {
 
   @Bean
   public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
-    String schemaName = getSchemaName();
-    JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate, schemaName);
+    
+    JdbcTemplateMapper jdbcTemplateMapper = null;
+    if (jdbcDriver.contains("mysql")) {
+       jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate, null, "jdbctemplatemapper");
+    }
+    else {
+      String schemaName = getSchemaName();
+      jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate, schemaName);
+    }
+    
     return jdbcTemplateMapper.withRecordOperatorResolver(new RecordOperatorResolver());
   }
 
@@ -34,7 +42,7 @@ public class JdbcTemplateMapperConfig {
     // Test databases setup
     String schemaName = "jdbctemplatemapper"; // default
     if (jdbcDriver.contains("mysql")) {
-      schemaName = null; // mysql set to null because issue with SimpleJdbcInsert.
+      schemaName = null; // no schemas for my sql
     } else if (jdbcDriver.contains("oracle")) {
       schemaName = "JDBCTEMPLATEMAPPER"; // oracle has upper case
     }
