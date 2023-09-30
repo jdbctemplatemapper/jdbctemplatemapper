@@ -260,8 +260,8 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     TableMapping relatedTypeTableMapping = jtm.getTableMapping(relatedType);
     String joinPropertyName = ownerTypeTableMapping.getPropertyName(joinColumnOwningSide);
 
-    List<BeanWrapper> bwMergeList = new ArrayList<>();
-    Set params = new HashSet<>();
+    List<BeanWrapper> bwMergeList = new ArrayList<>(mergeList.size());
+    Set params = new HashSet<>(mergeList.size());
     for (T obj : mergeList) {
       if (obj != null) {
         BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
@@ -287,7 +287,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     }
 
     String relatedModelIdPropName = relatedTypeTableMapping.getIdPropertyName();
-    Map<Object, Object> idToRelatedModelMap = new HashMap<>();
+    Map<Object, Object> idToRelatedModelMap = new HashMap<>(mergeList.size());
 
     ResultSetExtractor<List<T>> rsExtractor = new ResultSetExtractor<List<T>>() {
       public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
@@ -334,8 +334,8 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     String joinPropertyName = relatedTypeTableMapping.getPropertyName(joinColumnManySide);
     String ownerTypeIdPropName = ownerTypeTableMapping.getIdPropertyName();
 
-    Map<Object, BeanWrapper> idToBeanWrapperOwnerModelMap = new HashMap<>();
-    Set params = new HashSet<>();
+    Map<Object, BeanWrapper> idToBeanWrapperOwnerModelMap = new HashMap<>(mergeList.size());
+    Set params = new HashSet<>(mergeList.size());
     for (Object obj : mergeList) {
       if (obj != null) {
         BeanWrapper bwOwnerModel = PropertyAccessorFactory.forBeanPropertyAccess(obj);
@@ -413,8 +413,8 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     String ownerTypeIdPropName = ownerTypeTableMapping.getIdPropertyName();
 
     // key - ownerTypeId, value - bean wrapped owner model from mergeList
-    Map<Object, BeanWrapper> idToBeanWrapperOwnerModelMap = new HashMap<>();
-    Set params = new HashSet<>();
+    Map<Object, BeanWrapper> idToBeanWrapperOwnerModelMap = new HashMap<>(mergeList.size());
+    Set params = new HashSet<>(mergeList.size());
     for (Object obj : mergeList) {
       if (obj != null) {
         BeanWrapper bwOwnerModel = PropertyAccessorFactory.forBeanPropertyAccess(obj);
@@ -460,13 +460,13 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     ResultSetExtractor<List<T>> rsExtractor = new ResultSetExtractor<List<T>>() {
       public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
         while (rs.next()) {
-          BeanWrapper bwOwnerType = selectMapperOwnerType.buildBeanWrapperModel(rs);
-          if (bwOwnerType != null) {
+          BeanWrapper bwResultSetOwnerType = selectMapperOwnerType.buildBeanWrapperModel(rs);
+          if (bwResultSetOwnerType != null) {
             BeanWrapper bwRelatedModel = selectMapperRelatedType.buildBeanWrapperModel(rs);
             if (bwRelatedModel != null) {
-              Object ownerTypeIdValue = bwOwnerType.getPropertyValue(ownerTypeIdPropName);
-              if (idToBeanWrapperOwnerModelMap.containsKey(ownerTypeIdValue)) {
-                BeanWrapper bw = idToBeanWrapperOwnerModelMap.get(ownerTypeIdValue);
+              Object ownerTypeIdValue = bwResultSetOwnerType.getPropertyValue(ownerTypeIdPropName);
+              BeanWrapper bw = idToBeanWrapperOwnerModelMap.get(ownerTypeIdValue);
+              if (bw != null) {
                 Collection collection = (Collection) bw.getPropertyValue(propertyName);
                 collection.add(bwRelatedModel.getWrappedInstance());
               }
