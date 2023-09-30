@@ -15,9 +15,11 @@ import io.github.jdbctemplatemapper.exception.MapperException;
  */
 class TableMapping {
   private Class<?> tableClass;
-  private String catalogName;
-  private String schemaName;
   private String tableName;
+  private String schemaName;
+  private String catalogName;
+  private String commonDatabaseName;
+
   private String idPropertyName;
   private boolean idAutoIncrement = false;
   private String versionPropertyName = null;
@@ -38,15 +40,22 @@ class TableMapping {
       String tableName,
       String schemaName,
       String catalogName,
+      String commonDatabaseName,
       String idPropertyName,
       List<PropertyMapping> propertyMappings) {
     Assert.notNull(tableClass, "tableClass must not be null");
     Assert.notNull(tableName, "tableName must not be null");
     Assert.notNull(idPropertyName, "idPropertyName must not be null");
+    
     this.tableClass = tableClass;
     this.tableName = tableName;
+    this.schemaName = schemaName;
+    this.catalogName = catalogName;
+    this.commonDatabaseName = commonDatabaseName;
+    
     this.idPropertyName = idPropertyName;
     this.propertyMappings = propertyMappings;
+    
     if (propertyMappings != null) {
       for (PropertyMapping propMapping : propertyMappings) {
         if (propMapping.isVersionAnnotation()) {
@@ -103,16 +112,8 @@ class TableMapping {
     return catalogName;
   }
 
-  public void setCatalogName(String catalogName) {
-    this.catalogName = catalogName;
-  }
-
   public String getSchemaName() {
     return schemaName;
-  }
-
-  public void setSchemaName(String schemaName) {
-    this.schemaName = schemaName;
   }
 
   public String getIdPropertyName() {
@@ -151,6 +152,30 @@ class TableMapping {
   public PropertyMapping getPropertyMappingByColumnName(String columnName) {
     return columnNameMap.get(columnName);
   }
+  
+  public String fullyQualifiedTableName() {
+    if (MapperUtils.isNotEmpty(catalogName) && isMySql()) {
+      return catalogName + "." + tableName;
+    }
+
+    if (MapperUtils.isNotEmpty(schemaName)) {
+      return schemaName + "." + tableName;
+    }
+    return tableName;
+  }
+  
+  // if there is a schema or catalog it tacks a "." to them.
+  public String fullyQualifiedTablePrefix() {
+    if (MapperUtils.isNotEmpty(catalogName) && isMySql()) {
+      return catalogName + ".";
+    }
+
+    if (MapperUtils.isNotEmpty(schemaName)) {
+      return schemaName + ".";
+    }
+    return "";
+  }
+  
 
   public PropertyMapping getVersionPropertyMapping() {
     return versionPropertyName != null ? propertyNameMap.get(versionPropertyName) : null;
@@ -170,6 +195,13 @@ class TableMapping {
 
   public PropertyMapping getUpdatedByPropertyMapping() {
     return updatedByPropertyName != null ? propertyNameMap.get(updatedByPropertyName) : null;
+  }
+  
+  public boolean isMySql() {
+    if ("mysql".equalsIgnoreCase(commonDatabaseName)) {
+      return true;
+    }
+    return false;
   }
   
 }

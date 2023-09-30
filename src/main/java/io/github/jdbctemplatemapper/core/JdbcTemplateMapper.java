@@ -202,7 +202,7 @@ public final class JdbcTemplateMapper {
     TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
     String columnsSql = getFindColumnsSql(tableMapping, clazz);
     String sql = "SELECT " + columnsSql + " FROM "
-        + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " WHERE "
+        + tableMapping.fullyQualifiedTableName() + " WHERE "
         + tableMapping.getIdColumnName() + " = ?";
 
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
@@ -265,7 +265,7 @@ public final class JdbcTemplateMapper {
 
     String columnsSql = getFindColumnsSql(tableMapping, clazz);
     String sql = "SELECT " + columnsSql + " FROM "
-        + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()) + " WHERE "
+        + tableMapping.fullyQualifiedTableName() + " WHERE "
         + propColumnName;
 
     if (propertyValue == null) {
@@ -333,7 +333,7 @@ public final class JdbcTemplateMapper {
     }
 
     String sql = "SELECT " + columnsSql + " FROM "
-        + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName());
+        + tableMapping.fullyQualifiedTableName();
 
     if (orderByColumnName != null) {
       sql = sql + " ORDER BY " + orderByColumnName + " ASC";
@@ -427,15 +427,15 @@ public final class JdbcTemplateMapper {
     if (jdbcInsert == null) {
       if (tableMapping.isIdAutoIncrement()) {
         jdbcInsert =
-            new SimpleJdbcInsert(jdbcTemplate).withCatalogName(mappingHelper.getCatalogName())
-                .withSchemaName(mappingHelper.getSchemaName())
-                .withTableName(tableMapping.getTableName())
+            new SimpleJdbcInsert(jdbcTemplate).withCatalogName(tableMapping.getCatalogName())
+                .withSchemaName(tableMapping.getSchemaName())
+                .withTableName(tableNameForSimpleJdbcInsert(tableMapping))
                 .usingGeneratedKeyColumns(tableMapping.getIdColumnName());
       } else {
         jdbcInsert =
-            new SimpleJdbcInsert(jdbcTemplate).withCatalogName(mappingHelper.getCatalogName())
-                .withSchemaName(mappingHelper.getSchemaName())
-                .withTableName(tableMapping.getTableName());
+            new SimpleJdbcInsert(jdbcTemplate).withCatalogName(tableMapping.getCatalogName())
+                .withSchemaName(tableMapping.getSchemaName())
+                .withTableName(tableNameForSimpleJdbcInsert(tableMapping));
       }
       simpleJdbcInsertCache.put(obj.getClass(), jdbcInsert);
     }
@@ -536,7 +536,7 @@ public final class JdbcTemplateMapper {
 
     TableMapping tableMapping = mappingHelper.getTableMapping(obj.getClass());
 
-    String sql = "DELETE FROM " + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName())
+    String sql = "DELETE FROM " + tableMapping.fullyQualifiedTableName()
         + " WHERE " + tableMapping.getIdColumnName() + "= ?";
     BeanWrapper bw = getBeanWrapper(obj);
     Object id = bw.getPropertyValue(tableMapping.getIdPropertyName());
@@ -555,7 +555,7 @@ public final class JdbcTemplateMapper {
     Assert.notNull(id, "id must not be null");
 
     TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
-    String sql = "DELETE FROM " + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName())
+    String sql = "DELETE FROM " + tableMapping.fullyQualifiedTableName()
         + " WHERE " + tableMapping.getIdColumnName() + " = ?";
     return jdbcTemplate.update(sql, id);
   }
@@ -622,10 +622,6 @@ public final class JdbcTemplateMapper {
     return mappingHelper.getTableMapping(clazz);
   }
 
-  String fullyQualifiedTableName(String tableName) {
-    return mappingHelper.fullyQualifiedTableName(tableName);
-  }
-
   private SqlAndParams buildSqlAndParamsForUpdate(TableMapping tableMapping) {
     Assert.notNull(tableMapping, "tableMapping must not be null");
 
@@ -643,7 +639,7 @@ public final class JdbcTemplateMapper {
 
     Set<String> params = new HashSet<>();
     StringBuilder sqlBuilder = new StringBuilder("UPDATE ");
-    sqlBuilder.append(mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()));
+    sqlBuilder.append(tableMapping.fullyQualifiedTableName());
     sqlBuilder.append(" SET ");
 
     PropertyMapping versionPropMapping = tableMapping.getVersionPropertyMapping();
@@ -704,5 +700,14 @@ public final class JdbcTemplateMapper {
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
     bw.setConversionService(conversionService);
     return bw;
+  }
+  
+  private String tableNameForSimpleJdbcInsert(TableMapping tableMapping) {
+    if (tableMapping.isMySql()) {
+      return tableMapping.fullyQualifiedTableName();
+    }
+    else {
+      return tableMapping.getTableName();
+    }
   }
 }

@@ -172,7 +172,8 @@ class MappingHelper {
       validateAnnotations(propertyMappings, clazz);
 
       tableMapping = new TableMapping(clazz, tableName, tableColumnInfo.getSchemaName(),
-          tableColumnInfo.getCatalogName(), idPropertyInfo.getPropertyName(), propertyMappings);
+          tableColumnInfo.getCatalogName(), JdbcUtils.commonDatabaseName(databaseProductName),
+          idPropertyInfo.getPropertyName(), propertyMappings);
       tableMapping.setIdAutoIncrement(idPropertyInfo.isIdAutoIncrement());
 
       objectToTableMappingCache.put(clazz, tableMapping);
@@ -271,25 +272,6 @@ class MappingHelper {
     } catch (Exception e) {
       throw new MapperException(e);
     }
-  }
-
-  /**
-   * Get the fully qualified table name. If schema is present then will be schemaName.tableName
-   * otherwise just tableName
-   *
-   * @param tableName The table name
-   * @return The fully qualified table name
-   */
-  public String fullyQualifiedTableName(String tableName) {
-    Assert.hasLength(tableName, "tableName must not be empty");
-    if (MapperUtils.isNotEmpty(catalogName) && isMysql()) {
-      return catalogName + "." + tableName;
-    }
-
-    if (MapperUtils.isNotEmpty(schemaName)) {
-      return schemaName + "." + tableName;
-    }
-    return tableName;
   }
 
   boolean getForcePostgresTimestampWithTimezone() {
@@ -435,19 +417,14 @@ class MappingHelper {
     }
   }
 
-  private boolean isMysql() {
-    if ("mysql".equalsIgnoreCase(JdbcUtils.commonDatabaseName(databaseProductName))) {
-      return true;
-    }
-    return false;
-  }
-
   private String getCatalogForTable(Table tableAnnotation) {
-    return MapperUtils.isEmpty(tableAnnotation.catalog()) ? this.catalogName : tableAnnotation.catalog();
+    return MapperUtils.isEmpty(tableAnnotation.catalog()) ? this.catalogName
+        : tableAnnotation.catalog();
   }
 
   private String getSchemaForTable(Table tableAnnotation) {
-    return MapperUtils.isEmpty(tableAnnotation.schema()) ? this.schemaName : tableAnnotation.schema();
+    return MapperUtils.isEmpty(tableAnnotation.schema()) ? this.schemaName
+        : tableAnnotation.schema();
   }
 
 }

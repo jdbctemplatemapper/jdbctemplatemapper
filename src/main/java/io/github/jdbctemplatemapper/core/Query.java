@@ -374,26 +374,28 @@ public class Query<T> implements IQueryFluent<T> {
       sql += "," + relatedTypeSelectMapper.getColumnsSql();
     }
 
-    sql += " FROM " + jtm.fullyQualifiedTableName(ownerTypeTableName);
+    sql += " FROM " + ownerTypeTableMapping.fullyQualifiedTableName();
     if (relatedType != null) {
       String relatedTypeTableName = relatedTypeTableMapping.getTableName();
       if (relationshipType == RelationshipType.HAS_ONE) {
         // joinColumn is on owner table
-        sql += " LEFT JOIN " + jtm.fullyQualifiedTableName(relatedTypeTableMapping.getTableName())
-            + " on " + ownerTypeTableName + "." + joinColumnOwningSide + " = "
-            + relatedTypeTableName + "." + relatedTypeTableMapping.getIdColumnName();
+        sql += " LEFT JOIN " + relatedTypeTableMapping.fullyQualifiedTableName() + " on "
+            + ownerTypeTableName + "." + joinColumnOwningSide + " = " + relatedTypeTableName + "."
+            + relatedTypeTableMapping.getIdColumnName();
       } else if (relationshipType == RelationshipType.HAS_MANY) {
         // joinColumn is on related table
-        sql += " LEFT JOIN " + jtm.fullyQualifiedTableName(relatedTypeTableName) + " on "
+        sql += " LEFT JOIN " + relatedTypeTableMapping.fullyQualifiedTableName() + " on "
             + ownerTypeTableName + "." + ownerTypeTableMapping.getIdColumnName() + " = "
             + relatedTypeTableName + "." + joinColumnManySide;
       } else if (relationshipType == RelationshipType.HAS_MANY_THROUGH) {
-        sql += " LEFT JOIN " + jtm.fullyQualifiedTableName(throughJoinTable) + " on "
-            + ownerTypeTableName + "." + ownerTypeTableMapping.getIdColumnName() + " = "
-            + throughJoinTable + "." + throughOwnerTypeJoinColumn + " LEFT JOIN "
-            + jtm.fullyQualifiedTableName(relatedTypeTableName) + " on " + throughJoinTable + "."
-            + throughRelatedTypeJoinColumn + " = " + relatedTypeTableName + "."
-            + relatedTypeTableMapping.getIdColumnName();
+        sql += " LEFT JOIN "
+            + MapperUtils.getFullyQualifiedTableNameForThroughJoinTable(throughJoinTable,
+                ownerTypeTableMapping)
+            + " on " + ownerTypeTableName + "." + ownerTypeTableMapping.getIdColumnName() + " = "
+            + MapperUtils.getTableNameOnly(throughJoinTable) + "." + throughOwnerTypeJoinColumn
+            + " LEFT JOIN " + relatedTypeTableMapping.fullyQualifiedTableName() + " on "
+            + MapperUtils.getTableNameOnly(throughJoinTable) + "." + throughRelatedTypeJoinColumn
+            + " = " + relatedTypeTableName + "." + relatedTypeTableMapping.getIdColumnName();
       }
     }
     if (MapperUtils.isNotBlank(whereClause)) {

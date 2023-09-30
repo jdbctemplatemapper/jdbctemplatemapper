@@ -103,21 +103,6 @@ public class HasManyThroughTest {
     assertTrue(exception.getMessage().contains("throughJoinTable() tableName cannot be null or blank"));
   }
 
-  @Test
-  public void query_hasManyThrough_invalidJoinTableWithPrefix_test() {
-    Exception exception =
-        Assertions.assertThrows(
-            QueryException.class,
-            () -> {
-              Query.type(Employee.class)
-                  .hasMany(Skill.class)
-                  .throughJoinTable("jdbctemplatemapper.employee_skill")
-                  .throughJoinColumns("employee_id", "skill_id")
-                  .populateProperty("skills")
-                  .execute(jtm);
-            });
-    assertTrue(exception.getMessage().contains("Invalid throughJoinTable"));
-  }
 
   @Test
   public void query_hasManyThrough_invalidFirstJoinColumnWithPrefix_test() {

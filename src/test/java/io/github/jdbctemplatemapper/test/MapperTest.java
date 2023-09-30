@@ -431,7 +431,7 @@ public class MapperTest {
             + orderLineSelectMapper.getColumnsSql()
             + ","
             + productSelectMapper.getColumnsSql()
-            + " from jdbctemplatemapper.orders o"
+            + " from schema1.orders o"
             + " left join " + fullyQualifiedTableName("customer") + " c on o.customer_id = c.customer_id"
             + " left join " + fullyQualifiedTableName("order_line") + " ol on o.order_id = ol.order_id"
             + " left join " + fullyQualifiedTableName("product") + " p on p.product_id = ol.product_id"

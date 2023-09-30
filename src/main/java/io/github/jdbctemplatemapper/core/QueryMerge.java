@@ -282,7 +282,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     String sql = getSqlFromCache(cacheKey);
     if (sql == null) {
       sql = "SELECT " + selectMapperRelatedType.getColumnsSql() + " FROM "
-          + jtm.fullyQualifiedTableName(relatedTypeTableMapping.getTableName()) + " WHERE "
+          + relatedTypeTableMapping.fullyQualifiedTableName() + " WHERE "
           + relatedTypeTableMapping.getIdColumnName() + " IN (:joinPropertyOwningSideValues)";
     }
 
@@ -360,8 +360,8 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     String sql = getSqlFromCache(cacheKey);
     if (sql == null) {
       sql = "SELECT " + selectMapper.getColumnsSql() + " FROM "
-          + jtm.fullyQualifiedTableName(relatedTypeTableMapping.getTableName()) + " WHERE "
-          + joinColumnManySide + " IN (:ownerTypeIds)";
+          + relatedTypeTableMapping.fullyQualifiedTableName() + " WHERE " + joinColumnManySide
+          + " IN (:ownerTypeIds)";
 
       if (MapperUtils.isNotBlank(orderBy)) {
         sql += " ORDER BY " + orderBy;
@@ -443,13 +443,16 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
 
     String sql = successQueryMergeSqlCache.get(cacheKey);
     if (sql == null) {
-      sql = "SELECT " + throughJoinTable + "." + throughOwnerTypeJoinColumn + " as "
-          + ownerTypeTableName + "_" + ownerTypeTableMapping.getIdColumnName() + ", "
-          + selectMapperRelatedType.getColumnsSql() + " FROM "
-          + jtm.fullyQualifiedTableName(throughJoinTable) + " LEFT JOIN "
-          + jtm.fullyQualifiedTableName(relatedTypeTableName) + " on " + throughJoinTable + "."
-          + throughRelatedTypeJoinColumn + " = " + relatedTypeTableName + "."
-          + relatedTypeTableMapping.getIdColumnName() + " WHERE " + throughJoinTable + "."
+      sql = "SELECT " + MapperUtils.getTableNameOnly(throughJoinTable) + "."
+          + throughOwnerTypeJoinColumn + " as " + ownerTypeTableName + "_"
+          + ownerTypeTableMapping.getIdColumnName() + ", " + selectMapperRelatedType.getColumnsSql()
+          + " FROM "
+          + MapperUtils.getFullyQualifiedTableNameForThroughJoinTable(throughJoinTable,
+              ownerTypeTableMapping)
+          + " LEFT JOIN " + relatedTypeTableMapping.fullyQualifiedTableName() + " on "
+          + MapperUtils.getTableNameOnly(throughJoinTable) + "." + throughRelatedTypeJoinColumn
+          + " = " + relatedTypeTableName + "." + relatedTypeTableMapping.getIdColumnName()
+          + " WHERE " + MapperUtils.getTableNameOnly(throughJoinTable) + "."
           + throughOwnerTypeJoinColumn + " IN (:ownerTypeIds)";
 
       if (MapperUtils.isNotBlank(orderBy)) {
