@@ -18,14 +18,17 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class FlywayMigrationConfigForTest {
-  
+
   @Value("${all.spring.flyway.locations}")
   private String locations;
-  
+
+  @Value("${spring.datasource.driver-class-name}")
+  private String jdbcDriver;
+
   @Autowired
   @Qualifier("dsAll")
   private DataSource dsAll;
-  
+
   @Bean
   public static FlywayMigrationStrategy cleanMigrateStrategy() {
     FlywayMigrationStrategy strategy = new FlywayMigrationStrategy() {
@@ -37,21 +40,19 @@ public class FlywayMigrationConfigForTest {
     };
     return strategy;
   }
-  
-  
+
+
   @PostConstruct
-  public void xya() {
-    
-    System.out.println("DATASOURCE:" + dsAll);
-    
-  Flyway.configure()
-  .dataSource(dsAll)
-  .locations(locations)
-  .load()
-  .migrate();
-  
-  
+  public void flyWayDsAll() {
+    if (jdbcDriver.contains("postgres")) {
+      Flyway.configure().dataSource(dsAll).defaultSchema("schema2").locations(locations).load()
+          .migrate();
+
+    } else {
+      Flyway.configure().dataSource(dsAll).locations(locations).load().migrate();
+    }
+
   }
-  
-  
+
+
 }

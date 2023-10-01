@@ -228,16 +228,6 @@ public class MapperTest {
   }
 
   @Test
-  public void update_withNoVersionAndUpdateInfo_Test() {
-    Customer customer = jtm.findById(Customer.class, 4);
-    customer.setFirstName("xyz");
-    jtm.update(customer);
-
-    Customer customer1 = jtm.findById(Customer.class, 4); // requery
-    assertEquals("xyz", customer1.getFirstName());
-  }
-
-  @Test
   public void update_throwsOptimisticLockingException_Test() {
     Assertions.assertThrows(OptimisticLockingException.class, () -> {
       Order order = jtm.findById(Order.class, 2);

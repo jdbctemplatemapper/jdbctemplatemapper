@@ -23,23 +23,12 @@ public class JdbcTemplateMapperConfig {
   public DataSource dataSourceDs1() {
     return DataSourceBuilder.create().build();
   }
-
-  @Bean(name = "dsAll")
-  @ConfigurationProperties(prefix = "all.spring.datasource")
-  public DataSource dataSourceAll() {
-    return DataSourceBuilder.create().build();
-  }
-
+  
   @Bean(name = "ds1JdbcTemplate")
   public JdbcTemplate jdbcTemplateDs1(@Qualifier("ds1") DataSource ds) {
     return new JdbcTemplate(ds);
   }
-
-  @Bean(name = "allJdbcTemplate")
-  public JdbcTemplate jdbcTemplateAll(@Qualifier("dsAll") DataSource ds) {
-    return new JdbcTemplate(ds);
-  }
-
+  
   @Primary
   @Bean(name = "ds1JdbcTemplateMapper")
   public JdbcTemplateMapper ds1JdbcTemplateMapper(
@@ -56,6 +45,22 @@ public class JdbcTemplateMapperConfig {
     return jdbcTemplateMapper.withRecordOperatorResolver(new RecordOperatorResolver());
   }
 
+  
+  @Bean(name = "dsAll")
+  @ConfigurationProperties(prefix = "all.spring.datasource")
+  public DataSource dataSourceAll() {
+    return DataSourceBuilder.create().build();
+  }
+
+
+
+  @Bean(name = "allJdbcTemplate")
+  public JdbcTemplate jdbcTemplateAll(@Qualifier("dsAll") DataSource ds) {
+    return new JdbcTemplate(ds);
+  }
+
+
+
   @Bean
   @Qualifier("allJdbcTemplateMapper")
   public JdbcTemplateMapper allJdbcTemplateMapperAll(
@@ -63,6 +68,7 @@ public class JdbcTemplateMapperConfig {
     JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate);
     return jdbcTemplateMapper.withRecordOperatorResolver(new RecordOperatorResolver());
   }
+  
 
   private String getSchemaName() {
     // Test databases setup

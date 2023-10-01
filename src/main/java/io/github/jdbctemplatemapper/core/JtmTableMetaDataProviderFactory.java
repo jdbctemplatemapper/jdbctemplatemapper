@@ -38,7 +38,7 @@ public class JtmTableMetaDataProviderFactory {
           provider = new JtmTableMetaDataProvider(databaseMetaData);
         }
 
-        //provider.initializeWithMetaData(databaseMetaData);
+        provider.initializeWithMetaData(databaseMetaData);
 
         provider.initializeWithTableColumnMetaData(databaseMetaData, catalogName, schemaName,
             tableName);

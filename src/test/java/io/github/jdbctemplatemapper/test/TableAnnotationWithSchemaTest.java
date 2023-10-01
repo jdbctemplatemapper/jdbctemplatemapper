@@ -112,7 +112,7 @@ public class TableAnnotationWithSchemaTest {
   }
   
   @Test
-  public void query_WithCatalogSchema2Annotation() {
+  public void query_WithSchema2Annotation() {
     if (!jdbcDriver.contains("mysql")) {
       CompanySchema2 company = new CompanySchema2();
       company.setName("abc");
@@ -148,7 +148,7 @@ public class TableAnnotationWithSchemaTest {
   
   
   @Test
-  public void queryMerge_withCatalogSchema2Annotation() {
+  public void queryMerge_withSchema2Annotation() {
     if (!jdbcDriver.contains("mysql")) {
 
       CompanySchema2 company = new CompanySchema2();
