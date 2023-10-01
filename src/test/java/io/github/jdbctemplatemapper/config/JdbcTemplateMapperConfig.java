@@ -68,7 +68,7 @@ public class JdbcTemplateMapperConfig {
     // Test databases setup
     String schemaName = "schema1"; // default
     if (jdbcDriver.contains("mysql")) {
-      schemaName = null; // no schemas for my sql
+      schemaName = null; // no schemas for mysql
     } else if (jdbcDriver.contains("oracle")) {
       schemaName = "SCHEMA1"; // oracle has upper case
     }

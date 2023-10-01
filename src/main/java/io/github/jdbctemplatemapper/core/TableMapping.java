@@ -28,7 +28,7 @@ class TableMapping {
   private String updatedOnPropertyName = null;
   private String updatedByPropertyName = null;
 
-  // object property to database column mapping.
+  // model property to database column mapping.
   private List<PropertyMapping> propertyMappings = new ArrayList<>();
 
   // these maps used for performance
@@ -49,8 +49,8 @@ class TableMapping {
     
     this.tableClass = tableClass;
     this.tableName = tableName;
-    this.schemaName = schemaName;
-    this.catalogName = catalogName;
+    this.schemaName = MapperUtils.isEmpty(schemaName) ? null : schemaName;
+    this.catalogName = MapperUtils.isEmpty(catalogName) ? null : catalogName;
     this.commonDatabaseName = commonDatabaseName;
     
     this.idPropertyName = idPropertyName;
@@ -154,25 +154,27 @@ class TableMapping {
   }
   
   public String fullyQualifiedTableName() {
+    if (MapperUtils.isNotEmpty(schemaName)) {
+      return schemaName + "." + tableName;
+    }
+    
     if (MapperUtils.isNotEmpty(catalogName) && isMySql()) {
       return catalogName + "." + tableName;
     }
 
-    if (MapperUtils.isNotEmpty(schemaName)) {
-      return schemaName + "." + tableName;
-    }
     return tableName;
   }
   
   // if there is a schema or catalog it tacks a "." to them.
   public String fullyQualifiedTablePrefix() {
+    if (MapperUtils.isNotEmpty(schemaName)) {
+      return schemaName + ".";
+    }
+    
     if (MapperUtils.isNotEmpty(catalogName) && isMySql()) {
       return catalogName + ".";
     }
 
-    if (MapperUtils.isNotEmpty(schemaName)) {
-      return schemaName + ".";
-    }
     return "";
   }
   

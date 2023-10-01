@@ -18,6 +18,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsertOperations;
 import org.springframework.util.Assert;
 import io.github.jdbctemplatemapper.exception.MapperException;
 import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
@@ -63,6 +64,8 @@ public final class JdbcTemplateMapper {
 
   // used for an attempt to support for old/non standard jdbc drivers.
   private boolean useColumnLabelForResultSetMetaData = true;
+  
+  private boolean includeSynonyms = false;
 
   /** @param jdbcTemplate the jdbcTemplate */
   public JdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
@@ -104,7 +107,7 @@ public final class JdbcTemplateMapper {
     npJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
 
     mappingHelper =
-        new MappingHelper(jdbcTemplate, schemaName, catalogName, metaDataColumnNamePattern);
+        new MappingHelper(jdbcTemplate, schemaName, catalogName, metaDataColumnNamePattern, includeSynonyms);
   }
 
   /**
@@ -137,6 +140,38 @@ public final class JdbcTemplateMapper {
     this.recordOperatorResolver = recordOperatorResolver;
     return this;
   }
+  
+  
+  /**
+   * Attempted Support for old/non standard jdbc drivers. For these drivers
+   * resultSetMetaData,getcolumnLabel(int) info is in resultSetMetaData.getColumnName(int). When
+   * this is the case set this value to false. default is true
+   *
+   * @param val boolean value
+   */
+  public void useColumnLabelForResultSetMetaData(boolean val) {
+    this.useColumnLabelForResultSetMetaData = val;
+  }
+
+  /**
+   * Some postgres drivers seem to not return the correct meta data for TIMESTAMP WITH TIMEZONE
+   * fields. If this value is set to true it will force system to use
+   * java.sql.Types.TIMESTAMP_WITH_TIMEZONE for properties of models which are of type
+   * OffsetDateTime.
+   *
+   * @param val boolean value
+   */
+  public void forcePostgresTimestampWithTimezone(boolean val) {
+    mappingHelper.forcePostgresTimestampWithTimezone(val);
+  }
+  
+  /**
+   * Include synonyms for the column meta-data lookups
+   * This is for Oracle at this time to look up synonym table names,
+   */
+  public void includeSynonymsForTableColumnMetaData() {
+    this.includeSynonyms = true;
+  }
 
   /**
    * Get the schema name
@@ -165,28 +200,7 @@ public final class JdbcTemplateMapper {
     return (DefaultConversionService) conversionService;
   }
 
-  /**
-   * Attempted Support for old/non standard jdbc drivers. For these drivers
-   * resultSetMetaData,getcolumnLabel(int) info is in resultSetMetaData.getColumnName(int). When
-   * this is the case set this value to false. default is true
-   *
-   * @param val boolean value
-   */
-  public void useColumnLabelForResultSetMetaData(boolean val) {
-    this.useColumnLabelForResultSetMetaData = val;
-  }
 
-  /**
-   * Some postgres drivers seem to not return the correct meta data for TIMESTAMP WITH TIMEZONE
-   * fields. If this value is set to true it will force system to use
-   * java.sql.Types.TIMESTAMP_WITH_TIMEZONE for properties of models which are of type
-   * OffsetDateTime.
-   *
-   * @param val boolean value
-   */
-  public void forcePostgresTimestampWithTimezone(boolean val) {
-    mappingHelper.forcePostgresTimestampWithTimezone(val);
-  }
 
   /**
    * finds the object by Id. Return null if not found
@@ -423,11 +437,11 @@ public final class JdbcTemplateMapper {
       }
     }
 
-    SimpleJdbcInsert jdbcInsert = simpleJdbcInsertCache.get(obj.getClass());
+    SimpleJdbcInsertOperations jdbcInsert = simpleJdbcInsertCache.get(obj.getClass());
     if (jdbcInsert == null) {
       if (tableMapping.isIdAutoIncrement()) {
-        jdbcInsert =
-            new SimpleJdbcInsert(jdbcTemplate).withCatalogName(tableMapping.getCatalogName())
+        jdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
+                .withCatalogName(tableMapping.getCatalogName())
                 .withSchemaName(tableMapping.getSchemaName())
                 .withTableName(tableNameForSimpleJdbcInsert(tableMapping))
                 .usingGeneratedKeyColumns(tableMapping.getIdColumnName());
@@ -437,7 +451,12 @@ public final class JdbcTemplateMapper {
                 .withSchemaName(tableMapping.getSchemaName())
                 .withTableName(tableNameForSimpleJdbcInsert(tableMapping));
       }
-      simpleJdbcInsertCache.put(obj.getClass(), jdbcInsert);
+      // for oracle synonym table metadata
+      if(includeSynonyms) {
+        jdbcInsert.includeSynonymsForTableColumnMetaData();
+      }
+      
+      simpleJdbcInsertCache.put(obj.getClass(), (SimpleJdbcInsert) jdbcInsert);
     }
 
     if (tableMapping.isIdAutoIncrement()) {
@@ -703,11 +722,12 @@ public final class JdbcTemplateMapper {
   }
   
   private String tableNameForSimpleJdbcInsert(TableMapping tableMapping) {
-    if (tableMapping.isMySql()) {
-      return tableMapping.fullyQualifiedTableName();
-    }
-    else {
+    if (tableMapping.getSchemaName() != null) {
       return tableMapping.getTableName();
     }
+    else {
+      return tableMapping.fullyQualifiedTableName();
+    }
   }
+  
 }

@@ -18,6 +18,8 @@ import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.metadata.TableMetaDataProvider;
+import org.springframework.jdbc.core.metadata.TableParameterMetaData;
 import org.springframework.jdbc.support.DatabaseMetaDataCallback;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.jdbc.support.MetaDataAccessException;
@@ -55,6 +57,8 @@ class MappingHelper {
   // jdbc drivers may require to pass something like '%'.
   private final String metaDataColumnNamePattern;
 
+  
+  private boolean includeSynonyms = false;
   /**
    * Constructor.
    *
@@ -67,11 +71,13 @@ class MappingHelper {
    *        '%'.
    */
   public MappingHelper(JdbcTemplate jdbcTemplate, String schemaName, String catalogName,
-      String metaDataColumnNamePattern) {
+      String metaDataColumnNamePattern, boolean includeSynonyms) {
     this.jdbcTemplate = jdbcTemplate;
     this.schemaName = schemaName;
     this.catalogName = catalogName;
     this.metaDataColumnNamePattern = metaDataColumnNamePattern;
+    
+    this.includeSynonyms = includeSynonyms;
     this.databaseProductName = getDatabaseProductName(jdbcTemplate);
 
     System.out.println(databaseProductName);
@@ -233,7 +239,7 @@ class MappingHelper {
     return new TableColumnInfo(tableName, schema, catalog, columnInfoList);
   }
 
-  private List<ColumnInfo> getColumnInfoFromDatabaseMetadata(String tableName, String schema,
+  private List<ColumnInfo> getColumnInfoFromDatabaseMetadataOrig(String tableName, String schema,
       String catalog) {
     Assert.hasLength(tableName, "tableName must not be empty");
     try {
@@ -259,7 +265,25 @@ class MappingHelper {
       throw new MapperException(e);
     }
   }
-
+  
+  
+  private List<ColumnInfo> getColumnInfoFromDatabaseMetadata(String tableName, String schema,
+      String catalog) {
+    Assert.hasLength(tableName, "tableName must not be empty");
+    
+    TableMetaDataProvider provider = JtmTableMetaDataProviderFactory.createMetaDataProvider(jdbcTemplate.getDataSource(), catalog, schema, tableName, includeSynonyms);
+  
+    List<ColumnInfo> columnInfoList = new ArrayList<>();
+    
+    List<TableParameterMetaData> list = provider.getTableParameterMetaData();
+    for(TableParameterMetaData metaData : list) {
+      ColumnInfo columnInfo = new ColumnInfo(metaData.getParameterName(), metaData.getSqlType());
+      columnInfoList.add(columnInfo);
+    }
+    
+    return columnInfoList;
+  }
+  
   private String getDatabaseProductName(JdbcTemplate jdbcTemplate) {
     try {
       return JdbcUtils.extractDatabaseMetaData(jdbcTemplate.getDataSource(),

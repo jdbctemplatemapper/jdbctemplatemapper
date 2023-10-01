@@ -355,8 +355,14 @@ public class MapperTest {
 
   @Test
   public void findByProperty_nullPropertyValue_Test() {
+    Customer customer = new Customer();
+    customer.setLastName("doe");
+    jtm.insert(customer);
+    
     List<Customer> list = jtm.findByProperty(Customer.class, "firstName", null);
-    assertTrue(list.size() == 1);
+    assertTrue(list.size() > 0);
+    
+    jtm.delete(customer);
   }
 
   @Test
