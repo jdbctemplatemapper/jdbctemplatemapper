@@ -10,9 +10,23 @@ import java.lang.annotation.Target;
  *
  * <pre>
  * This is a class level annotation and is required for models.
- * It can be any name and should match a table in the database
+ * It has the following attributes
+ * 
+ * name = "tablename"
+ * schema = "schemaname"
+ * catalog = "catalogname"
  *
  * {@literal @}Table(name="products")
+ *  public class Product{
+ *    .....
+ *  }
+ *  
+ * {@literal @}Table(name="products", schema="someSchemaName")
+ *  public class Product{
+ *    .....
+ *  }
+ *  
+ * {@literal @}Table(name="products", catalog="someCatalogName")
  *  public class Product{
  *    .....
  *  }

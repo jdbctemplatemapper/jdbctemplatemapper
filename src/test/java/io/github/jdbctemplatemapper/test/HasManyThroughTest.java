@@ -1,9 +1,7 @@
 package io.github.jdbctemplatemapper.test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.util.List;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,7 +9,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-
 import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
 import io.github.jdbctemplatemapper.core.Query;
 import io.github.jdbctemplatemapper.core.QueryMerge;
@@ -257,4 +254,64 @@ public class HasManyThroughTest {
     assertTrue("aws".equals(employees.get(2).getSkills().get(0).getName()));
 
   }
+  
+  
+  @Test
+  public void queryMerge_hasManyThroughWithJoinTablePrefix() {
+    // @formatter:off
+    List<Employee> employees =
+        Query.type(Employee.class)
+            .orderBy("employee.id")
+            .execute(jtm);
+    // @formatter:on
+
+    // @formatter:off
+    QueryMerge.type(Employee.class)
+        .hasMany(Skill.class)
+        .throughJoinTable("schema1.employee_skill")
+        .throughJoinColumns("employee_id", "skill_id")
+        .populateProperty("skills")
+        .orderBy("name")
+        .execute(jtm, employees);
+    // @formatter:on
+       
+    assertTrue(employees.size() == 5);
+    assertTrue(employees.get(0).getSkills().size() == 1);
+    assertTrue(employees.get(1).getSkills().size() == 2);
+    assertTrue(employees.get(2).getSkills().size() == 3);
+    assertTrue(employees.get(3).getSkills().size() == 0);
+    assertTrue(employees.get(4).getSkills().size() == 0);
+    
+    assertTrue("java".equals(employees.get(0).getSkills().get(0).getName()));
+    assertTrue("aws".equals(employees.get(2).getSkills().get(0).getName()));
+
+  }
+  
+  @Test
+  public void queryMerge_hasManyThroughWithJoinTablePrefixInvalid() {
+    // @formatter:off
+    List<Employee> employees =
+        Query.type(Employee.class)
+            .orderBy("employee.id")
+            .execute(jtm);
+    // @formatter:on
+
+        Assertions.assertThrows(
+            org.springframework.jdbc.BadSqlGrammarException.class,
+            () -> {
+    // @formatter:off
+    QueryMerge.type(Employee.class)
+        .hasMany(Skill.class)
+        .throughJoinTable("aaa.employee_skill")
+        .throughJoinColumns("employee_id", "skill_id")
+        .populateProperty("skills")
+        .orderBy("name")
+        .execute(jtm, employees);
+    // @formatter:on
+            });
+       
+  }
+  
+  
+  
 }
