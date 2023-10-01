@@ -143,9 +143,8 @@ public final class JdbcTemplateMapper {
   
   
   /**
-   * Attempted Support for old/non standard jdbc drivers. For these drivers
-   * resultSetMetaData,getcolumnLabel(int) info is in resultSetMetaData.getColumnName(int). When
-   * this is the case set this value to false. default is true
+   * Attempted Support for old/non standard jdbc drivers. For old drivers
+   * set this value to false and see whether it makes a difference.
    *
    * @param val boolean value
    */

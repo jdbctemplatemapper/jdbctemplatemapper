@@ -14,7 +14,7 @@ import org.springframework.jdbc.support.MetaDataAccessException;
  * Mostly a copy for Spring TableMetaDataProviderFactory class
  *
  */
-public class JtmTableMetaDataProviderFactory {
+class JtmTableMetaDataProviderFactory {
 
   private JtmTableMetaDataProviderFactory() {}
 

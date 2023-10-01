@@ -3,7 +3,6 @@ package io.github.jdbctemplatemapper.core;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.time.LocalDateTime;
@@ -57,8 +56,9 @@ class MappingHelper {
   // jdbc drivers may require to pass something like '%'.
   private final String metaDataColumnNamePattern;
 
-  
+
   private boolean includeSynonyms = false;
+
   /**
    * Constructor.
    *
@@ -76,12 +76,9 @@ class MappingHelper {
     this.schemaName = schemaName;
     this.catalogName = catalogName;
     this.metaDataColumnNamePattern = metaDataColumnNamePattern;
-    
+
     this.includeSynonyms = includeSynonyms;
     this.databaseProductName = getDatabaseProductName(jdbcTemplate);
-
-    System.out.println(databaseProductName);
-
     validateMetaDataConfig(databaseProductName, catalogName, schemaName);
   }
 
@@ -221,69 +218,32 @@ class MappingHelper {
     String tableName = annotationTableName;
     List<ColumnInfo> columnInfoList = getColumnInfoFromDatabaseMetadata(tableName, schema, catalog);
     if (MapperUtils.isEmpty(columnInfoList)) {
-      tableName = tableName.toUpperCase();
-      // try again with upper case table name
-      columnInfoList = getColumnInfoFromDatabaseMetadata(tableName, schema, catalog);
-
       if (MapperUtils.isEmpty(columnInfoList)) {
-        tableName = tableName.toLowerCase();
-        // try again with lower case table name
-        columnInfoList = getColumnInfoFromDatabaseMetadata(tableName, schema, catalog);
-
-        if (MapperUtils.isEmpty(columnInfoList)) {
-          throw new AnnotationException("Could not find table " + annotationTableName
-              + " for class " + clazz.getSimpleName());
-        }
+        throw new AnnotationException(
+            "Could not find table " + annotationTableName + " for class " + clazz.getSimpleName());
       }
     }
     return new TableColumnInfo(tableName, schema, catalog, columnInfoList);
   }
 
-  private List<ColumnInfo> getColumnInfoFromDatabaseMetadataOrig(String tableName, String schema,
-      String catalog) {
-    Assert.hasLength(tableName, "tableName must not be empty");
-    try {
-      return JdbcUtils.extractDatabaseMetaData(jdbcTemplate.getDataSource(),
-          new DatabaseMetaDataCallback<List<ColumnInfo>>() {
-            public List<ColumnInfo> processMetaData(DatabaseMetaData dbMetadata)
-                throws SQLException, MetaDataAccessException {
-              ResultSet rs = null;
-              try {
-                List<ColumnInfo> columnInfoList = new ArrayList<>();
-                rs = dbMetadata.getColumns(catalog, schema, tableName, metaDataColumnNamePattern);
-                while (rs.next()) {
-                  columnInfoList
-                      .add(new ColumnInfo(rs.getString("COLUMN_NAME"), rs.getInt("DATA_TYPE")));
-                }
-                return columnInfoList;
-              } finally {
-                JdbcUtils.closeResultSet(rs);
-              }
-            }
-          });
-    } catch (Exception e) {
-      throw new MapperException(e);
-    }
-  }
-  
-  
   private List<ColumnInfo> getColumnInfoFromDatabaseMetadata(String tableName, String schema,
       String catalog) {
     Assert.hasLength(tableName, "tableName must not be empty");
-    
-    TableMetaDataProvider provider = JtmTableMetaDataProviderFactory.createMetaDataProvider(jdbcTemplate.getDataSource(), catalog, schema, tableName, includeSynonyms);
-  
+
+    TableMetaDataProvider provider = JtmTableMetaDataProviderFactory.createMetaDataProvider(
+        jdbcTemplate.getDataSource(), catalog, schema, tableName, includeSynonyms);
+
     List<ColumnInfo> columnInfoList = new ArrayList<>();
-    
+
     List<TableParameterMetaData> list = provider.getTableParameterMetaData();
-    for(TableParameterMetaData metaData : list) {
+    for (TableParameterMetaData metaData : list) {
       ColumnInfo columnInfo = new ColumnInfo(metaData.getParameterName(), metaData.getSqlType());
       columnInfoList.add(columnInfo);
     }
-    
+
     return columnInfoList;
   }
-  
+
   private String getDatabaseProductName(JdbcTemplate jdbcTemplate) {
     try {
       return JdbcUtils.extractDatabaseMetaData(jdbcTemplate.getDataSource(),
