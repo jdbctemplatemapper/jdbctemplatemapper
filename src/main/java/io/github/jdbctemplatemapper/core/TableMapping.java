@@ -200,10 +200,7 @@ class TableMapping {
   }
   
   public boolean isMySql() {
-    if ("mysql".equalsIgnoreCase(commonDatabaseName)) {
-      return true;
-    }
-    return false;
+    return "mysql".equalsIgnoreCase(commonDatabaseName);
   }
   
 }

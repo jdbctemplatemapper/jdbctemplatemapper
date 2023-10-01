@@ -174,13 +174,6 @@ class QueryValidator {
       String throughJoinTable, String throughOwnerTypeJoinColumn,
       String throughRelatedTypeJoinColumn, String propertyName, BeanWrapper bwOwnerModel) {
     validatePopulatePropertyForCollection(propertyName, bwOwnerModel, ownerType, relatedType);
-
-    /*
-    if (throughJoinTable.contains(".")) {
-      throw new QueryException(
-          "Invalid throughJoinTable " + throughJoinTable + " .It should have no prefixes");
-    }
-    */
     
     if (throughOwnerTypeJoinColumn.contains(".")) {
       throw new QueryException("Invalid throughJoinColumns " + throughOwnerTypeJoinColumn
