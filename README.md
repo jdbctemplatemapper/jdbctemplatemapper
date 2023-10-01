@@ -15,7 +15,7 @@
       * optimistic locking feature for updates.
   4. For transaction management use Spring transactions since the library uses JdbcTemplate for database access.
   5. To log the SQL statements use the same logging configurations as JdbcTemplate. See the logging section.
-  6. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with other relational databases. The jdbc drivers have to be jdbc 4.x compliant.
+  6. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with other relational databases.
   7. Distribution is compiled with java8. Works with java8, java11, java17 
 
 ## Example code
@@ -71,7 +71,7 @@
   <dependency>
     <groupId>io.github.jdbctemplatemapper</groupId>
     <artifactId>jdbctemplatemapper</artifactId>
-    <version>2.2.0</version>
+    <version>2.3.0</version>
  </dependency>
  ```
  
@@ -106,24 +106,42 @@ Take a look at [Tutorial application](https://github.com/jdbctemplatemapper/usin
 
 ```  
 # application.properties
-spring.datasource.jdbc-url=jdbc:postgresql://HOST:PORT/THE_DATABASE_NAME?currentSchema=THE_SCHEMA_NAME
+# Working with a single schema.
+spring.datasource.jdbc-url=jdbc:postgresql://HOST:PORT/THE_DATABASE_NAME
 spring.datasource.username=username
 spring.datasource.password=password
 spring.datasource.driver-class-name=org.postgresql.Driver
-
  // JdbcTemplateMapper configuration
  @Bean
   public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
     return new JdbcTemplateMapper(jdbcTemplate, THE_SCHEMA_NAME);
   }
+  
+# application.properties
+# Working with multiple schemas. The connection account should have access to the schemas.
+spring.datasource.jdbc-url=jdbc:postgresql://HOST:PORT/THE_DATABASE_NAME
+spring.datasource.username=username
+spring.datasource.password=password
+spring.datasource.driver-class-name=org.postgresql.Driver
+ // JdbcTemplateMapper configuration
+ @Bean
+  public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
+    return new JdbcTemplateMapper(jdbcTemplate);
+  } 
+  // the models define which schema to go against:
+  @Table(name="product", schema="theSchemaName")
+  public class Product {
+  ...
+  }
+  
 ```
  
 **MySQL**
 
 ```  
 # application.properties
-# VERY IMPORTANT to include 'nullDatabaseMeansCurrent=true' in url
-spring.datasource.jdbc-url=jdbc:mysql://HOST:PORT/THE_DATABASE_NAME?nullDatabaseMeansCurrent=true
+# Working with a single database (catalog).
+spring.datasource.jdbc-url=jdbc:mysql://HOST:PORT/THE_DATABASE_NAME
 spring.datasource.username=username
 spring.datasource.password=password
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
@@ -131,24 +149,68 @@ spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
  // JdbcTemplateMapper configuration
  @Bean
   public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
-    return new JdbcTemplateMapper(jdbcTemplate);
+    return new JdbcTemplateMapper(jdbcTemplate, null, THE_DATABASE_NAME); // catalog name is synonymous database name for mysql
   }
   
+# application.properties
+# Working with multiple databases. The connection account should have access to the databases.  
+spring.datasource.jdbc-url=jdbc:mysql://HOST:PORT/
+spring.datasource.username=username
+spring.datasource.password=password
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver 
+
+ // JdbcTemplateMapper configuration
+ @Bean
+  public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
+    return new JdbcTemplateMapper(jdbcTemplate); 
+  }
+  // the models define which schema to go against
+  @Table(name="product", catalog="theDatabaseName")  // database name synonymous with catalog name
+  public class Product {
+  ...
+  }
+  // JdbcTemplateMapper configuration
+ @Bean
+  public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
+    return new JdbcTemplateMapper(jdbcTemplate);
+  } 
+  // the models define which schema to go against:
+  @Table(name="product", schema="theSchemaName")
+  public class Product {
+  ...
+  }
 ```
 
 **Oracle**
 
 ```
 # application.properties
+# Working with a single schema.
 spring.datasource.jdbc-url=jdbc:oracle:thin:@HOST:PORT/THE_SERVICE_NAME
 spring.datasource.username=username
 spring.datasource.password=password
 spring.datasource.driver-class-name=oracle.jdbc.driver.OracleDriver
-
  // JdbcTemplateMapper configuration
  @Bean
   public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
     return new JdbcTemplateMapper(jdbcTemplate, THE_SCHEMA_NAME);
+  }
+  
+# application.properties
+# Working with multiple schemas. The connection account should have access to the schemas.
+spring.datasource.jdbc-url=jdbc:oracle:thin:@HOST:PORT/THE_SERVICE_NAME
+spring.datasource.username=username
+spring.datasource.password=password
+spring.datasource.driver-class-name=oracle.jdbc.driver.OracleDriver
+ // JdbcTemplateMapper configuration
+ @Bean
+  public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
+    return new JdbcTemplateMapper(jdbcTemplate);
+  } 
+  // the models define which schema to go against:
+  @Table(name="product", schema="theSchemaName")
+  public class Product {
+  ...
   }
 
 ```
@@ -157,15 +219,32 @@ spring.datasource.driver-class-name=oracle.jdbc.driver.OracleDriver
 
 ```
 # application.properties
+# Working with a single schema.
 spring.datasource.jdbc-url=jdbc:sqlserver://HOSTt:PORT;databaseName=THE_DATABASE_NAME;encrypt=true;trustServerCertificate=true;
 spring.datasource.username=username
 spring.datasource.password=password
 spring.datasource.driver-class-name=com.microsoft.sqlserver.jdbc.SQLServerDriver
-
  // JdbcTemplateMapper configuration
  @Bean
   public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
     return new JdbcTemplateMapper(jdbcTemplate, THE_SCHEMA_NAME);
+  }
+  
+# application.properties
+# Working with multiple schemas. The connection account should have access to the schemas.
+spring.datasource.jdbc-url=jdbc:sqlserver://HOSTt:PORT;databaseName=THE_DATABASE_NAME;encrypt=true;trustServerCertificate=true;
+spring.datasource.username=username
+spring.datasource.password=password
+spring.datasource.driver-class-name=com.microsoft.sqlserver.jdbc.SQLServerDriver
+ // JdbcTemplateMapper configuration
+ @Bean
+  public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
+    return new JdbcTemplateMapper(jdbcTemplate);
+  } 
+  // the models define which schema to go against:
+  @Table(name="product", schema="theSchemaName")
+  public class Product {
+  ...
   }
   
 ```
@@ -174,13 +253,25 @@ spring.datasource.driver-class-name=com.microsoft.sqlserver.jdbc.SQLServerDriver
 
 **@Table**
 
-Required class level annotation. It should match a table in the database
+Required class level annotation. Examples below:
 
 ```java
 @Table(name="product")
 class Product {
   ...
 }
+
+@Table(name="product", schema="someSchemaName")
+class Product {
+  ...
+}
+
+@Table(name="product", catalog="someDatabaseName")  // for mysql database name is synonymous with catalog name
+class Product {
+  ...
+}
+
+
 ```
 
 **@Id**
