@@ -8,6 +8,7 @@ import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 import io.github.jdbctemplatemapper.exception.MapperException;
 
 /**
@@ -38,9 +39,8 @@ public class SelectMapper<T> {
       ConversionService conversionService,
       boolean useColumnLabelForResultSetMetaData) {
     Assert.notNull(clazz, " clazz cannot be empty");
-    Assert.hasLength(tableAlias, " tableAlias cannot be empty");
-    if (tableAlias.trim().length() < 1) {
-      throw new MapperException("tableAlias cannot be empty");
+    if (MapperUtils.isBlank(tableAlias)) {
+      throw new MapperException("tableAlias cannot be blank or empty");
     }
 
     this.clazz = clazz;
@@ -148,20 +148,22 @@ public class SelectMapper<T> {
       ResultSetMetaData rsMetaData = rs.getMetaData();
       int count = rsMetaData.getColumnCount();
       for (int i = 1; i <= count; i++) {
-        // support for older drivers
-        String columnLabel =
-            useColumnLabelForResultSetMetaData
-                ? rsMetaData.getColumnLabel(i)
-                : rsMetaData.getColumnName(i);
+        String columnLabel = rsMetaData.getColumnLabel(i);
+        // attempted support for older drivers
+        if (!useColumnLabelForResultSetMetaData) {
+          if (StringUtils.hasLength(rsMetaData.getColumnName(i))) {
+            columnLabel = rsMetaData.getColumnName(i);
+          }
+        }
         if (columnLabel != null) {
           columnLabel = MapperUtils.toLowerCase(columnLabel);
           if (columnLabel.startsWith(colAliasPrefix)) {
-            String propertyName =
-                tableMapping.getPropertyName(columnLabel.substring(colAliasPrefix.length()));
-            if (propertyName != null) {
+             PropertyMapping propMapping = 
+                tableMapping.getPropertyMappingByColumnName(columnLabel.substring(colAliasPrefix.length()));
+            if (propMapping != null) {
               bw.setPropertyValue(
-                  propertyName,
-                  JdbcUtils.getResultSetValue(rs, i, tableMapping.getPropertyType(propertyName)));
+                  propMapping.getPropertyName(),
+                  JdbcUtils.getResultSetValue(rs, i, propMapping.getPropertyType()));
             }
           }
         }

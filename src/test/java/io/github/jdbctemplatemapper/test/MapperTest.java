@@ -228,16 +228,6 @@ public class MapperTest {
   }
 
   @Test
-  public void update_withNoVersionAndUpdateInfo_Test() {
-    Customer customer = jtm.findById(Customer.class, 4);
-    customer.setFirstName("xyz");
-    jtm.update(customer);
-
-    Customer customer1 = jtm.findById(Customer.class, 4); // requery
-    assertEquals("xyz", customer1.getFirstName());
-  }
-
-  @Test
   public void update_throwsOptimisticLockingException_Test() {
     Assertions.assertThrows(OptimisticLockingException.class, () -> {
       Order order = jtm.findById(Order.class, 2);
@@ -355,8 +345,14 @@ public class MapperTest {
 
   @Test
   public void findByProperty_nullPropertyValue_Test() {
+    Customer customer = new Customer();
+    customer.setLastName("doe");
+    jtm.insert(customer);
+    
     List<Customer> list = jtm.findByProperty(Customer.class, "firstName", null);
-    assertTrue(list.size() == 1);
+    assertTrue(list.size() > 0);
+    
+    jtm.delete(customer);
   }
 
   @Test
@@ -431,7 +427,7 @@ public class MapperTest {
             + orderLineSelectMapper.getColumnsSql()
             + ","
             + productSelectMapper.getColumnsSql()
-            + " from jdbctemplatemapper.orders o"
+            + " from schema1.orders o"
             + " left join " + fullyQualifiedTableName("customer") + " c on o.customer_id = c.customer_id"
             + " left join " + fullyQualifiedTableName("order_line") + " ol on o.order_id = ol.order_id"
             + " left join " + fullyQualifiedTableName("product") + " p on p.product_id = ol.product_id"

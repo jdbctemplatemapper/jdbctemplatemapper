@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.ConcurrentHashMap;
-
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.core.convert.support.DefaultConversionService;
@@ -19,8 +18,8 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsertOperations;
 import org.springframework.util.Assert;
-
 import io.github.jdbctemplatemapper.exception.MapperException;
 import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
 
@@ -65,6 +64,8 @@ public final class JdbcTemplateMapper {
 
   // used for an attempt to support for old/non standard jdbc drivers.
   private boolean useColumnLabelForResultSetMetaData = true;
+  
+  private boolean includeSynonyms = false;
 
   /** @param jdbcTemplate the jdbcTemplate */
   public JdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
@@ -93,13 +94,11 @@ public final class JdbcTemplateMapper {
    * @param schemaName database schema name.
    * @param catalogName database catalog name.
    * @param metaDataColumnNamePattern For most jdbc drivers getting column metadata from database
-   *     the metaDataColumnNamePattern argument of null will return all the columns (which is the
-   *     default for JdbcTemplateMapper). Some jdbc drivers may require to pass something like '%'.
+   *        the metaDataColumnNamePattern argument of null will return all the columns (which is the
+   *        default for JdbcTemplateMapper). Some jdbc drivers may require to pass something like
+   *        '%'.
    */
-  public JdbcTemplateMapper(
-      JdbcTemplate jdbcTemplate,
-      String schemaName,
-      String catalogName,
+  public JdbcTemplateMapper(JdbcTemplate jdbcTemplate, String schemaName, String catalogName,
       String metaDataColumnNamePattern) {
 
     Assert.notNull(jdbcTemplate, "jdbcTemplate must not be null");
@@ -108,7 +107,7 @@ public final class JdbcTemplateMapper {
     npJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
 
     mappingHelper =
-        new MappingHelper(jdbcTemplate, schemaName, catalogName, metaDataColumnNamePattern);
+        new MappingHelper(jdbcTemplate, schemaName, catalogName, metaDataColumnNamePattern, includeSynonyms);
   }
 
   /**
@@ -142,35 +141,10 @@ public final class JdbcTemplateMapper {
     return this;
   }
   
-  /**
-   * Get the schema name
-   * @return the schema name
-   */
-  public String getSchemaName() {
-      return mappingHelper.getSchemaName();
-  }
   
   /**
-   * Get the catalog name
-   * @return the catalog name
-   */
-  public String getCatalogName() {
-      return mappingHelper.getCatalogName();
-  }
-
-  /**
-   * Exposing the conversion service used so if necessary new converters can be added
-   *
-   * @return the default conversion service.
-   */
-  public DefaultConversionService getConversionService() {
-    return (DefaultConversionService) conversionService;
-  }
-
-  /**
-   * Attempted Support for old/non standard jdbc drivers. For these drivers
-   * resultSetMetaData,getcolumnLabel(int) info is in resultSetMetaData.getColumnName(int). When
-   * this is the case set this value to false. default is true
+   * Attempted Support for old/non standard jdbc drivers. For old drivers
+   * set this value to false and see whether it makes a difference.
    *
    * @param val boolean value
    */
@@ -189,6 +163,43 @@ public final class JdbcTemplateMapper {
   public void forcePostgresTimestampWithTimezone(boolean val) {
     mappingHelper.forcePostgresTimestampWithTimezone(val);
   }
+  
+  /**
+   * Include synonyms for the column meta-data lookups
+   * This is for Oracle at this time to look up synonym table names,
+   */
+  public void includeSynonymsForTableColumnMetaData() {
+    this.includeSynonyms = true;
+  }
+
+  /**
+   * Get the schema name
+   * 
+   * @return the schema name
+   */
+  public String getSchemaName() {
+    return mappingHelper.getSchemaName();
+  }
+
+  /**
+   * Get the catalog name
+   * 
+   * @return the catalog name
+   */
+  public String getCatalogName() {
+    return mappingHelper.getCatalogName();
+  }
+
+  /**
+   * Exposing the conversion service used so if necessary new converters can be added
+   *
+   * @return the default conversion service.
+   */
+  public DefaultConversionService getConversionService() {
+    return (DefaultConversionService) conversionService;
+  }
+
+
 
   /**
    * finds the object by Id. Return null if not found
@@ -203,14 +214,9 @@ public final class JdbcTemplateMapper {
 
     TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
     String columnsSql = getFindColumnsSql(tableMapping, clazz);
-    String sql =
-        "SELECT "
-            + columnsSql
-            + " FROM "
-            + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName())
-            + " WHERE "
-            + tableMapping.getIdColumnName()
-            + " = ?";
+    String sql = "SELECT " + columnsSql + " FROM "
+        + tableMapping.fullyQualifiedTableName() + " WHERE "
+        + tableMapping.getIdColumnName() + " = ?";
 
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
 
@@ -258,29 +264,22 @@ public final class JdbcTemplateMapper {
    * @param orderByPropertyName the order by property name
    * @return a List of objects for type T
    */
-  public <T> List<T> findByProperty(
-      Class<T> clazz, String propertyName, Object propertyValue, String orderByPropertyName) {
+  public <T> List<T> findByProperty(Class<T> clazz, String propertyName, Object propertyValue,
+      String orderByPropertyName) {
     Assert.notNull(clazz, "Class must not be null");
     Assert.notNull(propertyName, "propertyName must not be null");
 
     TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
     String propColumnName = tableMapping.getColumnName(propertyName);
     if (propColumnName == null) {
-      throw new MapperException(
-          clazz.getSimpleName()
-              + "."
-              + propertyName
-              + " is either invalid or does not have a corresponding column in database.");
+      throw new MapperException(clazz.getSimpleName() + "." + propertyName
+          + " is either invalid or does not have a corresponding column in database.");
     }
 
     String columnsSql = getFindColumnsSql(tableMapping, clazz);
-    String sql =
-        "SELECT "
-            + columnsSql
-            + " FROM "
-            + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName())
-            + " WHERE "
-            + propColumnName;
+    String sql = "SELECT " + columnsSql + " FROM "
+        + tableMapping.fullyQualifiedTableName() + " WHERE "
+        + propColumnName;
 
     if (propertyValue == null) {
       sql += " IS NULL";
@@ -293,10 +292,7 @@ public final class JdbcTemplateMapper {
       orderByColumnName = tableMapping.getColumnName(orderByPropertyName);
       if (orderByColumnName == null) {
         throw new MapperException(
-            "orderByPropertyName "
-                + clazz.getSimpleName()
-                + "."
-                + orderByPropertyName
+            "orderByPropertyName " + clazz.getSimpleName() + "." + orderByPropertyName
                 + " is either invalid or does not have a corresponding column in database.");
       }
     }
@@ -344,19 +340,13 @@ public final class JdbcTemplateMapper {
       orderByColumnName = tableMapping.getColumnName(orderByPropertyName);
       if (orderByColumnName == null) {
         throw new MapperException(
-            "orderByPropertyName "
-                + clazz.getSimpleName()
-                + "."
-                + orderByPropertyName
+            "orderByPropertyName " + clazz.getSimpleName() + "." + orderByPropertyName
                 + " is either invalid or does not have a corresponding column in database.");
       }
     }
 
-    String sql =
-        "SELECT "
-            + columnsSql
-            + " FROM "
-            + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName());
+    String sql = "SELECT " + columnsSql + " FROM "
+        + tableMapping.fullyQualifiedTableName();
 
     if (orderByColumnName != null) {
       sql = sql + " ORDER BY " + orderByColumnName + " ASC";
@@ -389,21 +379,15 @@ public final class JdbcTemplateMapper {
     Object idValue = bw.getPropertyValue(tableMapping.getIdPropertyName());
     if (tableMapping.isIdAutoIncrement()) {
       if (idValue != null) {
-        throw new MapperException(
-            "For insert() the property "
-                + obj.getClass().getSimpleName()
-                + "."
-                + tableMapping.getIdPropertyName()
-                + " has to be null since this insert is for an object whose id is auto increment.");
+        throw new MapperException("For insert() the property " + obj.getClass().getSimpleName()
+            + "." + tableMapping.getIdPropertyName()
+            + " has to be null since this insert is for an object whose id is auto increment.");
       }
     } else {
       if (idValue == null) {
-        throw new MapperException(
-            "For insert() the property "
-                + obj.getClass().getSimpleName()
-                + "."
-                + tableMapping.getIdPropertyName()
-                + " cannot be null since it is not an auto increment id");
+        throw new MapperException("For insert() the property " + obj.getClass().getSimpleName()
+            + "." + tableMapping.getIdPropertyName()
+            + " cannot be null since it is not an auto increment id");
       }
     }
 
@@ -421,14 +405,14 @@ public final class JdbcTemplateMapper {
 
     PropertyMapping createdByPropMapping = tableMapping.getCreatedByPropertyMapping();
     if (createdByPropMapping != null && recordOperatorResolver != null) {
-      bw.setPropertyValue(
-          createdByPropMapping.getPropertyName(), recordOperatorResolver.getRecordOperator());
+      bw.setPropertyValue(createdByPropMapping.getPropertyName(),
+          recordOperatorResolver.getRecordOperator());
     }
 
     PropertyMapping updatedByPropMapping = tableMapping.getUpdatedByPropertyMapping();
     if (updatedByPropMapping != null && recordOperatorResolver != null) {
-      bw.setPropertyValue(
-          updatedByPropMapping.getPropertyName(), recordOperatorResolver.getRecordOperator());
+      bw.setPropertyValue(updatedByPropMapping.getPropertyName(),
+          recordOperatorResolver.getRecordOperator());
     }
 
     PropertyMapping versionPropMapping = tableMapping.getVersionPropertyMapping();
@@ -441,35 +425,37 @@ public final class JdbcTemplateMapper {
     if (mappingHelper.getForcePostgresTimestampWithTimezone()) {
       // propertySqlTypes are included in this case.
       for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
-        mapSqlParameterSource.addValue(
-            propMapping.getColumnName(),
+        mapSqlParameterSource.addValue(propMapping.getColumnName(),
             bw.getPropertyValue(propMapping.getPropertyName()),
             tableMapping.getPropertySqlType(propMapping.getPropertyName()));
       }
     } else {
       for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
-        mapSqlParameterSource.addValue(
-            propMapping.getColumnName(), bw.getPropertyValue(propMapping.getPropertyName()));
+        mapSqlParameterSource.addValue(propMapping.getColumnName(),
+            bw.getPropertyValue(propMapping.getPropertyName()));
       }
     }
 
-    SimpleJdbcInsert jdbcInsert = simpleJdbcInsertCache.get(obj.getClass());
+    SimpleJdbcInsertOperations jdbcInsert = simpleJdbcInsertCache.get(obj.getClass());
     if (jdbcInsert == null) {
       if (tableMapping.isIdAutoIncrement()) {
-        jdbcInsert =
-            new SimpleJdbcInsert(jdbcTemplate)
-                .withCatalogName(mappingHelper.getCatalogName())
-                .withSchemaName(mappingHelper.getSchemaName())
-                .withTableName(tableMapping.getTableName())
+        jdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
+                .withCatalogName(tableMapping.getCatalogName())
+                .withSchemaName(tableMapping.getSchemaName())
+                .withTableName(tableNameForSimpleJdbcInsert(tableMapping))
                 .usingGeneratedKeyColumns(tableMapping.getIdColumnName());
       } else {
         jdbcInsert =
-            new SimpleJdbcInsert(jdbcTemplate)
-                .withCatalogName(mappingHelper.getCatalogName())
-                .withSchemaName(mappingHelper.getSchemaName())
-                .withTableName(tableMapping.getTableName());
+            new SimpleJdbcInsert(jdbcTemplate).withCatalogName(tableMapping.getCatalogName())
+                .withSchemaName(tableMapping.getSchemaName())
+                .withTableName(tableNameForSimpleJdbcInsert(tableMapping));
       }
-      simpleJdbcInsertCache.put(obj.getClass(), jdbcInsert);
+      // for oracle synonym table metadata
+      if(includeSynonyms) {
+        jdbcInsert.includeSynonymsForTableColumnMetaData();
+      }
+      
+      simpleJdbcInsertCache.put(obj.getClass(), (SimpleJdbcInsert) jdbcInsert);
     }
 
     if (tableMapping.isIdAutoIncrement()) {
@@ -506,11 +492,10 @@ public final class JdbcTemplateMapper {
     BeanWrapper bw = getBeanWrapper(obj);
     Set<String> parameters = sqlAndParams.getParams();
     PropertyMapping updatedByPropMapping = tableMapping.getUpdatedByPropertyMapping();
-    if (updatedByPropMapping != null
-        && recordOperatorResolver != null
+    if (updatedByPropMapping != null && recordOperatorResolver != null
         && parameters.contains(updatedByPropMapping.getPropertyName())) {
-      bw.setPropertyValue(
-          updatedByPropMapping.getPropertyName(), recordOperatorResolver.getRecordOperator());
+      bw.setPropertyValue(updatedByPropMapping.getPropertyName(),
+          recordOperatorResolver.getRecordOperator());
     }
 
     PropertyMapping updatedOnPropMapping = tableMapping.getUpdatedOnPropertyMapping();
@@ -522,22 +507,19 @@ public final class JdbcTemplateMapper {
     MapSqlParameterSource mapSqlParameterSource = new MapSqlParameterSource();
     for (String paramName : parameters) {
       if (paramName.equals("incrementedVersion")) {
-        Integer versionVal =
-            (Integer)
-                bw.getPropertyValue(tableMapping.getVersionPropertyMapping().getPropertyName());
+        Integer versionVal = (Integer) bw
+            .getPropertyValue(tableMapping.getVersionPropertyMapping().getPropertyName());
         if (versionVal == null) {
-          throw new MapperException(
-              "JdbcTemplateMapper is configured for versioning so "
-                  + tableMapping.getVersionPropertyMapping().getPropertyName()
-                  + " cannot be null when updating "
-                  + obj.getClass().getSimpleName());
+          throw new MapperException("JdbcTemplateMapper is configured for versioning so "
+              + tableMapping.getVersionPropertyMapping().getPropertyName()
+              + " cannot be null when updating " + obj.getClass().getSimpleName());
         } else {
-          mapSqlParameterSource.addValue(
-              "incrementedVersion", versionVal + 1, java.sql.Types.INTEGER);
+          mapSqlParameterSource.addValue("incrementedVersion", versionVal + 1,
+              java.sql.Types.INTEGER);
         }
       } else {
-        mapSqlParameterSource.addValue(
-            paramName, bw.getPropertyValue(paramName), tableMapping.getPropertySqlType(paramName));
+        mapSqlParameterSource.addValue(paramName, bw.getPropertyValue(paramName),
+            tableMapping.getPropertySqlType(paramName));
       }
     }
 
@@ -546,21 +528,14 @@ public final class JdbcTemplateMapper {
     if (sqlAndParams.getParams().contains("incrementedVersion")) {
       int cnt = npJdbcTemplate.update(sqlAndParams.getSql(), mapSqlParameterSource);
       if (cnt == 0) {
-        throw new OptimisticLockingException(
-            "update failed for "
-                + obj.getClass().getSimpleName()
-                + " . "
-                + tableMapping.getIdPropertyName()
-                + ": "
-                + bw.getPropertyValue(tableMapping.getIdPropertyName())
-                + " and "
-                + tableMapping.getVersionPropertyMapping().getPropertyName()
-                + ": "
-                + bw.getPropertyValue(tableMapping.getVersionPropertyMapping().getPropertyName()));
+        throw new OptimisticLockingException("update failed for " + obj.getClass().getSimpleName()
+            + " . " + tableMapping.getIdPropertyName() + ": "
+            + bw.getPropertyValue(tableMapping.getIdPropertyName()) + " and "
+            + tableMapping.getVersionPropertyMapping().getPropertyName() + ": "
+            + bw.getPropertyValue(tableMapping.getVersionPropertyMapping().getPropertyName()));
       }
       // update the version in object with new version
-      bw.setPropertyValue(
-          tableMapping.getVersionPropertyMapping().getPropertyName(),
+      bw.setPropertyValue(tableMapping.getVersionPropertyMapping().getPropertyName(),
           mapSqlParameterSource.getValue("incrementedVersion"));
       return cnt;
     } else {
@@ -579,12 +554,8 @@ public final class JdbcTemplateMapper {
 
     TableMapping tableMapping = mappingHelper.getTableMapping(obj.getClass());
 
-    String sql =
-        "DELETE FROM "
-            + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName())
-            + " WHERE "
-            + tableMapping.getIdColumnName()
-            + "= ?";
+    String sql = "DELETE FROM " + tableMapping.fullyQualifiedTableName()
+        + " WHERE " + tableMapping.getIdColumnName() + "= ?";
     BeanWrapper bw = getBeanWrapper(obj);
     Object id = bw.getPropertyValue(tableMapping.getIdPropertyName());
     return jdbcTemplate.update(sql, id);
@@ -602,12 +573,8 @@ public final class JdbcTemplateMapper {
     Assert.notNull(id, "id must not be null");
 
     TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
-    String sql =
-        "DELETE FROM "
-            + mappingHelper.fullyQualifiedTableName(tableMapping.getTableName())
-            + " WHERE "
-            + tableMapping.getIdColumnName()
-            + " = ?";
+    String sql = "DELETE FROM " + tableMapping.fullyQualifiedTableName()
+        + " WHERE " + tableMapping.getIdColumnName() + " = ?";
     return jdbcTemplate.update(sql, id);
   }
 
@@ -620,8 +587,8 @@ public final class JdbcTemplateMapper {
    * @return the SelectMapper
    */
   public <T> SelectMapper<T> getSelectMapper(Class<T> type, String tableAlias) {
-    return new SelectMapper<T>(
-        type, tableAlias, mappingHelper, conversionService, useColumnLabelForResultSetMetaData);
+    return new SelectMapper<T>(type, tableAlias, mappingHelper, conversionService,
+        useColumnLabelForResultSetMetaData);
   }
 
   /**
@@ -636,12 +603,14 @@ public final class JdbcTemplateMapper {
     return mappingHelper.getTableMapping(clazz).getColumnName(propertyName);
   }
 
+
   /**
-   * returns a string which can be used in a sql select statement with all the properties which are
-   * mapped. The column alias will be the underscore case name of property name, so it works well
-   * with JdbcTemplate's BeanPropertyRowMapper
+   * returns a string which can be used in a sql select statement. The column alias will be the
+   * underscore case name of property name, so it works well with JdbcTemplate's
+   * BeanPropertyRowMapper
    *
-   * <p>Will return something like below if name property is mapped to last_name:
+   * <p>
+   * Will return something like below if 'name' property is mapped to 'last_name':
    *
    * <pre>
    * "id as id, last_name as name"
@@ -649,10 +618,12 @@ public final class JdbcTemplateMapper {
    *
    * @param clazz the class
    * @return comma separated select column string
+   * 
    */
   public String getColumnsSql(Class<?> clazz) {
     return getFindColumnsSql(mappingHelper.getTableMapping(clazz), clazz);
   }
+
 
   /**
    * Loads the mapping for a class. Model mappings are loaded when they are used for the first time.
@@ -664,13 +635,9 @@ public final class JdbcTemplateMapper {
   public void loadMapping(Class<?> clazz) {
     mappingHelper.getTableMapping(clazz);
   }
-  
+
   TableMapping getTableMapping(Class<?> clazz) {
     return mappingHelper.getTableMapping(clazz);
-  }
-  
-  String fullyQualifiedTableName(String tableName) {
-    return mappingHelper.fullyQualifiedTableName(tableName);
   }
 
   private SqlAndParams buildSqlAndParamsForUpdate(TableMapping tableMapping) {
@@ -690,7 +657,7 @@ public final class JdbcTemplateMapper {
 
     Set<String> params = new HashSet<>();
     StringBuilder sqlBuilder = new StringBuilder("UPDATE ");
-    sqlBuilder.append(mappingHelper.fullyQualifiedTableName(tableMapping.getTableName()));
+    sqlBuilder.append(tableMapping.fullyQualifiedTableName());
     sqlBuilder.append(" SET ");
 
     PropertyMapping versionPropMapping = tableMapping.getVersionPropertyMapping();
@@ -722,10 +689,7 @@ public final class JdbcTemplateMapper {
         " WHERE " + tableMapping.getIdColumnName() + " = :" + tableMapping.getIdPropertyName());
     params.add(tableMapping.getIdPropertyName());
     if (versionPropMapping != null) {
-      sqlBuilder
-          .append(" AND ")
-          .append(versionPropMapping.getColumnName())
-          .append(" = :")
+      sqlBuilder.append(" AND ").append(versionPropMapping.getColumnName()).append(" = :")
           .append(versionPropMapping.getPropertyName());
       params.add(versionPropMapping.getPropertyName());
     }
@@ -741,10 +705,8 @@ public final class JdbcTemplateMapper {
     if (columnsSql == null) {
       StringJoiner sj = new StringJoiner(", ", " ", " ");
       for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
-        sj.add(
-            propMapping.getColumnName()
-                + " as "
-                + MapperUtils.toUnderscoreName(propMapping.getPropertyName()));
+        sj.add(propMapping.getColumnName() + " as "
+            + MapperUtils.toUnderscoreName(propMapping.getPropertyName()));
       }
       columnsSql = sj.toString();
       findColumnsSqlCache.put(clazz, columnsSql);
@@ -757,4 +719,14 @@ public final class JdbcTemplateMapper {
     bw.setConversionService(conversionService);
     return bw;
   }
+  
+  private String tableNameForSimpleJdbcInsert(TableMapping tableMapping) {
+    if (tableMapping.getSchemaName() != null) {
+      return tableMapping.getTableName();
+    }
+    else {
+      return tableMapping.fullyQualifiedTableName();
+    }
+  }
+  
 }

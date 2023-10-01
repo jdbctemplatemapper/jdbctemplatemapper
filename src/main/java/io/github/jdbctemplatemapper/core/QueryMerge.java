@@ -260,8 +260,8 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     TableMapping relatedTypeTableMapping = jtm.getTableMapping(relatedType);
     String joinPropertyName = ownerTypeTableMapping.getPropertyName(joinColumnOwningSide);
 
-    List<BeanWrapper> bwMergeList = new ArrayList<>();
-    Set params = new HashSet<>();
+    List<BeanWrapper> bwMergeList = new ArrayList<>(mergeList.size());
+    Set params = new HashSet<>(mergeList.size());
     for (T obj : mergeList) {
       if (obj != null) {
         BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
@@ -282,12 +282,12 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     String sql = getSqlFromCache(cacheKey);
     if (sql == null) {
       sql = "SELECT " + selectMapperRelatedType.getColumnsSql() + " FROM "
-          + jtm.fullyQualifiedTableName(relatedTypeTableMapping.getTableName()) + " WHERE "
+          + relatedTypeTableMapping.fullyQualifiedTableName() + " WHERE "
           + relatedTypeTableMapping.getIdColumnName() + " IN (:joinPropertyOwningSideValues)";
     }
 
     String relatedModelIdPropName = relatedTypeTableMapping.getIdPropertyName();
-    Map<Object, Object> idToRelatedModelMap = new HashMap<>();
+    Map<Object, Object> idToRelatedModelMap = new HashMap<>(mergeList.size());
 
     ResultSetExtractor<List<T>> rsExtractor = new ResultSetExtractor<List<T>>() {
       public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
@@ -334,8 +334,8 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     String joinPropertyName = relatedTypeTableMapping.getPropertyName(joinColumnManySide);
     String ownerTypeIdPropName = ownerTypeTableMapping.getIdPropertyName();
 
-    Map<Object, BeanWrapper> idToBeanWrapperOwnerModelMap = new HashMap<>();
-    Set params = new HashSet<>();
+    Map<Object, BeanWrapper> idToBeanWrapperOwnerModelMap = new HashMap<>(mergeList.size());
+    Set params = new HashSet<>(mergeList.size());
     for (Object obj : mergeList) {
       if (obj != null) {
         BeanWrapper bwOwnerModel = PropertyAccessorFactory.forBeanPropertyAccess(obj);
@@ -360,8 +360,8 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     String sql = getSqlFromCache(cacheKey);
     if (sql == null) {
       sql = "SELECT " + selectMapper.getColumnsSql() + " FROM "
-          + jtm.fullyQualifiedTableName(relatedTypeTableMapping.getTableName()) + " WHERE "
-          + joinColumnManySide + " IN (:ownerTypeIds)";
+          + relatedTypeTableMapping.fullyQualifiedTableName() + " WHERE " + joinColumnManySide
+          + " IN (:ownerTypeIds)";
 
       if (MapperUtils.isNotBlank(orderBy)) {
         sql += " ORDER BY " + orderBy;
@@ -413,8 +413,8 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     String ownerTypeIdPropName = ownerTypeTableMapping.getIdPropertyName();
 
     // key - ownerTypeId, value - bean wrapped owner model from mergeList
-    Map<Object, BeanWrapper> idToBeanWrapperOwnerModelMap = new HashMap<>();
-    Set params = new HashSet<>();
+    Map<Object, BeanWrapper> idToBeanWrapperOwnerModelMap = new HashMap<>(mergeList.size());
+    Set params = new HashSet<>(mergeList.size());
     for (Object obj : mergeList) {
       if (obj != null) {
         BeanWrapper bwOwnerModel = PropertyAccessorFactory.forBeanPropertyAccess(obj);
@@ -443,13 +443,16 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
 
     String sql = successQueryMergeSqlCache.get(cacheKey);
     if (sql == null) {
-      sql = "SELECT " + throughJoinTable + "." + throughOwnerTypeJoinColumn + " as "
-          + ownerTypeTableName + "_" + ownerTypeTableMapping.getIdColumnName() + ", "
-          + selectMapperRelatedType.getColumnsSql() + " FROM "
-          + jtm.fullyQualifiedTableName(throughJoinTable) + " LEFT JOIN "
-          + jtm.fullyQualifiedTableName(relatedTypeTableName) + " on " + throughJoinTable + "."
-          + throughRelatedTypeJoinColumn + " = " + relatedTypeTableName + "."
-          + relatedTypeTableMapping.getIdColumnName() + " WHERE " + throughJoinTable + "."
+      sql = "SELECT " + MapperUtils.getTableNameOnly(throughJoinTable) + "."
+          + throughOwnerTypeJoinColumn + " as " + ownerTypeTableName + "_"
+          + ownerTypeTableMapping.getIdColumnName() + ", " + selectMapperRelatedType.getColumnsSql()
+          + " FROM "
+          + MapperUtils.getFullyQualifiedTableNameForThroughJoinTable(throughJoinTable,
+              ownerTypeTableMapping)
+          + " LEFT JOIN " + relatedTypeTableMapping.fullyQualifiedTableName() + " on "
+          + MapperUtils.getTableNameOnly(throughJoinTable) + "." + throughRelatedTypeJoinColumn
+          + " = " + relatedTypeTableName + "." + relatedTypeTableMapping.getIdColumnName()
+          + " WHERE " + MapperUtils.getTableNameOnly(throughJoinTable) + "."
           + throughOwnerTypeJoinColumn + " IN (:ownerTypeIds)";
 
       if (MapperUtils.isNotBlank(orderBy)) {
@@ -460,13 +463,13 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     ResultSetExtractor<List<T>> rsExtractor = new ResultSetExtractor<List<T>>() {
       public List<T> extractData(ResultSet rs) throws SQLException, DataAccessException {
         while (rs.next()) {
-          BeanWrapper bwOwnerType = selectMapperOwnerType.buildBeanWrapperModel(rs);
-          if (bwOwnerType != null) {
+          BeanWrapper bwResultSetOwnerType = selectMapperOwnerType.buildBeanWrapperModel(rs);
+          if (bwResultSetOwnerType != null) {
             BeanWrapper bwRelatedModel = selectMapperRelatedType.buildBeanWrapperModel(rs);
             if (bwRelatedModel != null) {
-              Object ownerTypeIdValue = bwOwnerType.getPropertyValue(ownerTypeIdPropName);
-              if (idToBeanWrapperOwnerModelMap.containsKey(ownerTypeIdValue)) {
-                BeanWrapper bw = idToBeanWrapperOwnerModelMap.get(ownerTypeIdValue);
+              Object ownerTypeIdValue = bwResultSetOwnerType.getPropertyValue(ownerTypeIdPropName);
+              BeanWrapper bw = idToBeanWrapperOwnerModelMap.get(ownerTypeIdValue);
+              if (bw != null) {
                 Collection collection = (Collection) bw.getPropertyValue(propertyName);
                 collection.add(bwRelatedModel.getWrappedInstance());
               }

@@ -4,11 +4,30 @@ import java.util.Collection;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.util.Assert;
 
 class MapperUtils {
+  
+  public static String getTableNameOnly(String str) {
+    if(str != null && str.contains("."))  {
+        return str.substring(str.lastIndexOf('.') + 1);
+    }
+    return str;
+  }
+  
+  public static String getFullyQualifiedTableNameForThroughJoinTable(String throughJoinTable, TableMapping tableMapping) {
+    if(throughJoinTable != null) {
+      if(throughJoinTable.contains(".")) {
+        return throughJoinTable;
+      }
+      else {
+        return tableMapping.fullyQualifiedTablePrefix() + throughJoinTable;
+      }
+    }
+    return throughJoinTable;
+  }
+  
   /**
    * Converts underscore case to camel case. Ex: user_last_name gets converted to userLastName.
    *

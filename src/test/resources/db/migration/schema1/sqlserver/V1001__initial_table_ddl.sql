@@ -1,5 +1,5 @@
 
-CREATE TABLE jdbctemplatemapper.orders(
+CREATE TABLE schema1.orders(
     order_id bigint IDENTITY(1,1) NOT NULL,
 	order_date datetime NULL,
 	customer_id int NULL,
@@ -13,7 +13,7 @@ CREATE TABLE jdbctemplatemapper.orders(
 	CONSTRAINT order_pk PRIMARY KEY (order_id)
 );
 
-CREATE TABLE jdbctemplatemapper.order_line (
+CREATE TABLE schema1.order_line (
 	order_line_id int IDENTITY(1,1) NOT NULL,
 	order_id int NOT NULL,
 	product_id int NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE jdbctemplatemapper.order_line (
 	CONSTRAINT order_line_pk PRIMARY KEY (order_line_id)
 );
 
-CREATE TABLE jdbctemplatemapper.customer (
+CREATE TABLE schema1.customer (
 	customer_id int IDENTITY(1,1) NOT NULL,
 	first_name varchar(100),
 	last_name varchar(100) NOT NULL,
@@ -30,7 +30,7 @@ CREATE TABLE jdbctemplatemapper.customer (
 	CONSTRAINT customer_pk PRIMARY KEY (customer_id)
 );
 
-CREATE TABLE jdbctemplatemapper.product (
+CREATE TABLE schema1.product (
 	product_id int NOT NULL,
 	name varchar(100) NOT NULL,
 	cost numeric(10,3) NULL,
@@ -44,7 +44,7 @@ CREATE TABLE jdbctemplatemapper.product (
 );
 
 
-CREATE TABLE jdbctemplatemapper.person (
+CREATE TABLE schema1.person (
 	person_id varchar(100) NOT NULL,
 	first_name varchar(100) NOT NULL,
 	last_name varchar(100) NOT NULL,
@@ -58,7 +58,7 @@ CREATE TABLE jdbctemplatemapper.person (
 );
 
 
-CREATE TABLE jdbctemplatemapper.type_check (
+CREATE TABLE schema1.type_check (
    	id int IDENTITY(1,1) NOT NULL,
    local_date_data date,
    java_util_date_data date,
@@ -69,7 +69,7 @@ CREATE TABLE jdbctemplatemapper.type_check (
    offset_date_time_data varchar(100)
 );
 
-CREATE TABLE jdbctemplatemapper.annotation_check (
+CREATE TABLE schema1.annotation_check (
    id int NOT NULL,  
    id2 int,
    something varchar(100),
@@ -87,24 +87,24 @@ CREATE TABLE jdbctemplatemapper.annotation_check (
    CONSTRAINT annotation_check_pk PRIMARY KEY (id)
 );
 
-CREATE TABLE jdbctemplatemapper.no_id_object (
+CREATE TABLE schema1.no_id_object (
    something varchar(100)
 );
 
-CREATE TABLE jdbctemplatemapper.employee (
+CREATE TABLE schema1.employee (
 	id int IDENTITY(1,1) NOT NULL,
 	first_name varchar(100) NOT NULL,
 	last_name varchar(100) NOT NULL,
 	CONSTRAINT employee_pk PRIMARY KEY (id)
 );
 
-CREATE TABLE jdbctemplatemapper.skill (
+CREATE TABLE schema1.skill (
 	id int IDENTITY(1,1) NOT NULL,
 	name varchar(100) NOT NULL,
 	CONSTRAINT skill_pk PRIMARY KEY (id)
 );
 
-CREATE TABLE jdbctemplatemapper.employee_skill (
+CREATE TABLE schema1.employee_skill (
 	id int IDENTITY(1,1) NOT NULL,
 	employee_id integer,
 	skill_id integer,

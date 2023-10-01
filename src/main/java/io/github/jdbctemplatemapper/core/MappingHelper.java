@@ -3,7 +3,6 @@ package io.github.jdbctemplatemapper.core;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.time.LocalDateTime;
@@ -18,6 +17,8 @@ import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.metadata.TableMetaDataProvider;
+import org.springframework.jdbc.core.metadata.TableParameterMetaData;
 import org.springframework.jdbc.support.DatabaseMetaDataCallback;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.jdbc.support.MetaDataAccessException;
@@ -43,6 +44,8 @@ class MappingHelper {
   // workaround for postgres driver bug for ResultSetMetaData
   private boolean forcePostgresTimestampWithTimezone = false;
 
+  private String databaseProductName;
+
   private final JdbcTemplate jdbcTemplate;
   private final String schemaName;
   private final String catalogName;
@@ -53,6 +56,9 @@ class MappingHelper {
   // jdbc drivers may require to pass something like '%'.
   private final String metaDataColumnNamePattern;
 
+
+  private boolean includeSynonyms = false;
+
   /**
    * Constructor.
    *
@@ -60,18 +66,20 @@ class MappingHelper {
    * @param schemaName database schema name.
    * @param catalogName database catalog name.
    * @param metaDataColumnNamePattern For most jdbc drivers getting column metadata from database
-   *     the metaDataColumnNamePattern argument of null returns all the columns (which is the
-   *     default for JdbcTemplateMapper). Some jdbc drivers may require to pass something like '%'.
+   *        the metaDataColumnNamePattern argument of null returns all the columns (which is the
+   *        default for JdbcTemplateMapper). Some jdbc drivers may require to pass something like
+   *        '%'.
    */
-  public MappingHelper(
-      JdbcTemplate jdbcTemplate,
-      String schemaName,
-      String catalogName,
-      String metaDataColumnNamePattern) {
+  public MappingHelper(JdbcTemplate jdbcTemplate, String schemaName, String catalogName,
+      String metaDataColumnNamePattern, boolean includeSynonyms) {
     this.jdbcTemplate = jdbcTemplate;
     this.schemaName = schemaName;
     this.catalogName = catalogName;
     this.metaDataColumnNamePattern = metaDataColumnNamePattern;
+
+    this.includeSynonyms = includeSynonyms;
+    this.databaseProductName = getDatabaseProductName(jdbcTemplate);
+    validateMetaDataConfig(databaseProductName, catalogName, schemaName);
   }
 
   public void forcePostgresTimestampWithTimezone(boolean val) {
@@ -94,8 +102,9 @@ class MappingHelper {
    * Gets the table mapping for the Object. The table mapping has the table name and and object
    * property to database column mapping.
    *
-   * <p>Table name is either from the @Tabel annotation or the underscore case conversion of the
-   * Object name.
+   * <p>
+   * Table name is either from the @Tabel annotation or the underscore case conversion of the Object
+   * name.
    *
    * @param clazz The object class
    * @return The table mapping.
@@ -111,11 +120,8 @@ class MappingHelper {
       IdPropertyInfo idPropertyInfo = getIdPropertyInfo(clazz);
 
       // key:column name, value: ColumnInfo
-      Map<String, ColumnInfo> columnNameToColumnInfo =
-          tableColumnInfo
-              .getColumnInfos()
-              .stream()
-              .collect(Collectors.toMap(o -> o.getColumnName(), o -> o));
+      Map<String, ColumnInfo> columnNameToColumnInfo = tableColumnInfo.getColumnInfos().stream()
+          .collect(Collectors.toMap(o -> o.getColumnName(), o -> o));
 
       // key:propertyName, value:PropertyMapping. LinkedHashMap to maintain order of
       // properties
@@ -131,36 +137,26 @@ class MappingHelper {
           }
           colName = MapperUtils.toLowerCase(colName);
           if (!columnNameToColumnInfo.containsKey(colName)) {
-            throw new AnnotationException(
-                colName
-                    + " column not found in table "
-                    + tableName
-                    + " for model property "
-                    + clazz.getSimpleName()
-                    + "."
-                    + propertyName);
+            throw new AnnotationException(colName + " column not found in table " + tableName
+                + " for model property " + clazz.getSimpleName() + "." + propertyName);
           }
-          propNameToPropertyMapping.put(
-              propertyName,
-              new PropertyMapping(
-                  propertyName,
-                  field.getType(),
-                  colName,
+          propNameToPropertyMapping.put(propertyName,
+              new PropertyMapping(propertyName, field.getType(), colName,
                   columnNameToColumnInfo.get(colName).getColumnSqlDataType()));
         }
 
-        processAnnotation(
-            Id.class, field, tableName, propNameToPropertyMapping, columnNameToColumnInfo);
-        processAnnotation(
-            Version.class, field, tableName, propNameToPropertyMapping, columnNameToColumnInfo);
-        processAnnotation(
-            CreatedOn.class, field, tableName, propNameToPropertyMapping, columnNameToColumnInfo);
-        processAnnotation(
-            UpdatedOn.class, field, tableName, propNameToPropertyMapping, columnNameToColumnInfo);
-        processAnnotation(
-            CreatedBy.class, field, tableName, propNameToPropertyMapping, columnNameToColumnInfo);
-        processAnnotation(
-            UpdatedBy.class, field, tableName, propNameToPropertyMapping, columnNameToColumnInfo);
+        processAnnotation(Id.class, field, tableName, propNameToPropertyMapping,
+            columnNameToColumnInfo);
+        processAnnotation(Version.class, field, tableName, propNameToPropertyMapping,
+            columnNameToColumnInfo);
+        processAnnotation(CreatedOn.class, field, tableName, propNameToPropertyMapping,
+            columnNameToColumnInfo);
+        processAnnotation(UpdatedOn.class, field, tableName, propNameToPropertyMapping,
+            columnNameToColumnInfo);
+        processAnnotation(CreatedBy.class, field, tableName, propNameToPropertyMapping,
+            columnNameToColumnInfo);
+        processAnnotation(UpdatedBy.class, field, tableName, propNameToPropertyMapping,
+            columnNameToColumnInfo);
 
         // postgres driver bug where the database metadata returns TIMESTAMP instead of
         // TIMESTAMP_WITH_TIMEZONE for columns timestamptz.
@@ -178,8 +174,9 @@ class MappingHelper {
       List<PropertyMapping> propertyMappings = new ArrayList<>(propNameToPropertyMapping.values());
       validateAnnotations(propertyMappings, clazz);
 
-      tableMapping =
-          new TableMapping(clazz, tableName, idPropertyInfo.getPropertyName(), propertyMappings);
+      tableMapping = new TableMapping(clazz, tableName, tableColumnInfo.getSchemaName(),
+          tableColumnInfo.getCatalogName(), JdbcUtils.commonDatabaseName(databaseProductName),
+          idPropertyInfo.getPropertyName(), propertyMappings);
       tableMapping.setIdAutoIncrement(idPropertyInfo.isIdAutoIncrement());
 
       objectToTableMappingCache.put(clazz, tableMapping);
@@ -212,53 +209,48 @@ class MappingHelper {
     Table tableAnnotation = AnnotationUtils.findAnnotation(clazz, Table.class);
     validateTableAnnotation(tableAnnotation, clazz);
 
+    String catalog = getCatalogForTable(tableAnnotation);
+    String schema = getSchemaForTable(tableAnnotation);
+
+    validateMetaDataConfig(databaseProductName, catalog, schema);
+
     String annotationTableName = tableAnnotation.name();
     String tableName = annotationTableName;
-    List<ColumnInfo> columnInfoList = getColumnInfoFromDatabaseMetadata(tableName);
+    List<ColumnInfo> columnInfoList = getColumnInfoFromDatabaseMetadata(tableName, schema, catalog);
     if (MapperUtils.isEmpty(columnInfoList)) {
-      tableName = tableName.toUpperCase();
-      // try again with upper case table name
-      columnInfoList = getColumnInfoFromDatabaseMetadata(tableName);
-
       if (MapperUtils.isEmpty(columnInfoList)) {
-        tableName = tableName.toLowerCase();
-        // try again with lower case table name
-        columnInfoList = getColumnInfoFromDatabaseMetadata(tableName);
-
-        if (MapperUtils.isEmpty(columnInfoList)) {
-          throw new AnnotationException(
-              "Could not find table "
-                  + annotationTableName
-                  + " for class "
-                  + clazz.getSimpleName());
-        }
+        throw new AnnotationException(
+            "Could not find table " + annotationTableName + " for class " + clazz.getSimpleName());
       }
     }
-    return new TableColumnInfo(tableName, columnInfoList);
+    return new TableColumnInfo(tableName, schema, catalog, columnInfoList);
   }
 
-  private List<ColumnInfo> getColumnInfoFromDatabaseMetadata(String tableName) {
+  private List<ColumnInfo> getColumnInfoFromDatabaseMetadata(String tableName, String schema,
+      String catalog) {
     Assert.hasLength(tableName, "tableName must not be empty");
+
+    TableMetaDataProvider provider = JtmTableMetaDataProviderFactory.createMetaDataProvider(
+        jdbcTemplate.getDataSource(), catalog, schema, tableName, includeSynonyms);
+
+    List<ColumnInfo> columnInfoList = new ArrayList<>();
+
+    List<TableParameterMetaData> list = provider.getTableParameterMetaData();
+    for (TableParameterMetaData metaData : list) {
+      ColumnInfo columnInfo = new ColumnInfo(metaData.getParameterName(), metaData.getSqlType());
+      columnInfoList.add(columnInfo);
+    }
+
+    return columnInfoList;
+  }
+
+  private String getDatabaseProductName(JdbcTemplate jdbcTemplate) {
     try {
-      return JdbcUtils.extractDatabaseMetaData(
-          jdbcTemplate.getDataSource(),
-          new DatabaseMetaDataCallback<List<ColumnInfo>>() {
-            public List<ColumnInfo> processMetaData(DatabaseMetaData dbMetadata)
+      return JdbcUtils.extractDatabaseMetaData(jdbcTemplate.getDataSource(),
+          new DatabaseMetaDataCallback<String>() {
+            public String processMetaData(DatabaseMetaData dbMetaData)
                 throws SQLException, MetaDataAccessException {
-              ResultSet rs = null;
-              try {
-                List<ColumnInfo> columnInfoList = new ArrayList<>();
-                rs =
-                    dbMetadata.getColumns(
-                        catalogName, schemaName, tableName, metaDataColumnNamePattern);
-                while (rs.next()) {
-                  columnInfoList.add(
-                      new ColumnInfo(rs.getString("COLUMN_NAME"), rs.getInt("DATA_TYPE")));
-                }
-                return columnInfoList;
-              } finally {
-                JdbcUtils.closeResultSet(rs);
-              }
+              return dbMetaData.getDatabaseProductName();
             }
           });
     } catch (Exception e) {
@@ -266,30 +258,12 @@ class MappingHelper {
     }
   }
 
-  /**
-   * Get the fully qualified table name. If schema is present then will be schemaName.tableName
-   * otherwise just tableName
-   *
-   * @param tableName The table name
-   * @return The fully qualified table name
-   */
-  public String fullyQualifiedTableName(String tableName) {
-    Assert.hasLength(tableName, "tableName must not be empty");
-    if (MapperUtils.isNotEmpty(getSchemaName())) {
-      return getSchemaName() + "." + tableName;
-    }
-    return tableName;
-  }
-
   boolean getForcePostgresTimestampWithTimezone() {
     return forcePostgresTimestampWithTimezone;
   }
 
-  private <T extends Annotation> void processAnnotation(
-      Class<T> annotationClazz,
-      Field field,
-      String tableName,
-      Map<String, PropertyMapping> propNameToPropertyMapping,
+  private <T extends Annotation> void processAnnotation(Class<T> annotationClazz, Field field,
+      String tableName, Map<String, PropertyMapping> propNameToPropertyMapping,
       Map<String, ColumnInfo> columnNameToColumnInfo) {
 
     Annotation annotation = AnnotationUtils.findAnnotation(field, annotationClazz);
@@ -300,25 +274,17 @@ class MappingHelper {
         String colName = MapperUtils.toUnderscoreName(propertyName); // the default column name
         if (!columnNameToColumnInfo.containsKey(colName)) {
           throw new AnnotationException(
-              colName
-                  + " column not found in table "
-                  + tableName
-                  + " for model property "
-                  + field.getDeclaringClass().getSimpleName()
-                  + "."
-                  + field.getName());
+              colName + " column not found in table " + tableName + " for model property "
+                  + field.getDeclaringClass().getSimpleName() + "." + field.getName());
         }
-        propMapping =
-            new PropertyMapping(
-                propertyName,
-                field.getType(),
-                colName,
-                columnNameToColumnInfo.get(colName).getColumnSqlDataType());
+        propMapping = new PropertyMapping(propertyName, field.getType(), colName,
+            columnNameToColumnInfo.get(colName).getColumnSqlDataType());
         propNameToPropertyMapping.put(propertyName, propMapping);
       }
 
       BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(propMapping);
-      bw.setPropertyValue(StringUtils.uncapitalize(annotationClazz.getSimpleName()) + "Annotation", true);
+      bw.setPropertyValue(StringUtils.uncapitalize(annotationClazz.getSimpleName()) + "Annotation",
+          true);
     }
   }
 
@@ -371,40 +337,25 @@ class MappingHelper {
       }
 
       if (propMapping.isVersionAnnotation() && Integer.class != propMapping.getPropertyType()) {
-        throw new AnnotationException(
-            "@Version requires the type of property "
-                + clazz.getSimpleName()
-                + "."
-                + propMapping.getPropertyName()
-                + " to be Integer");
+        throw new AnnotationException("@Version requires the type of property "
+            + clazz.getSimpleName() + "." + propMapping.getPropertyName() + " to be Integer");
       }
 
       if (propMapping.isCreatedOnAnnotation()
           && LocalDateTime.class != propMapping.getPropertyType()) {
-        throw new AnnotationException(
-            "@CreatedOn requires the type of property "
-                + clazz.getSimpleName()
-                + "."
-                + propMapping.getPropertyName()
-                + " to be LocalDateTime");
+        throw new AnnotationException("@CreatedOn requires the type of property "
+            + clazz.getSimpleName() + "." + propMapping.getPropertyName() + " to be LocalDateTime");
       }
 
       if (propMapping.isUpdatedOnAnnotation()
           && LocalDateTime.class != propMapping.getPropertyType()) {
-        throw new AnnotationException(
-            "@UpdatedOn requires the type of property "
-                + clazz.getSimpleName()
-                + "."
-                + propMapping.getPropertyName()
-                + " to be LocalDateTime");
+        throw new AnnotationException("@UpdatedOn requires the type of property "
+            + clazz.getSimpleName() + "." + propMapping.getPropertyName() + " to be LocalDateTime");
       }
 
       if (conflictCnt > 1) {
-        throw new AnnotationException(
-            clazz.getSimpleName()
-                + "."
-                + propMapping.getPropertyName()
-                + " has multiple annotations that conflict");
+        throw new AnnotationException(clazz.getSimpleName() + "." + propMapping.getPropertyName()
+            + " has multiple annotations that conflict");
       }
     }
 
@@ -433,4 +384,31 @@ class MappingHelper {
           " model " + clazz.getSimpleName() + " has multiple @UpdatedBy annotations");
     }
   }
+
+  private void validateMetaDataConfig(String databaseProductName, String catalogName,
+      String schemaName) {
+    String commonDatabaseName = JdbcUtils.commonDatabaseName(databaseProductName);
+    if ("mysql".equalsIgnoreCase(commonDatabaseName)) {
+      if (MapperUtils.isNotEmpty(schemaName)) {
+        throw new MapperException(databaseProductName + " does not support schema.");
+      }
+    }
+
+    if ("oracle".equalsIgnoreCase(commonDatabaseName)) {
+      if (MapperUtils.isNotEmpty(catalogName)) {
+        throw new MapperException(databaseProductName + " does not support catalog.");
+      }
+    }
+  }
+
+  private String getCatalogForTable(Table tableAnnotation) {
+    return MapperUtils.isEmpty(tableAnnotation.catalog()) ? this.catalogName
+        : tableAnnotation.catalog();
+  }
+
+  private String getSchemaForTable(Table tableAnnotation) {
+    return MapperUtils.isEmpty(tableAnnotation.schema()) ? this.schemaName
+        : tableAnnotation.schema();
+  }
+
 }

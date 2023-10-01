@@ -137,12 +137,12 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
         relatedType == null ? null : jtm.getTableMapping(relatedType);
 
     String sql = "SELECT count(*) as record_count ";
-    sql += " FROM " + jtm.fullyQualifiedTableName(ownerTypeTableName);
+    sql += " FROM " + ownerTypeTableMapping.fullyQualifiedTableName();
     if (relatedType != null) {
       String relatedTypeTableName = relatedTypeTableMapping.getTableName();
       if (relationshipType == RelationshipType.HAS_ONE) {
         // joinColumn is on owner table
-        sql += " LEFT JOIN " + jtm.fullyQualifiedTableName(relatedTypeTableMapping.getTableName())
+        sql += " LEFT JOIN " + relatedTypeTableMapping.fullyQualifiedTableName()
             + " on " + ownerTypeTableName + "." + joinColumnOwningSide + " = "
             + relatedTypeTableName + "." + relatedTypeTableMapping.getIdColumnName();
       }
