@@ -67,7 +67,7 @@ class MapperUtils {
    * Splits the list into multiple lists of chunk size. Used to split the sql IN clauses since some
    * databases have a limitation of 1024.
    *
-   * @param list The list of Long
+   * @param collection the collection to chunk
    * @param chunkSize The size of each chunk
    * @return Collection of lists broken down by chunkSize
    */

@@ -234,16 +234,8 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
           joinColumnOwningSide, joinColumnManySide, propertyName, throughJoinTable,
           throughOwnerTypeJoinColumn, throughRelatedTypeJoinColumn);
     }
-    if (MapperUtils.isEmpty(mergeList)) {
-      return;
-    }
 
     if (relationshipType == RelationshipType.HAS_ONE) {
-      if (MapperUtils.isNotBlank(orderBy)) {
-        throw new IllegalStateException(
-            "For QueryMerge hasOne relationships orderBy is not supported."
-                + " The order is already dictated by the mergeList");
-      }
       processHasOne(jdbcTemplateMapper, mergeList, ownerType, relatedType, cacheKey);
     } else if (relationshipType == RelationshipType.HAS_MANY) {
       processHasMany(jdbcTemplateMapper, mergeList, ownerType, relatedType, cacheKey);
@@ -255,6 +247,16 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   @SuppressWarnings({"unchecked", "rawtypes"})
   private void processHasOne(JdbcTemplateMapper jtm, List<T> mergeList, Class<?> ownerType,
       Class<?> relatedType, String cacheKey) {
+    
+    if (MapperUtils.isNotBlank(orderBy)) {
+      throw new IllegalStateException(
+          "For QueryMerge hasOne relationships orderBy is not supported."
+              + " The order is already dictated by the mergeList");
+    }
+    
+    if (MapperUtils.isEmpty(mergeList)) {
+      return;
+    }
 
     TableMapping ownerTypeTableMapping = jtm.getTableMapping(ownerType);
     TableMapping relatedTypeTableMapping = jtm.getTableMapping(relatedType);
@@ -279,11 +281,15 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     SelectMapper<?> selectMapperRelatedType =
         jtm.getSelectMapper(relatedType, relatedTypeTableMapping.getTableName());
 
+    boolean foundInCache = false;
     String sql = getSqlFromCache(cacheKey);
     if (sql == null) {
       sql = "SELECT " + selectMapperRelatedType.getColumnsSql() + " FROM "
           + relatedTypeTableMapping.fullyQualifiedTableName() + " WHERE "
           + relatedTypeTableMapping.getIdColumnName() + " IN (:joinPropertyOwningSideValues)";
+    }
+    else {
+      foundInCache = true;
     }
 
     String relatedModelIdPropName = relatedTypeTableMapping.getIdPropertyName();
@@ -320,7 +326,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
       }
     }
     // code reaches here query success, handle caching
-    if (!previouslySuccessfulQuery(cacheKey)) {
+    if (!foundInCache) {
       addToCache(cacheKey, sql);
     }
   }
@@ -328,7 +334,9 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   @SuppressWarnings({"rawtypes", "unchecked"})
   private void processHasMany(JdbcTemplateMapper jtm, List<T> mergeList, Class<?> ownerType,
       Class<?> relatedType, String cacheKey) {
-
+    if (MapperUtils.isEmpty(mergeList)) {
+      return;
+    }
     TableMapping ownerTypeTableMapping = jtm.getTableMapping(ownerType);
     TableMapping relatedTypeTableMapping = jtm.getTableMapping(relatedType);
     String joinPropertyName = relatedTypeTableMapping.getPropertyName(joinColumnManySide);
@@ -357,6 +365,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     SelectMapper<?> selectMapper =
         jtm.getSelectMapper(relatedType, relatedTypeTableMapping.getTableName());
 
+    boolean foundInCache = false;
     String sql = getSqlFromCache(cacheKey);
     if (sql == null) {
       sql = "SELECT " + selectMapper.getColumnsSql() + " FROM "
@@ -366,6 +375,9 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
       if (MapperUtils.isNotBlank(orderBy)) {
         sql += " ORDER BY " + orderBy;
       }
+    }
+    else {
+      foundInCache = true;
     }
 
     ResultSetExtractor<List<T>> rsExtractor = new ResultSetExtractor<List<T>>() {
@@ -396,7 +408,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     }
 
     // code reaches here query success, handle caching
-    if (!previouslySuccessfulQuery(cacheKey)) {
+    if (!foundInCache) {
       addToCache(cacheKey, sql);
     }
   }
@@ -404,7 +416,9 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   @SuppressWarnings({"rawtypes", "unchecked"})
   private void processHasManyThrough(JdbcTemplateMapper jtm, List<T> mergeList, Class<?> ownerType,
       Class<?> relatedType, String cacheKey) {
-
+    if (MapperUtils.isEmpty(mergeList)) {
+      return;
+    }
     TableMapping ownerTypeTableMapping = jtm.getTableMapping(ownerType);
     TableMapping relatedTypeTableMapping = jtm.getTableMapping(relatedType);
 
@@ -441,6 +455,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     SelectMapper<?> selectMapperRelatedType =
         jtm.getSelectMapper(relatedType, relatedTypeTableMapping.getTableName());
 
+    boolean foundInCache = false;
     String sql = successQueryMergeSqlCache.get(cacheKey);
     if (sql == null) {
       sql = "SELECT " + MapperUtils.getTableNameOnly(throughJoinTable) + "."
@@ -458,6 +473,9 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
       if (MapperUtils.isNotBlank(orderBy)) {
         sql += " ORDER BY " + orderBy;
       }
+    }
+    else {
+      foundInCache = true;
     }
 
     ResultSetExtractor<List<T>> rsExtractor = new ResultSetExtractor<List<T>>() {
@@ -490,7 +508,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     }
 
     // code reaches here query success, handle caching
-    if (!previouslySuccessfulQuery(cacheKey)) {
+    if (!foundInCache) {
       addToCache(cacheKey, sql);
     }
   }
