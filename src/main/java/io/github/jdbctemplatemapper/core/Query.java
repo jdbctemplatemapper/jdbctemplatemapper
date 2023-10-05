@@ -269,6 +269,7 @@ public class Query<T> implements IQueryFluent<T> {
     SelectMapper<?> relatedTypeSelectMapper = relatedType == null ? null
         : jdbcTemplateMapper.getSelectMapper(relatedType, relatedTypeTableMapping.getTableName());
 
+    boolean foundInCache = false;
     String cacheKey = getCacheKey(jdbcTemplateMapper);
     String sql = getSqlFromCache(cacheKey);
     if (sql == null) {
@@ -277,6 +278,9 @@ public class Query<T> implements IQueryFluent<T> {
           throughOwnerTypeJoinColumn, throughRelatedTypeJoinColumn);
 
       sql = generateQuerySql(jdbcTemplateMapper);
+    }
+    else {
+      foundInCache = true;
     }
 
     // sql stored in cache does not include limit offset clause.
@@ -327,7 +331,7 @@ public class Query<T> implements IQueryFluent<T> {
     }
 
     // code reaches here query success, handle caching
-    if (!previouslySuccessfulQuery(cacheKey)) {
+    if (!foundInCache) {
       addToCache(cacheKey, sqlForCache);
     }
     return resultList;
@@ -427,10 +431,6 @@ public class Query<T> implements IQueryFluent<T> {
 
   private String getSqlFromCache(String cacheKey) {
     return successQuerySqlCache.get(cacheKey);
-  }
-
-  private boolean previouslySuccessfulQuery(String key) {
-    return successQuerySqlCache.containsKey(key);
   }
 
   private void addToCache(String key, String sql) {

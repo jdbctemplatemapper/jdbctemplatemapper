@@ -106,12 +106,16 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
   public Integer execute(JdbcTemplateMapper jdbcTemplateMapper) {
     Assert.notNull(jdbcTemplateMapper, "jdbcTemplateMapper cannot be null");
 
+    boolean foundInCache = false;
     String cacheKey = getCacheKey(jdbcTemplateMapper);
     String sql = getSqlFromCache(cacheKey);
     if (sql == null) {
       QueryValidator.validateQueryCount(jdbcTemplateMapper, ownerType, relationshipType,
           relatedType, joinColumnOwningSide);
       sql = generateQuerySql(jdbcTemplateMapper);
+    }
+    else {
+      foundInCache = true;
     }
 
     Integer count = 0;
@@ -122,15 +126,13 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
     }
 
     // code reaches here query success, handle caching
-    if (!previouslySuccessfulQuery(cacheKey)) {
+    if (!foundInCache) {
       addToCache(cacheKey, sql);
     }
     return count;
   }
 
   private String generateQuerySql(JdbcTemplateMapper jtm) {
-
-    // MappingHelper mappingHelper = jdbcTemplateMapper.getMappingHelper();
     TableMapping ownerTypeTableMapping = jtm.getTableMapping(ownerType);
     String ownerTypeTableName = ownerTypeTableMapping.getTableName();
     TableMapping relatedTypeTableMapping =
@@ -168,10 +170,6 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
 
   private String getSqlFromCache(String cacheKey) {
     return successCountSqlCache.get(cacheKey);
-  }
-
-  private boolean previouslySuccessfulQuery(String key) {
-    return successCountSqlCache.containsKey(key);
   }
 
   private void addToCache(String key, String sql) {

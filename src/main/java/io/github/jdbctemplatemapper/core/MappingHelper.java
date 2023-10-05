@@ -214,13 +214,12 @@ class MappingHelper {
 
     validateMetaDataConfig(databaseProductName, catalog, schema);
 
-    String annotationTableName = tableAnnotation.name();
-    String tableName = annotationTableName;
+    String tableName = tableAnnotation.name();
     List<ColumnInfo> columnInfoList = getColumnInfoFromDatabaseMetadata(tableName, schema, catalog);
     if (MapperUtils.isEmpty(columnInfoList)) {
       if (MapperUtils.isEmpty(columnInfoList)) {
         throw new AnnotationException(
-            "Could not find table " + annotationTableName + " for class " + clazz.getSimpleName());
+            "Could not find table " + tableName + " for class " + clazz.getSimpleName());
       }
     }
     return new TableColumnInfo(tableName, schema, catalog, columnInfoList);

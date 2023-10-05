@@ -199,8 +199,6 @@ public final class JdbcTemplateMapper {
     return (DefaultConversionService) conversionService;
   }
 
-
-
   /**
    * finds the object by Id. Return null if not found
    *
@@ -639,7 +637,6 @@ public final class JdbcTemplateMapper {
   public String getColumnsSql(Class<?> clazz) {
     return getFindColumnsSql(mappingHelper.getTableMapping(clazz), clazz);
   }
-
 
   /**
    * Loads the mapping for a class. Model mappings are loaded when they are used for the first time.
