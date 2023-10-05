@@ -117,23 +117,6 @@ spring.datasource.driver-class-name=org.postgresql.Driver
     return new JdbcTemplateMapper(jdbcTemplate, THE_SCHEMA_NAME);
   }
   
-# application.properties
-# Working with multiple schemas. The connection account should have access to the schemas.
-spring.datasource.jdbc-url=jdbc:postgresql://HOST:PORT/THE_DATABASE_NAME
-spring.datasource.username=username
-spring.datasource.password=password
-spring.datasource.driver-class-name=org.postgresql.Driver
- // JdbcTemplateMapper configuration
- @Bean
-  public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
-    return new JdbcTemplateMapper(jdbcTemplate);
-  } 
-  // the models define which schema to go against:
-  @Table(name="product", schema="theSchemaName")
-  public class Product {
-  ...
-  }
-  
 ```
  
 **MySQL**
@@ -152,33 +135,6 @@ spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
     return new JdbcTemplateMapper(jdbcTemplate, null, THE_DATABASE_NAME); // catalog name is synonymous database name for mysql
   }
   
-# application.properties
-# Working with multiple databases. The connection account should have access to the databases.  
-spring.datasource.jdbc-url=jdbc:mysql://HOST:PORT/
-spring.datasource.username=username
-spring.datasource.password=password
-spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver 
-
- // JdbcTemplateMapper configuration
- @Bean
-  public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
-    return new JdbcTemplateMapper(jdbcTemplate); 
-  }
-  // the models define which schema to go against
-  @Table(name="product", catalog="theDatabaseName")  // database name synonymous with catalog name
-  public class Product {
-  ...
-  }
-  // JdbcTemplateMapper configuration
- @Bean
-  public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
-    return new JdbcTemplateMapper(jdbcTemplate);
-  } 
-  // the models define which schema to go against:
-  @Table(name="product", schema="theSchemaName")
-  public class Product {
-  ...
-  }
 ```
 
 **Oracle**
@@ -194,23 +150,6 @@ spring.datasource.driver-class-name=oracle.jdbc.driver.OracleDriver
  @Bean
   public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
     return new JdbcTemplateMapper(jdbcTemplate, THE_SCHEMA_NAME);
-  }
-  
-# application.properties
-# Working with multiple schemas. The connection account should have access to the schemas.
-spring.datasource.jdbc-url=jdbc:oracle:thin:@HOST:PORT/THE_SERVICE_NAME
-spring.datasource.username=username
-spring.datasource.password=password
-spring.datasource.driver-class-name=oracle.jdbc.driver.OracleDriver
- // JdbcTemplateMapper configuration
- @Bean
-  public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
-    return new JdbcTemplateMapper(jdbcTemplate);
-  } 
-  // the models define which schema to go against:
-  @Table(name="product", schema="theSchemaName")
-  public class Product {
-  ...
   }
 
 ```
@@ -228,23 +167,6 @@ spring.datasource.driver-class-name=com.microsoft.sqlserver.jdbc.SQLServerDriver
  @Bean
   public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
     return new JdbcTemplateMapper(jdbcTemplate, THE_SCHEMA_NAME);
-  }
-  
-# application.properties
-# Working with multiple schemas. The connection account should have access to the schemas.
-spring.datasource.jdbc-url=jdbc:sqlserver://HOSTt:PORT;databaseName=THE_DATABASE_NAME;encrypt=true;trustServerCertificate=true;
-spring.datasource.username=username
-spring.datasource.password=password
-spring.datasource.driver-class-name=com.microsoft.sqlserver.jdbc.SQLServerDriver
- // JdbcTemplateMapper configuration
- @Bean
-  public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
-    return new JdbcTemplateMapper(jdbcTemplate);
-  } 
-  // the models define which schema to go against:
-  @Table(name="product", schema="theSchemaName")
-  public class Product {
-  ...
   }
   
 ```
@@ -596,9 +518,9 @@ public class EmployeeSkill {
  
  // Skills with employees populated
  List<Skill> skills = 
-   Query.type(Skill.class) 
+   Query.type(Skill.class) // owning class
         .hasMany(Employee.class) 
-        .throughJoinTable("employee_skill") 
+        .throughJoinTable("employee_skill") // the associated table
         .throughJoinColumns("skill_id", "employee_id") // note order of join columns. owning join column is first
         .populateProperty("employees")
         .execute(jdbcTemplateMapper);
@@ -732,23 +654,7 @@ An example for querying the following relationship: Order hasOne Customer, Order
 
          OrderLine orderLine = orderLineSelectMapper.buildModel(rs);
          if(orderLine != null) {
-           /******************************************
-           // productSelectMapper.getResultSetModelIdColumnName() returns the id column alias 
-           // which is 'p_id'for the sql above.
-           Product product = null;
-           Object productId = rs.getObject(productSelectMapper.getResultSetModelIdColumnLabel());
-           if(productId != null){
-             Product product = idProductMap.get(productId);
-             if (product == null) {
-               product = productSelectMapper.buildModel(rs); 
-               idProductMap.put(productId, product);
-             }
-           }
-           *******************************************/
-            // above code refactored
            Product product = getModel(rs, productSelectMapper, idProductMap); // see definition of getModel() further below
-           
-           // wire up the relationships
            orderLine.setProduct(product); 
            order.getOrderLines().add(orderLine);
          }			
