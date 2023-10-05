@@ -1,33 +1,32 @@
 package io.github.jdbctemplatemapper.core;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 import org.springframework.jdbc.support.JdbcUtils;
-import org.springframework.util.Assert;
 
 class MapperUtils {
-  
+
   public static String getTableNameOnly(String str) {
-    if(str != null && str.contains("."))  {
-        return str.substring(str.lastIndexOf('.') + 1);
+    if (str != null && str.contains(".")) {
+      return str.substring(str.lastIndexOf('.') + 1);
     }
     return str;
   }
-  
-  public static String getFullyQualifiedTableNameForThroughJoinTable(String throughJoinTable, TableMapping tableMapping) {
-    if(throughJoinTable != null) {
-      if(throughJoinTable.contains(".")) {
+
+  public static String getFullyQualifiedTableNameForThroughJoinTable(String throughJoinTable,
+      TableMapping tableMapping) {
+    if (throughJoinTable != null) {
+      if (throughJoinTable.contains(".")) {
         return throughJoinTable;
-      }
-      else {
+      } else {
         return tableMapping.fullyQualifiedTablePrefix() + throughJoinTable;
       }
     }
     return throughJoinTable;
   }
-  
+
   /**
    * Converts underscore case to camel case. Ex: user_last_name gets converted to userLastName.
    *
@@ -65,21 +64,18 @@ class MapperUtils {
 
   /**
    * Splits the list into multiple lists of chunk size. Used to split the sql IN clauses since some
-   * databases have a limitation of 1024.
+   * databases have a limitation on the number.
    *
-   * @param collection the collection to chunk
+   * @param collection the list to chunk
    * @param chunkSize The size of each chunk
    * @return Collection of lists broken down by chunkSize
    */
-  @SuppressWarnings("rawtypes")
-  public static Collection chunkTheCollection(Collection<?> collection, Integer chunkSize) {
-    Assert.notNull(collection, "collection must not be null");
-    AtomicInteger counter = new AtomicInteger();
-    return collection
-        .stream()
-        .filter(e -> e != null)
-        .collect(Collectors.groupingBy(it -> counter.getAndIncrement() / chunkSize))
-        .values();
+  public static List<List<?>> chunkTheList(List<?> collection, Integer chunkSize) {
+    List<List<?>> chunks = new ArrayList<>();
+    for (int i = 0; i < collection.size(); i += chunkSize) {
+      chunks.add(collection.subList(i, Math.min(i + chunkSize, collection.size())));
+    }
+    return chunks;
   }
 
   public static boolean isBlank(final CharSequence cs) {
