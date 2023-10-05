@@ -436,6 +436,7 @@ public final class JdbcTemplateMapper {
       }
     }
 
+    boolean foundInCache = false;
     SimpleJdbcInsertOperations jdbcInsert = simpleJdbcInsertCache.get(obj.getClass());
     if (jdbcInsert == null) {
       if (tableMapping.isIdAutoIncrement()) {
@@ -454,8 +455,9 @@ public final class JdbcTemplateMapper {
       if(includeSynonyms) {
         jdbcInsert.includeSynonymsForTableColumnMetaData();
       }
-      
-      simpleJdbcInsertCache.put(obj.getClass(), (SimpleJdbcInsert) jdbcInsert);
+    }
+    else {
+      foundInCache = true;
     }
 
     if (tableMapping.isIdAutoIncrement()) {
@@ -463,6 +465,10 @@ public final class JdbcTemplateMapper {
       bw.setPropertyValue(tableMapping.getIdPropertyName(), idNumber); // set object id value
     } else {
       jdbcInsert.execute(mapSqlParameterSource);
+    }
+    
+    if(!foundInCache) {
+      simpleJdbcInsertCache.put(obj.getClass(), (SimpleJdbcInsert) jdbcInsert);
     }
   }
 
@@ -483,10 +489,14 @@ public final class JdbcTemplateMapper {
     Assert.notNull(obj, "Object must not be null");
 
     TableMapping tableMapping = mappingHelper.getTableMapping(obj.getClass());
+    
+    boolean foundInCache = false;
     SqlAndParams sqlAndParams = updateSqlAndParamsCache.get(obj.getClass());
     if (sqlAndParams == null) {
       sqlAndParams = buildSqlAndParamsForUpdate(tableMapping);
-      updateSqlAndParamsCache.put(obj.getClass(), sqlAndParams);
+    }
+    else {
+      foundInCache = true;
     }
 
     BeanWrapper bw = getBeanWrapper(obj);
@@ -523,10 +533,11 @@ public final class JdbcTemplateMapper {
       }
     }
 
+    int cnt = -1;
     // if object has property version the version gets incremented on update.
     // throws OptimisticLockingException when update fails.
     if (sqlAndParams.getParams().contains("incrementedVersion")) {
-      int cnt = npJdbcTemplate.update(sqlAndParams.getSql(), mapSqlParameterSource);
+      cnt = npJdbcTemplate.update(sqlAndParams.getSql(), mapSqlParameterSource);
       if (cnt == 0) {
         throw new OptimisticLockingException("update failed for " + obj.getClass().getSimpleName()
             + " . " + tableMapping.getIdPropertyName() + ": "
@@ -537,10 +548,15 @@ public final class JdbcTemplateMapper {
       // update the version in object with new version
       bw.setPropertyValue(tableMapping.getVersionPropertyMapping().getPropertyName(),
           mapSqlParameterSource.getValue("incrementedVersion"));
-      return cnt;
     } else {
-      return npJdbcTemplate.update(sqlAndParams.getSql(), mapSqlParameterSource);
+      cnt = npJdbcTemplate.update(sqlAndParams.getSql(), mapSqlParameterSource);
     }
+    
+    if(!foundInCache) {
+      updateSqlAndParamsCache.put(obj.getClass(), sqlAndParams); 
+    }
+    
+    return cnt;
   }
 
   /**
