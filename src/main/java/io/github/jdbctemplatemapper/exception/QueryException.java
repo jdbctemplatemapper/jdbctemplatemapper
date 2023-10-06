@@ -1,6 +1,7 @@
 package io.github.jdbctemplatemapper.exception;
+
 /**
- * Query Exception
+ * Query Exception.
  *
  * @author ajoseph
  */

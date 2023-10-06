@@ -1,7 +1,7 @@
 package io.github.jdbctemplatemapper.exception;
 
 /**
- * Annotation Exception
+ * Annotation Exception.
  *
  * @author ajoseph
  */

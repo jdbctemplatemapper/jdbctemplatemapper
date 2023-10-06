@@ -108,6 +108,13 @@ CREATE TABLE SCHEMA1.employee_skill (
 	CONSTRAINT employee_skill_pk PRIMARY KEY (id)
 );
 
+CREATE TABLE SCHEMA1.testsynonym (
+	id NUMBER GENERATED ALWAYS AS IDENTITY,
+	name varchar2(100),
+	CONSTRAINT testsynonym_pk PRIMARY KEY (id)
+);
+
+
 
 
 

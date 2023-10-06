@@ -236,7 +236,7 @@ public class QueryTest {
               Query.type(InvalidTableObject.class).execute(jtm);
             });
     // @formatter:on
-    assertTrue(exception.getMessage().contains("Could not find table"));
+   assertTrue(exception.getMessage().contains("Unable to locate meta-data for table"));
   }
 
   @Test

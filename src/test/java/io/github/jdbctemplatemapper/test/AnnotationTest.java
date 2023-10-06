@@ -56,7 +56,7 @@ public class AnnotationTest {
             () -> {
               jtm.findById(InvalidTableObject.class, 1);
             });
-    assertTrue(exception.getMessage().contains("Could not find table"));
+    assertTrue(exception.getMessage().contains("Unable to locate meta-data for table"));
   }
 
   @Test

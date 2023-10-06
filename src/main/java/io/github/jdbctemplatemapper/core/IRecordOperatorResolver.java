@@ -2,7 +2,7 @@ package io.github.jdbctemplatemapper.core;
 
 /**
  * An implementation of this interface should return the value used to populate properties annotated
- * with {@literal @}CreatedBy and {@literal @}UpdatedBy
+ * with {@literal @}CreatedBy and {@literal @}UpdatedBy.
  *
  * @author ajoseph
  */

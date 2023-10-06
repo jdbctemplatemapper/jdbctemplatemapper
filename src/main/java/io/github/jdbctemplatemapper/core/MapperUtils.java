@@ -15,6 +15,8 @@ class MapperUtils {
     return str;
   }
 
+  // if user entered someschema.tablename use that. otherwise get the 
+  // schema/catalog(table prefix) and concatenate with tableName
   public static String getFullyQualifiedTableNameForThroughJoinTable(String throughJoinTable,
       TableMapping tableMapping) {
     if (throughJoinTable != null) {
@@ -72,8 +74,10 @@ class MapperUtils {
    */
   public static List<List<?>> chunkTheList(List<?> collection, Integer chunkSize) {
     List<List<?>> chunks = new ArrayList<>();
-    for (int i = 0; i < collection.size(); i += chunkSize) {
-      chunks.add(collection.subList(i, Math.min(i + chunkSize, collection.size())));
+    if (collection != null) {
+      for (int i = 0; i < collection.size(); i += chunkSize) {
+        chunks.add(collection.subList(i, Math.min(i + chunkSize, collection.size())));
+      }
     }
     return chunks;
   }
@@ -98,14 +102,14 @@ class MapperUtils {
   public static boolean isEmpty(String str) {
     return str == null || str.length() == 0;
   }
-
-  public static boolean isNotEmpty(String str) {
-    return !isEmpty(str);
-  }
-
+  
   @SuppressWarnings("all")
   public static boolean isEmpty(Collection coll) {
     return (coll == null || coll.isEmpty());
+  }
+
+  public static boolean isNotEmpty(String str) {
+    return !isEmpty(str);
   }
 
   @SuppressWarnings("all")

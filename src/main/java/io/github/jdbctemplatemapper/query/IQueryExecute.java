@@ -1,11 +1,10 @@
 package io.github.jdbctemplatemapper.query;
 
+import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
 import java.util.List;
 
-import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
-
 /**
- * The execute interface
+ * The execute interface.
  *
  * @author ajoseph
  * @param <T> the type

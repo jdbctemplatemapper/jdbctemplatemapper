@@ -1,5 +1,6 @@
 package io.github.jdbctemplatemapper.core;
 
+import io.github.jdbctemplatemapper.exception.MapperException;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.StringJoiner;
@@ -9,11 +10,10 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
-import io.github.jdbctemplatemapper.exception.MapperException;
 
 /**
  * Allows population of the model from a ResultSet and generating the select columns string for the
- * model
+ * model.
  *
  * <pre>
  *
@@ -32,12 +32,8 @@ public class SelectMapper<T> {
   private String colPrefix; // tableAlias + "."
   private String colAliasPrefix; // tableAlias + "_"
 
-  SelectMapper(
-      Class<T> clazz,
-      String tableAlias,
-      MappingHelper mappingHelper,
-      ConversionService conversionService,
-      boolean useColumnLabelForResultSetMetaData) {
+  SelectMapper(Class<T> clazz, String tableAlias, MappingHelper mappingHelper,
+      ConversionService conversionService, boolean useColumnLabelForResultSetMetaData) {
     Assert.notNull(clazz, " clazz cannot be empty");
     if (MapperUtils.isBlank(tableAlias)) {
       throw new MapperException("tableAlias cannot be blank or empty");
@@ -71,18 +67,14 @@ public class SelectMapper<T> {
     StringJoiner sj = new StringJoiner(", ", " ", " ");
     TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
     for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
-      sj.add(
-          colPrefix
-              + propMapping.getColumnName()
-              + " as "
-              + colAliasPrefix
-              + propMapping.getColumnName());
+      sj.add(colPrefix + propMapping.getColumnName() + " as " + colAliasPrefix
+          + propMapping.getColumnName());
     }
     return sj.toString();
   }
 
   /**
-   * Get the type the SelectMapper is for
+   * Get the type the SelectMapper is for.
    *
    * @return the type
    */
@@ -91,7 +83,7 @@ public class SelectMapper<T> {
   }
 
   /**
-   * Get the table alias of the SelectMapper
+   * Get the table alias of the SelectMapper.
    *
    * @return the table alias
    */
@@ -100,16 +92,16 @@ public class SelectMapper<T> {
   }
 
   /**
-   * gets column alias of the models id in sql statement
+   * gets column alias of the models id in sql statement.
    *
    * @return the column alias of the models id in sql statement
    */
   public String getResultSetModelIdColumnLabel() {
     return colAliasPrefix + mappingHelper.getTableMapping(clazz).getIdColumnName();
   }
-  
+
   /**
-   * Get the models id type
+   * Get the models id type.
    *
    * @return the type
    */
@@ -118,11 +110,11 @@ public class SelectMapper<T> {
   }
 
   /**
-   * Builds the model from the resultSet
+   * Builds the model from the resultSet.
    *
    * @param rs The ResultSet from which to build the model.
    * @return the model. Will return null if the id property is null (even if other fields have some
-   *     values)
+   *         values)
    */
   public T buildModel(ResultSet rs) {
     BeanWrapper bw = buildBeanWrapperModel(rs);
@@ -135,9 +127,9 @@ public class SelectMapper<T> {
     Object obj = null;
     try {
       obj = clazz.getConstructor().newInstance();
-    }
-    catch(Exception e) {
-       throw new MapperException("Failed to instantiate " + clazz.getName() + "  No default constructor found." ,e);
+    } catch (Exception e) {
+      throw new MapperException(
+          "Failed to instantiate " + clazz.getName() + "  No default constructor found.", e);
     }
     try {
       TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
@@ -158,11 +150,10 @@ public class SelectMapper<T> {
         if (columnLabel != null) {
           columnLabel = MapperUtils.toLowerCase(columnLabel);
           if (columnLabel.startsWith(colAliasPrefix)) {
-             PropertyMapping propMapping = 
-                tableMapping.getPropertyMappingByColumnName(columnLabel.substring(colAliasPrefix.length()));
+            PropertyMapping propMapping = tableMapping
+                .getPropertyMappingByColumnName(columnLabel.substring(colAliasPrefix.length()));
             if (propMapping != null) {
-              bw.setPropertyValue(
-                  propMapping.getPropertyName(),
+              bw.setPropertyValue(propMapping.getPropertyName(),
                   JdbcUtils.getResultSetValue(rs, i, propMapping.getPropertyType()));
             }
           }

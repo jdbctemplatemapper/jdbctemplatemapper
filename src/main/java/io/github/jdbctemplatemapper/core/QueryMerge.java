@@ -1,5 +1,15 @@
 package io.github.jdbctemplatemapper.core;
 
+import io.github.jdbctemplatemapper.querymerge.IQueryMergeFluent;
+import io.github.jdbctemplatemapper.querymerge.IQueryMergeHasMany;
+import io.github.jdbctemplatemapper.querymerge.IQueryMergeHasOne;
+import io.github.jdbctemplatemapper.querymerge.IQueryMergeJoinColumnManySide;
+import io.github.jdbctemplatemapper.querymerge.IQueryMergeJoinColumnOwningSide;
+import io.github.jdbctemplatemapper.querymerge.IQueryMergeOrderBy;
+import io.github.jdbctemplatemapper.querymerge.IQueryMergePopulateProperty;
+import io.github.jdbctemplatemapper.querymerge.IQueryMergeThroughJoinColumns;
+import io.github.jdbctemplatemapper.querymerge.IQueryMergeThroughJoinTable;
+import io.github.jdbctemplatemapper.querymerge.IQueryMergeType;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -16,16 +26,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.util.Assert;
-import io.github.jdbctemplatemapper.querymerge.IQueryMergeFluent;
-import io.github.jdbctemplatemapper.querymerge.IQueryMergeHasMany;
-import io.github.jdbctemplatemapper.querymerge.IQueryMergeHasOne;
-import io.github.jdbctemplatemapper.querymerge.IQueryMergeJoinColumnManySide;
-import io.github.jdbctemplatemapper.querymerge.IQueryMergeJoinColumnOwningSide;
-import io.github.jdbctemplatemapper.querymerge.IQueryMergeOrderBy;
-import io.github.jdbctemplatemapper.querymerge.IQueryMergePopulateProperty;
-import io.github.jdbctemplatemapper.querymerge.IQueryMergeThroughJoinColumns;
-import io.github.jdbctemplatemapper.querymerge.IQueryMergeThroughJoinTable;
-import io.github.jdbctemplatemapper.querymerge.IQueryMergeType;
+
 
 /**
  * QueryMerge allows query results to be merged with results of another query.
@@ -73,7 +74,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   }
 
   /**
-   * hasOne relationship
+   * hasOne relationship.
    *
    * @param relatedType the related type
    * @return interface with the next methods in the chain
@@ -86,7 +87,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   }
 
   /**
-   * hasMany relationship
+   * hasMany relationship.
    *
    * @param relatedType the related type
    * @return interface with the next methods in the chain
@@ -101,10 +102,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   /**
    * Join column for hasOne relationship. The join column (the foreign key) is on the table of the
    * owning model. Example: Order hasOne Customer. The join column(foreign key) will be on the table
-   * order (of the owning model)
-   *
-   * <p>
-   * The join column should not have a table prefix.
+   * order (of the owning model). The join column should not have a table prefix.
    *
    * @param joinColumnOwningSide the join column on the owning side (with no table prefix)
    * @return interface with the next methods in the chain
@@ -120,10 +118,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   /**
    * Join column for hasMany relationship: The join column (the foreign key) is on the table of the
    * many side. Example: Order hasMany OrderLine. The join column will be on the table order_line
-   * (the many side)
-   *
-   * <p>
-   * The join column should not have a table prefix.
+   * (the many side). The join column should not have a table prefix.
    *
    * @param joinColumnManySide the join column on the many side (with no table prefix)
    * @return interface with the next methods in the chain
@@ -137,7 +132,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   }
 
   /**
-   * The join table (associative table) for the hasMany through (many to many) relationship
+   * The join table (associative table) for the hasMany through (many to many) relationship.
    *
    * @param tableName the associative table name
    * @return interface with the next methods in the chain
@@ -152,7 +147,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   }
 
   /**
-   * The join columns for the owning side and the related side for hasMany through relationship
+   * The join columns for the owning side and the related side for hasMany through relationship.
    *
    * @param ownerTypeJoinColumn the join column for the owning side
    * @param relatedTypeJoinColumn the join column for the related side
@@ -174,14 +169,10 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   }
 
   /**
-   * The relationship property that needs to be populated on the owning type.
-   *
-   * <p>
-   * For hasMany() this property has to be an initialized collection (cannot be null) and the
-   * generic type should match the hasMany related type.
-   *
-   * <p>
-   * For hasOne this property has to be the same type as hasOne related type
+   * The relationship property that needs to be populated on the owning type. For hasMany() this
+   * property has to be an initialized collection (cannot be null) and the generic type should match
+   * the hasMany related type. For hasOne this property has to be the same type as hasOne related
+   * type
    *
    * @param propertyName name of property that needs to be populated
    * @return interface with the next methods in the chain
@@ -197,10 +188,8 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   /**
    * The orderBy clause for QueryMerge. For QueryMerge orderBy is only supported for hasMany and
    * hasMany through. For others it does not makes sense because the order will be dictated by the
-   * mergeList.
-   * 
-   * orderBy columns have to be on the table of the hasMany/hasMany through side.
-   * 
+   * mergeList. orderBy columns have to be on the table of the hasMany/hasMany through side.
+   *
    * @param orderBy the orderBy clause.
    * @return interface with the next methods in the chain
    */
@@ -214,7 +203,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
 
   /**
    * The query executes an sql 'IN' clause to get the related side (hasOne, hasMany, hasMany
-   * through) objects and merges those with the objects in the mergeList
+   * through) objects and merges those with the objects in the mergeList.
    *
    * <pre>
    * Some databases have limits on size of 'IN' clause.
@@ -335,7 +324,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   @SuppressWarnings({"rawtypes", "unchecked"})
   private void processHasMany(JdbcTemplateMapper jtm, List<T> mergeList, Class<?> ownerType,
       Class<?> relatedType, String cacheKey) {
-    
+
     if (MapperUtils.isEmpty(mergeList)) {
       return;
     }
@@ -343,7 +332,6 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     TableMapping relatedTypeTableMapping = jtm.getTableMapping(relatedType);
     String joinPropertyName = relatedTypeTableMapping.getPropertyName(joinColumnManySide);
     String ownerTypeIdPropName = ownerTypeTableMapping.getIdPropertyName();
-
     Map<Object, BeanWrapper> idToBeanWrapperOwnerModelMap = new HashMap<>(mergeList.size());
     Set params = new HashSet<>(mergeList.size());
     for (Object obj : mergeList) {
@@ -417,7 +405,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   @SuppressWarnings({"rawtypes", "unchecked"})
   private void processHasManyThrough(JdbcTemplateMapper jtm, List<T> mergeList, Class<?> ownerType,
       Class<?> relatedType, String cacheKey) {
-    
+
     if (MapperUtils.isEmpty(mergeList)) {
       return;
     }
@@ -515,7 +503,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   }
 
   private String getCacheKey(JdbcTemplateMapper jdbcTemplateMapper) {
- // @formatter:off
+    // @formatter:off
     return String.join("-", 
         ownerType.getName(),
         relatedType == null ? null : relatedType.getName(),
@@ -528,7 +516,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         propertyName,
         orderBy,
         jdbcTemplateMapper.toString());
- // @formatter:on
+    // @formatter:on
   }
 
   private String getSqlFromCache(String cacheKey) {

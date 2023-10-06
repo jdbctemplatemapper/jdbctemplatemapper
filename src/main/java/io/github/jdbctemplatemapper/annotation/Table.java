@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to map an object to a database table
+ * Annotation to map an object to a database table.
  *
  * <pre>
  * This is a class level annotation and is required for models.
@@ -39,6 +39,8 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface Table {
   String name();
+
   String catalog() default "";
+
   String schema() default "";
 }

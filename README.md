@@ -99,23 +99,25 @@
 ```
 Example configurations:  
 Depending on the versions of the database/driver changes may be required for the properties.
-Take a look at [Tutorial application](https://github.com/jdbctemplatemapper/using-spring-jdbctemplate-with-jdbctemplatemapper) to see how JdbcTemplateMapper is configured on a working application.
-
 
 **PostgresSQL**
 
 ```  
 # application.properties
-# Working with a single schema.
 spring.datasource.jdbc-url=jdbc:postgresql://HOST:PORT/THE_DATABASE_NAME
 spring.datasource.username=username
 spring.datasource.password=password
 spring.datasource.driver-class-name=org.postgresql.Driver
+
  // JdbcTemplateMapper configuration
  @Bean
   public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
     return new JdbcTemplateMapper(jdbcTemplate, THE_SCHEMA_NAME);
   }
+  
+ // Access a table in another schema (The connection should have the appropriate privileges)
+ @Table(name='product', schema='someotherschema')
+  class Product {...}
   
 ```
  
@@ -123,7 +125,6 @@ spring.datasource.driver-class-name=org.postgresql.Driver
 
 ```  
 # application.properties
-# Working with a single database (catalog).
 spring.datasource.jdbc-url=jdbc:mysql://HOST:PORT/THE_DATABASE_NAME
 spring.datasource.username=username
 spring.datasource.password=password
@@ -132,8 +133,12 @@ spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
  // JdbcTemplateMapper configuration
  @Bean
   public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
-    return new JdbcTemplateMapper(jdbcTemplate, null, THE_DATABASE_NAME); // catalog name is synonymous database name for mysql
+    return new JdbcTemplateMapper(jdbcTemplate, null, THE_DATABASE_NAME); // catalog name is synonymous to database name for mysql
   }
+  
+ // Access a table in another database (The connection should have the appropriate privileges)
+ @Table(name='product', catalog='someotherdatabase') // catalog name is synonymous to database name for mysql
+  class Product {...}
   
 ```
 
@@ -141,16 +146,27 @@ spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 
 ```
 # application.properties
-# Working with a single schema.
 spring.datasource.jdbc-url=jdbc:oracle:thin:@HOST:PORT/THE_SERVICE_NAME
 spring.datasource.username=username
 spring.datasource.password=password
 spring.datasource.driver-class-name=oracle.jdbc.driver.OracleDriver
+
  // JdbcTemplateMapper configuration
  @Bean
   public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
     return new JdbcTemplateMapper(jdbcTemplate, THE_SCHEMA_NAME);
+    
+    // Specific for oracle when using table synonyms configure as below:
+    /*
+    JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate, THE_SCHEMA_NAME);
+    jdbcTemplateMapper.includeSynonymsForTableColumnMetaData();
+    return jdbcTemplateMapper;
+    */
   }
+  
+ // Access a table in another schema (The connection should have the appropriate privileges)
+ @Table(name='product', schema='someotherschema')
+  class Product {...}
 
 ```
 
@@ -158,16 +174,20 @@ spring.datasource.driver-class-name=oracle.jdbc.driver.OracleDriver
 
 ```
 # application.properties
-# Working with a single schema.
 spring.datasource.jdbc-url=jdbc:sqlserver://HOSTt:PORT;databaseName=THE_DATABASE_NAME;encrypt=true;trustServerCertificate=true;
 spring.datasource.username=username
 spring.datasource.password=password
 spring.datasource.driver-class-name=com.microsoft.sqlserver.jdbc.SQLServerDriver
+
  // JdbcTemplateMapper configuration
  @Bean
   public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
     return new JdbcTemplateMapper(jdbcTemplate, THE_SCHEMA_NAME);
   }
+  
+ // Access a table in another schema (The connection should have the appropriate privileges)
+ @Table(name='product', schema='someotherschema')
+  class Product {...}
   
 ```
 
@@ -363,7 +383,7 @@ List<Order> orders =
 
 ### Merging query results with QueryMerge
 
-The Query api allows one relationship to be queried at a time. If multiple relationships need to be queried, using QueryMerge is an option. It merges the results of a query with results from another query.  
+The Query api allows one relationship to be queried at a time. If multiple relationships need to be queried, using QueryMerge is an option. It merges the results of a query with results from another query. 
 QueryMerge uses an sql 'IN' clause to retrieve records. If the number of records are larger than 100, multiple IN clause queries will be issued with each having up to 100 entries to retrieve all the records.
 
 ### Example using Query and QueryMerge together

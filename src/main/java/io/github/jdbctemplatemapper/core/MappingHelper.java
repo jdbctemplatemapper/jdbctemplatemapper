@@ -1,5 +1,16 @@
 package io.github.jdbctemplatemapper.core;
 
+import io.github.jdbctemplatemapper.annotation.Column;
+import io.github.jdbctemplatemapper.annotation.CreatedBy;
+import io.github.jdbctemplatemapper.annotation.CreatedOn;
+import io.github.jdbctemplatemapper.annotation.Id;
+import io.github.jdbctemplatemapper.annotation.IdType;
+import io.github.jdbctemplatemapper.annotation.Table;
+import io.github.jdbctemplatemapper.annotation.UpdatedBy;
+import io.github.jdbctemplatemapper.annotation.UpdatedOn;
+import io.github.jdbctemplatemapper.annotation.Version;
+import io.github.jdbctemplatemapper.exception.AnnotationException;
+import io.github.jdbctemplatemapper.exception.MapperException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.sql.DatabaseMetaData;
@@ -24,17 +35,7 @@ import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.jdbc.support.MetaDataAccessException;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
-import io.github.jdbctemplatemapper.annotation.Column;
-import io.github.jdbctemplatemapper.annotation.CreatedBy;
-import io.github.jdbctemplatemapper.annotation.CreatedOn;
-import io.github.jdbctemplatemapper.annotation.Id;
-import io.github.jdbctemplatemapper.annotation.IdType;
-import io.github.jdbctemplatemapper.annotation.Table;
-import io.github.jdbctemplatemapper.annotation.UpdatedBy;
-import io.github.jdbctemplatemapper.annotation.UpdatedOn;
-import io.github.jdbctemplatemapper.annotation.Version;
-import io.github.jdbctemplatemapper.exception.AnnotationException;
-import io.github.jdbctemplatemapper.exception.MapperException;
+
 
 class MappingHelper {
   // Map key - object class
@@ -56,7 +57,6 @@ class MappingHelper {
   // jdbc drivers may require to pass something like '%'.
   private final String metaDataColumnNamePattern;
 
-
   private boolean includeSynonyms = false;
 
   /**
@@ -71,19 +71,22 @@ class MappingHelper {
    *        '%'.
    */
   public MappingHelper(JdbcTemplate jdbcTemplate, String schemaName, String catalogName,
-      String metaDataColumnNamePattern, boolean includeSynonyms) {
+      String metaDataColumnNamePattern) {
     this.jdbcTemplate = jdbcTemplate;
     this.schemaName = schemaName;
     this.catalogName = catalogName;
     this.metaDataColumnNamePattern = metaDataColumnNamePattern;
 
-    this.includeSynonyms = includeSynonyms;
     this.databaseProductName = getDatabaseProductName(jdbcTemplate);
     validateMetaDataConfig(databaseProductName, catalogName, schemaName);
   }
 
   public void forcePostgresTimestampWithTimezone(boolean val) {
     this.forcePostgresTimestampWithTimezone = val;
+  }
+  
+  public void includeSynonyms() {
+    this.includeSynonyms = true;
   }
 
   public String getSchemaName() {
@@ -217,11 +220,9 @@ class MappingHelper {
     String tableName = tableAnnotation.name();
     List<ColumnInfo> columnInfoList = getColumnInfoFromDatabaseMetadata(tableName, schema, catalog);
     if (MapperUtils.isEmpty(columnInfoList)) {
-      if (MapperUtils.isEmpty(columnInfoList)) {
-        throw new AnnotationException(
-            "Could not find table " + tableName + " for class " + clazz.getSimpleName());
-      }
+      throw new AnnotationException(getTableMetaDataNotFoundErrMsg(clazz, tableName, schema, catalog));
     }
+    
     return new TableColumnInfo(tableName, schema, catalog, columnInfoList);
   }
 
@@ -408,6 +409,24 @@ class MappingHelper {
   private String getSchemaForTable(Table tableAnnotation) {
     return MapperUtils.isEmpty(tableAnnotation.schema()) ? this.schemaName
         : tableAnnotation.schema();
+  }
+  
+  private String getTableMetaDataNotFoundErrMsg(Class<?> clazz, String tableName, String schema, String catalog) {
+    String errMsg = "Unable to locate meta-data for table '" + tableName + "'" ; 
+
+    if(schema != null && catalog != null) {
+      errMsg += " in schema " + schema + " and catalog " + catalog;
+    }
+    else {
+      if(schema != null) {
+        errMsg += " in schema " + schema;
+      }
+      if(catalog != null) {
+        errMsg += " in catalog/database " + catalog;
+      }
+    }
+    errMsg += " for class " + clazz.getSimpleName();
+    return errMsg;
   }
 
 }

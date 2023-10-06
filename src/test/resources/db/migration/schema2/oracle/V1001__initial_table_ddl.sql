@@ -11,3 +11,5 @@ CREATE TABLE SCHEMA2.office (
 	address varchar2(100),
 	CONSTRAINT office_pk PRIMARY KEY (id)
 );
+
+CREATE synonym testsynonym FOR SCHEMA1.testsynonym;
