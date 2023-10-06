@@ -132,6 +132,28 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>4.3</version>
+                <configuration>
+                    <properties>
+                        <year>2023</year>
+                    </properties>
+                    <licenseSets>
+                        <licenseSet>
+                            <header>/opt/license/APACHE-2.txt</header>
+                            <excludes>
+                                <exclude>**/README</exclude>
+                                <exclude>**/*.xml</exclude>
+                                <exclude>**/*.yml</exclude>
+                                <exclude>src/test/**</exclude>
+                                <exclude>src/main/resources/**</exclude>
+                            </excludes>
+                        </licenseSet>
+                    </licenseSets>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
