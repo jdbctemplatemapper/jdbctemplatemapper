@@ -1,13 +1,14 @@
 package io.github.jdbctemplatemapper.core;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import org.springframework.util.Assert;
 import io.github.jdbctemplatemapper.querycount.IQueryCountFluent;
 import io.github.jdbctemplatemapper.querycount.IQueryCountHasOne;
 import io.github.jdbctemplatemapper.querycount.IQueryCountJoinColumnOwningSide;
 import io.github.jdbctemplatemapper.querycount.IQueryCountType;
 import io.github.jdbctemplatemapper.querycount.IQueryCountWhere;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.util.Assert;
+
 
 /**
  * Gets the count of the records for a query. This is to mainly support pagination counts
@@ -39,7 +40,7 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
   }
 
   /**
-   * The owning type
+   * The owning type.
    *
    * @param <T> The type
    * @param type the type
@@ -51,7 +52,7 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
   }
 
   /**
-   * The hasOne relationship
+   * The hasOne relationship.
    *
    * @param relatedType the related type
    * @return interface with the next methods in the chain
@@ -66,10 +67,7 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
   /**
    * Join column for hasOne relationship: The join column (the foreign key) is on the table of the
    * owning model. Example: Order hasOne Customer. The join column(foreign key) will be on the table
-   * order (of the owning model)
-   *
-   * <p>
-   * The join column should not have a table prefix.
+   * order (of the owning model). The join column should not have a table prefix.
    *
    * @param joinColumnOwningSide the join column on the owning side (with no table prefix)
    * @return interface with the next methods in the chain
@@ -99,19 +97,22 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
   }
 
   /**
-   * The executes query and returns count
+   * The executes query and returns count.
    *
    * @param jdbcTemplateMapper the jdbcTemplateMapper
    */
   public Integer execute(JdbcTemplateMapper jdbcTemplateMapper) {
     Assert.notNull(jdbcTemplateMapper, "jdbcTemplateMapper cannot be null");
 
+    boolean foundInCache = false;
     String cacheKey = getCacheKey(jdbcTemplateMapper);
     String sql = getSqlFromCache(cacheKey);
     if (sql == null) {
       QueryValidator.validateQueryCount(jdbcTemplateMapper, ownerType, relationshipType,
           relatedType, joinColumnOwningSide);
       sql = generateQuerySql(jdbcTemplateMapper);
+    } else {
+      foundInCache = true;
     }
 
     Integer count = 0;
@@ -122,15 +123,13 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
     }
 
     // code reaches here query success, handle caching
-    if (!previouslySuccessfulQuery(cacheKey)) {
+    if (!foundInCache) {
       addToCache(cacheKey, sql);
     }
     return count;
   }
 
   private String generateQuerySql(JdbcTemplateMapper jtm) {
-
-    // MappingHelper mappingHelper = jdbcTemplateMapper.getMappingHelper();
     TableMapping ownerTypeTableMapping = jtm.getTableMapping(ownerType);
     String ownerTypeTableName = ownerTypeTableMapping.getTableName();
     TableMapping relatedTypeTableMapping =
@@ -142,9 +141,9 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
       String relatedTypeTableName = relatedTypeTableMapping.getTableName();
       if (relationshipType == RelationshipType.HAS_ONE) {
         // joinColumn is on owner table
-        sql += " LEFT JOIN " + relatedTypeTableMapping.fullyQualifiedTableName()
-            + " on " + ownerTypeTableName + "." + joinColumnOwningSide + " = "
-            + relatedTypeTableName + "." + relatedTypeTableMapping.getIdColumnName();
+        sql += " LEFT JOIN " + relatedTypeTableMapping.fullyQualifiedTableName() + " on "
+            + ownerTypeTableName + "." + joinColumnOwningSide + " = " + relatedTypeTableName + "."
+            + relatedTypeTableMapping.getIdColumnName();
       }
     }
     if (MapperUtils.isNotBlank(whereClause)) {
@@ -168,10 +167,6 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
 
   private String getSqlFromCache(String cacheKey) {
     return successCountSqlCache.get(cacheKey);
-  }
-
-  private boolean previouslySuccessfulQuery(String key) {
-    return successCountSqlCache.containsKey(key);
   }
 
   private void addToCache(String key, String sql) {

@@ -1,5 +1,7 @@
 package io.github.jdbctemplatemapper.core;
 
+import io.github.jdbctemplatemapper.exception.MapperException;
+import io.github.jdbctemplatemapper.exception.QueryException;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
@@ -7,8 +9,6 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
-import io.github.jdbctemplatemapper.exception.MapperException;
-import io.github.jdbctemplatemapper.exception.QueryException;
 
 class QueryValidator {
 
@@ -174,7 +174,7 @@ class QueryValidator {
       String throughJoinTable, String throughOwnerTypeJoinColumn,
       String throughRelatedTypeJoinColumn, String propertyName, BeanWrapper bwOwnerModel) {
     validatePopulatePropertyForCollection(propertyName, bwOwnerModel, ownerType, relatedType);
-    
+
     if (throughOwnerTypeJoinColumn.contains(".")) {
       throw new QueryException("Invalid throughJoinColumns " + throughOwnerTypeJoinColumn
           + " .It should have no prefixes");
@@ -211,8 +211,9 @@ class QueryValidator {
     }
     Object value = bwOwnerModel.getPropertyValue(propertyName);
     if (value == null) {
-      throw new QueryException("Only initialized collections can be populated by queries. Collection property "
-          + ownerType.getSimpleName() + "." + propertyName + " is not initialized.");
+      throw new QueryException(
+          "Only initialized collections can be populated by queries. Collection property "
+              + ownerType.getSimpleName() + "." + propertyName + " is not initialized.");
     }
   }
 

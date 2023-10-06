@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  * Properties that need be persisted to the database will need this annotation unless the property
- * is already annotated with one of the other annotations
+ * is already annotated with one of the other annotations.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

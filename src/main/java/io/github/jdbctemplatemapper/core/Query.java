@@ -1,5 +1,17 @@
 package io.github.jdbctemplatemapper.core;
 
+import io.github.jdbctemplatemapper.query.IQueryFluent;
+import io.github.jdbctemplatemapper.query.IQueryHasMany;
+import io.github.jdbctemplatemapper.query.IQueryHasOne;
+import io.github.jdbctemplatemapper.query.IQueryJoinColumnManySide;
+import io.github.jdbctemplatemapper.query.IQueryJoinColumnOwningSide;
+import io.github.jdbctemplatemapper.query.IQueryLimitOffsetClause;
+import io.github.jdbctemplatemapper.query.IQueryOrderBy;
+import io.github.jdbctemplatemapper.query.IQueryPopulateProperty;
+import io.github.jdbctemplatemapper.query.IQueryThroughJoinColumns;
+import io.github.jdbctemplatemapper.query.IQueryThroughJoinTable;
+import io.github.jdbctemplatemapper.query.IQueryType;
+import io.github.jdbctemplatemapper.query.IQueryWhere;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -13,18 +25,7 @@ import org.springframework.beans.BeanWrapper;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.util.Assert;
-import io.github.jdbctemplatemapper.query.IQueryFluent;
-import io.github.jdbctemplatemapper.query.IQueryHasMany;
-import io.github.jdbctemplatemapper.query.IQueryHasOne;
-import io.github.jdbctemplatemapper.query.IQueryJoinColumnManySide;
-import io.github.jdbctemplatemapper.query.IQueryJoinColumnOwningSide;
-import io.github.jdbctemplatemapper.query.IQueryLimitOffsetClause;
-import io.github.jdbctemplatemapper.query.IQueryOrderBy;
-import io.github.jdbctemplatemapper.query.IQueryPopulateProperty;
-import io.github.jdbctemplatemapper.query.IQueryThroughJoinColumns;
-import io.github.jdbctemplatemapper.query.IQueryThroughJoinTable;
-import io.github.jdbctemplatemapper.query.IQueryType;
-import io.github.jdbctemplatemapper.query.IQueryWhere;
+
 
 /**
  * Fluent style queries for relationships hasOne, hasMany, hasMany through (many to many).
@@ -77,7 +78,7 @@ public class Query<T> implements IQueryFluent<T> {
   }
 
   /**
-   * The hasOne relationship
+   * The hasOne relationship.
    *
    * @param relatedType the related type
    * @return interface with the next methods in the chain
@@ -106,10 +107,7 @@ public class Query<T> implements IQueryFluent<T> {
   /**
    * Join column for hasOne relationship: The join column (the foreign key) is on the table of the
    * owning model. Example: Order hasOne Customer. The join column(foreign key) will be on the table
-   * order (of the owning model)
-   *
-   * <p>
-   * The join column should not have a table prefix.
+   * order (of the owning model). The join column should not have a table prefix.
    *
    * @param joinColumnOwningSide the join column on the owning side (with no table prefix)
    * @return interface with the next methods in the chain
@@ -125,10 +123,7 @@ public class Query<T> implements IQueryFluent<T> {
   /**
    * Join column for hasMany relationship: The join column (the foreign key) is on the table of the
    * many side. Example: Order hasMany OrderLine. The join column will be on the table order_line
-   * (the many side)
-   *
-   * <p>
-   * The join column should not have a table prefix.
+   * (the many side). The join column should not have a table prefix.
    *
    * @param joinColumnManySide the join column on the many side (with no table prefix)
    * @return interface with the next methods in the chain
@@ -142,7 +137,7 @@ public class Query<T> implements IQueryFluent<T> {
   }
 
   /**
-   * The join table (associative table) for the hasMany through (many to many) relationship
+   * The join table (associative table) for the hasMany through (many to many) relationship.
    *
    * @param tableName the associative table name
    * @return interface with the next methods in the chain
@@ -157,7 +152,7 @@ public class Query<T> implements IQueryFluent<T> {
   }
 
   /**
-   * The join columns for the owning side and the related side for hasMany through relationship
+   * The join columns for the owning side and the related side for hasMany through relationship.
    *
    * @param ownerTypeJoinColumn the join column for the owning side
    * @param relatedTypeJoinColumn the join column for the related side
@@ -179,12 +174,10 @@ public class Query<T> implements IQueryFluent<T> {
   }
 
   /**
-   * The relationship property that needs to be populated on the owning type.
-   *
-   * <p>
-   * For hasMany() this property has to be an initialized collection (cannot be null) and the
-   * generic type should match the hasMany related type. For hasOne this property has to be the same
-   * type as hasOne related type
+   * The relationship property that needs to be populated on the owning type. For hasMany() this
+   * property has to be an initialized collection (cannot be null) and the generic type should match
+   * the hasMany related type. For hasOne this property has to be the same type as hasOne related
+   * type
    *
    * @param propertyName name of property that needs to be populated
    * @return interface with the next methods in the chain
@@ -229,16 +222,15 @@ public class Query<T> implements IQueryFluent<T> {
   }
 
   /**
-   * The limit Offset clause for the query specific to the database being used.
-   * 
-   * The limit offset clause for hasMany/hasMany through relationship is not supported.
+   * The limit Offset clause for the query specific to the database being used. The limit offset
+   * clause for hasMany/hasMany through relationship is not supported.
    * 
    * <pre>
    * See <a href=
    * "https://github.com/jdbctemplatemapper/jdbctemplatemapper#paginated-queries">Paginated Queries
    * </a> for more info
    * </pre>
-   * 
+   *
    * @param limitOffsetClause the limit clause.
    * @return interface with the next methods in the chain
    */
@@ -251,7 +243,7 @@ public class Query<T> implements IQueryFluent<T> {
   }
 
   /**
-   * Execute the query using the jdbcTemplateMapper
+   * Execute the query using the jdbcTemplateMapper.
    *
    * @param jdbcTemplateMapper the jdbcTemplateMapper
    * @return List a list of the owning type with its relationship property populated
@@ -269,6 +261,7 @@ public class Query<T> implements IQueryFluent<T> {
     SelectMapper<?> relatedTypeSelectMapper = relatedType == null ? null
         : jdbcTemplateMapper.getSelectMapper(relatedType, relatedTypeTableMapping.getTableName());
 
+    boolean foundInCache = false;
     String cacheKey = getCacheKey(jdbcTemplateMapper);
     String sql = getSqlFromCache(cacheKey);
     if (sql == null) {
@@ -277,6 +270,8 @@ public class Query<T> implements IQueryFluent<T> {
           throughOwnerTypeJoinColumn, throughRelatedTypeJoinColumn);
 
       sql = generateQuerySql(jdbcTemplateMapper);
+    } else {
+      foundInCache = true;
     }
 
     // sql stored in cache does not include limit offset clause.
@@ -327,7 +322,7 @@ public class Query<T> implements IQueryFluent<T> {
     }
 
     // code reaches here query success, handle caching
-    if (!previouslySuccessfulQuery(cacheKey)) {
+    if (!foundInCache) {
       addToCache(cacheKey, sqlForCache);
     }
     return resultList;
@@ -427,10 +422,6 @@ public class Query<T> implements IQueryFluent<T> {
 
   private String getSqlFromCache(String cacheKey) {
     return successQuerySqlCache.get(cacheKey);
-  }
-
-  private boolean previouslySuccessfulQuery(String key) {
-    return successQuerySqlCache.containsKey(key);
   }
 
   private void addToCache(String key, String sql) {

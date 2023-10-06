@@ -3,7 +3,7 @@ package io.github.jdbctemplatemapper.querycount;
 import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
 
 /**
- * The execute interface
+ * The execute interface.
  *
  * @author ajoseph
  * @param <T> the type

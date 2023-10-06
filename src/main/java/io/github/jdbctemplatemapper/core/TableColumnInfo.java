@@ -9,7 +9,8 @@ class TableColumnInfo {
   private final String catalogName;
   private List<ColumnInfo> columnInfos;
 
-  TableColumnInfo(String tableName, String schemaName, String catalogName, List<ColumnInfo> columnInfos) {
+  TableColumnInfo(String tableName, String schemaName, String catalogName,
+      List<ColumnInfo> columnInfos) {
     this.tableName = tableName;
     this.schemaName = MapperUtils.isEmpty(schemaName) ? null : schemaName;
     this.catalogName = MapperUtils.isEmpty(catalogName) ? null : catalogName;

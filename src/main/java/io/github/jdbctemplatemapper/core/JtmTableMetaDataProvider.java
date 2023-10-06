@@ -4,11 +4,9 @@ import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import org.springframework.jdbc.core.metadata.GenericTableMetaDataProvider;
 
-class JtmTableMetaDataProvider extends GenericTableMetaDataProvider{
-  
-  // GenericTableMetaDataProvider constructor is protected so needed to extend
+// Spring GenericTableMetaDataProvider constructor is protected so needed to extend
+class JtmTableMetaDataProvider extends GenericTableMetaDataProvider {
   public JtmTableMetaDataProvider(DatabaseMetaData databaseMetaData) throws SQLException {
     super(databaseMetaData);
   }
-
 }

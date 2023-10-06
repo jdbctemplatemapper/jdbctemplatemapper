@@ -1,5 +1,7 @@
 package io.github.jdbctemplatemapper.core;
 
+import io.github.jdbctemplatemapper.exception.MapperException;
+import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -20,11 +22,10 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsertOperations;
 import org.springframework.util.Assert;
-import io.github.jdbctemplatemapper.exception.MapperException;
-import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
+
 
 /**
- * CRUD methods and configuration for JdbcTemplateMapper
+ * CRUD methods and configuration for JdbcTemplateMapper.
  *
  * <pre>
  * See <a href=
@@ -64,16 +65,22 @@ public final class JdbcTemplateMapper {
 
   // used for an attempt to support for old/non standard jdbc drivers.
   private boolean useColumnLabelForResultSetMetaData = true;
-  
+
   private boolean includeSynonyms = false;
 
-  /** @param jdbcTemplate the jdbcTemplate */
+  /**
+   * Constructor.
+   *
+   * @param jdbcTemplate the jdbcTemplate.
+   */
   public JdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
     this(jdbcTemplate, null, null, null);
   }
 
   /**
-   * @param jdbcTemplate the jdbcTemplate
+   * Constructor.
+   *
+   * @param jdbcTemplate the jdbcTemplate.
    * @param schemaName database schema name.
    */
   public JdbcTemplateMapper(JdbcTemplate jdbcTemplate, String schemaName) {
@@ -81,6 +88,8 @@ public final class JdbcTemplateMapper {
   }
 
   /**
+   * Constructor.
+   *
    * @param jdbcTemplate the jdbcTemplate
    * @param schemaName database schema name.
    * @param catalogName database catalog name.
@@ -90,6 +99,8 @@ public final class JdbcTemplateMapper {
   }
 
   /**
+   * Constructor.
+   *
    * @param jdbcTemplate The jdbcTemplate
    * @param schemaName database schema name.
    * @param catalogName database catalog name.
@@ -106,12 +117,12 @@ public final class JdbcTemplateMapper {
 
     npJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
 
-    mappingHelper =
-        new MappingHelper(jdbcTemplate, schemaName, catalogName, metaDataColumnNamePattern, includeSynonyms);
+    mappingHelper = new MappingHelper(jdbcTemplate, schemaName, catalogName,
+        metaDataColumnNamePattern);
   }
 
   /**
-   * Gets the JdbcTemplate of the jdbcTemplateMapper
+   * Gets the JdbcTemplate of the jdbcTemplateMapper.
    *
    * @return the JdbcTemplate
    */
@@ -120,7 +131,7 @@ public final class JdbcTemplateMapper {
   }
 
   /**
-   * Gets the NamedParameterJdbcTemplate of the jdbcTemplateMapper
+   * Gets the NamedParameterJdbcTemplate of the jdbcTemplateMapper.
    *
    * @return the NamedParameterJdbcTemplate
    */
@@ -140,11 +151,11 @@ public final class JdbcTemplateMapper {
     this.recordOperatorResolver = recordOperatorResolver;
     return this;
   }
-  
-  
+
+
   /**
-   * Attempted Support for old/non standard jdbc drivers. For old drivers
-   * set this value to false and see whether it makes a difference.
+   * Attempted Support for old/non standard jdbc drivers. For old drivers set this value to false
+   * and see whether it makes a difference.
    *
    * @param val boolean value
    */
@@ -163,43 +174,41 @@ public final class JdbcTemplateMapper {
   public void forcePostgresTimestampWithTimezone(boolean val) {
     mappingHelper.forcePostgresTimestampWithTimezone(val);
   }
-  
+
   /**
-   * Include synonyms for the column meta-data lookups
-   * This is for Oracle at this time to look up synonym table names,
+   * Include synonyms for the table meta-data lookups for Oracle. Other databases don't need this.
    */
   public void includeSynonymsForTableColumnMetaData() {
     this.includeSynonyms = true;
+    mappingHelper.includeSynonyms();
   }
 
   /**
-   * Get the schema name
-   * 
-   * @return the schema name
+   * Get the schema name.
+   *
+   * @return the schema name.
    */
   public String getSchemaName() {
     return mappingHelper.getSchemaName();
   }
 
   /**
-   * Get the catalog name
-   * 
-   * @return the catalog name
+   * Get the catalog name.
+   *
+   * @return the catalog name.
    */
   public String getCatalogName() {
     return mappingHelper.getCatalogName();
   }
 
   /**
-   * Exposing the conversion service used so if necessary new converters can be added
+   * Exposing the conversion service used so if necessary new converters can be added.
    *
    * @return the default conversion service.
    */
   public DefaultConversionService getConversionService() {
     return (DefaultConversionService) conversionService;
   }
-
-
 
   /**
    * finds the object by Id. Return null if not found
@@ -214,9 +223,8 @@ public final class JdbcTemplateMapper {
 
     TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
     String columnsSql = getFindColumnsSql(tableMapping, clazz);
-    String sql = "SELECT " + columnsSql + " FROM "
-        + tableMapping.fullyQualifiedTableName() + " WHERE "
-        + tableMapping.getIdColumnName() + " = ?";
+    String sql = "SELECT " + columnsSql + " FROM " + tableMapping.fullyQualifiedTableName()
+        + " WHERE " + tableMapping.getIdColumnName() + " = ?";
 
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
 
@@ -277,9 +285,8 @@ public final class JdbcTemplateMapper {
     }
 
     String columnsSql = getFindColumnsSql(tableMapping, clazz);
-    String sql = "SELECT " + columnsSql + " FROM "
-        + tableMapping.fullyQualifiedTableName() + " WHERE "
-        + propColumnName;
+    String sql = "SELECT " + columnsSql + " FROM " + tableMapping.fullyQualifiedTableName()
+        + " WHERE " + propColumnName;
 
     if (propertyValue == null) {
       sql += " IS NULL";
@@ -311,7 +318,7 @@ public final class JdbcTemplateMapper {
   }
 
   /**
-   * Find all objects
+   * Find all objects.
    *
    * @param <T> the type
    * @param clazz Type of object
@@ -322,7 +329,7 @@ public final class JdbcTemplateMapper {
   }
 
   /**
-   * Find all objects ordered by orderByPropertyName ascending
+   * Find all objects ordered by orderByPropertyName ascending.
    *
    * @param <T> the type
    * @param clazz Type of object
@@ -345,8 +352,7 @@ public final class JdbcTemplateMapper {
       }
     }
 
-    String sql = "SELECT " + columnsSql + " FROM "
-        + tableMapping.fullyQualifiedTableName();
+    String sql = "SELECT " + columnsSql + " FROM " + tableMapping.fullyQualifiedTableName();
 
     if (orderByColumnName != null) {
       sql = sql + " ORDER BY " + orderByColumnName + " ASC";
@@ -363,9 +369,11 @@ public final class JdbcTemplateMapper {
    * <pre>
    * Will handle the following annotations:
    * &#64;CreatedOn property will be assigned current date and time
-   * &#64;CreatedBy if IRecordOperaterrResolver is configured with JdbcTemplateMapper the property will be assigned that value
+   * &#64;CreatedBy if IRecordOperaterrResolver is configured with JdbcTemplateMapper the property 
+   *      will be assigned that value
    * &#64;UpdatedOn property will be assigned current date and time
-   * &#64;UpdatedBy if IRecordOperaterrResolver is configured with JdbcTemplateMapper the property will be assigned that value
+   * &#64;UpdatedBy if IRecordOperaterrResolver is configured with JdbcTemplateMapper the property
+   *                will be assigned that value
    * &#64;Version property will be set to 1. Used for optimistic locking.
    * </pre>
    *
@@ -436,11 +444,12 @@ public final class JdbcTemplateMapper {
       }
     }
 
+    boolean foundInCache = false;
     SimpleJdbcInsertOperations jdbcInsert = simpleJdbcInsertCache.get(obj.getClass());
     if (jdbcInsert == null) {
       if (tableMapping.isIdAutoIncrement()) {
-        jdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
-                .withCatalogName(tableMapping.getCatalogName())
+        jdbcInsert =
+            new SimpleJdbcInsert(jdbcTemplate).withCatalogName(tableMapping.getCatalogName())
                 .withSchemaName(tableMapping.getSchemaName())
                 .withTableName(tableNameForSimpleJdbcInsert(tableMapping))
                 .usingGeneratedKeyColumns(tableMapping.getIdColumnName());
@@ -451,11 +460,11 @@ public final class JdbcTemplateMapper {
                 .withTableName(tableNameForSimpleJdbcInsert(tableMapping));
       }
       // for oracle synonym table metadata
-      if(includeSynonyms) {
+      if (includeSynonyms) {
         jdbcInsert.includeSynonymsForTableColumnMetaData();
       }
-      
-      simpleJdbcInsertCache.put(obj.getClass(), (SimpleJdbcInsert) jdbcInsert);
+    } else {
+      foundInCache = true;
     }
 
     if (tableMapping.isIdAutoIncrement()) {
@@ -463,6 +472,10 @@ public final class JdbcTemplateMapper {
       bw.setPropertyValue(tableMapping.getIdPropertyName(), idNumber); // set object id value
     } else {
       jdbcInsert.execute(mapSqlParameterSource);
+    }
+
+    if (!foundInCache) {
+      simpleJdbcInsertCache.put(obj.getClass(), (SimpleJdbcInsert) jdbcInsert);
     }
   }
 
@@ -472,8 +485,10 @@ public final class JdbcTemplateMapper {
    * <pre>
    * Will handle the following annotations:
    * &#64;UpdatedOn property will be assigned current date and time
-   * &#64;UpdatedBy if IRecordOperaterrResolver is configured with JdbcTemplateMapper the property will be assigned that value
-   * &#64;Version property will be incremented on a successful update. An OptimisticLockingException will be thrown if object is stale.
+   * &#64;UpdatedBy if IRecordOperaterrResolver is configured with JdbcTemplateMapper the property 
+   *                will be assigned that value
+   * &#64;Version property will be incremented on a successful update. An OptimisticLockingException
+   *                will be thrown if object is stale.
    * </pre>
    *
    * @param obj object to be updated
@@ -483,10 +498,13 @@ public final class JdbcTemplateMapper {
     Assert.notNull(obj, "Object must not be null");
 
     TableMapping tableMapping = mappingHelper.getTableMapping(obj.getClass());
+
+    boolean foundInCache = false;
     SqlAndParams sqlAndParams = updateSqlAndParamsCache.get(obj.getClass());
     if (sqlAndParams == null) {
       sqlAndParams = buildSqlAndParamsForUpdate(tableMapping);
-      updateSqlAndParamsCache.put(obj.getClass(), sqlAndParams);
+    } else {
+      foundInCache = true;
     }
 
     BeanWrapper bw = getBeanWrapper(obj);
@@ -523,10 +541,11 @@ public final class JdbcTemplateMapper {
       }
     }
 
+    int cnt = -1;
     // if object has property version the version gets incremented on update.
     // throws OptimisticLockingException when update fails.
     if (sqlAndParams.getParams().contains("incrementedVersion")) {
-      int cnt = npJdbcTemplate.update(sqlAndParams.getSql(), mapSqlParameterSource);
+      cnt = npJdbcTemplate.update(sqlAndParams.getSql(), mapSqlParameterSource);
       if (cnt == 0) {
         throw new OptimisticLockingException("update failed for " + obj.getClass().getSimpleName()
             + " . " + tableMapping.getIdPropertyName() + ": "
@@ -537,14 +556,19 @@ public final class JdbcTemplateMapper {
       // update the version in object with new version
       bw.setPropertyValue(tableMapping.getVersionPropertyMapping().getPropertyName(),
           mapSqlParameterSource.getValue("incrementedVersion"));
-      return cnt;
     } else {
-      return npJdbcTemplate.update(sqlAndParams.getSql(), mapSqlParameterSource);
+      cnt = npJdbcTemplate.update(sqlAndParams.getSql(), mapSqlParameterSource);
     }
+
+    if (!foundInCache) {
+      updateSqlAndParamsCache.put(obj.getClass(), sqlAndParams);
+    }
+
+    return cnt;
   }
 
   /**
-   * Physically Deletes the object from the database
+   * Deletes the object from the database.
    *
    * @param obj Object to be deleted
    * @return number of records were deleted (1 or 0)
@@ -554,15 +578,15 @@ public final class JdbcTemplateMapper {
 
     TableMapping tableMapping = mappingHelper.getTableMapping(obj.getClass());
 
-    String sql = "DELETE FROM " + tableMapping.fullyQualifiedTableName()
-        + " WHERE " + tableMapping.getIdColumnName() + "= ?";
+    String sql = "DELETE FROM " + tableMapping.fullyQualifiedTableName() + " WHERE "
+        + tableMapping.getIdColumnName() + "= ?";
     BeanWrapper bw = getBeanWrapper(obj);
     Object id = bw.getPropertyValue(tableMapping.getIdPropertyName());
     return jdbcTemplate.update(sql, id);
   }
 
   /**
-   * Physically Deletes the object from the database by id
+   * Deletes the object from the database by id.
    *
    * @param clazz Type of object to be deleted.
    * @param id Id of object to be deleted
@@ -573,8 +597,8 @@ public final class JdbcTemplateMapper {
     Assert.notNull(id, "id must not be null");
 
     TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
-    String sql = "DELETE FROM " + tableMapping.fullyQualifiedTableName()
-        + " WHERE " + tableMapping.getIdColumnName() + " = ?";
+    String sql = "DELETE FROM " + tableMapping.fullyQualifiedTableName() + " WHERE "
+        + tableMapping.getIdColumnName() + " = ?";
     return jdbcTemplate.update(sql, id);
   }
 
@@ -609,8 +633,7 @@ public final class JdbcTemplateMapper {
    * underscore case name of property name, so it works well with JdbcTemplate's
    * BeanPropertyRowMapper
    *
-   * <p>
-   * Will return something like below if 'name' property is mapped to 'last_name':
+   *<p>Will return something like below if 'name' property is mapped to 'last_name':
    *
    * <pre>
    * "id as id, last_name as name"
@@ -623,7 +646,6 @@ public final class JdbcTemplateMapper {
   public String getColumnsSql(Class<?> clazz) {
     return getFindColumnsSql(mappingHelper.getTableMapping(clazz), clazz);
   }
-
 
   /**
    * Loads the mapping for a class. Model mappings are loaded when they are used for the first time.
@@ -719,14 +741,13 @@ public final class JdbcTemplateMapper {
     bw.setConversionService(conversionService);
     return bw;
   }
-  
+
   private String tableNameForSimpleJdbcInsert(TableMapping tableMapping) {
     if (tableMapping.getSchemaName() != null) {
       return tableMapping.getTableName();
-    }
-    else {
+    } else {
       return tableMapping.fullyQualifiedTableName();
     }
   }
-  
+
 }

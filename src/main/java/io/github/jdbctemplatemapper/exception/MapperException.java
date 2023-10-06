@@ -1,7 +1,7 @@
 package io.github.jdbctemplatemapper.exception;
 
 /**
- * Generic Mapper Exception
+ * Generic Mapper Exception.
  *
  * @author ajoseph
  */
@@ -11,10 +11,12 @@ public class MapperException extends RuntimeException {
   public MapperException(String message) {
     super(message);
   }
+
   public MapperException(Exception e) {
     super(e);
   }
+
   public MapperException(String message, Exception e) {
-    super(message,e);
+    super(message, e);
   }
 }

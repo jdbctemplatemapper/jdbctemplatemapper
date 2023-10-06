@@ -1,7 +1,6 @@
 package io.github.jdbctemplatemapper.core;
 
 import java.util.Set;
-
 import org.springframework.util.ObjectUtils;
 
 /**
