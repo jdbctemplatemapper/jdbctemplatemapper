@@ -1,17 +1,15 @@
 /*
  * Copyright 2023 the original author or authors.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.github.jdbctemplatemapper.core;
 
@@ -56,7 +54,7 @@ import org.springframework.util.Assert;
 public class Query<T> implements IQueryFluent<T> {
   private static final int CACHE_MAX_ENTRIES = 1000;
 
-  // Cached SQL does not include limit clause
+  // Cached SQL does not include limit offset clause
   // key - cacheKey, value - sql
   private static Map<String, String> successQuerySqlCache = new ConcurrentHashMap<>();
 
@@ -206,9 +204,10 @@ public class Query<T> implements IQueryFluent<T> {
   }
 
   /**
-   * The where clause for the type.
+   * The where clause. When querying relationships the where clause can include columns from both
+   * owning and related tables.
    *
-   * @param whereClause the whereClause for the type.
+   * @param whereClause the whereClause.
    * @param params varArgs for the whereClause.
    * @return interface with the next methods in the chain
    */
@@ -223,7 +222,7 @@ public class Query<T> implements IQueryFluent<T> {
 
   /**
    * The orderBy clause for the query. When querying relationships (hasOne, hasMany, hasMany
-   * through) both the owning side and related side columns can be used in the orderBy clause.
+   * through) the orderBy can include columns from both owning and related tables.
    *
    * @param orderBy the orderBy clause.
    * @return interface with the next methods in the chain
@@ -284,6 +283,7 @@ public class Query<T> implements IQueryFluent<T> {
           joinColumnOwningSide, joinColumnManySide, propertyName, throughJoinTable,
           throughOwnerTypeJoinColumn, throughRelatedTypeJoinColumn);
 
+      // does not include the limit offset clause
       sql = generateQuerySql(jdbcTemplateMapper);
     } else {
       foundInCache = true;
@@ -367,6 +367,7 @@ public class Query<T> implements IQueryFluent<T> {
     return bwModel;
   }
 
+  // The sql generated does not include offset limit clause
   private String generateQuerySql(JdbcTemplateMapper jtm) {
 
     TableMapping ownerTypeTableMapping = jtm.getTableMapping(ownerType);
@@ -422,7 +423,7 @@ public class Query<T> implements IQueryFluent<T> {
     return String.join("-", 
         ownerType.getName(), 
         relatedType == null ? null : relatedType.getName(),
-        relationshipType == null ? null : relationshipType.toString(), propertyName,
+        relationshipType == null ? null : relationshipType.toString(),
         joinColumnOwningSide, 
         joinColumnManySide, 
         throughJoinTable, 

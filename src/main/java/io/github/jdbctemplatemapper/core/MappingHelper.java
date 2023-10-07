@@ -1,17 +1,15 @@
 /*
  * Copyright 2023 the original author or authors.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.github.jdbctemplatemapper.core;
 
@@ -51,7 +49,11 @@ import org.springframework.jdbc.support.MetaDataAccessException;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-
+/**
+ * Mapping helper.
+ *
+ * @author ajoseph
+ */
 class MappingHelper {
   // Map key - object class
   // value - the table mapping
@@ -99,7 +101,7 @@ class MappingHelper {
   public void forcePostgresTimestampWithTimezone(boolean val) {
     this.forcePostgresTimestampWithTimezone = val;
   }
-  
+
   public void includeSynonyms() {
     this.includeSynonyms = true;
   }
@@ -235,9 +237,10 @@ class MappingHelper {
     String tableName = tableAnnotation.name();
     List<ColumnInfo> columnInfoList = getColumnInfoFromDatabaseMetadata(tableName, schema, catalog);
     if (MapperUtils.isEmpty(columnInfoList)) {
-      throw new AnnotationException(getTableMetaDataNotFoundErrMsg(clazz, tableName, schema, catalog));
+      throw new AnnotationException(
+          getTableMetaDataNotFoundErrMsg(clazz, tableName, schema, catalog));
     }
-    
+
     return new TableColumnInfo(tableName, schema, catalog, columnInfoList);
   }
 
@@ -425,18 +428,18 @@ class MappingHelper {
     return MapperUtils.isEmpty(tableAnnotation.schema()) ? this.schemaName
         : tableAnnotation.schema();
   }
-  
-  private String getTableMetaDataNotFoundErrMsg(Class<?> clazz, String tableName, String schema, String catalog) {
-    String errMsg = "Unable to locate meta-data for table '" + tableName + "'" ; 
 
-    if(schema != null && catalog != null) {
+  private String getTableMetaDataNotFoundErrMsg(Class<?> clazz, String tableName, String schema,
+      String catalog) {
+    String errMsg = "Unable to locate meta-data for table '" + tableName + "'";
+
+    if (schema != null && catalog != null) {
       errMsg += " in schema " + schema + " and catalog " + catalog;
-    }
-    else {
-      if(schema != null) {
+    } else {
+      if (schema != null) {
         errMsg += " in schema " + schema;
       }
-      if(catalog != null) {
+      if (catalog != null) {
         errMsg += " in catalog/database " + catalog;
       }
     }

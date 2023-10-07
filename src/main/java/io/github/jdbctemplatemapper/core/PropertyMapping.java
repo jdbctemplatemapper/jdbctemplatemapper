@@ -1,22 +1,20 @@
 /*
  * Copyright 2023 the original author or authors.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.github.jdbctemplatemapper.core;
 
 /**
- * object property to database column mapping.
+ * Object property to database column mapping.
  *
  * @author ajoseph
  */
@@ -33,15 +31,15 @@ class PropertyMapping {
   private boolean createdByAnnotation = false;
   private boolean updatedByAnnotation = false;
 
-  public PropertyMapping(
-      String propertyName, Class<?> propertyType, String columnName, int columnSqlDataType) {
+  public PropertyMapping(String propertyName, Class<?> propertyType, String columnName,
+      int columnSqlDataType) {
     if (propertyName == null || propertyType == null || columnName == null) {
       throw new IllegalArgumentException("propertyName, propertyType, columnName must not be null");
     }
     this.propertyName = propertyName;
     this.propertyType = propertyType;
-    this.columnName =
-        MapperUtils.toLowerCase(columnName); // column names stored in lower case always
+    this.columnName = MapperUtils.toLowerCase(columnName); // column names stored in lower case
+                                                           // always
     this.columnSqlDataType = columnSqlDataType;
   }
 

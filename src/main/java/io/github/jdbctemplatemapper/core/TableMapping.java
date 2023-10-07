@@ -1,17 +1,15 @@
 /*
  * Copyright 2023 the original author or authors.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.github.jdbctemplatemapper.core;
 
@@ -50,27 +48,21 @@ class TableMapping {
   private Map<String, PropertyMapping> columnNameMap = new HashMap<>();
   private Map<String, PropertyMapping> propertyNameMap = new HashMap<>();
 
-  public TableMapping(
-      Class<?> tableClass,
-      String tableName,
-      String schemaName,
-      String catalogName,
-      String commonDatabaseName,
-      String idPropertyName,
-      List<PropertyMapping> propertyMappings) {
+  public TableMapping(Class<?> tableClass, String tableName, String schemaName, String catalogName,
+      String commonDatabaseName, String idPropertyName, List<PropertyMapping> propertyMappings) {
     Assert.notNull(tableClass, "tableClass must not be null");
     Assert.notNull(tableName, "tableName must not be null");
     Assert.notNull(idPropertyName, "idPropertyName must not be null");
-    
+
     this.tableClass = tableClass;
     this.tableName = tableName;
     this.schemaName = MapperUtils.isEmpty(schemaName) ? null : schemaName;
     this.catalogName = MapperUtils.isEmpty(catalogName) ? null : catalogName;
     this.commonDatabaseName = commonDatabaseName;
-    
+
     this.idPropertyName = idPropertyName;
     this.propertyMappings = propertyMappings;
-    
+
     if (propertyMappings != null) {
       for (PropertyMapping propMapping : propertyMappings) {
         if (propMapping.isVersionAnnotation()) {
@@ -152,47 +144,44 @@ class TableMapping {
     if (propMapping != null) {
       return propMapping;
     } else {
-      throw new MapperException(
-          "For @Id property "
-              + idPropertyName
-              + " could not find corresponding column in database table "
-              + tableName);
+      throw new MapperException("For @Id property " + idPropertyName
+          + " could not find corresponding column in database table " + tableName);
     }
   }
 
   public List<PropertyMapping> getPropertyMappings() {
     return propertyMappings;
   }
-  
+
   public PropertyMapping getPropertyMappingByColumnName(String columnName) {
     return columnNameMap.get(columnName);
   }
-  
+
   public String fullyQualifiedTableName() {
     if (MapperUtils.isNotEmpty(schemaName)) {
       return schemaName + "." + tableName;
     }
-    
+
     if (MapperUtils.isNotEmpty(catalogName) && isMySql()) {
       return catalogName + "." + tableName;
     }
 
     return tableName;
   }
-  
+
   // if there is a schema or catalog it tacks a "." to them.
   public String fullyQualifiedTablePrefix() {
     if (MapperUtils.isNotEmpty(schemaName)) {
       return schemaName + ".";
     }
-    
+
     if (MapperUtils.isNotEmpty(catalogName) && isMySql()) {
       return catalogName + ".";
     }
 
     return "";
   }
-  
+
 
   public PropertyMapping getVersionPropertyMapping() {
     return versionPropertyName != null ? propertyNameMap.get(versionPropertyName) : null;
@@ -213,9 +202,9 @@ class TableMapping {
   public PropertyMapping getUpdatedByPropertyMapping() {
     return updatedByPropertyName != null ? propertyNameMap.get(updatedByPropertyName) : null;
   }
-  
+
   public boolean isMySql() {
     return "mysql".equalsIgnoreCase(commonDatabaseName);
   }
-  
+
 }

@@ -115,10 +115,6 @@ spring.datasource.driver-class-name=org.postgresql.Driver
     return new JdbcTemplateMapper(jdbcTemplate, THE_SCHEMA_NAME);
   }
   
- // Access a table in another schema (The connection should have the appropriate privileges)
- @Table(name="product", schema="someotherschema")
-  class Product {...}
-  
 ```
  
 **MySQL**
@@ -136,10 +132,6 @@ spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
     return new JdbcTemplateMapper(jdbcTemplate, null, THE_DATABASE_NAME); // catalog name is synonymous to database name for mysql
   }
   
- // Access a table in another database (The connection should have the appropriate privileges)
- @Table(name="product", catalog="someotherdatabase") // catalog name is synonymous to database name for mysql
-  class Product {...}
-  
 ```
 
 **Oracle**
@@ -156,7 +148,7 @@ spring.datasource.driver-class-name=oracle.jdbc.driver.OracleDriver
   public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
     return new JdbcTemplateMapper(jdbcTemplate, THE_SCHEMA_NAME);
     
-    // Specific for oracle when using table synonyms configure as below:
+    // Specific to oracle when using table synonyms configure as below:
     /*
     JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate, THE_SCHEMA_NAME);
     jdbcTemplateMapper.includeSynonymsForTableColumnMetaData();
@@ -164,9 +156,6 @@ spring.datasource.driver-class-name=oracle.jdbc.driver.OracleDriver
     */
   }
   
- // Access a table in another schema (The connection should have the appropriate privileges)
- @Table(name="product", schema="someotherschema")
-  class Product {...}
 
 ```
 
@@ -203,7 +192,7 @@ class Product {
   ...
 }
 
-@Table(name="product", schema="someSchemaName")
+@Table(name="product", schema="someSchemaName") 
 class Product {
   ...
 }
@@ -606,7 +595,7 @@ An example for querying the following relationship: Order hasOne Customer, Order
  // The second argument to getSelectMapper() below is the table alias in the query and should match what is exactly used in query
  // For the query below the 'orders' table alias is 'o', 'customer' table alias is 'c', 'order_line' table alias 
  // is 'ol' and the product table alias is 'p'
- // SelectMapper.getColumnsSql() aliases all columns with the prefix; table alias + "_" so that there are no conflicts in sql
+ // SelectMapper.getColumnsSql() aliases all columns with the prefix: table alias + "_" so that there are no conflicts in sql
  // when different models have same property names like for example 'id'.
  // SelectMapper.buildModel(rs) uses the column alias prefix to populate the pertinent model from the ResultSet.
  

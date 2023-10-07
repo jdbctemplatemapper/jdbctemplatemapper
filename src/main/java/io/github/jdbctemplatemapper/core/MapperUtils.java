@@ -1,17 +1,15 @@
 /*
  * Copyright 2023 the original author or authors.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.github.jdbctemplatemapper.core;
 
@@ -21,6 +19,11 @@ import java.util.List;
 import java.util.Locale;
 import org.springframework.jdbc.support.JdbcUtils;
 
+/**
+ * Utility methods used by mapper.
+ *
+ * @author ajoseph
+ */
 class MapperUtils {
 
   public static String getTableNameOnly(String str) {
@@ -30,7 +33,7 @@ class MapperUtils {
     return str;
   }
 
-  // if user entered someschema.tablename use that. otherwise get the 
+  // if user entered someschema.tablename use that. otherwise get the
   // schema/catalog(table prefix) and concatenate with tableName
   public static String getFullyQualifiedTableNameForThroughJoinTable(String throughJoinTable,
       TableMapping tableMapping) {
@@ -117,7 +120,7 @@ class MapperUtils {
   public static boolean isEmpty(String str) {
     return str == null || str.length() == 0;
   }
-  
+
   @SuppressWarnings("all")
   public static boolean isEmpty(Collection coll) {
     return (coll == null || coll.isEmpty());
