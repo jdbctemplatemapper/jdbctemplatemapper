@@ -22,6 +22,8 @@ import java.lang.annotation.Target;
  * If IRecordOperatorResolver is implemented and configured with JdbcTemplateMapper the value will
  * be set to value returned by implementation when the record is updated. Without configuration no
  * values will be set. The type returned should match the type of the property.
+ * 
+ * @author ajoseph
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
