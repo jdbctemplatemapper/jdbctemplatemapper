@@ -56,7 +56,7 @@ public class Query<T> implements IQueryFluent<T> {
 
   // Cached SQL does not include limit offset clause
   // key - cacheKey, value - sql
-  private static Map<String, String> successQuerySqlCache = new ConcurrentHashMap<>();
+  private static Map<String, String> partialQuerySqlCache = new ConcurrentHashMap<>();
 
   private Class<T> ownerType;
   private String whereClause;
@@ -283,14 +283,22 @@ public class Query<T> implements IQueryFluent<T> {
           joinColumnOwningSide, joinColumnManySide, propertyName, throughJoinTable,
           throughOwnerTypeJoinColumn, throughRelatedTypeJoinColumn);
 
-      // does not include the limit offset clause
-      sql = generateQuerySql(jdbcTemplateMapper);
+      // does not include where,orderBy,offsetLimit
+      sql = generatePartialQuerySql(jdbcTemplateMapper);
     } else {
       foundInCache = true;
     }
 
-    // sql stored in cache does not include limit offset clause.
-    String sqlForCache = sql;
+    // sql stored in cache does not include where,orderBy,offsetLimit
+    String partialSqlForCache = sql;
+    
+    if (MapperUtils.isNotBlank(whereClause)) {
+      sql += " WHERE " + whereClause;
+    }
+    
+    if (MapperUtils.isNotBlank(orderBy)) {
+      sql += " ORDER BY " + orderBy;
+    }
 
     if (MapperUtils.isNotBlank(limitOffsetClause)) {
       QueryValidator.validateQueryLimitOffsetClause(relationshipType, limitOffsetClause);
@@ -338,7 +346,7 @@ public class Query<T> implements IQueryFluent<T> {
 
     // code reaches here query success, handle caching
     if (!foundInCache) {
-      addToCache(cacheKey, sqlForCache);
+      addToCache(cacheKey, partialSqlForCache);
     }
     return resultList;
   }
@@ -367,8 +375,8 @@ public class Query<T> implements IQueryFluent<T> {
     return bwModel;
   }
 
-  // The sql generated does not include offset limit clause
-  private String generateQuerySql(JdbcTemplateMapper jtm) {
+  // The sql generated does not include where, orderBy, offsetLimit
+  private String generatePartialQuerySql(JdbcTemplateMapper jtm) {
 
     TableMapping ownerTypeTableMapping = jtm.getTableMapping(ownerType);
     SelectMapper<?> ownerTypeSelectMapper =
@@ -409,12 +417,7 @@ public class Query<T> implements IQueryFluent<T> {
             + " = " + relatedTypeTableName + "." + relatedTypeTableMapping.getIdColumnName();
       }
     }
-    if (MapperUtils.isNotBlank(whereClause)) {
-      sql += " WHERE " + whereClause;
-    }
-    if (MapperUtils.isNotBlank(orderBy)) {
-      sql += " ORDER BY " + orderBy;
-    }
+
     return sql;
   }
 
@@ -430,25 +433,23 @@ public class Query<T> implements IQueryFluent<T> {
         throughOwnerTypeJoinColumn,
         throughRelatedTypeJoinColumn,
         propertyName,
-        whereClause,
-        orderBy,
         jdbcTemplateMapper.toString());
     // @formatter:on
   }
 
   private String getSqlFromCache(String cacheKey) {
-    return successQuerySqlCache.get(cacheKey);
+    return partialQuerySqlCache.get(cacheKey);
   }
 
   private void addToCache(String key, String sql) {
-    if (successQuerySqlCache.size() < CACHE_MAX_ENTRIES) {
-      successQuerySqlCache.put(key, sql);
+    if (partialQuerySqlCache.size() < CACHE_MAX_ENTRIES) {
+      partialQuerySqlCache.put(key, sql);
     } else {
       // remove a random entry from cache and add new entry
-      String k = successQuerySqlCache.keySet().iterator().next();
-      successQuerySqlCache.remove(k);
+      String k = partialQuerySqlCache.keySet().iterator().next();
+      partialQuerySqlCache.remove(k);
 
-      successQuerySqlCache.put(key, sql);
+      partialQuerySqlCache.put(key, sql);
     }
   }
 

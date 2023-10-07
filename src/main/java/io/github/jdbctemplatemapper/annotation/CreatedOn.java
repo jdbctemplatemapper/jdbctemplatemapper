@@ -21,6 +21,8 @@ import java.lang.annotation.Target;
 /**
  * When record is created the property will be set to LocalDateTime.now(). It has to be of type
  * LocalDateTime.
+ * 
+ * @author ajoseph
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
