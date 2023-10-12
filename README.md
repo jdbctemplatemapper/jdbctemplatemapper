@@ -100,7 +100,7 @@
 Example configurations:  
 Depending on the versions of the database/driver changes may be required for the properties.
 
-**PostgresSQL**
+**PostgreSQL**
 
 ```  
 # application.properties
@@ -173,7 +173,7 @@ spring.datasource.driver-class-name=oracle.jdbc.driver.OracleDriver
 
 ```
 # application.properties
-spring.datasource.jdbc-url=jdbc:sqlserver://HOSTt:PORT;databaseName=THE_DATABASE_NAME;encrypt=true;trustServerCertificate=true;
+spring.datasource.jdbc-url=jdbc:sqlserver://HOST:PORT;databaseName=THE_DATABASE_NAME;encrypt=true;trustServerCertificate=true;
 spring.datasource.username=username
 spring.datasource.password=password
 spring.datasource.driver-class-name=com.microsoft.sqlserver.jdbc.SQLServerDriver
