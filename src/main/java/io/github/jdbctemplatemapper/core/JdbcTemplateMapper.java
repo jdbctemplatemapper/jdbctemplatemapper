@@ -57,15 +57,15 @@ public final class JdbcTemplateMapper {
 
   // update sql cache
   // Map key - object class
-  // value - the update sql details
+  // value - the update sql and params
   private Map<Class<?>, SqlAndParams> updateSqlAndParamsCache = new ConcurrentHashMap<>();
 
-  // insert sql cache
+  // insert cache
   // Map key - object class
-  // value - insert sql details
+  // value - SimpleJdbcInsert 
   private Map<Class<?>, SimpleJdbcInsert> simpleJdbcInsertCache = new ConcurrentHashMap<>();
 
-  // the column sql string with column aliases for all properties of model for
+  // the column sql string with column aliases for mapped properties of model for
   // find methods
   // Map key - object class
   // value - the column sql string
@@ -646,7 +646,6 @@ public final class JdbcTemplateMapper {
   public String getColumnName(Class<?> clazz, String propertyName) {
     return mappingHelper.getTableMapping(clazz).getColumnName(propertyName);
   }
-
 
   /**
    * returns a string which can be used in a sql select statement. The column alias will be the
