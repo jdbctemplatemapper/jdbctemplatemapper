@@ -250,12 +250,15 @@ public final class JdbcTemplateMapper {
 
   /**
    * Returns list of objects which match the property value.
-   *
+   * 
    * <pre>
    * Query is constructed
    * in such a way that if propertyValue is null it will return records in
    * database which have null values for the property
    * </pre>
+   * 
+   * @deprecated
+   * <p> Use {@link Query} with where clause instead.
    *
    * @param <T> the type
    * @param clazz Class of List of objects returned
@@ -263,6 +266,7 @@ public final class JdbcTemplateMapper {
    * @param propertyValue the value of property to query by
    * @return a List of objects of type T
    */
+  @Deprecated
   public <T> List<T> findByProperty(Class<T> clazz, String propertyName, Object propertyValue) {
     return findByProperty(clazz, propertyName, propertyValue, null);
   }
@@ -270,12 +274,15 @@ public final class JdbcTemplateMapper {
   /**
    * Returns list of objects which match the propertyValue ordered by the orderedByProperty
    * ascending.
-   *
+   * 
    * <pre>
    * Query is constructed in such a way that if
    * propertyValue is null it will return records in database which have null
    * values for the property
    * </pre>
+   * 
+   * @deprecated
+   * <p> Use {@link Query} with where clause instead.
    *
    * @param <T> the type
    * @param clazz Class of List of objects returned
@@ -284,6 +291,7 @@ public final class JdbcTemplateMapper {
    * @param orderByPropertyName the order by property name
    * @return a List of objects for type T
    */
+  @Deprecated
   public <T> List<T> findByProperty(Class<T> clazz, String propertyName, Object propertyValue,
       String orderByPropertyName) {
     Assert.notNull(clazz, "Class must not be null");
