@@ -233,6 +233,19 @@ public class MapperTest {
     });
   }
 
+
+  @Test
+  public void update_withNullVersion_Test() {
+    Exception exception = Assertions.assertThrows(MapperException.class, () -> {
+      Order order = jtm.findById(Order.class, 2);
+      order.setVersion(null);
+      jtm.update(order);
+    });
+
+    assertTrue(exception.getMessage().contains("cannot be null when updating"));
+
+  }
+
   @Test
   public void update_nullObjectFailure_Test() {
     Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
@@ -345,10 +358,10 @@ public class MapperTest {
     Customer customer = new Customer();
     customer.setLastName("doe");
     jtm.insert(customer);
-    
+
     List<Customer> list = jtm.findByProperty(Customer.class, "firstName", null);
     assertTrue(list.size() > 0);
-    
+
     jtm.delete(customer);
   }
 

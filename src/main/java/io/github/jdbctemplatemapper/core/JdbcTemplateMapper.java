@@ -13,8 +13,6 @@
  */
 package io.github.jdbctemplatemapper.core;
 
-import io.github.jdbctemplatemapper.exception.MapperException;
-import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -35,6 +33,8 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsertOperations;
 import org.springframework.util.Assert;
+import io.github.jdbctemplatemapper.exception.MapperException;
+import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
 
 /**
  * CRUD methods and configuration for JdbcTemplateMapper.
@@ -62,7 +62,7 @@ public final class JdbcTemplateMapper {
 
   // insert cache
   // Map key - object class
-  // value - SimpleJdbcInsert 
+  // value - SimpleJdbcInsert
   private Map<Class<?>, SimpleJdbcInsert> simpleJdbcInsertCache = new ConcurrentHashMap<>();
 
   // the column sql string with column aliases for mapped properties of model for
@@ -129,8 +129,8 @@ public final class JdbcTemplateMapper {
 
     npJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
 
-    mappingHelper = new MappingHelper(jdbcTemplate, schemaName, catalogName,
-        metaDataColumnNamePattern);
+    mappingHelper =
+        new MappingHelper(jdbcTemplate, schemaName, catalogName, metaDataColumnNamePattern);
   }
 
   /**
@@ -258,7 +258,8 @@ public final class JdbcTemplateMapper {
    * </pre>
    * 
    * @deprecated
-   * <p> Use {@link Query} with where clause instead.
+   *             <p>
+   *             Use {@link Query} with where clause instead.
    *
    * @param <T> the type
    * @param clazz Class of List of objects returned
@@ -282,7 +283,8 @@ public final class JdbcTemplateMapper {
    * </pre>
    * 
    * @deprecated
-   * <p> Use {@link Query} with where clause instead.
+   *             <p>
+   *             Use {@link Query} with where clause instead.
    *
    * @param <T> the type
    * @param clazz Class of List of objects returned
@@ -548,9 +550,11 @@ public final class JdbcTemplateMapper {
         Integer versionVal = (Integer) bw
             .getPropertyValue(tableMapping.getVersionPropertyMapping().getPropertyName());
         if (versionVal == null) {
-          throw new MapperException("JdbcTemplateMapper is configured for versioning so "
+          throw new MapperException(obj.getClass().getSimpleName() + "."
               + tableMapping.getVersionPropertyMapping().getPropertyName()
-              + " cannot be null when updating " + obj.getClass().getSimpleName());
+              + " is configured with annotation @Version. Property "
+              + tableMapping.getVersionPropertyMapping().getPropertyName()
+              + " cannot be null when updating.");
         } else {
           mapSqlParameterSource.addValue("incrementedVersion", versionVal + 1,
               java.sql.Types.INTEGER);
@@ -567,10 +571,10 @@ public final class JdbcTemplateMapper {
     if (sqlAndParams.getParams().contains("incrementedVersion")) {
       cnt = npJdbcTemplate.update(sqlAndParams.getSql(), mapSqlParameterSource);
       if (cnt == 0) {
-        throw new OptimisticLockingException("update failed for " + obj.getClass().getSimpleName()
-            + " . " + tableMapping.getIdPropertyName() + ": "
+        throw new OptimisticLockingException(obj.getClass().getSimpleName()
+            + " update failed due to stale data. Failed for " + tableMapping.getIdColumnName() + " = "
             + bw.getPropertyValue(tableMapping.getIdPropertyName()) + " and "
-            + tableMapping.getVersionPropertyMapping().getPropertyName() + ": "
+            + tableMapping.getVersionPropertyMapping().getColumnName() + " = "
             + bw.getPropertyValue(tableMapping.getVersionPropertyMapping().getPropertyName()));
       }
       // update the version in object with new version
@@ -652,7 +656,8 @@ public final class JdbcTemplateMapper {
    * underscore case name of property name, so it works well with JdbcTemplate's
    * BeanPropertyRowMapper
    *
-   *<p>Will return something like below if 'name' property is mapped to 'last_name':
+   * <p>
+   * Will return something like below if 'name' property is mapped to 'last_name':
    *
    * <pre>
    * "id as id, last_name as name"
