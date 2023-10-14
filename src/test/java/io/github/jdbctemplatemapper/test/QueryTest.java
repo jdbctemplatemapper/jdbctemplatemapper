@@ -738,34 +738,61 @@ public class QueryTest {
       limitOffsetClause = "OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY";
     }
 
-    Query.type(Order.class).execute(jtm);
+    // @formatter:off
+    Query.type(Order.class)
+         .execute(jtm);
 
-    Query.type(Order.class).where("orders.status = ?", "IN PROCESS").execute(jtm);
+    Query.type(Order.class)
+         .where("orders.status = ?", "IN PROCESS")
+         .execute(jtm);
 
-    Query.type(Order.class).orderBy("orders.order_id").execute(jtm);
+    Query.type(Order.class)
+         .orderBy("orders.order_id")
+         .execute(jtm);
 
-    Query.type(Order.class).orderBy("orders.order_id").limitOffsetClause(limitOffsetClause)
-        .execute(jtm);
+    Query.type(Order.class)
+         .orderBy("orders.order_id")
+         .limitOffsetClause(limitOffsetClause)
+         .execute(jtm);
 
-    Query.type(Order.class).where("orders.status = ?", "IN PROCESS").orderBy("orders.order_id")
-        .execute(jtm);
+    Query.type(Order.class)
+         .where("orders.status = ?", "IN PROCESS")
+         .orderBy("orders.order_id")
+         .execute(jtm);
 
-    Query.type(Order.class).where("orders.status = ?", "IN PROCESS").orderBy("orders.order_id")
-        .limitOffsetClause(limitOffsetClause).execute(jtm);
+    Query.type(Order.class).where("orders.status = ?", "IN PROCESS")
+         .orderBy("orders.order_id")
+         .limitOffsetClause(limitOffsetClause)
+         .execute(jtm);
 
-    Query.type(Order.class).hasOne(Customer.class).joinColumnOwningSide("customer_id")
-        .populateProperty("customer").where("orders.status = ?", "IN PROCESS").execute(jtm);
+    Query.type(Order.class)
+         .hasOne(Customer.class)
+         .joinColumnOwningSide("customer_id")
+         .populateProperty("customer")
+         .where("orders.status = ?", "IN PROCESS").execute(jtm);
 
-    Query.type(Order.class).hasOne(Customer.class).joinColumnOwningSide("customer_id")
-        .populateProperty("customer").orderBy("customer.customer_id").execute(jtm);
+    Query.type(Order.class)
+         .hasOne(Customer.class)
+         .joinColumnOwningSide("customer_id")
+         .populateProperty("customer")
+         .orderBy("customer.customer_id").execute(jtm);
 
-    Query.type(Order.class).hasOne(Customer.class).joinColumnOwningSide("customer_id")
-        .populateProperty("customer").orderBy("orders.order_id")
-        .limitOffsetClause(limitOffsetClause).execute(jtm);
+    Query.type(Order.class)
+         .hasOne(Customer.class)
+         .joinColumnOwningSide("customer_id")
+         .populateProperty("customer")
+         .orderBy("orders.order_id")
+         .limitOffsetClause(limitOffsetClause)
+         .execute(jtm);
 
-    Query.type(Order.class).hasOne(Customer.class).joinColumnOwningSide("customer_id")
-        .populateProperty("customer").where("orders.status = ?", "IN PROCESS")
-        .orderBy("customer.customer_id").limitOffsetClause(limitOffsetClause).execute(jtm);
+    Query.type(Order.class)
+         .hasOne(Customer.class)
+         .joinColumnOwningSide("customer_id")
+         .populateProperty("customer")
+         .where("orders.status = ? and customer.last_name like ?", "IN PROCESS", "%")
+         .orderBy("customer.customer_id")
+         .limitOffsetClause(limitOffsetClause)
+         .execute(jtm);
 
     // @formatter:on
   }
