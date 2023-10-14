@@ -273,7 +273,7 @@ public class QueryMergeTest {
     // @formatter:off
     QueryMerge.type(Order.class)
         .hasOne(Customer.class)
-        .joinColumnOwningSide("customer_id")
+        .joinColumnOwningSide("CUSTOMER_ID")
         .populateProperty("customer")
         .execute(jtm, orders);
     // @formatter:on
@@ -464,7 +464,7 @@ public class QueryMergeTest {
     // @formatter:off
     QueryMerge.type(Order.class)
         .hasMany(OrderLine.class)
-        .joinColumnManySide("order_id")
+        .joinColumnManySide("ORDER_ID")
         .populateProperty("orderLines")
         .orderBy("order_line_id")
         .execute(jtm, orders);

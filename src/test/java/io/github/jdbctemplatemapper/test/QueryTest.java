@@ -632,7 +632,7 @@ public class QueryTest {
     List<Order7> orders =
         Query.type(Order7.class)
             .hasMany(OrderLine7.class)
-            .joinColumnManySide("order_id")
+            .joinColumnManySide("ORDER_ID")
             .populateProperty("orderLines")
             .where("orders.status = ?", "IN PROCESS")
             .orderBy("orders.order_id, order_line.order_line_id")
@@ -779,7 +779,7 @@ public class QueryTest {
 
     Query.type(Order.class)
          .hasOne(Customer.class)
-         .joinColumnOwningSide("customer_id")
+         .joinColumnOwningSide("CUSTOMER_ID")
          .populateProperty("customer")
          .orderBy("orders.order_id")
          .limitOffsetClause(limitOffsetClause)
