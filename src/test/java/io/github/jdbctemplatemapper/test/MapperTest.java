@@ -294,7 +294,7 @@ public class MapperTest {
   }
 
   @Test
-  public void updateSpecifiedProperties_IdAndAutoAssign_failure() {
+  public void updatePProperties_IdAndAutoAssign_failure() {
     Order order = jtm.findById(Order.class, 1);
 
     Exception exception = Assertions.assertThrows(MapperException.class, () -> {
@@ -331,7 +331,7 @@ public class MapperTest {
   }
 
   @Test
-  public void updateSpecifiedProperties_invalidProperty_failure() {
+  public void updateProperties_invalidProperty_failure() {
     Order order = jtm.findById(Order.class, 1);
     Exception exception = Assertions.assertThrows(MapperException.class, () -> {
       jtm.updateProperties(order, "xyz");
@@ -346,7 +346,7 @@ public class MapperTest {
   }
 
   @Test
-  public void updateSpecifiedProperties_success() throws Exception {
+  public void updateProperties_success() throws Exception {
     Customer customer = jtm.findById(Customer.class, 5);
 
     customer.setLastName("bbb");
