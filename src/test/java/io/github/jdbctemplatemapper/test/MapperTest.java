@@ -293,8 +293,6 @@ public class MapperTest {
     assertNull(person2.getSomeNonDatabaseProperty());
   }
 
-  /**************************************/
-
   @Test
   public void updateSpecifiedProperties_IdAndAutoAssign_failure() {
     Order order = jtm.findById(Order.class, 1);
@@ -354,6 +352,10 @@ public class MapperTest {
     customer.setLastName("bbb");
     customer.setFirstName("aaa");
     jtm.updateSpecifiedProperties(customer, "lastName", "firstName");
+    
+    customer = jtm.findById(Customer.class,  customer.getCustomerId());
+    assertEquals("bbb", customer.getLastName());
+    assertEquals("aaa", customer.getFirstName());
 
     Order order = new Order();
     order.setStatus("PENDING");
@@ -366,6 +368,7 @@ public class MapperTest {
     order.setStatus("DONE");
     jtm.updateSpecifiedProperties(order, "status");
 
+    assertEquals("DONE", order.getStatus());
     // check if auto assigned properties have changed.
     assertEquals(2, order.getVersion());
     assertTrue(order.getUpdatedOn().isAfter(prevUpdatedOn));
@@ -375,8 +378,6 @@ public class MapperTest {
     jtm.delete(order);
 
   }
-
-  /**************************************/
 
   @Test
   public void findById_Test() {
