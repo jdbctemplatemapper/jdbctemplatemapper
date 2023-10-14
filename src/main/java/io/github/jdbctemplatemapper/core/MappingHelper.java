@@ -213,7 +213,12 @@ class MappingHelper {
       if (idAnnotation != null) {
         idPropertyName = field.getName();
         if (idAnnotation.type() == IdType.AUTO_INCREMENT) {
-          isIdAutoIncrement = true;
+          if (Number.class.isAssignableFrom(field.getType())) {
+            isIdAutoIncrement = true;
+          } else {
+            throw new AnnotationException(clazz.getSimpleName() + "." + idPropertyName
+                + " is auto increment id so has to be a non-primitive Number object.");
+          }
         }
         break;
       }
@@ -222,6 +227,7 @@ class MappingHelper {
       throw new AnnotationException(
           "@Id annotation not found in class " + clazz.getSimpleName() + " . It is required");
     }
+
     return new IdPropertyInfo(clazz, idPropertyName, isIdAutoIncrement);
   }
 

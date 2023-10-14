@@ -16,6 +16,7 @@ package io.github.jdbctemplatemapper.core;
 import io.github.jdbctemplatemapper.exception.MapperException;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.util.Locale;
 import java.util.StringJoiner;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
@@ -42,8 +43,8 @@ public class SelectMapper<T> {
   private final ConversionService conversionService;
   private final boolean useColumnLabelForResultSetMetaData;
   private String tableAlias;
-  private String colPrefix; // tableAlias + "."
-  private String colAliasPrefix; // tableAlias + "_"
+  private String colPrefix;
+  private String colAliasPrefix;
 
   SelectMapper(Class<T> clazz, String tableAlias, MappingHelper mappingHelper,
       ConversionService conversionService, boolean useColumnLabelForResultSetMetaData) {
@@ -60,6 +61,21 @@ public class SelectMapper<T> {
     this.tableAlias = tableAlias.trim();
     this.colPrefix = this.tableAlias + ".";
     this.colAliasPrefix = MapperUtils.toLowerCase(this.tableAlias + "_");
+  }
+
+  // internal use only
+  SelectMapper(Class<T> clazz, String tableName, String columnAlias, MappingHelper mappingHelper,
+      ConversionService conversionService, boolean useColumnLabelForResultSetMetaData) {
+    Assert.notNull(clazz, " clazz cannot be null");
+    Assert.notNull(tableName, " tableName cannot be null");
+    Assert.notNull(columnAlias, " columnAlias cannot be null");
+    this.clazz = clazz;
+    this.mappingHelper = mappingHelper;
+    this.conversionService = conversionService;
+    this.useColumnLabelForResultSetMetaData = useColumnLabelForResultSetMetaData;
+
+    this.colPrefix = tableName + ".";
+    this.colAliasPrefix = columnAlias + "_";
   }
 
   /**
@@ -161,7 +177,7 @@ public class SelectMapper<T> {
           }
         }
         if (columnLabel != null) {
-          columnLabel = MapperUtils.toLowerCase(columnLabel);
+          columnLabel = columnLabel.toLowerCase(Locale.US); 
           if (columnLabel.startsWith(colAliasPrefix)) {
             PropertyMapping propMapping = tableMapping
                 .getPropertyMappingByColumnName(columnLabel.substring(colAliasPrefix.length()));
