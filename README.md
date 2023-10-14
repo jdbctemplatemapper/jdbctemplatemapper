@@ -82,6 +82,10 @@
 
  **Note: An instance of JdbcTemplateMapper is thread safe**
  
+ See an example of JdbcTemplateMapper configuration used in an application [here](https://github.com/jdbctemplatemapper/using-spring-jdbctemplate-with-jdbctemplatemapper/blob/master/src/test/java/io/github/ajoseph88/jdbctemplatemapper/config/JdbcTemplateMapperConfig.java).
+
+Example configurations:  
+
  ```java
  
   // In the examples the DataSource properties are read from application.properties.
@@ -97,7 +101,6 @@
   // See examples for different databases below.
   
 ```
-Example configurations:  
 Depending on the versions of the database/driver changes may be required for the properties.
 
 **PostgreSQL**
