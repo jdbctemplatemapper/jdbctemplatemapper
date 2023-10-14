@@ -10,7 +10,9 @@ public class DuplicateIdAnnotion {
   @Id(type = IdType.AUTO_INCREMENT)
   private Integer id;
 
-  @Id private Integer id2;
+  @Id
+  private Integer id2;
 
-  @Column private String something;
+  @Column
+  private String something;
 }

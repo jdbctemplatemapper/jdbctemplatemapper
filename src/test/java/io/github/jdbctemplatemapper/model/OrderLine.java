@@ -10,9 +10,12 @@ public class OrderLine {
   @Id(type = IdType.AUTO_INCREMENT)
   private Integer orderLineId;
 
-  @Column private Long orderId;
-  @Column private Integer productId;
-  @Column private Integer numOfUnits;
+  @Column
+  private Long orderId;
+  @Column
+  private Integer productId;
+  @Column
+  private Integer numOfUnits;
 
   private Order order;
 

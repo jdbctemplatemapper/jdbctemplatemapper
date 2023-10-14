@@ -157,6 +157,10 @@ class TableMapping {
     return columnNameMap.get(columnName);
   }
 
+  public PropertyMapping getPropertyMappingByPropertyName(String propertyName) {
+    return propertyNameMap.get(propertyName);
+  }
+
   public String fullyQualifiedTableName() {
     if (MapperUtils.isNotEmpty(schemaName)) {
       return schemaName + "." + tableName;

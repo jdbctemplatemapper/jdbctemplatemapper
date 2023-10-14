@@ -2,12 +2,14 @@ package io.github.jdbctemplatemapper.model;
 
 import io.github.jdbctemplatemapper.annotation.Column;
 import io.github.jdbctemplatemapper.annotation.Id;
+import io.github.jdbctemplatemapper.annotation.IdType;
 import io.github.jdbctemplatemapper.annotation.Table;
 
-@Table(name = "person", schema = "SCHEMA1")
-public class PersonSchema1 {
-  @Id
-  private String personId;
+// int auto increment id. Used to test for failure. Auto increment ids have to be Number objects.
+@Table(name = "person")
+public class Person2 {
+  @Id(type = IdType.AUTO_INCREMENT)
+  private int personId;
   @Column
   private String lastName;
   @Column
@@ -15,11 +17,11 @@ public class PersonSchema1 {
 
   private String someNonDatabaseProperty;
 
-  public String getPersonId() {
+  public int getPersonId() {
     return personId;
   }
 
-  public void setPersonId(String id) {
+  public void setPersonId(int id) {
     this.personId = id;
   }
 
@@ -47,3 +49,4 @@ public class PersonSchema1 {
     this.someNonDatabaseProperty = someNonDatabaseProperty;
   }
 }
+

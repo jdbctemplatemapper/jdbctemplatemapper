@@ -283,7 +283,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
       return;
     }
     SelectMapper<?> selectMapperRelatedType =
-        jtm.getSelectMapper(relatedType, relatedTypeTableMapping.getTableName());
+        jtm.getSelectMapperInternal(relatedType, relatedTypeTableMapping.getTableName(), "r");
 
     boolean foundInCache = false;
     String sql = getSqlFromCache(cacheKey);
@@ -366,7 +366,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
       return;
     }
     SelectMapper<?> selectMapper =
-        jtm.getSelectMapper(relatedType, relatedTypeTableMapping.getTableName());
+        jtm.getSelectMapperInternal(relatedType, relatedTypeTableMapping.getTableName(), "r");
 
     boolean foundInCache = false;
     String sql = getSqlFromCache(cacheKey);
@@ -425,7 +425,6 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     TableMapping ownerTypeTableMapping = jtm.getTableMapping(ownerType);
     TableMapping relatedTypeTableMapping = jtm.getTableMapping(relatedType);
 
-    String ownerTypeTableName = ownerTypeTableMapping.getTableName();
     String relatedTypeTableName = relatedTypeTableMapping.getTableName();
     String ownerTypeIdPropName = ownerTypeTableMapping.getIdPropertyName();
 
@@ -453,18 +452,17 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
 
     // The select statement is build in such a way the buildBeanWrapperModel(rs) returns the
     // ownerType id value.
-    SelectMapper<?> selectMapperOwnerType = jtm.getSelectMapper(ownerType, ownerTypeTableName);
+    SelectMapper<?> selectMapperOwnerType = jtm.getSelectMapper(ownerType, "o");
 
     SelectMapper<?> selectMapperRelatedType =
-        jtm.getSelectMapper(relatedType, relatedTypeTableMapping.getTableName());
+        jtm.getSelectMapperInternal(relatedType, relatedTypeTableMapping.getTableName(), "r");
 
     boolean foundInCache = false;
     String sql = successQueryMergeSqlCache.get(cacheKey);
     if (sql == null) {
       sql = "SELECT " + MapperUtils.getTableNameOnly(throughJoinTable) + "."
-          + throughOwnerTypeJoinColumn + " as " + ownerTypeTableName + "_"
-          + ownerTypeTableMapping.getIdColumnName() + ", " + selectMapperRelatedType.getColumnsSql()
-          + " FROM "
+          + throughOwnerTypeJoinColumn + " as " + "o_" + ownerTypeTableMapping.getIdColumnName()
+          + ", " + selectMapperRelatedType.getColumnsSql() + " FROM "
           + MapperUtils.getFullyQualifiedTableNameForThroughJoinTable(throughJoinTable,
               ownerTypeTableMapping)
           + " LEFT JOIN " + relatedTypeTableMapping.fullyQualifiedTableName() + " on "

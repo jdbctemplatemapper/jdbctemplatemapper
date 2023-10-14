@@ -12,5 +12,6 @@ public class ConflictAnnotation {
   @Version
   private Integer id;
 
-  @Column private String something;
+  @Column
+  private String something;
 }

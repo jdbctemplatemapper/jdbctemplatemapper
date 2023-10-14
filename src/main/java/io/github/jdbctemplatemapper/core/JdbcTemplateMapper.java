@@ -13,10 +13,9 @@
  */
 package io.github.jdbctemplatemapper.core;
 
-import io.github.jdbctemplatemapper.exception.MapperException;
-import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +34,8 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsertOperations;
 import org.springframework.util.Assert;
+import io.github.jdbctemplatemapper.exception.MapperException;
+import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
 
 /**
  * CRUD methods and configuration for JdbcTemplateMapper.
@@ -49,23 +50,31 @@ import org.springframework.util.Assert;
  * @author ajoseph
  */
 public final class JdbcTemplateMapper {
+
+  private static final int CACHE_MAX_ENTRIES = 1000;
+
   private final JdbcTemplate jdbcTemplate;
   private final NamedParameterJdbcTemplate npJdbcTemplate;
 
   private final MappingHelper mappingHelper;
   private IRecordOperatorResolver recordOperatorResolver;
 
-  // update sql cache
+  // insert cache. Note that Spring SimpleJdbcInsert is thread safe.
   // Map key - object class
-  // value - the update sql details
-  private Map<Class<?>, SqlAndParams> updateSqlAndParamsCache = new ConcurrentHashMap<>();
-
-  // insert sql cache
-  // Map key - object class
-  // value - insert sql details
+  // value - SimpleJdbcInsert
   private Map<Class<?>, SimpleJdbcInsert> simpleJdbcInsertCache = new ConcurrentHashMap<>();
 
-  // the column sql string with column aliases for all properties of model for
+  // update sql cache
+  // Map key - object class
+  // value - the update sql and params
+  private Map<Class<?>, SqlAndParams> updateSqlAndParamsCache = new ConcurrentHashMap<>();
+
+  // update specified properties sql cache
+  // Map key - cacheKey
+  // value - the update sql and params
+  private Map<String, SqlAndParams> updatePropertiesSqlAndParamsCache = new ConcurrentHashMap<>();
+
+  // the column sql string with column aliases for mapped properties of model for
   // find methods
   // Map key - object class
   // value - the column sql string
@@ -129,8 +138,8 @@ public final class JdbcTemplateMapper {
 
     npJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
 
-    mappingHelper = new MappingHelper(jdbcTemplate, schemaName, catalogName,
-        metaDataColumnNamePattern);
+    mappingHelper =
+        new MappingHelper(jdbcTemplate, schemaName, catalogName, metaDataColumnNamePattern);
   }
 
   /**
@@ -250,12 +259,14 @@ public final class JdbcTemplateMapper {
 
   /**
    * Returns list of objects which match the property value.
-   *
+   * 
    * <pre>
    * Query is constructed
    * in such a way that if propertyValue is null it will return records in
    * database which have null values for the property
    * </pre>
+   * 
+   * @deprecated as of 2.4.0. Use {@link Query} with where clause instead.
    *
    * @param <T> the type
    * @param clazz Class of List of objects returned
@@ -263,6 +274,7 @@ public final class JdbcTemplateMapper {
    * @param propertyValue the value of property to query by
    * @return a List of objects of type T
    */
+  @Deprecated
   public <T> List<T> findByProperty(Class<T> clazz, String propertyName, Object propertyValue) {
     return findByProperty(clazz, propertyName, propertyValue, null);
   }
@@ -270,12 +282,14 @@ public final class JdbcTemplateMapper {
   /**
    * Returns list of objects which match the propertyValue ordered by the orderedByProperty
    * ascending.
-   *
+   * 
    * <pre>
    * Query is constructed in such a way that if
    * propertyValue is null it will return records in database which have null
    * values for the property
    * </pre>
+   * 
+   * @deprecated as of 2.4.0. Use {@link Query} with where clause and orderBy instead.
    *
    * @param <T> the type
    * @param clazz Class of List of objects returned
@@ -284,6 +298,7 @@ public final class JdbcTemplateMapper {
    * @param orderByPropertyName the order by property name
    * @return a List of objects for type T
    */
+  @Deprecated
   public <T> List<T> findByProperty(Class<T> clazz, String propertyName, Object propertyValue,
       String orderByPropertyName) {
     Assert.notNull(clazz, "Class must not be null");
@@ -518,8 +533,70 @@ public final class JdbcTemplateMapper {
     } else {
       foundInCache = true;
     }
+    Integer cnt = updateInternal(obj, sqlAndParams, tableMapping);
+
+    if (!foundInCache && cnt > 0) {
+      updateSqlAndParamsCache.put(obj.getClass(), sqlAndParams);
+    }
+
+    return cnt;
+  }
+
+  /**
+   * Updates the specified properties passed in as arguments. Use it when you want to update a
+   * property or a few properties of the object and not the whole object. Issues an update for only
+   * the specific properties and any auto assign properties. Comes in handy for tables with large
+   * number of columns and need to update only a few. Also you can instantiate a new Object, populate the
+   * id and just the  properties needed and invoke updateProperties.
+   *
+   * <pre>
+   * Will handle the following annotations:
+   * &#64;UpdatedOn property will be assigned current date and time
+   * &#64;UpdatedBy if IRecordOperaterrResolver is configured with JdbcTemplateMapper the property 
+   *                will be assigned that value
+   * &#64;Version property will be incremented on a successful update. An OptimisticLockingException
+   *                will be thrown if object is stale.
+   * </pre>
+   *
+   * @param obj object to be updated
+   * @param propertyNames the specific property names that need to be updated.
+   * @return number of records updated
+   */
+  public Integer updateProperties(Object obj, String... propertyNames) {
+    Assert.notNull(obj, "Object must not be null");
+    Assert.notNull(propertyNames, "propertyNames must not be null");
+
+    TableMapping tableMapping = mappingHelper.getTableMapping(obj.getClass());
+
+    boolean foundInCache = false;
+    String cacheKey = getUpdatePropertiesCacheKey(obj, propertyNames);
+    SqlAndParams sqlAndParams = updatePropertiesSqlAndParamsCache.get(cacheKey);
+    if (sqlAndParams == null) {
+      sqlAndParams = buildSqlAndParamsForUpdateProperties(tableMapping, propertyNames);
+    } else {
+      foundInCache = true;
+    }
+
+    Integer cnt = updateInternal(obj, sqlAndParams, tableMapping);
+
+    if (!foundInCache && cnt > 0) {
+      addToUpdatePropertiesCache(cacheKey, sqlAndParams);
+    }
+
+    return cnt;
+  }
+
+  private Integer updateInternal(Object obj, SqlAndParams sqlAndParams, TableMapping tableMapping) {
+    Assert.notNull(obj, "Object must not be null");
+    Assert.notNull(sqlAndParams, "sqlAndParams must not be null");
 
     BeanWrapper bw = getBeanWrapper(obj);
+
+    if (bw.getPropertyValue(tableMapping.getIdPropertyName()) == null) {
+      throw new IllegalArgumentException("Property " + tableMapping.getTableClass().getSimpleName()
+          + "." + tableMapping.getIdPropertyName() + " is the id and cannot be null.");
+    }
+
     Set<String> parameters = sqlAndParams.getParams();
     PropertyMapping updatedByPropMapping = tableMapping.getUpdatedByPropertyMapping();
     if (updatedByPropMapping != null && recordOperatorResolver != null
@@ -540,9 +617,11 @@ public final class JdbcTemplateMapper {
         Integer versionVal = (Integer) bw
             .getPropertyValue(tableMapping.getVersionPropertyMapping().getPropertyName());
         if (versionVal == null) {
-          throw new MapperException("JdbcTemplateMapper is configured for versioning so "
+          throw new MapperException(obj.getClass().getSimpleName() + "."
               + tableMapping.getVersionPropertyMapping().getPropertyName()
-              + " cannot be null when updating " + obj.getClass().getSimpleName());
+              + " is configured with annotation @Version. Property "
+              + tableMapping.getVersionPropertyMapping().getPropertyName()
+              + " cannot be null when updating.");
         } else {
           mapSqlParameterSource.addValue("incrementedVersion", versionVal + 1,
               java.sql.Types.INTEGER);
@@ -559,10 +638,10 @@ public final class JdbcTemplateMapper {
     if (sqlAndParams.getParams().contains("incrementedVersion")) {
       cnt = npJdbcTemplate.update(sqlAndParams.getSql(), mapSqlParameterSource);
       if (cnt == 0) {
-        throw new OptimisticLockingException("update failed for " + obj.getClass().getSimpleName()
-            + " . " + tableMapping.getIdPropertyName() + ": "
-            + bw.getPropertyValue(tableMapping.getIdPropertyName()) + " and "
-            + tableMapping.getVersionPropertyMapping().getPropertyName() + ": "
+        throw new OptimisticLockingException(obj.getClass().getSimpleName()
+            + " update failed due to stale data. Failed for " + tableMapping.getIdColumnName()
+            + " = " + bw.getPropertyValue(tableMapping.getIdPropertyName()) + " and "
+            + tableMapping.getVersionPropertyMapping().getColumnName() + " = "
             + bw.getPropertyValue(tableMapping.getVersionPropertyMapping().getPropertyName()));
       }
       // update the version in object with new version
@@ -570,10 +649,6 @@ public final class JdbcTemplateMapper {
           mapSqlParameterSource.getValue("incrementedVersion"));
     } else {
       cnt = npJdbcTemplate.update(sqlAndParams.getSql(), mapSqlParameterSource);
-    }
-
-    if (!foundInCache) {
-      updateSqlAndParamsCache.put(obj.getClass(), sqlAndParams);
     }
 
     return cnt;
@@ -627,6 +702,12 @@ public final class JdbcTemplateMapper {
         useColumnLabelForResultSetMetaData);
   }
 
+  // internal use only
+  <T> SelectMapper<T> getSelectMapperInternal(Class<T> type, String tableName, String columnAlias) {
+    return new SelectMapper<T>(type, tableName, columnAlias, mappingHelper, conversionService,
+        useColumnLabelForResultSetMetaData);
+  }
+
   /**
    * Get the column name of a property of the Model. Will return null if there is no corresponding
    * column for the property.
@@ -639,13 +720,13 @@ public final class JdbcTemplateMapper {
     return mappingHelper.getTableMapping(clazz).getColumnName(propertyName);
   }
 
-
   /**
    * returns a string which can be used in a sql select statement. The column alias will be the
    * underscore case name of property name, so it works well with JdbcTemplate's
    * BeanPropertyRowMapper
    *
-   *<p>Will return something like below if 'name' property is mapped to 'last_name':
+   * <p>
+   * Will return something like below if 'name' property is mapped to 'last_name':
    *
    * <pre>
    * "id as id, last_name as name"
@@ -734,6 +815,93 @@ public final class JdbcTemplateMapper {
     return updateSqlAndParams;
   }
 
+  private SqlAndParams buildSqlAndParamsForUpdateProperties(TableMapping tableMapping,
+      String... propertyNames) {
+    Assert.notNull(tableMapping, "tableMapping must not be null");
+    Assert.notNull(propertyNames, "propertyNames must not be null");
+
+    // do the validations
+    for (String propertyName : propertyNames) {
+      PropertyMapping propertyMapping = tableMapping.getPropertyMappingByPropertyName(propertyName);
+      if (propertyMapping == null) {
+        throw new MapperException("No mapping found for property '" + propertyName + "' in class "
+            + tableMapping.getTableClass().getSimpleName());
+      }
+
+      // id property cannot be updated
+      if (propertyMapping.isIdAnnotation()) {
+        throw new MapperException("Id property " + tableMapping.getTableClass().getSimpleName()
+            + "." + propertyName + " cannot be updated.");
+      }
+
+      // auto assign properties cannot be updated
+      if (propertyMapping.isCreatedByAnnotation() || propertyMapping.isCreatedOnAnnotation()
+          || propertyMapping.isUpdatedByAnnotation() || propertyMapping.isUpdatedOnAnnotation()
+          || propertyMapping.isVersionAnnotation()) {
+        throw new MapperException(
+            "Auto assign property " + tableMapping.getTableClass().getSimpleName() + "."
+                + propertyName + " cannot be updated.");
+      }
+    }
+
+    Set<String> params = new HashSet<>();
+    StringBuilder sqlBuilder = new StringBuilder("UPDATE ");
+    sqlBuilder.append(tableMapping.fullyQualifiedTableName());
+    sqlBuilder.append(" SET ");
+
+    List<String> propertyList = new ArrayList<>(Arrays.asList(propertyNames));
+
+    // handle auto assign properties for update
+    PropertyMapping updatedOnPropMapping = tableMapping.getUpdatedOnPropertyMapping();
+    if (updatedOnPropMapping != null) {
+      propertyList.add(updatedOnPropMapping.getPropertyName());
+    }
+    PropertyMapping updatedByPropMapping = tableMapping.getUpdatedByPropertyMapping();
+    if (updatedByPropMapping != null) {
+      propertyList.add(updatedByPropMapping.getPropertyName());
+    }
+    PropertyMapping versionPropMapping = tableMapping.getVersionPropertyMapping();
+    if (versionPropMapping != null) {
+      propertyList.add(versionPropMapping.getPropertyName());
+    }
+
+    boolean first = true;
+    for (String propertyName : propertyList) {
+      PropertyMapping propMapping = tableMapping.getPropertyMappingByPropertyName(propertyName);
+      if (!first) {
+        sqlBuilder.append(", ");
+      } else {
+        first = false;
+      }
+      sqlBuilder.append(propMapping.getColumnName());
+      sqlBuilder.append(" = :");
+
+      if (versionPropMapping != null
+          && propMapping.getPropertyName().equals(versionPropMapping.getPropertyName())) {
+        sqlBuilder.append("incrementedVersion");
+        params.add("incrementedVersion");
+      } else {
+        sqlBuilder.append(propMapping.getPropertyName());
+        params.add(propMapping.getPropertyName());
+      }
+    }
+
+    // the where clause
+    sqlBuilder.append(
+        " WHERE " + tableMapping.getIdColumnName() + " = :" + tableMapping.getIdPropertyName());
+    params.add(tableMapping.getIdPropertyName());
+    if (versionPropMapping != null) {
+      sqlBuilder.append(" AND ").append(versionPropMapping.getColumnName()).append(" = :")
+          .append(versionPropMapping.getPropertyName());
+      params.add(versionPropMapping.getPropertyName());
+    }
+
+    String updateSql = sqlBuilder.toString();
+    SqlAndParams updateSqlAndParams = new SqlAndParams(updateSql, params);
+
+    return updateSqlAndParams;
+  }
+
   private <T> String getFindColumnsSql(TableMapping tableMapping, Class<T> clazz) {
     String columnsSql = findColumnsSqlCache.get(clazz);
     if (columnsSql == null) {
@@ -759,6 +927,22 @@ public final class JdbcTemplateMapper {
       return tableMapping.getTableName();
     } else {
       return tableMapping.fullyQualifiedTableName();
+    }
+  }
+
+  private String getUpdatePropertiesCacheKey(Object obj, String[] propertyNames) {
+    return obj.getClass().getName() + "-" + String.join("-", propertyNames);
+  }
+
+  private void addToUpdatePropertiesCache(String key, SqlAndParams sqlAndParams) {
+    if (updatePropertiesSqlAndParamsCache.size() < CACHE_MAX_ENTRIES) {
+      updatePropertiesSqlAndParamsCache.put(key, sqlAndParams);
+    } else {
+      // remove a random entry from cache and add new entry
+      String k = updatePropertiesSqlAndParamsCache.keySet().iterator().next();
+      updatePropertiesSqlAndParamsCache.remove(k);
+
+      updatePropertiesSqlAndParamsCache.put(key, sqlAndParams);
     }
   }
 

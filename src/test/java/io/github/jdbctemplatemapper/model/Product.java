@@ -13,19 +13,27 @@ import io.github.jdbctemplatemapper.annotation.Version;
 
 @Table(name = "product")
 public class Product {
-  @Id private Integer productId;
-  @Column private String name;
-  @Column private Double cost;
+  @Id
+  private Integer productId;
+  @Column
+  private String name;
+  @Column
+  private Double cost;
 
-  @CreatedOn private LocalDateTime createdOn;
+  @CreatedOn
+  private LocalDateTime createdOn;
 
-  @CreatedBy private String createdBy;
+  @CreatedBy
+  private String createdBy;
 
-  @UpdatedOn private LocalDateTime updatedOn;
+  @UpdatedOn
+  private LocalDateTime updatedOn;
 
-  @UpdatedBy private String updatedBy;
+  @UpdatedBy
+  private String updatedBy;
 
-  @Version private Integer version;
+  @Version
+  private Integer version;
 
   public Integer getProductId() {
     return productId;

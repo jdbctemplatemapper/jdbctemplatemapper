@@ -42,7 +42,7 @@ class TableColumnInfo {
   public String getTableName() {
     return tableName;
   }
-  
+
   public String getSchemaName() {
     return schemaName;
   }

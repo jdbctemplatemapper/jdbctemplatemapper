@@ -21,22 +21,29 @@ public class Order7 {
   @Column(name = "order_id")
   private Long id;
 
-  @Column private LocalDateTime orderDate;
+  @Column
+  private LocalDateTime orderDate;
 
   @Column(name = "customer_id")
   private Integer custId;
 
-  @Column private String status;
+  @Column
+  private String status;
 
-  @CreatedOn private LocalDateTime createdOn;
+  @CreatedOn
+  private LocalDateTime createdOn;
 
-  @CreatedBy private String createdBy;
+  @CreatedBy
+  private String createdBy;
 
-  @UpdatedOn private LocalDateTime updatedOn;
+  @UpdatedOn
+  private LocalDateTime updatedOn;
 
-  @UpdatedBy private String updatedBy;
+  @UpdatedBy
+  private String updatedBy;
 
-  @Version private Integer version;
+  @Version
+  private Integer version;
 
   private Customer7 customer;
 

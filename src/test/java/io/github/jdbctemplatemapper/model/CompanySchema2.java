@@ -7,36 +7,37 @@ import io.github.jdbctemplatemapper.annotation.Id;
 import io.github.jdbctemplatemapper.annotation.IdType;
 import io.github.jdbctemplatemapper.annotation.Table;
 
-@Table(name = "company", schema="SCHEMA2")
+@Table(name = "company", schema = "SCHEMA2")
 public class CompanySchema2 {
-    @Id(type = IdType.AUTO_INCREMENT)
-    private Integer id;
-    @Column private String name;
-    
-    List<OfficeSchema2> offices = new ArrayList<>();
+  @Id(type = IdType.AUTO_INCREMENT)
+  private Integer id;
+  @Column
+  private String name;
 
-    public Integer getId() {
-      return id;
-    }
+  List<OfficeSchema2> offices = new ArrayList<>();
 
-    public void setId(Integer id) {
-      this.id = id;
-    }
+  public Integer getId() {
+    return id;
+  }
 
-    public String getName() {
-      return name;
-    }
+  public void setId(Integer id) {
+    this.id = id;
+  }
 
-    public void setName(String name) {
-      this.name = name;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public List<OfficeSchema2> getOffices() {
-      return offices;
-    }
+  public void setName(String name) {
+    this.name = name;
+  }
 
-    public void setOffices(List<OfficeSchema2> offices) {
-      this.offices = offices;
-    }
+  public List<OfficeSchema2> getOffices() {
+    return offices;
+  }
+
+  public void setOffices(List<OfficeSchema2> offices) {
+    this.offices = offices;
+  }
 
 }

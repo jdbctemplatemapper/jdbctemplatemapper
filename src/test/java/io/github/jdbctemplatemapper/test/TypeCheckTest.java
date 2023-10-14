@@ -36,7 +36,8 @@ public class TypeCheckTest {
   @Value("${spring.datasource.driver-class-name}")
   private String jdbcDriver;
 
-  @Autowired private JdbcTemplateMapper jtm;
+  @Autowired
+  private JdbcTemplateMapper jtm;
 
   @Test
   public void insert_TypeCheckTest() {
@@ -191,18 +192,16 @@ public class TypeCheckTest {
     String sql =
         "select" + typeCheckMapper.getColumnsSql() + " from type_check tc" + " where tc.id = ?";
 
-    ResultSetExtractor<List<TypeCheck>> rsExtractor =
-        new ResultSetExtractor<List<TypeCheck>>() {
-          @Override
-          public List<TypeCheck> extractData(ResultSet rs)
-              throws SQLException, DataAccessException {
-            List<TypeCheck> list = new ArrayList<>();
-            while (rs.next()) {
-              list.add(typeCheckMapper.buildModel(rs));
-            }
-            return list;
-          }
-        };
+    ResultSetExtractor<List<TypeCheck>> rsExtractor = new ResultSetExtractor<List<TypeCheck>>() {
+      @Override
+      public List<TypeCheck> extractData(ResultSet rs) throws SQLException, DataAccessException {
+        List<TypeCheck> list = new ArrayList<>();
+        while (rs.next()) {
+          list.add(typeCheckMapper.buildModel(rs));
+        }
+        return list;
+      }
+    };
 
     List<TypeCheck> list = jtm.getJdbcTemplate().query(sql, rsExtractor, obj.getId());
 

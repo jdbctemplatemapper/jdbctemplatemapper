@@ -31,6 +31,7 @@ import io.github.jdbctemplatemapper.model.NoTableAnnotationModel;
 import io.github.jdbctemplatemapper.model.Order;
 import io.github.jdbctemplatemapper.model.OrderLine;
 import io.github.jdbctemplatemapper.model.Person;
+import io.github.jdbctemplatemapper.model.Person2;
 import io.github.jdbctemplatemapper.model.Product;
 
 @SpringBootTest
@@ -225,6 +226,21 @@ public class MapperTest {
   }
 
   @Test
+  public void update_withIdAutoIncrementFailure_Test() {
+    // id is int. update should fail.
+    Person2 person = new Person2();
+    person.setLastName("john");
+    person.setFirstName("doe");
+
+    Exception exception = Assertions.assertThrows(AnnotationException.class, () -> {
+      jtm.insert(person);
+    });
+
+    assertTrue(exception.getMessage()
+        .contains("is auto increment id so has to be a non-primitive Number object"));
+  }
+
+  @Test
   public void update_throwsOptimisticLockingException_Test() {
     Assertions.assertThrows(OptimisticLockingException.class, () -> {
       Order order = jtm.findById(Order.class, 2);
@@ -233,12 +249,35 @@ public class MapperTest {
     });
   }
 
+
+  @Test
+  public void update_withNullVersion_Test() {
+    Exception exception = Assertions.assertThrows(MapperException.class, () -> {
+      Order order = jtm.findById(Order.class, 2);
+      order.setVersion(null);
+      jtm.update(order);
+    });
+
+    assertTrue(exception.getMessage().contains("cannot be null when updating"));
+
+  }
+
   @Test
   public void update_nullObjectFailure_Test() {
     Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
       jtm.update(null);
     });
     assertTrue(exception.getMessage().contains("Object must not be null"));
+  }
+
+  @Test
+  public void update_nullIdFailure_Test() {
+    Customer customer = jtm.findById(Customer.class, 1);
+    customer.setCustomerId(null);
+    Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+      jtm.update(customer);
+    });
+    assertTrue(exception.getMessage().contains("is the id and cannot be null"));
   }
 
   @Test
@@ -252,6 +291,92 @@ public class MapperTest {
 
     assertNotNull(person2);
     assertNull(person2.getSomeNonDatabaseProperty());
+  }
+
+  @Test
+  public void updatePProperties_IdAndAutoAssign_failure() {
+    Order order = jtm.findById(Order.class, 1);
+
+    Exception exception = Assertions.assertThrows(MapperException.class, () -> {
+      jtm.updateProperties(order, "orderId");
+    });
+    assertTrue(exception.getMessage().contains("cannot be updated"));
+
+    exception = Assertions.assertThrows(MapperException.class, () -> {
+      jtm.updateProperties(order, "createdOn"); // @CreatedOn auto assign
+    });
+    assertTrue(exception.getMessage().contains("cannot be updated"));
+
+    exception = Assertions.assertThrows(MapperException.class, () -> {
+      jtm.updateProperties(order, "createdBy"); // @CreatedBy auto assign
+    });
+    assertTrue(exception.getMessage().contains("cannot be updated"));
+
+
+    exception = Assertions.assertThrows(MapperException.class, () -> {
+      jtm.updateProperties(order, "updatedOn"); // @UpdatedOn auto assign
+    });
+    assertTrue(exception.getMessage().contains("cannot be updated"));
+
+    exception = Assertions.assertThrows(MapperException.class, () -> {
+      jtm.updateProperties(order, "updatedBy"); // @UpdatedBy auto assign
+    });
+    assertTrue(exception.getMessage().contains("cannot be updated"));
+
+    exception = Assertions.assertThrows(MapperException.class, () -> {
+      jtm.updateProperties(order, "version"); // @Version auto assign
+    });
+    assertTrue(exception.getMessage().contains("cannot be updated"));
+
+  }
+
+  @Test
+  public void updateProperties_invalidProperty_failure() {
+    Order order = jtm.findById(Order.class, 1);
+    Exception exception = Assertions.assertThrows(MapperException.class, () -> {
+      jtm.updateProperties(order, "xyz");
+    });
+    assertTrue(exception.getMessage().contains("No mapping found for property"));
+
+    exception = Assertions.assertThrows(MapperException.class, () -> {
+      jtm.updateProperties(order, "status", null);
+    });
+    assertTrue(exception.getMessage().contains("No mapping found for property"));
+
+  }
+
+  @Test
+  public void updateProperties_success() throws Exception {
+    Customer customer = jtm.findById(Customer.class, 5);
+
+    customer.setLastName("bbb");
+    customer.setFirstName("aaa");
+    jtm.updateProperties(customer, "lastName", "firstName");
+
+    customer = jtm.findById(Customer.class, customer.getCustomerId());
+    assertEquals("bbb", customer.getLastName());
+    assertEquals("aaa", customer.getFirstName());
+
+    Order order = new Order();
+    order.setStatus("PENDING");
+    jtm.insert(order);
+
+    LocalDateTime prevUpdatedOn = order.getUpdatedOn();
+
+    Thread.sleep(1000); // avoid timing issue.
+
+    order.setStatus("DONE");
+    jtm.updateProperties(order, "status");
+
+    assertEquals("DONE", order.getStatus());
+    // check if auto assigned properties have changed.
+    assertEquals(2, order.getVersion());
+    assertTrue(order.getUpdatedOn().isAfter(prevUpdatedOn));
+    assertEquals("tester", order.getUpdatedBy());
+
+
+    jtm.delete(order);
+
   }
 
   @Test
@@ -345,10 +470,10 @@ public class MapperTest {
     Customer customer = new Customer();
     customer.setLastName("doe");
     jtm.insert(customer);
-    
+
     List<Customer> list = jtm.findByProperty(Customer.class, "firstName", null);
     assertTrue(list.size() > 0);
-    
+
     jtm.delete(customer);
   }
 

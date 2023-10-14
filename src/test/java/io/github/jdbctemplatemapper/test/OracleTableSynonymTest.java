@@ -29,8 +29,9 @@ public class OracleTableSynonymTest {
   @Test
   public void oracleSynonymTable_test() {
     if (jdbcDriver.contains("oracle")) {
-      
-      // testsynonym table created in SCHEMA1 and synonym created in SCHEMA2  and accessing it in SCHEMA2
+
+      // testsynonym table created in SCHEMA1 and synonym created in SCHEMA2 and accessing it in
+      // SCHEMA2
       Testsynonym model = new Testsynonym();
       model.setName("abc");
 

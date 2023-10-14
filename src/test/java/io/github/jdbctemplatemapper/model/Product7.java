@@ -17,18 +17,25 @@ public class Product7 {
   @Column(name = "product_id")
   private Integer id;
 
-  @Column private String name;
-  @Column private Double cost;
+  @Column
+  private String name;
+  @Column
+  private Double cost;
 
-  @CreatedOn private LocalDateTime createdOn;
+  @CreatedOn
+  private LocalDateTime createdOn;
 
-  @CreatedBy private String createdBy;
+  @CreatedBy
+  private String createdBy;
 
-  @UpdatedOn private LocalDateTime updatedOn;
+  @UpdatedOn
+  private LocalDateTime updatedOn;
 
-  @UpdatedBy private String updatedBy;
+  @UpdatedBy
+  private String updatedBy;
 
-  @Version private Integer version;
+  @Version
+  private Integer version;
 
   public Integer getId() {
     return id;

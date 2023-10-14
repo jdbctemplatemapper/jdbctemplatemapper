@@ -21,7 +21,8 @@ public class NonDefaultNamingProduct {
   @Column(name = "PRODUCT_id")
   private Integer id;
 
-  @Column private Double cost;
+  @Column
+  private Double cost;
 
   @CreatedOn
   @Column(name = "created_on")

@@ -236,7 +236,7 @@ public class QueryTest {
               Query.type(InvalidTableObject.class).execute(jtm);
             });
     // @formatter:on
-   assertTrue(exception.getMessage().contains("Unable to locate meta-data for table"));
+    assertTrue(exception.getMessage().contains("Unable to locate meta-data for table"));
   }
 
   @Test
@@ -409,7 +409,7 @@ public class QueryTest {
     assertTrue(
         exception.getMessage().contains("Collections without generic types are not supported"));
   }
-  
+
   @Test
   public void hasMany_populatePropertyCollectionNotInitialized_test() {
     // @formatter:off
@@ -424,8 +424,8 @@ public class QueryTest {
                   .execute(jtm);
             });
     // @formatter:on
-    assertTrue(
-        exception.getMessage().contains("Only initialized collections can be populated by queries"));
+    assertTrue(exception.getMessage()
+        .contains("Only initialized collections can be populated by queries"));
   }
 
   @Test
@@ -661,8 +661,8 @@ public class QueryTest {
            .execute(jtm);
     });
     // @formatter:on
-    assertTrue(exception.getMessage()
-        .contains("limitOffsetClause is not supported for hasMany and hasMany through relationships."));
+    assertTrue(exception.getMessage().contains(
+        "limitOffsetClause is not supported for hasMany and hasMany through relationships."));
   }
 
   @Test
@@ -690,7 +690,7 @@ public class QueryTest {
 
     // @formatter:on
   }
-  
+
   @Test
   public void hasOne_limitOffsetClause_success_test() {
     String limitOffsetClause = null;
@@ -720,8 +720,8 @@ public class QueryTest {
 
     // @formatter:on
   }
-  
-  
+
+
   @Test
   public void query_methodChainingSequenceTest_success_test() {
     String limitOffsetClause = null;
@@ -737,68 +737,65 @@ public class QueryTest {
     if (jdbcDriver.contains("sqlserver")) {
       limitOffsetClause = "OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY";
     }
-    
+
+    // @formatter:off
     Query.type(Order.class)
          .execute(jtm);
-    
+
     Query.type(Order.class)
-    .where("orders.status = ?", "IN PROCESS")
-    .execute(jtm);
-    
+         .where("orders.status = ?", "IN PROCESS")
+         .execute(jtm);
+
     Query.type(Order.class)
-    .orderBy("orders.order_id")
-    .execute(jtm);
-    
+         .orderBy("orders.order_id")
+         .execute(jtm);
+
     Query.type(Order.class)
-    .orderBy("orders.order_id")
-    .limitOffsetClause(limitOffsetClause)
-    .execute(jtm);
-    
+         .orderBy("orders.order_id")
+         .limitOffsetClause(limitOffsetClause)
+         .execute(jtm);
+
     Query.type(Order.class)
-    .where("orders.status = ?", "IN PROCESS")
-    .orderBy("orders.order_id")
-    .execute(jtm);
-    
+         .where("orders.status = ?", "IN PROCESS")
+         .orderBy("orders.order_id")
+         .execute(jtm);
+
+    Query.type(Order.class).where("orders.status = ?", "IN PROCESS")
+         .orderBy("orders.order_id")
+         .limitOffsetClause(limitOffsetClause)
+         .execute(jtm);
+
     Query.type(Order.class)
-    .where("orders.status = ?", "IN PROCESS")
-    .orderBy("orders.order_id")
-    .limitOffsetClause(limitOffsetClause)
-    .execute(jtm);
-    
+         .hasOne(Customer.class)
+         .joinColumnOwningSide("customer_id")
+         .populateProperty("customer")
+         .where("orders.status = ?", "IN PROCESS").execute(jtm);
+
     Query.type(Order.class)
-    .hasOne(Customer.class)
-    .joinColumnOwningSide("customer_id")
-    .populateProperty("customer")
-    .where("orders.status = ?", "IN PROCESS")
-    .execute(jtm);
-    
+         .hasOne(Customer.class)
+         .joinColumnOwningSide("customer_id")
+         .populateProperty("customer")
+         .orderBy("customer.customer_id").execute(jtm);
+
     Query.type(Order.class)
-    .hasOne(Customer.class)
-    .joinColumnOwningSide("customer_id")
-    .populateProperty("customer")
-    .orderBy("customer.customer_id")
-    .execute(jtm);
-    
+         .hasOne(Customer.class)
+         .joinColumnOwningSide("customer_id")
+         .populateProperty("customer")
+         .orderBy("orders.order_id")
+         .limitOffsetClause(limitOffsetClause)
+         .execute(jtm);
+
     Query.type(Order.class)
-    .hasOne(Customer.class)
-    .joinColumnOwningSide("customer_id")
-    .populateProperty("customer")
-    .orderBy("orders.order_id")
-    .limitOffsetClause(limitOffsetClause)
-    .execute(jtm);
-    
-    Query.type(Order.class)
-             .hasOne(Customer.class)
-             .joinColumnOwningSide("customer_id")
-             .populateProperty("customer")
-             .where("orders.status = ?", "IN PROCESS")
-             .orderBy("customer.customer_id")
-             .limitOffsetClause(limitOffsetClause)
-             .execute(jtm);
+         .hasOne(Customer.class)
+         .joinColumnOwningSide("customer_id")
+         .populateProperty("customer")
+         .where("orders.status = ? and customer.last_name like ?", "IN PROCESS", "%")
+         .orderBy("customer.customer_id")
+         .limitOffsetClause(limitOffsetClause)
+         .execute(jtm);
 
     // @formatter:on
   }
-  
 
 
 
