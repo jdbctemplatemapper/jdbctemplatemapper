@@ -298,33 +298,33 @@ public class MapperTest {
     Order order = jtm.findById(Order.class, 1);
 
     Exception exception = Assertions.assertThrows(MapperException.class, () -> {
-      jtm.updateSpecifiedProperties(order, "orderId");
+      jtm.updateProperties(order, "orderId");
     });
     assertTrue(exception.getMessage().contains("cannot be updated"));
 
     exception = Assertions.assertThrows(MapperException.class, () -> {
-      jtm.updateSpecifiedProperties(order, "createdOn"); // @CreatedOn auto assign
+      jtm.updateProperties(order, "createdOn"); // @CreatedOn auto assign
     });
     assertTrue(exception.getMessage().contains("cannot be updated"));
 
     exception = Assertions.assertThrows(MapperException.class, () -> {
-      jtm.updateSpecifiedProperties(order, "createdBy"); // @CreatedBy auto assign
+      jtm.updateProperties(order, "createdBy"); // @CreatedBy auto assign
     });
     assertTrue(exception.getMessage().contains("cannot be updated"));
 
 
     exception = Assertions.assertThrows(MapperException.class, () -> {
-      jtm.updateSpecifiedProperties(order, "updatedOn"); // @UpdatedOn auto assign
+      jtm.updateProperties(order, "updatedOn"); // @UpdatedOn auto assign
     });
     assertTrue(exception.getMessage().contains("cannot be updated"));
 
     exception = Assertions.assertThrows(MapperException.class, () -> {
-      jtm.updateSpecifiedProperties(order, "updatedBy"); // @UpdatedBy auto assign
+      jtm.updateProperties(order, "updatedBy"); // @UpdatedBy auto assign
     });
     assertTrue(exception.getMessage().contains("cannot be updated"));
 
     exception = Assertions.assertThrows(MapperException.class, () -> {
-      jtm.updateSpecifiedProperties(order, "version"); // @Version auto assign
+      jtm.updateProperties(order, "version"); // @Version auto assign
     });
     assertTrue(exception.getMessage().contains("cannot be updated"));
 
@@ -334,12 +334,12 @@ public class MapperTest {
   public void updateSpecifiedProperties_invalidProperty_failure() {
     Order order = jtm.findById(Order.class, 1);
     Exception exception = Assertions.assertThrows(MapperException.class, () -> {
-      jtm.updateSpecifiedProperties(order, "xyz");
+      jtm.updateProperties(order, "xyz");
     });
     assertTrue(exception.getMessage().contains("No mapping found for property"));
 
     exception = Assertions.assertThrows(MapperException.class, () -> {
-      jtm.updateSpecifiedProperties(order, "status", null);
+      jtm.updateProperties(order, "status", null);
     });
     assertTrue(exception.getMessage().contains("No mapping found for property"));
 
@@ -351,9 +351,9 @@ public class MapperTest {
 
     customer.setLastName("bbb");
     customer.setFirstName("aaa");
-    jtm.updateSpecifiedProperties(customer, "lastName", "firstName");
-    
-    customer = jtm.findById(Customer.class,  customer.getCustomerId());
+    jtm.updateProperties(customer, "lastName", "firstName");
+
+    customer = jtm.findById(Customer.class, customer.getCustomerId());
     assertEquals("bbb", customer.getLastName());
     assertEquals("aaa", customer.getFirstName());
 
@@ -366,7 +366,7 @@ public class MapperTest {
     Thread.sleep(1000); // avoid timing issue.
 
     order.setStatus("DONE");
-    jtm.updateSpecifiedProperties(order, "status");
+    jtm.updateProperties(order, "status");
 
     assertEquals("DONE", order.getStatus());
     // check if auto assigned properties have changed.

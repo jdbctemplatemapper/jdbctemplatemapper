@@ -59,7 +59,7 @@ public final class JdbcTemplateMapper {
   private final MappingHelper mappingHelper;
   private IRecordOperatorResolver recordOperatorResolver;
 
-  // insert cache
+  // insert cache. Note that Spring SimpleJdbcInsert is thread safe.
   // Map key - object class
   // value - SimpleJdbcInsert
   private Map<Class<?>, SimpleJdbcInsert> simpleJdbcInsertCache = new ConcurrentHashMap<>();
@@ -72,8 +72,7 @@ public final class JdbcTemplateMapper {
   // update specified properties sql cache
   // Map key - cacheKey
   // value - the update sql and params
-  private Map<String, SqlAndParams> updateSpecifiedPropertiesSqlAndParamsCache =
-      new ConcurrentHashMap<>();
+  private Map<String, SqlAndParams> updatePropertiesSqlAndParamsCache = new ConcurrentHashMap<>();
 
   // the column sql string with column aliases for mapped properties of model for
   // find methods
@@ -290,7 +289,7 @@ public final class JdbcTemplateMapper {
    * values for the property
    * </pre>
    * 
-   * @deprecated as of 2.4.0. Use {@link Query} with where clause instead.
+   * @deprecated as of 2.4.0. Use {@link Query} with where clause and orderBy instead.
    *
    * @param <T> the type
    * @param clazz Class of List of objects returned
@@ -534,7 +533,7 @@ public final class JdbcTemplateMapper {
     } else {
       foundInCache = true;
     }
-    Integer cnt = issueUpdate(obj, sqlAndParams, tableMapping);
+    Integer cnt = updateInternal(obj, sqlAndParams, tableMapping);
 
     if (!foundInCache && cnt > 0) {
       updateSqlAndParamsCache.put(obj.getClass(), sqlAndParams);
@@ -547,8 +546,8 @@ public final class JdbcTemplateMapper {
    * Updates the specified properties passed in as arguments. Use it when you want to update a
    * property or a few properties of the object and not the whole object. Issues an update for only
    * the specific properties and any auto assign properties. Comes in handy for tables with large
-   * number of columns and need to update only a few. Also you can create a new Object populate the
-   * pertinent fields you need and invoke the update.
+   * number of columns and need to update only a few. Also you can instantiate a new Object, populate the
+   * id and just the  properties needed and invoke updateProperties.
    *
    * <pre>
    * Will handle the following annotations:
@@ -560,34 +559,34 @@ public final class JdbcTemplateMapper {
    * </pre>
    *
    * @param obj object to be updated
-   * @param propertyNames the specific properties that need to be updated.
+   * @param propertyNames the specific property names that need to be updated.
    * @return number of records updated
    */
-  public Integer updateSpecifiedProperties(Object obj, String... propertyNames) {
+  public Integer updateProperties(Object obj, String... propertyNames) {
     Assert.notNull(obj, "Object must not be null");
     Assert.notNull(propertyNames, "propertyNames must not be null");
 
     TableMapping tableMapping = mappingHelper.getTableMapping(obj.getClass());
 
     boolean foundInCache = false;
-    String cacheKey = getUpdateSpecifiedPropertiesCacheKey(obj, propertyNames);
-    SqlAndParams sqlAndParams = updateSpecifiedPropertiesSqlAndParamsCache.get(cacheKey);
+    String cacheKey = getUpdatePropertiesCacheKey(obj, propertyNames);
+    SqlAndParams sqlAndParams = updatePropertiesSqlAndParamsCache.get(cacheKey);
     if (sqlAndParams == null) {
-      sqlAndParams = buildSqlAndParamsForUpdateSpecifiedProperties(tableMapping, propertyNames);
+      sqlAndParams = buildSqlAndParamsForUpdateProperties(tableMapping, propertyNames);
     } else {
       foundInCache = true;
     }
 
-    Integer cnt = issueUpdate(obj, sqlAndParams, tableMapping);
+    Integer cnt = updateInternal(obj, sqlAndParams, tableMapping);
 
     if (!foundInCache && cnt > 0) {
-      addToUpdateSpecifiedPropertiesCache(cacheKey, sqlAndParams);
+      addToUpdatePropertiesCache(cacheKey, sqlAndParams);
     }
 
     return cnt;
   }
 
-  private Integer issueUpdate(Object obj, SqlAndParams sqlAndParams, TableMapping tableMapping) {
+  private Integer updateInternal(Object obj, SqlAndParams sqlAndParams, TableMapping tableMapping) {
     Assert.notNull(obj, "Object must not be null");
     Assert.notNull(sqlAndParams, "sqlAndParams must not be null");
 
@@ -816,7 +815,7 @@ public final class JdbcTemplateMapper {
     return updateSqlAndParams;
   }
 
-  private SqlAndParams buildSqlAndParamsForUpdateSpecifiedProperties(TableMapping tableMapping,
+  private SqlAndParams buildSqlAndParamsForUpdateProperties(TableMapping tableMapping,
       String... propertyNames) {
     Assert.notNull(tableMapping, "tableMapping must not be null");
     Assert.notNull(propertyNames, "propertyNames must not be null");
@@ -931,19 +930,19 @@ public final class JdbcTemplateMapper {
     }
   }
 
-  private String getUpdateSpecifiedPropertiesCacheKey(Object obj, String[] propertyNames) {
+  private String getUpdatePropertiesCacheKey(Object obj, String[] propertyNames) {
     return obj.getClass().getName() + "-" + String.join("-", propertyNames);
   }
 
-  private void addToUpdateSpecifiedPropertiesCache(String key, SqlAndParams sqlAndParams) {
-    if (updateSpecifiedPropertiesSqlAndParamsCache.size() < CACHE_MAX_ENTRIES) {
-      updateSpecifiedPropertiesSqlAndParamsCache.put(key, sqlAndParams);
+  private void addToUpdatePropertiesCache(String key, SqlAndParams sqlAndParams) {
+    if (updatePropertiesSqlAndParamsCache.size() < CACHE_MAX_ENTRIES) {
+      updatePropertiesSqlAndParamsCache.put(key, sqlAndParams);
     } else {
       // remove a random entry from cache and add new entry
-      String k = updateSpecifiedPropertiesSqlAndParamsCache.keySet().iterator().next();
-      updateSpecifiedPropertiesSqlAndParamsCache.remove(k);
+      String k = updatePropertiesSqlAndParamsCache.keySet().iterator().next();
+      updatePropertiesSqlAndParamsCache.remove(k);
 
-      updateSpecifiedPropertiesSqlAndParamsCache.put(key, sqlAndParams);
+      updatePropertiesSqlAndParamsCache.put(key, sqlAndParams);
     }
   }
 
