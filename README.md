@@ -56,6 +56,10 @@
  product.setPrice(11.50);
  jdbcTemplateMapper.update(product);
  
+ // updateProperties() updates only the specified properties passed as arguments.
+ product.setPrice(12.50);
+ jdbcTemplateMapper.updateProperties(product, "price"); // will issue an SQL update only for price.
+ 
  List<Product> products = jdbcTemplateMapper.findAll(Product.class);
  
  jdbcTemplateMapper.delete(product);
@@ -71,7 +75,7 @@
   <dependency>
     <groupId>io.github.jdbctemplatemapper</groupId>
     <artifactId>jdbctemplatemapper</artifactId>
-    <version>2.3.1</version>
+    <version>2.4.0</version>
  </dependency>
  ```
  
@@ -84,11 +88,10 @@
  
  See an example of JdbcTemplateMapper configuration used in an application [here](https://github.com/jdbctemplatemapper/using-spring-jdbctemplate-with-jdbctemplatemapper/blob/master/src/test/java/io/github/ajoseph88/jdbctemplatemapper/config/JdbcTemplateMapperConfig.java).
 
-Example configurations:  
 
  ```java
  
-  // In the examples the DataSource properties are read from application.properties.
+  // In the examples below the DataSource properties are read from application.properties.
   // See examples of application.properties for different databases further below:
   @Bean
   @ConfigurationProperties(prefix = "spring.datasource")
