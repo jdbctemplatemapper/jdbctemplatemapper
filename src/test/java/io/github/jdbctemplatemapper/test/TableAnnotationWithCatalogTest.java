@@ -167,7 +167,7 @@ public class TableAnnotationWithCatalogTest {
 
       QueryMerge.type(CompanyCatalogSchema2.class).hasMany(OfficeCatalogSchema2.class)
           .joinColumnManySide("company_id").populateProperty("offices").execute(jtm, companies);
-      
+
     }
   }
 

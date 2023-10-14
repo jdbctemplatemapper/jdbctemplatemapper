@@ -204,8 +204,8 @@ public class Query<T> implements IQueryFluent<T> {
   }
 
   /**
-   * The SQL where clause. When querying relationships the where clause can include columns from both
-   * owning and related tables.
+   * The SQL where clause. When querying relationships the where clause can include columns from
+   * both owning and related tables.
    *
    * @param whereClause the whereClause.
    * @param params varArgs for the whereClause.
@@ -266,15 +266,16 @@ public class Query<T> implements IQueryFluent<T> {
     Assert.notNull(jdbcTemplateMapper, "jdbcTemplateMapper cannot be null");
 
     TableMapping ownerTypeTableMapping = jdbcTemplateMapper.getTableMapping(ownerType);
-    SelectMapper<?> ownerTypeSelectMapper =
-        jdbcTemplateMapper.getSelectMapperInternal(ownerType, ownerTypeTableMapping.getTableName(),  "o");
-    
+    SelectMapper<?> ownerTypeSelectMapper = jdbcTemplateMapper.getSelectMapperInternal(ownerType,
+        ownerTypeTableMapping.getTableName(), "o");
+
     TableMapping relatedTypeTableMapping =
         relatedType == null ? null : jdbcTemplateMapper.getTableMapping(relatedType);
     // making it effectively final to be used in inner class ResultSetExtractor
     SelectMapper<?> relatedTypeSelectMapper = relatedType == null ? null
-        : jdbcTemplateMapper.getSelectMapperInternal(relatedType, relatedTypeTableMapping.getTableName(), "r");
-    
+        : jdbcTemplateMapper.getSelectMapperInternal(relatedType,
+            relatedTypeTableMapping.getTableName(), "r");
+
     boolean foundInCache = false;
     String cacheKey = getCacheKey(jdbcTemplateMapper);
     String sql = getSqlFromCache(cacheKey);
@@ -291,11 +292,11 @@ public class Query<T> implements IQueryFluent<T> {
 
     // sql stored in cache does not include where,orderBy,offsetLimit
     String partialSqlForCache = sql;
-    
+
     if (MapperUtils.isNotBlank(whereClause)) {
       sql += " WHERE " + whereClause;
     }
-    
+
     if (MapperUtils.isNotBlank(orderBy)) {
       sql += " ORDER BY " + orderBy;
     }
@@ -379,18 +380,18 @@ public class Query<T> implements IQueryFluent<T> {
   private String generatePartialQuerySql(JdbcTemplateMapper jtm) {
 
     TableMapping ownerTypeTableMapping = jtm.getTableMapping(ownerType);
-    
+
     SelectMapper<?> ownerTypeSelectMapper =
         jtm.getSelectMapperInternal(ownerType, ownerTypeTableMapping.getTableName(), "o");
-    
+
     String ownerTypeTableName = ownerTypeTableMapping.getTableName();
-    
+
     TableMapping relatedTypeTableMapping =
         relatedType == null ? null : jtm.getTableMapping(relatedType);
 
     SelectMapper<?> relatedTypeSelectMapper = relatedType == null ? null
         : jtm.getSelectMapperInternal(relatedType, relatedTypeTableMapping.getTableName(), "r");
-    
+
     String sql = "SELECT " + ownerTypeSelectMapper.getColumnsSql();
     if (relatedType != null) {
       sql += "," + relatedTypeSelectMapper.getColumnsSql();

@@ -19,21 +19,29 @@ public class Order {
   @Id(type = IdType.AUTO_INCREMENT)
   private Long orderId;
 
-  @Column private LocalDateTime orderDate;
+  @Column
+  private LocalDateTime orderDate;
 
-  @Column private Integer customerId;
+  @Column
+  private Integer customerId;
 
-  @Column private String status;
+  @Column
+  private String status;
 
-  @CreatedOn private LocalDateTime createdOn;
+  @CreatedOn
+  private LocalDateTime createdOn;
 
-  @CreatedBy private String createdBy;
+  @CreatedBy
+  private String createdBy;
 
-  @UpdatedOn private LocalDateTime updatedOn;
+  @UpdatedOn
+  private LocalDateTime updatedOn;
 
-  @UpdatedBy private String updatedBy;
+  @UpdatedBy
+  private String updatedBy;
 
-  @Version private Integer version;
+  @Version
+  private Integer version;
 
   private Customer customer;
 

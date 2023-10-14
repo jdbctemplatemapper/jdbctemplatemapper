@@ -177,7 +177,7 @@ public class SelectMapper<T> {
           }
         }
         if (columnLabel != null) {
-          columnLabel = columnLabel.toLowerCase(Locale.US); 
+          columnLabel = columnLabel.toLowerCase(Locale.US);
           if (columnLabel.startsWith(colAliasPrefix)) {
             PropertyMapping propMapping = tableMapping
                 .getPropertyMappingByColumnName(columnLabel.substring(colAliasPrefix.length()));

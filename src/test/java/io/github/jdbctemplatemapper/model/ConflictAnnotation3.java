@@ -14,7 +14,10 @@ public class ConflictAnnotation3 {
   @Id(type = IdType.AUTO_INCREMENT)
   private Integer id;
 
-  @Column private String something;
+  @Column
+  private String something;
 
-  @CreatedBy @UpdatedBy private LocalDateTime createdBy1;
+  @CreatedBy
+  @UpdatedBy
+  private LocalDateTime createdBy1;
 }

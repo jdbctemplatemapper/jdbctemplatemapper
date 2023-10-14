@@ -12,9 +12,12 @@ public class OrderLine7 {
   @Column(name = "order_line_id")
   private Long id;
 
-  @Column private Long orderId;
-  @Column private Integer productId;
-  @Column private Integer numOfUnits;
+  @Column
+  private Long orderId;
+  @Column
+  private Integer productId;
+  @Column
+  private Integer numOfUnits;
 
   private Order order;
 

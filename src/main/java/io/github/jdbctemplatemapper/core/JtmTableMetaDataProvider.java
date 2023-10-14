@@ -12,6 +12,7 @@
  * the License.
  */
 package io.github.jdbctemplatemapper.core;
+
 /**
  * A generic table meta data provider.
  *

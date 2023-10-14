@@ -15,27 +15,31 @@ public class TypeCheck {
   @Id(type = IdType.AUTO_INCREMENT)
   private Integer id;
 
-  @Column private LocalDate localDateData;
+  @Column
+  private LocalDate localDateData;
 
-  @Column private java.util.Date javaUtilDateData;
+  @Column
+  private java.util.Date javaUtilDateData;
 
-  @Column private LocalDateTime localDateTimeData;
+  @Column
+  private LocalDateTime localDateTimeData;
 
-  @Column 
+  @Column
   private java.util.Date javaUtilDateTsData; // postgres/mysql/oracle
 
-  //@Column
+  // @Column
   private java.util.Date javaUtilDateDtData; // SqlServer
 
-  @Column private BigDecimal bigDecimalData;
+  @Column
+  private BigDecimal bigDecimalData;
 
-  //@Column
+  // @Column
   private OffsetDateTime offsetDateTimeData; // mysql/oracle
 
-  @Column 
+  @Column
   private Boolean booleanVal; // postgres/mysql
 
- @Column 
+  @Column
   private byte[] image; // postgres/mysql
 
   public Integer getId() {

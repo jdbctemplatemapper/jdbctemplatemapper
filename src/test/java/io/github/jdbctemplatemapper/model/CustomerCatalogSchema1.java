@@ -8,14 +8,16 @@ import io.github.jdbctemplatemapper.annotation.Id;
 import io.github.jdbctemplatemapper.annotation.IdType;
 import io.github.jdbctemplatemapper.annotation.Table;
 
-@Table(name = "customer", catalog="schema1")
+@Table(name = "customer", catalog = "schema1")
 
 public class CustomerCatalogSchema1 {
   @Id(type = IdType.AUTO_INCREMENT)
   private Integer customerId;
 
-  @Column private String firstName;
-  @Column private String lastName;
+  @Column
+  private String firstName;
+  @Column
+  private String lastName;
 
   private LocalDateTime createdOn;
   private String createdBy;

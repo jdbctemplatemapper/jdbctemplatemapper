@@ -8,9 +8,12 @@ import io.github.jdbctemplatemapper.annotation.Table;
 // int auto increment id. Used to test for failure. Auto increment ids have to be Number objects.
 @Table(name = "person")
 public class Person2 {
-  @Id(type=IdType.AUTO_INCREMENT) private int personId;
-  @Column private String lastName;
-  @Column private String firstName;
+  @Id(type = IdType.AUTO_INCREMENT)
+  private int personId;
+  @Column
+  private String lastName;
+  @Column
+  private String firstName;
 
   private String someNonDatabaseProperty;
 

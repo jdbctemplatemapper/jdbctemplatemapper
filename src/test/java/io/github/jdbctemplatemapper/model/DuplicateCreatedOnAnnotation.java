@@ -13,9 +13,12 @@ public class DuplicateCreatedOnAnnotation {
   @Id(type = IdType.AUTO_INCREMENT)
   private Integer id;
 
-  @CreatedOn private LocalDateTime createdOn1;
+  @CreatedOn
+  private LocalDateTime createdOn1;
 
-  @CreatedOn private LocalDateTime createdOn2;
+  @CreatedOn
+  private LocalDateTime createdOn2;
 
-  @Column private String something;
+  @Column
+  private String something;
 }

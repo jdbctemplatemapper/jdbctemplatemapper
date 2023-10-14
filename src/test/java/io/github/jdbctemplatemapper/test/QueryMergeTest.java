@@ -37,7 +37,8 @@ public class QueryMergeTest {
   @Value("${spring.datasource.driver-class-name}")
   private String jdbcDriver;
 
-  @Autowired private JdbcTemplateMapper jtm;
+  @Autowired
+  private JdbcTemplateMapper jtm;
 
   @Test
   public void hasOne_null_test() {
@@ -222,55 +223,39 @@ public class QueryMergeTest {
 
   @Test
   public void hasOne_mergeListNull_success() {
-    Assertions.assertDoesNotThrow(
-        () -> {
-          QueryMerge.type(Order.class)
-              .hasOne(Customer.class)
-              .joinColumnOwningSide("customer_id")
-              .populateProperty("customer")
-              .execute(jtm, null);
-        });
+    Assertions.assertDoesNotThrow(() -> {
+      QueryMerge.type(Order.class).hasOne(Customer.class).joinColumnOwningSide("customer_id")
+          .populateProperty("customer").execute(jtm, null);
+    });
   }
 
   @Test
   public void hasOne_mergeListEmpty_success() {
 
     List<Order> orders = new ArrayList<Order>();
-    Assertions.assertDoesNotThrow(
-        () -> {
-          QueryMerge.type(Order.class)
-              .hasOne(Customer.class)
-              .joinColumnOwningSide("customer_id")
-              .populateProperty("customer")
-              .execute(jtm, orders);
-        });
+    Assertions.assertDoesNotThrow(() -> {
+      QueryMerge.type(Order.class).hasOne(Customer.class).joinColumnOwningSide("customer_id")
+          .populateProperty("customer").execute(jtm, orders);
+    });
 
     assertTrue(orders.size() == 0);
   }
 
   @Test
   public void hasMany_mergeListNull_success() {
-    Assertions.assertDoesNotThrow(
-        () -> {
-          QueryMerge.type(Order.class)
-              .hasMany(OrderLine.class)
-              .joinColumnManySide("order_id")
-              .populateProperty("orderLines")
-              .execute(jtm, null);
-        });
+    Assertions.assertDoesNotThrow(() -> {
+      QueryMerge.type(Order.class).hasMany(OrderLine.class).joinColumnManySide("order_id")
+          .populateProperty("orderLines").execute(jtm, null);
+    });
   }
 
   @Test
   public void hasMany_mergeListEmpty_success() {
     List<Order> orders = new ArrayList<Order>();
-    Assertions.assertDoesNotThrow(
-        () -> {
-          QueryMerge.type(Order.class)
-              .hasMany(OrderLine.class)
-              .joinColumnManySide("order_id")
-              .populateProperty("orderLines")
-              .execute(jtm, orders);
-        });
+    Assertions.assertDoesNotThrow(() -> {
+      QueryMerge.type(Order.class).hasMany(OrderLine.class).joinColumnManySide("order_id")
+          .populateProperty("orderLines").execute(jtm, orders);
+    });
 
     assertTrue(orders.size() == 0);
   }
@@ -296,7 +281,7 @@ public class QueryMergeTest {
     assertTrue("jane".equals(orders.get(0).getCustomer().getFirstName()));
     assertTrue("joe".equals(orders.get(1).getCustomer().getLastName()));
   }
-  
+
   @Test
   public void hasOne_success_withEdgeCaseCustomerIntialized_test() {
     // @formatter:off
@@ -316,8 +301,8 @@ public class QueryMergeTest {
 
     assertNull(orders.get(0).getCustomer());
   }
-  
-  
+
+
 
   @Test
   public void hasMany_success_test() {
@@ -354,14 +339,14 @@ public class QueryMergeTest {
     assertTrue(twoOrderLines);
     assertTrue(cnt == 3);
   }
-  
+
   @Test
   public void hasMany_EdgeCaseOrderLinesInitializedWithValues_test() {
     Order9 order = new Order9();
     order.setOrderDate(LocalDateTime.now());
     order.setCustomerId(2);
     jtm.insert(order);
-    
+
     // @formatter:off
     List<Order9> orders =
         Query.type(Order9.class) // order9.orderLines initialized with value while query returns null.
@@ -376,11 +361,11 @@ public class QueryMergeTest {
         .populateProperty("orderLines")
         .execute(jtm, orders);
     // @formatter:on
-    
+
     assertEquals(0, orders.get(0).getOrderLines().size());
-    
+
     jtm.delete(order);
-    
+
   }
 
   @Test
@@ -440,8 +425,8 @@ public class QueryMergeTest {
     assertNotNull(orders.get(0).getOrderLines().get(1).getId());
     assertNotNull(orders.get(1).getOrderLines().get(0).getId());
   }
-  
-  
+
+
   @Test
   public void hasOne_orderByIsNotSupported_test() {
     // @formatter:off
@@ -450,10 +435,7 @@ public class QueryMergeTest {
             .execute(jtm);
     // @formatter:on
 
-    Exception exception =
-        Assertions.assertThrows(
-            IllegalStateException.class,
-            () -> {
+    Exception exception = Assertions.assertThrows(IllegalStateException.class, () -> {
     // @formatter:off
     QueryMerge.type(Order.class)
         .hasOne(Customer.class)
@@ -466,9 +448,9 @@ public class QueryMergeTest {
     
     // @formatter:on
   }
-  
-  
-  
+
+
+
   @Test
   public void hasMany_withOrderBy_success_test() {
     // @formatter:off
@@ -487,12 +469,12 @@ public class QueryMergeTest {
         .orderBy("order_line_id")
         .execute(jtm, orders);
     // @formatter:on
-    
+
     assertTrue(orders.get(0).getOrderLines().size() == 2);
     assertTrue(orders.get(1).getOrderLines().size() == 1);
-    
+
   }
-  
+
   @Test
   public void queryMerge_methodChainingSequence_test() {
     // @formatter:off
@@ -500,18 +482,12 @@ public class QueryMergeTest {
         Query.type(Order.class)
             .execute(jtm);
     // @formatter:on
-    
-    QueryMerge.type(Order.class)
-    .hasMany(OrderLine.class)
-    .joinColumnManySide("order_id")
-    .populateProperty("orderLines")
-    .execute(jtm, orders);
-    
-    QueryMerge.type(Order.class)
-    .hasMany(OrderLine.class)
-    .joinColumnManySide("order_id")
-    .populateProperty("orderLines")
-    .execute(jtm, orders);
+
+    QueryMerge.type(Order.class).hasMany(OrderLine.class).joinColumnManySide("order_id")
+        .populateProperty("orderLines").execute(jtm, orders);
+
+    QueryMerge.type(Order.class).hasMany(OrderLine.class).joinColumnManySide("order_id")
+        .populateProperty("orderLines").execute(jtm, orders);
 
     // @formatter:off
     QueryMerge.type(Order.class)
@@ -529,6 +505,6 @@ public class QueryMergeTest {
     .execute(jtm, orders);
     
     // @formatter:on
-    
+
   }
 }

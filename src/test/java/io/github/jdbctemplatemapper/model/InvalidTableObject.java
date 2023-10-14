@@ -5,5 +5,6 @@ import io.github.jdbctemplatemapper.annotation.Table;
 
 @Table(name = "invalid_table")
 public class InvalidTableObject {
-  @Id private Integer id;
+  @Id
+  private Integer id;
 }

@@ -13,8 +13,10 @@ public class Employee {
   @Id(type = IdType.AUTO_INCREMENT)
   private Integer id;
 
-  @Column private String lastName;
-  @Column private String firstName;
+  @Column
+  private String lastName;
+  @Column
+  private String firstName;
 
   private List<Skill> skills = new ArrayList<>();
 

@@ -21,7 +21,8 @@ import io.github.jdbctemplatemapper.model.Skill;
 @ExtendWith(SpringExtension.class)
 public class HasManyThroughTest {
 
-  @Autowired private JdbcTemplateMapper jtm;
+  @Autowired
+  private JdbcTemplateMapper jtm;
 
   private static boolean flag = false;
 
@@ -86,95 +87,60 @@ public class HasManyThroughTest {
 
   @Test
   public void query_hasManyThrough_invalidJoinTableBlank_test() {
-    Exception exception =
-        Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> {
-              Query.type(Employee.class)
-                  .hasMany(Skill.class)
-                  .throughJoinTable("    ")
-                  .throughJoinColumns("employee_id", "skill_id")
-                  .populateProperty("skills")
-                  .execute(jtm);
-            });
-    assertTrue(exception.getMessage().contains("throughJoinTable() tableName cannot be null or blank"));
+    Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+      Query.type(Employee.class).hasMany(Skill.class).throughJoinTable("    ")
+          .throughJoinColumns("employee_id", "skill_id").populateProperty("skills").execute(jtm);
+    });
+    assertTrue(
+        exception.getMessage().contains("throughJoinTable() tableName cannot be null or blank"));
   }
 
 
   @Test
   public void query_hasManyThrough_invalidFirstJoinColumnWithPrefix_test() {
-    Exception exception =
-        Assertions.assertThrows(
-            QueryException.class,
-            () -> {
-              Query.type(Employee.class)
-                  .hasMany(Skill.class)
-                  .throughJoinTable("employee_skill")
-                  .throughJoinColumns("employee_skill.employee_id", "skill_id")
-                  .populateProperty("skills")
-                  .execute(jtm);
-            });
+    Exception exception = Assertions.assertThrows(QueryException.class, () -> {
+      Query.type(Employee.class).hasMany(Skill.class).throughJoinTable("employee_skill")
+          .throughJoinColumns("employee_skill.employee_id", "skill_id").populateProperty("skills")
+          .execute(jtm);
+    });
     assertTrue(exception.getMessage().contains("Invalid throughJoinColumns"));
   }
 
   @Test
   public void query_hasManyThrough_invalidFirstJoinColumnBlank_test() {
-    Exception exception =
-        Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> {
-              Query.type(Employee.class)
-                  .hasMany(Skill.class)
-                  .throughJoinTable("employee_skill")
-                  .throughJoinColumns("   ", "skill_id")
-                  .populateProperty("skills")
-                  .execute(jtm);
-            });
-    assertTrue(exception.getMessage().contains("throughJoinColumns() ownerTypeJoinColumn cannot be null or blank"));
+    Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+      Query.type(Employee.class).hasMany(Skill.class).throughJoinTable("employee_skill")
+          .throughJoinColumns("   ", "skill_id").populateProperty("skills").execute(jtm);
+    });
+    assertTrue(exception.getMessage()
+        .contains("throughJoinColumns() ownerTypeJoinColumn cannot be null or blank"));
   }
 
   @Test
   public void query_hasManyThrough_invalidSecondJoinColumnWithPrefix_test() {
-    Exception exception =
-        Assertions.assertThrows(
-            QueryException.class,
-            () -> {
-              Query.type(Employee.class)
-                  .hasMany(Skill.class)
-                  .throughJoinTable("employee_skill")
-                  .throughJoinColumns("employee_id", "employee_skill.skill_id")
-                  .populateProperty("skills")
-                  .execute(jtm);
-            });
+    Exception exception = Assertions.assertThrows(QueryException.class, () -> {
+      Query.type(Employee.class).hasMany(Skill.class).throughJoinTable("employee_skill")
+          .throughJoinColumns("employee_id", "employee_skill.skill_id").populateProperty("skills")
+          .execute(jtm);
+    });
     assertTrue(exception.getMessage().contains("Invalid throughJoinColumns"));
   }
 
   @Test
   public void query_hasManyThrough_invalidSecondJoinColumnBlank_test() {
-    Exception exception =
-        Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> {
-              Query.type(Employee.class)
-                  .hasMany(Skill.class)
-                  .throughJoinTable("employee_skill")
-                  .throughJoinColumns("employee_id", "")
-                  .populateProperty("skills")
-                  .execute(jtm);
-            });
-    assertTrue(exception.getMessage().contains("throughJoinColumns() relatedTypeJoinColumn cannot be null or blank"));
+    Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+      Query.type(Employee.class).hasMany(Skill.class).throughJoinTable("employee_skill")
+          .throughJoinColumns("employee_id", "").populateProperty("skills").execute(jtm);
+    });
+    assertTrue(exception.getMessage()
+        .contains("throughJoinColumns() relatedTypeJoinColumn cannot be null or blank"));
   }
 
   @Test
   public void query_hasManyThrough_sucess_test() {
-    List<Employee> employees =
-        Query.type(Employee.class)
-            .hasMany(Skill.class)
-            .throughJoinTable("employee_skill")
-            .throughJoinColumns("employee_id", "skill_id")
-            .populateProperty("skills")
-            .orderBy("employee.id")
-            .execute(jtm);
+    List<Employee> employees = Query.type(Employee.class).hasMany(Skill.class)
+        .throughJoinTable("employee_skill").throughJoinColumns("employee_id", "skill_id")
+        .populateProperty("skills").orderBy("employee.id").execute(jtm);
 
     assertTrue(employees.size() == 5);
     assertTrue(employees.get(0).getSkills().size() == 1);
@@ -186,14 +152,9 @@ public class HasManyThroughTest {
 
   @Test
   public void query_hasManyThrough2_success_test() {
-    List<Skill> skills =
-        Query.type(Skill.class)
-            .hasMany(Employee.class)
-            .throughJoinTable("employee_skill")
-            .throughJoinColumns("skill_id", "employee_id")
-            .populateProperty("employees")
-            .orderBy("skill.id")
-            .execute(jtm);
+    List<Skill> skills = Query.type(Skill.class).hasMany(Employee.class)
+        .throughJoinTable("employee_skill").throughJoinColumns("skill_id", "employee_id")
+        .populateProperty("employees").orderBy("skill.id").execute(jtm);
 
     assertTrue(skills.size() == 4);
     assertTrue(skills.get(0).getEmployees().size() == 3);
@@ -201,29 +162,20 @@ public class HasManyThroughTest {
     assertTrue(skills.get(2).getEmployees().size() == 1);
     assertTrue(skills.get(3).getEmployees().size() == 0);
   }
-  
-  
+
+
   @Test
   public void queryMerger_hasManyThrough_invalidFirstJoinColumnBlank_test() {
-    List<Employee> employees =
-        Query.type(Employee.class)
-            .orderBy("employee.id")
-            .execute(jtm);
-    
-    Exception exception =
-        Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> {
-              QueryMerge.type(Employee.class)
-                  .hasMany(Skill.class)
-                  .throughJoinTable("employee_skill")
-                  .throughJoinColumns("  ", "skill_id")
-                  .populateProperty("skills")
-                  .execute(jtm, employees);
-            });
-    assertTrue(exception.getMessage().contains("throughJoinColumns() ownerTypeJoinColumn cannot be null or blank"));
+    List<Employee> employees = Query.type(Employee.class).orderBy("employee.id").execute(jtm);
+
+    Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+      QueryMerge.type(Employee.class).hasMany(Skill.class).throughJoinTable("employee_skill")
+          .throughJoinColumns("  ", "skill_id").populateProperty("skills").execute(jtm, employees);
+    });
+    assertTrue(exception.getMessage()
+        .contains("throughJoinColumns() ownerTypeJoinColumn cannot be null or blank"));
   }
-  
+
   @Test
   public void queryMerge_hasManyThrough_success_test() {
     // @formatter:off
@@ -242,20 +194,20 @@ public class HasManyThroughTest {
         .orderBy("name")
         .execute(jtm, employees);
     // @formatter:on
-       
+
     assertTrue(employees.size() == 5);
     assertTrue(employees.get(0).getSkills().size() == 1);
     assertTrue(employees.get(1).getSkills().size() == 2);
     assertTrue(employees.get(2).getSkills().size() == 3);
     assertTrue(employees.get(3).getSkills().size() == 0);
     assertTrue(employees.get(4).getSkills().size() == 0);
-    
+
     assertTrue("java".equals(employees.get(0).getSkills().get(0).getName()));
     assertTrue("aws".equals(employees.get(2).getSkills().get(0).getName()));
 
   }
-  
-  
+
+
   @Test
   public void queryMerge_hasManyThroughWithJoinTablePrefix() {
     // @formatter:off
@@ -274,19 +226,19 @@ public class HasManyThroughTest {
         .orderBy("name")
         .execute(jtm, employees);
     // @formatter:on
-       
+
     assertTrue(employees.size() == 5);
     assertTrue(employees.get(0).getSkills().size() == 1);
     assertTrue(employees.get(1).getSkills().size() == 2);
     assertTrue(employees.get(2).getSkills().size() == 3);
     assertTrue(employees.get(3).getSkills().size() == 0);
     assertTrue(employees.get(4).getSkills().size() == 0);
-    
+
     assertTrue("java".equals(employees.get(0).getSkills().get(0).getName()));
     assertTrue("aws".equals(employees.get(2).getSkills().get(0).getName()));
 
   }
-  
+
   @Test
   public void queryMerge_hasManyThroughWithJoinTablePrefixInvalid() {
     // @formatter:off
@@ -296,9 +248,7 @@ public class HasManyThroughTest {
             .execute(jtm);
     // @formatter:on
 
-        Assertions.assertThrows(
-            org.springframework.jdbc.BadSqlGrammarException.class,
-            () -> {
+    Assertions.assertThrows(org.springframework.jdbc.BadSqlGrammarException.class, () -> {
     // @formatter:off
     QueryMerge.type(Employee.class)
         .hasMany(Skill.class)
@@ -308,10 +258,10 @@ public class HasManyThroughTest {
         .orderBy("name")
         .execute(jtm, employees);
     // @formatter:on
-            });
-       
+    });
+
   }
-  
-  
-  
+
+
+
 }

@@ -29,7 +29,8 @@ public class NonDefaultNamingModelTest {
   @Value("${spring.datasource.driver-class-name}")
   private String jdbcDriver;
 
-  @Autowired private JdbcTemplateMapper jtm;
+  @Autowired
+  private JdbcTemplateMapper jtm;
 
   @Test
   public void findById_Test() {

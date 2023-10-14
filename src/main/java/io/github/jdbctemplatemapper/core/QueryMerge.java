@@ -461,9 +461,8 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     String sql = successQueryMergeSqlCache.get(cacheKey);
     if (sql == null) {
       sql = "SELECT " + MapperUtils.getTableNameOnly(throughJoinTable) + "."
-          + throughOwnerTypeJoinColumn + " as "  + "o_"
-          + ownerTypeTableMapping.getIdColumnName() + ", " + selectMapperRelatedType.getColumnsSql()
-          + " FROM "
+          + throughOwnerTypeJoinColumn + " as " + "o_" + ownerTypeTableMapping.getIdColumnName()
+          + ", " + selectMapperRelatedType.getColumnsSql() + " FROM "
           + MapperUtils.getFullyQualifiedTableNameForThroughJoinTable(throughJoinTable,
               ownerTypeTableMapping)
           + " LEFT JOIN " + relatedTypeTableMapping.fullyQualifiedTableName() + " on "

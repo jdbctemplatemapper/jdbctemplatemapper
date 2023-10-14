@@ -12,8 +12,10 @@ public class Customer {
   @Id(type = IdType.AUTO_INCREMENT)
   private Integer customerId;
 
-  @Column private String firstName;
-  @Column private String lastName;
+  @Column
+  private String firstName;
+  @Column
+  private String lastName;
 
   private LocalDateTime createdOn;
   private String createdBy;

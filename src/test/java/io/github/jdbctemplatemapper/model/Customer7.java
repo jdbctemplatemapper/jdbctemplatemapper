@@ -15,8 +15,10 @@ public class Customer7 {
   @Column(name = "customer_id")
   private Integer id;
 
-  @Column private String firstName;
-  @Column private String lastName;
+  @Column
+  private String firstName;
+  @Column
+  private String lastName;
 
   private LocalDateTime createdOn;
   private String createdBy;

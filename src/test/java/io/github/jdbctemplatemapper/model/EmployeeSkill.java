@@ -11,8 +11,10 @@ public class EmployeeSkill {
   @Id(type = IdType.AUTO_INCREMENT)
   private Integer id;
 
-  @Column private Integer employeeId;
-  @Column private Integer skillId;
+  @Column
+  private Integer employeeId;
+  @Column
+  private Integer skillId;
 
   public EmployeeSkill() {}
 

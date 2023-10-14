@@ -23,12 +23,12 @@ public class JdbcTemplateMapperConfig {
   public DataSource dataSourceDs1() {
     return DataSourceBuilder.create().build();
   }
-  
+
   @Bean(name = "ds1JdbcTemplate")
   public JdbcTemplate jdbcTemplateDs1(@Qualifier("ds1") DataSource ds) {
     return new JdbcTemplate(ds);
   }
-  
+
   @Primary
   @Bean(name = "ds1JdbcTemplateMapper")
   public JdbcTemplateMapper ds1JdbcTemplateMapper(
@@ -36,7 +36,9 @@ public class JdbcTemplateMapperConfig {
 
     JdbcTemplateMapper jdbcTemplateMapper = null;
     if (jdbcDriver.contains("mysql")) {
-      jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate, null, "schema1"); // schema1 database name for mysql
+      jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate, null, "schema1"); // schema1
+                                                                                  // database name
+                                                                                  // for mysql
     } else {
       jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate, "schema1");
     }
@@ -60,7 +62,7 @@ public class JdbcTemplateMapperConfig {
   public JdbcTemplateMapper allJdbcTemplateMapperAll(
       @Qualifier("allJdbcTemplate") JdbcTemplate jdbcTemplate) {
     JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate);
-    
+
     if (jdbcDriver.contains("oracle")) {
       // Need this to get meta-data of table names which are synonyms
       jdbcTemplateMapper.includeSynonymsForTableColumnMetaData();

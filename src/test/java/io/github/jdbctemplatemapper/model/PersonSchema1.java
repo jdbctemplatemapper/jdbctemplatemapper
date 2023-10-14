@@ -6,9 +6,12 @@ import io.github.jdbctemplatemapper.annotation.Table;
 
 @Table(name = "person", schema = "SCHEMA1")
 public class PersonSchema1 {
-  @Id private String personId;
-  @Column private String lastName;
-  @Column private String firstName;
+  @Id
+  private String personId;
+  @Column
+  private String lastName;
+  @Column
+  private String firstName;
 
   private String someNonDatabaseProperty;
 
