@@ -28,6 +28,11 @@ class MapperUtils {
   public static final String OWNER_COL_ALIAS_PREFIX = "o";
   public static final String RELATED_COL_ALIAS_PREFIX = "r";
 
+  
+  public static String getIdentityHashCodeAsStr(Object obj) {
+    return String.valueOf(System.identityHashCode(obj));
+  }
+  
   public static String getTableNameOnly(String str) {
     if (str != null && str.contains(".")) {
       return str.substring(str.lastIndexOf('.') + 1);

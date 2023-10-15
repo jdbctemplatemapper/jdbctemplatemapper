@@ -60,17 +60,17 @@ public final class JdbcTemplateMapper {
   private IRecordOperatorResolver recordOperatorResolver;
 
   // insert cache. Note that Spring SimpleJdbcInsert is thread safe.
-  // Map key - object class
+  // Map key - class name
   // value - SimpleJdbcInsert
-  private Map<Class<?>, SimpleJdbcInsert> simpleJdbcInsertCache = new ConcurrentHashMap<>();
+  private Map<String, SimpleJdbcInsert> simpleJdbcInsertCache = new ConcurrentHashMap<>();
 
   // update sql cache
-  // Map key - object class
+  // Map key - class name
   // value - the update sql and params
-  private Map<Class<?>, SqlAndParams> updateSqlAndParamsCache = new ConcurrentHashMap<>();
+  private Map<String, SqlAndParams> updateSqlAndParamsCache = new ConcurrentHashMap<>();
 
   // update specified properties sql cache
-  // Map key - cacheKey
+  // Map key - class name and properties
   // value - the update sql and params
   private Map<String, SqlAndParams> updatePropertiesSqlAndParamsCache = new ConcurrentHashMap<>();
 
@@ -472,7 +472,7 @@ public final class JdbcTemplateMapper {
     }
 
     boolean foundInCache = false;
-    SimpleJdbcInsertOperations jdbcInsert = simpleJdbcInsertCache.get(obj.getClass());
+    SimpleJdbcInsertOperations jdbcInsert = simpleJdbcInsertCache.get(obj.getClass().getName());
     if (jdbcInsert == null) {
       if (tableMapping.isIdAutoIncrement()) {
         jdbcInsert =
@@ -502,7 +502,7 @@ public final class JdbcTemplateMapper {
     }
 
     if (!foundInCache) {
-      simpleJdbcInsertCache.put(obj.getClass(), (SimpleJdbcInsert) jdbcInsert);
+      simpleJdbcInsertCache.put(obj.getClass().getName(), (SimpleJdbcInsert) jdbcInsert);
     }
   }
 
@@ -527,7 +527,7 @@ public final class JdbcTemplateMapper {
     TableMapping tableMapping = mappingHelper.getTableMapping(obj.getClass());
 
     boolean foundInCache = false;
-    SqlAndParams sqlAndParams = updateSqlAndParamsCache.get(obj.getClass());
+    SqlAndParams sqlAndParams = updateSqlAndParamsCache.get(obj.getClass().getName());
     if (sqlAndParams == null) {
       sqlAndParams = buildSqlAndParamsForUpdate(tableMapping);
     } else {
@@ -536,7 +536,7 @@ public final class JdbcTemplateMapper {
     Integer cnt = updateInternal(obj, sqlAndParams, tableMapping);
 
     if (!foundInCache && cnt > 0) {
-      updateSqlAndParamsCache.put(obj.getClass(), sqlAndParams);
+      updateSqlAndParamsCache.put(obj.getClass().getName(), sqlAndParams);
     }
 
     return cnt;

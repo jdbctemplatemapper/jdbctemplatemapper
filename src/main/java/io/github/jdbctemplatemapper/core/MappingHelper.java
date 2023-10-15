@@ -55,9 +55,9 @@ import org.springframework.util.StringUtils;
  * @author ajoseph
  */
 class MappingHelper {
-  // Map key - object class
+  // Map key - class name
   // value - the table mapping
-  private Map<Class<?>, TableMapping> objectToTableMappingCache = new ConcurrentHashMap<>();
+  private Map<String, TableMapping> modelToTableMappingCache = new ConcurrentHashMap<>();
 
   // workaround for postgres driver bug for ResultSetMetaData
   private boolean forcePostgresTimestampWithTimezone = false;
@@ -132,7 +132,7 @@ class MappingHelper {
   public TableMapping getTableMapping(Class<?> clazz) {
     Assert.notNull(clazz, "clazz must not be null");
 
-    TableMapping tableMapping = objectToTableMappingCache.get(clazz);
+    TableMapping tableMapping = modelToTableMappingCache.get(clazz.getName());
     if (tableMapping == null) {
       TableColumnInfo tableColumnInfo = getTableColumnInfo(clazz);
       String tableName = tableColumnInfo.getTableName();
@@ -198,7 +198,7 @@ class MappingHelper {
           tableColumnInfo.getCatalogName(), JdbcUtils.commonDatabaseName(getDatabaseProductName()),
           idPropertyInfo, propertyMappings);
 
-      objectToTableMappingCache.put(clazz, tableMapping);
+      modelToTableMappingCache.put(clazz.getName(), tableMapping);
     }
     return tableMapping;
   }
