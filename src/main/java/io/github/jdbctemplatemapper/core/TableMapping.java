@@ -47,6 +47,7 @@ class TableMapping {
   // these maps used for performance
   private Map<String, PropertyMapping> columnNameMap = new HashMap<>();
   private Map<String, PropertyMapping> propertyNameMap = new HashMap<>();
+  private Map<String, PropertyMapping> columnAliasMap = new HashMap<>();
 
   public TableMapping(Class<?> tableClass, String tableName, String schemaName, String catalogName,
       String commonDatabaseName, IdPropertyInfo idPropertyInfo,
@@ -67,6 +68,7 @@ class TableMapping {
     this.propertyMappings = propertyMappings;
 
     if (propertyMappings != null) {
+      int cnt = 1;
       for (PropertyMapping propMapping : propertyMappings) {
         if (propMapping.isVersionAnnotation()) {
           versionPropertyName = propMapping.getPropertyName();
@@ -84,8 +86,16 @@ class TableMapping {
           updatedByPropertyName = propMapping.getPropertyName();
         }
         // these maps used for performance
+        String colAliasSuffix = "c" + cnt;
+        propMapping.setColumnAliasSuffix(colAliasSuffix);
+        // creating alias lookups for queries generated through Query and QueryMerge
+        columnAliasMap.put(MapperUtils.OWNER_COL_ALIAS_PREFIX + colAliasSuffix, propMapping);
+        columnAliasMap.put(MapperUtils.RELATED_COL_ALIAS_PREFIX + colAliasSuffix, propMapping);
+
         columnNameMap.put(propMapping.getColumnName(), propMapping);
         propertyNameMap.put(propMapping.getPropertyName(), propMapping);
+
+        cnt++;
       }
     }
   }
@@ -160,6 +170,10 @@ class TableMapping {
     return propertyNameMap.get(propertyName);
   }
 
+  public PropertyMapping getPropertyMappingByColumnAlias(String columnAlias) {
+    return columnAliasMap.get(columnAlias);
+  }
+
   public String fullyQualifiedTableName() {
     if (MapperUtils.isNotEmpty(schemaName)) {
       return schemaName + "." + tableName;
@@ -184,7 +198,6 @@ class TableMapping {
 
     return "";
   }
-
 
   public PropertyMapping getVersionPropertyMapping() {
     return versionPropertyName != null ? propertyNameMap.get(versionPropertyName) : null;

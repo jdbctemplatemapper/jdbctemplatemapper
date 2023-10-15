@@ -267,14 +267,14 @@ public class Query<T> implements IQueryFluent<T> {
 
     TableMapping ownerTypeTableMapping = jdbcTemplateMapper.getTableMapping(ownerType);
     SelectMapper<?> ownerTypeSelectMapper = jdbcTemplateMapper.getSelectMapperInternal(ownerType,
-        ownerTypeTableMapping.getTableName(), "o");
+        ownerTypeTableMapping.getTableName(), MapperUtils.OWNER_COL_ALIAS_PREFIX);
 
     TableMapping relatedTypeTableMapping =
         relatedType == null ? null : jdbcTemplateMapper.getTableMapping(relatedType);
     // making it effectively final to be used in inner class ResultSetExtractor
     SelectMapper<?> relatedTypeSelectMapper = relatedType == null ? null
         : jdbcTemplateMapper.getSelectMapperInternal(relatedType,
-            relatedTypeTableMapping.getTableName(), "r");
+            relatedTypeTableMapping.getTableName(), MapperUtils.RELATED_COL_ALIAS_PREFIX);
 
     boolean foundInCache = false;
     String cacheKey = getCacheKey(jdbcTemplateMapper);
@@ -381,8 +381,8 @@ public class Query<T> implements IQueryFluent<T> {
 
     TableMapping ownerTypeTableMapping = jtm.getTableMapping(ownerType);
 
-    SelectMapper<?> ownerTypeSelectMapper =
-        jtm.getSelectMapperInternal(ownerType, ownerTypeTableMapping.getTableName(), "o");
+    SelectMapper<?> ownerTypeSelectMapper = jtm.getSelectMapperInternal(ownerType,
+        ownerTypeTableMapping.getTableName(), MapperUtils.OWNER_COL_ALIAS_PREFIX);
 
     String ownerTypeTableName = ownerTypeTableMapping.getTableName();
 
@@ -390,7 +390,8 @@ public class Query<T> implements IQueryFluent<T> {
         relatedType == null ? null : jtm.getTableMapping(relatedType);
 
     SelectMapper<?> relatedTypeSelectMapper = relatedType == null ? null
-        : jtm.getSelectMapperInternal(relatedType, relatedTypeTableMapping.getTableName(), "r");
+        : jtm.getSelectMapperInternal(relatedType, relatedTypeTableMapping.getTableName(),
+            MapperUtils.RELATED_COL_ALIAS_PREFIX);
 
     String sql = "SELECT " + ownerTypeSelectMapper.getColumnsSql();
     if (relatedType != null) {

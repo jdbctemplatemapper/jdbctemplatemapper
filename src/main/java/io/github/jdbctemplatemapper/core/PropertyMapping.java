@@ -30,6 +30,7 @@ class PropertyMapping {
   private boolean versionAnnotation = false;
   private boolean createdByAnnotation = false;
   private boolean updatedByAnnotation = false;
+  private String columnAliasSuffix = "";
 
   public PropertyMapping(String propertyName, Class<?> propertyType, String columnName,
       int columnSqlDataType) {
@@ -109,5 +110,13 @@ class PropertyMapping {
 
   public void setUpdatedByAnnotation(boolean updatedByAnnotation) {
     this.updatedByAnnotation = updatedByAnnotation;
+  }
+
+  public String getColumnAliasSuffix() {
+    return columnAliasSuffix;
+  }
+
+  public void setColumnAliasSuffix(String colAliasSuffix) {
+    this.columnAliasSuffix = colAliasSuffix;
   }
 }

@@ -194,7 +194,7 @@ public class HasManyThroughTest {
 
 
   @Test
-  public void queryMerger_hasManyThrough_invalidFirstJoinColumnBlank_test() {
+  public void queryMerge_hasManyThrough_invalidFirstJoinColumnBlank_test() {
     List<Employee> employees = Query.type(Employee.class).orderBy("employee.id").execute(jtm);
 
     Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
@@ -238,7 +238,7 @@ public class HasManyThroughTest {
 
 
   @Test
-  public void queryMerge_hasManyThroughWithJoinTablePrefix() {
+  public void queryMerge_hasManyThroughWithJoinTablePrefix_success() {
     List<Employee> employees =
         Query.type(Employee.class)
              .orderBy("employee.id")
