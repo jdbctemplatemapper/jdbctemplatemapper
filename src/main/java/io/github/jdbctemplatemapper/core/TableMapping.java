@@ -49,10 +49,11 @@ class TableMapping {
   private Map<String, PropertyMapping> propertyNameMap = new HashMap<>();
 
   public TableMapping(Class<?> tableClass, String tableName, String schemaName, String catalogName,
-      String commonDatabaseName, String idPropertyName, List<PropertyMapping> propertyMappings) {
+      String commonDatabaseName, IdPropertyInfo idPropertyInfo,
+      List<PropertyMapping> propertyMappings) {
     Assert.notNull(tableClass, "tableClass must not be null");
     Assert.notNull(tableName, "tableName must not be null");
-    Assert.notNull(idPropertyName, "idPropertyName must not be null");
+    Assert.notNull(idPropertyInfo, "idPropertyInfo must not be null");
 
     this.tableClass = tableClass;
     this.tableName = tableName;
@@ -60,7 +61,9 @@ class TableMapping {
     this.catalogName = MapperUtils.isEmpty(catalogName) ? null : catalogName;
     this.commonDatabaseName = commonDatabaseName;
 
-    this.idPropertyName = idPropertyName;
+    this.idPropertyName = idPropertyInfo.getPropertyName();
+    this.idAutoIncrement = idPropertyInfo.isIdAutoIncrement();
+
     this.propertyMappings = propertyMappings;
 
     if (propertyMappings != null) {
@@ -129,10 +132,6 @@ class TableMapping {
 
   public String getIdColumnName() {
     return getIdPropertyMapping().getColumnName();
-  }
-
-  public void setIdAutoIncrement(boolean val) {
-    this.idAutoIncrement = val;
   }
 
   public boolean isIdAutoIncrement() {

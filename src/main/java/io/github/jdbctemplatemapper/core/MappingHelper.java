@@ -196,8 +196,7 @@ class MappingHelper {
 
       tableMapping = new TableMapping(clazz, tableName, tableColumnInfo.getSchemaName(),
           tableColumnInfo.getCatalogName(), JdbcUtils.commonDatabaseName(getDatabaseProductName()),
-          idPropertyInfo.getPropertyName(), propertyMappings);
-      tableMapping.setIdAutoIncrement(idPropertyInfo.isIdAutoIncrement());
+          idPropertyInfo, propertyMappings);
 
       objectToTableMappingCache.put(clazz, tableMapping);
     }
