@@ -82,7 +82,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
    * @return interface with the next methods in the chain
    */
   public static <T> IQueryMergeType<T> type(Class<T> type) {
-    Assert.notNull(type, "Type cannot be null");
+    Assert.notNull(type, "type cannot be null");
     return new QueryMerge<T>(type);
   }
 

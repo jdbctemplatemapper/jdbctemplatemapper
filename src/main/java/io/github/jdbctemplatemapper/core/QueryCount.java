@@ -60,7 +60,7 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
    * @return interface with the next methods in the chain
    */
   public static <T> IQueryCountType<T> type(Class<T> type) {
-    Assert.notNull(type, "Type cannot be null");
+    Assert.notNull(type, "type cannot be null");
     return new QueryCount<T>(type);
   }
 
