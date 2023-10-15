@@ -49,20 +49,20 @@ class QueryValidator {
           "Failed to instantiate " + ownerType.getName() + " No default constructor found.", e);
     }
 
-    if (relatedType != null) {
+    if (relatedType != null && relationshipType != null) {
       BeanWrapper bwOwnerModel = PropertyAccessorFactory.forBeanPropertyAccess(ownerModel);
       if (!bwOwnerModel.isReadableProperty(propertyName)) {
         throw new QueryException(
             "Invalid property name " + propertyName + " for class " + ownerType.getSimpleName());
       }
 
-      if (relationshipType == RelationshipType.HAS_ONE) {
+      if (relationshipType.name().equals(RelationshipType.HAS_ONE.name())) {
         validateHasOne(jtm, ownerType, relatedType, joinColumnOwningSide, propertyName,
             bwOwnerModel);
-      } else if (relationshipType == RelationshipType.HAS_MANY) {
+      } else if (relationshipType.name().equals(RelationshipType.HAS_MANY.name())) {
         validateHasMany(jtm, ownerType, relatedType, joinColumnManySide, propertyName,
             bwOwnerModel);
-      } else if (relationshipType == RelationshipType.HAS_MANY_THROUGH) {
+      } else if (relationshipType.name().equals(RelationshipType.HAS_MANY_THROUGH.name())) {
         validateHasManyThrough(ownerType, relatedType, throughJoinTable, throughOwnerTypeJoinColumn,
             throughRelatedTypeJoinColumn, propertyName, bwOwnerModel);
       }
@@ -84,8 +84,8 @@ class QueryValidator {
           "Failed to instantiate " + ownerType.getName() + " No default constructor found.", e);
     }
 
-    if (relatedType != null) {
-      if (relationshipType == RelationshipType.HAS_ONE) {
+    if (relatedType != null && relationshipType != null) {
+      if (relationshipType.name().equals(RelationshipType.HAS_ONE.name())) {
         BeanWrapper bwOwnerModel = PropertyAccessorFactory.forBeanPropertyAccess(ownerModel);
         validateHasOne(jtm, ownerType, relatedType, joinColumnOwningSide, null, bwOwnerModel);
       }
@@ -94,8 +94,9 @@ class QueryValidator {
 
   static void validateQueryLimitOffsetClause(RelationshipType relationshipType,
       String limitOffsetClause) {
-    if (relationshipType == RelationshipType.HAS_MANY
-        || relationshipType == RelationshipType.HAS_MANY_THROUGH) {
+    if (relationshipType != null
+        && (relationshipType.name().equals(RelationshipType.HAS_MANY.name())
+            || relationshipType.name().equals(RelationshipType.HAS_MANY_THROUGH.name()))) {
       if (MapperUtils.isNotBlank(limitOffsetClause)) {
         throw new IllegalStateException(
             "limitOffsetClause is not supported for hasMany and hasMany through relationships. "
@@ -110,7 +111,7 @@ class QueryValidator {
 
     if (propertyName != null) {
       PropertyDescriptor pd = bwOwnerModel.getPropertyDescriptor(propertyName);
-      if (relatedType != pd.getPropertyType()) {
+      if (relatedType != null && !relatedType.getName().equals(pd.getPropertyType().getName())) {
         throw new QueryException("property type conflict. property " + ownerType.getSimpleName()
             + "." + propertyName + " is of type " + pd.getPropertyType().getSimpleName()
             + " while type for hasOne relationship is " + relatedType.getSimpleName());
