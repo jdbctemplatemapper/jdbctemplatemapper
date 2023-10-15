@@ -546,8 +546,8 @@ public final class JdbcTemplateMapper {
    * Updates the specified properties passed in as arguments. Use it when you want to update a
    * property or a few properties of the object and not the whole object. Issues an update for only
    * the specific properties and any auto assign properties. Comes in handy for tables with large
-   * number of columns and need to update only a few. Also you can instantiate a new Object, populate the
-   * id and just the properties needed and invoke updateProperties().
+   * number of columns and need to update only a few. Also you can instantiate a new Object,
+   * populate the id and just the properties needed and invoke updateProperties().
    *
    * <pre>
    * Will handle the following annotations:
