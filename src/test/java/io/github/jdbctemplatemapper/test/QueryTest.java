@@ -48,7 +48,7 @@ public class QueryTest {
               Query.type(null).execute(jtm);
             });
     // @formatter:on
-    assertTrue(exception.getMessage().contains("Type cannot be null"));
+    assertTrue(exception.getMessage().contains("type cannot be null"));
   }
 
   @Test
