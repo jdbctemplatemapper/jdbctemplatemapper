@@ -138,9 +138,6 @@ class QueryValidator {
     Class<?> relatedTypeIdPropertyType =
         relatedTypeTableMapping.getIdPropertyMapping().getPropertyType();
 
-    // During development some IDE plugins (ex Spring Tools) could use different class loaders.
-    // Since this is just a check we use full class name. Assigning the value is done
-    // using reflection so its not a problem
     if (!joinColumnPropertyType.getName().equals(relatedTypeIdPropertyType.getName())) {
       throw new QueryException("Property type mismatch. join column " + joinColumnOwningSide
           + " property " + ownerType.getSimpleName() + "." + joinColumnPropertyName + " is of type "
@@ -176,9 +173,6 @@ class QueryValidator {
     Class<?> ownerTypeIdPropertyType =
         ownerTypeTableMapping.getIdPropertyMapping().getPropertyType();
 
-    // During development some IDE plugins (ex Spring Tools) could use different class loaders.
-    // Since this is just a check we use full class name. Assigning the value is done
-    // using reflection so its not a problem
     if (!joinColumnPropertyType.getName().equals(ownerTypeIdPropertyType.getName())) {
       throw new QueryException(
           "Property type mismatch. join column " + joinColumnManySide + " property "
@@ -212,6 +206,7 @@ class QueryValidator {
       throw new QueryException("property " + ownerType.getSimpleName() + "." + propertyName
           + " is not a collection. hasMany() relationship requires it to be a collection");
     }
+
     Object ownerModel = bwOwnerModel.getWrappedInstance();
     Class<?> collectionGenericType = getGenericTypeOfCollection(ownerModel, propertyName);
     if (collectionGenericType == null) {
@@ -219,9 +214,7 @@ class QueryValidator {
           "Collections without generic types are not supported. Collection for property "
               + ownerType.getSimpleName() + "." + propertyName + " does not have a generic type.");
     }
-    // During development some IDE plugins (ex Spring Tools) could use different class loaders.
-    // Since this is just a check we use full class name. Assigning the value is done
-    // using reflection so its not a problem
+
     if (!collectionGenericType.getName().equals(relatedType.getName())) {
       throw new QueryException("Collection generic type and hasMany relationship type mismatch. "
           + ownerType.getSimpleName() + "." + propertyName + " has generic type "
