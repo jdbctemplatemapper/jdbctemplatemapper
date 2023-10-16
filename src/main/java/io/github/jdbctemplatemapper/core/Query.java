@@ -13,6 +13,18 @@
  */
 package io.github.jdbctemplatemapper.core;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.util.Assert;
 import io.github.jdbctemplatemapper.query.IQueryFluent;
 import io.github.jdbctemplatemapper.query.IQueryHasMany;
 import io.github.jdbctemplatemapper.query.IQueryHasOne;
@@ -25,19 +37,6 @@ import io.github.jdbctemplatemapper.query.IQueryThroughJoinColumns;
 import io.github.jdbctemplatemapper.query.IQueryThroughJoinTable;
 import io.github.jdbctemplatemapper.query.IQueryType;
 import io.github.jdbctemplatemapper.query.IQueryWhere;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-import org.springframework.beans.BeanWrapper;
-import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.ResultSetExtractor;
-import org.springframework.util.Assert;
 
 
 /**
@@ -52,11 +51,9 @@ import org.springframework.util.Assert;
  * @author ajoseph
  */
 public class Query<T> implements IQueryFluent<T> {
-  private static final int CACHE_MAX_ENTRIES = 1000;
-
   // Cached SQL does not include limit offset clause
   // key - cacheKey, value - sql
-  private static Map<String, String> partialQuerySqlCache = new ConcurrentHashMap<>();
+  private static SimpleCache<String, String> partialSqlCache = new SimpleCache<>(1000);
 
   private Class<T> ownerType;
   private String whereClause;
@@ -278,7 +275,7 @@ public class Query<T> implements IQueryFluent<T> {
 
     boolean foundInCache = false;
     String cacheKey = getCacheKey(jdbcTemplateMapper);
-    String sql = getSqlFromCache(cacheKey);
+    String sql = partialSqlCache.get(cacheKey);
     if (sql == null) {
       QueryValidator.validate(jdbcTemplateMapper, ownerType, relationshipType, relatedType,
           joinColumnOwningSide, joinColumnManySide, propertyName, throughJoinTable,
@@ -347,7 +344,7 @@ public class Query<T> implements IQueryFluent<T> {
 
     // code reaches here query success, handle caching
     if (!foundInCache) {
-      addToCache(cacheKey, partialSqlForCache);
+      partialSqlCache.put(cacheKey, partialSqlForCache);
     }
     return resultList;
   }
@@ -426,7 +423,7 @@ public class Query<T> implements IQueryFluent<T> {
     return sql;
   }
 
-  private String getCacheKey(JdbcTemplateMapper jdbcTemplateMapper) {
+  String getCacheKey(JdbcTemplateMapper jdbcTemplateMapper) {
     // @formatter:off
     return String.join("-", 
         ownerType.getName(), 
@@ -442,20 +439,8 @@ public class Query<T> implements IQueryFluent<T> {
     // @formatter:on
   }
 
-  private String getSqlFromCache(String cacheKey) {
-    return partialQuerySqlCache.get(cacheKey);
-  }
-
-  private void addToCache(String key, String sql) {
-    if (partialQuerySqlCache.size() < CACHE_MAX_ENTRIES) {
-      partialQuerySqlCache.put(key, sql);
-    } else {
-      // remove a random entry from cache and add new entry
-      String k = partialQuerySqlCache.keySet().iterator().next();
-      partialQuerySqlCache.remove(k);
-
-      partialQuerySqlCache.put(key, sql);
-    }
+  SimpleCache<String, String> getPartialSqlCache() {
+    return partialSqlCache;
   }
 
 }
