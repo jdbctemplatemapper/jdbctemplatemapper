@@ -76,9 +76,9 @@ public final class JdbcTemplateMapper {
 
   // the column sql string with column aliases for mapped properties of model for
   // find methods
-  // Map key - object class
+  // Map key - class name
   // value - the column sql string
-  private Map<Class<?>, String> findColumnsSqlCache = new ConcurrentHashMap<>();
+  private Map<String, String> findColumnsSqlCache = new ConcurrentHashMap<>();
 
   // JdbcTemplate uses this as its converter so use the same
   private DefaultConversionService conversionService =
@@ -903,7 +903,7 @@ public final class JdbcTemplateMapper {
   }
 
   private <T> String getFindColumnsSql(TableMapping tableMapping, Class<T> clazz) {
-    String columnsSql = findColumnsSqlCache.get(clazz);
+    String columnsSql = findColumnsSqlCache.get(clazz.getName());
     if (columnsSql == null) {
       StringJoiner sj = new StringJoiner(", ", " ", " ");
       for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
@@ -911,7 +911,7 @@ public final class JdbcTemplateMapper {
             + MapperUtils.toUnderscoreName(propMapping.getPropertyName()));
       }
       columnsSql = sj.toString();
-      findColumnsSqlCache.put(clazz, columnsSql);
+      findColumnsSqlCache.put(clazz.getName(), columnsSql);
     }
     return columnsSql;
   }
