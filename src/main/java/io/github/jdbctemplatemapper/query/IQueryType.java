@@ -25,9 +25,11 @@ import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
  */
 public interface IQueryType<T> {
   IQueryHasMany<T> hasMany(Class<?> relatedType);
+  IQueryHasMany<T> hasMany(Class<?> relatedType, String tableAlias);
 
   IQueryHasOne<T> hasOne(Class<?> relatedType);
-
+  IQueryHasOne<T> hasOne(Class<?> relatedType, String tableAlias);
+  
   IQueryWhere<T> where(String whereClause, Object... params);
 
   IQueryOrderBy<T> orderBy(String orderBy);

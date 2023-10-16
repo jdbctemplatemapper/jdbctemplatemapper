@@ -505,6 +505,50 @@ public class QueryTest {
 
     // @formatter:on
   }
+  
+  
+  /*********************/
+  @Test
+  public void hasMany_tableAlias_success() {
+    // @formatter:off
+    List<Order> orders =  Query.type(Order.class, "o")
+        .hasMany(OrderLine.class, "ol")
+        .joinColumnManySide("order_id")
+        .populateProperty("orderLines")
+        .where("o.status = ?", "IN PROCESS")
+        .orderBy("o.order_id, ol.order_line_id")
+        .execute(jtm);
+    
+    assertTrue(orders.size() == 2);
+    assertTrue(orders.get(0).getOrderLines().size() == 2);
+    assertEquals("IN PROCESS", orders.get(1).getStatus());
+    assertTrue(orders.get(1).getOrderLines().size() == 1);
+
+    // @formatter:on
+  }
+  
+  
+  @Test
+  public void hasOne_tableAlias_success() {
+    // @formatter:off
+    List<Order> orders =
+        Query.type(Order.class, "o")
+            .hasOne(Customer.class, "c")
+            .joinColumnOwningSide("customer_id")
+            .populateProperty("customer")
+            .where("o.status = ?", "IN PROCESS")
+            .orderBy("o.status   DESC")
+            .execute(jtm);
+
+    assertTrue(orders.size() == 2);
+    assertTrue("tony".equals(orders.get(0).getCustomer().getFirstName()));
+    assertTrue("jane".equals(orders.get(1).getCustomer().getFirstName()));
+
+    // @formatter:on
+  }
+  
+  
+  /***************************************/
 
   @Test
   public void hasMany_Set_success_test() {

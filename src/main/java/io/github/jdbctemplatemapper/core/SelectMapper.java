@@ -196,7 +196,7 @@ public class SelectMapper<T> {
           if (columnLabel.startsWith(colAliasPrefix)) {
             PropertyMapping propMapping = null;
             if (internal) {
-              // column alias  would be something like oc1, rc1
+              // column alias would be something like oc1, rc1
               propMapping = tableMapping.getPropertyMappingByColumnAlias(columnLabel);
             } else {
               // column alias would be something like tableAliasArgument_oc1,
