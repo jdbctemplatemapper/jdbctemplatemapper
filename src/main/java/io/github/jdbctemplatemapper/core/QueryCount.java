@@ -13,14 +13,12 @@
  */
 package io.github.jdbctemplatemapper.core;
 
+import org.springframework.util.Assert;
 import io.github.jdbctemplatemapper.querycount.IQueryCountFluent;
 import io.github.jdbctemplatemapper.querycount.IQueryCountHasOne;
 import io.github.jdbctemplatemapper.querycount.IQueryCountJoinColumnOwningSide;
 import io.github.jdbctemplatemapper.querycount.IQueryCountType;
 import io.github.jdbctemplatemapper.querycount.IQueryCountWhere;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import org.springframework.util.Assert;
 
 
 /**
@@ -35,10 +33,8 @@ import org.springframework.util.Assert;
  * @author ajoseph
  */
 public class QueryCount<T> implements IQueryCountFluent<T> {
-
-  private static final int CACHE_MAX_ENTRIES = 1000;
   // key - cacheKey, value - sql
-  private static Map<String, String> successCountSqlCache = new ConcurrentHashMap<>();
+  private static SimpleCache<String, String> sqlCache = new SimpleCache<>(1000);
 
   private Class<T> ownerType;
   private String whereClause;
@@ -60,7 +56,7 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
    * @return interface with the next methods in the chain
    */
   public static <T> IQueryCountType<T> type(Class<T> type) {
-    Assert.notNull(type, "Type cannot be null");
+    Assert.notNull(type, "type cannot be null");
     return new QueryCount<T>(type);
   }
 
@@ -119,7 +115,7 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
 
     boolean foundInCache = false;
     String cacheKey = getCacheKey(jdbcTemplateMapper);
-    String sql = getSqlFromCache(cacheKey);
+    String sql = sqlCache.get(cacheKey);
     if (sql == null) {
       QueryValidator.validateQueryCount(jdbcTemplateMapper, ownerType, relationshipType,
           relatedType, joinColumnOwningSide);
@@ -137,7 +133,7 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
 
     // code reaches here query success, handle caching
     if (!foundInCache) {
-      addToCache(cacheKey, sql);
+      sqlCache.put(cacheKey, sql);
     }
     return count;
   }
@@ -178,20 +174,8 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
     // @formatter:on
   }
 
-  private String getSqlFromCache(String cacheKey) {
-    return successCountSqlCache.get(cacheKey);
-  }
-
-  private void addToCache(String key, String sql) {
-    if (successCountSqlCache.size() < CACHE_MAX_ENTRIES) {
-      successCountSqlCache.put(key, sql);
-    } else {
-      // remove a random entry from cache and add new entry
-      String k = successCountSqlCache.keySet().iterator().next();
-      successCountSqlCache.remove(k);
-
-      successCountSqlCache.put(key, sql);
-    }
+  SimpleCache<String, String> getSqlCache() {
+    return sqlCache;
   }
 
 }

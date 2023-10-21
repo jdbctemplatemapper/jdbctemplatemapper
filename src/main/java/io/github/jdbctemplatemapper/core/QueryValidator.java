@@ -49,20 +49,20 @@ class QueryValidator {
           "Failed to instantiate " + ownerType.getName() + " No default constructor found.", e);
     }
 
-    if (relatedType != null) {
+    if (relatedType != null && relationshipType != null) {
       BeanWrapper bwOwnerModel = PropertyAccessorFactory.forBeanPropertyAccess(ownerModel);
       if (!bwOwnerModel.isReadableProperty(propertyName)) {
         throw new QueryException(
             "Invalid property name " + propertyName + " for class " + ownerType.getSimpleName());
       }
 
-      if (relationshipType == RelationshipType.HAS_ONE) {
+      if (relationshipType.name().equals(RelationshipType.HAS_ONE.name())) {
         validateHasOne(jtm, ownerType, relatedType, joinColumnOwningSide, propertyName,
             bwOwnerModel);
-      } else if (relationshipType == RelationshipType.HAS_MANY) {
+      } else if (relationshipType.name().equals(RelationshipType.HAS_MANY.name())) {
         validateHasMany(jtm, ownerType, relatedType, joinColumnManySide, propertyName,
             bwOwnerModel);
-      } else if (relationshipType == RelationshipType.HAS_MANY_THROUGH) {
+      } else if (relationshipType.name().equals(RelationshipType.HAS_MANY_THROUGH.name())) {
         validateHasManyThrough(ownerType, relatedType, throughJoinTable, throughOwnerTypeJoinColumn,
             throughRelatedTypeJoinColumn, propertyName, bwOwnerModel);
       }
@@ -84,8 +84,8 @@ class QueryValidator {
           "Failed to instantiate " + ownerType.getName() + " No default constructor found.", e);
     }
 
-    if (relatedType != null) {
-      if (relationshipType == RelationshipType.HAS_ONE) {
+    if (relatedType != null && relationshipType != null) {
+      if (relationshipType.name().equals(RelationshipType.HAS_ONE.name())) {
         BeanWrapper bwOwnerModel = PropertyAccessorFactory.forBeanPropertyAccess(ownerModel);
         validateHasOne(jtm, ownerType, relatedType, joinColumnOwningSide, null, bwOwnerModel);
       }
@@ -94,8 +94,9 @@ class QueryValidator {
 
   static void validateQueryLimitOffsetClause(RelationshipType relationshipType,
       String limitOffsetClause) {
-    if (relationshipType == RelationshipType.HAS_MANY
-        || relationshipType == RelationshipType.HAS_MANY_THROUGH) {
+    if (relationshipType != null
+        && (relationshipType.name().equals(RelationshipType.HAS_MANY.name())
+            || relationshipType.name().equals(RelationshipType.HAS_MANY_THROUGH.name()))) {
       if (MapperUtils.isNotBlank(limitOffsetClause)) {
         throw new IllegalStateException(
             "limitOffsetClause is not supported for hasMany and hasMany through relationships. "
@@ -110,7 +111,7 @@ class QueryValidator {
 
     if (propertyName != null) {
       PropertyDescriptor pd = bwOwnerModel.getPropertyDescriptor(propertyName);
-      if (relatedType != pd.getPropertyType()) {
+      if (relatedType != null && !relatedType.getName().equals(pd.getPropertyType().getName())) {
         throw new QueryException("property type conflict. property " + ownerType.getSimpleName()
             + "." + propertyName + " is of type " + pd.getPropertyType().getSimpleName()
             + " while type for hasOne relationship is " + relatedType.getSimpleName());
@@ -137,9 +138,6 @@ class QueryValidator {
     Class<?> relatedTypeIdPropertyType =
         relatedTypeTableMapping.getIdPropertyMapping().getPropertyType();
 
-    // During development some IDE plugins (ex Spring Tools) could use different class loaders.
-    // Since this is just a check we use full class name. Assigning the value is done
-    // using reflection so its not a problem
     if (!joinColumnPropertyType.getName().equals(relatedTypeIdPropertyType.getName())) {
       throw new QueryException("Property type mismatch. join column " + joinColumnOwningSide
           + " property " + ownerType.getSimpleName() + "." + joinColumnPropertyName + " is of type "
@@ -175,9 +173,6 @@ class QueryValidator {
     Class<?> ownerTypeIdPropertyType =
         ownerTypeTableMapping.getIdPropertyMapping().getPropertyType();
 
-    // During development some IDE plugins (ex Spring Tools) could use different class loaders.
-    // Since this is just a check we use full class name. Assigning the value is done
-    // using reflection so its not a problem
     if (!joinColumnPropertyType.getName().equals(ownerTypeIdPropertyType.getName())) {
       throw new QueryException(
           "Property type mismatch. join column " + joinColumnManySide + " property "
@@ -211,6 +206,7 @@ class QueryValidator {
       throw new QueryException("property " + ownerType.getSimpleName() + "." + propertyName
           + " is not a collection. hasMany() relationship requires it to be a collection");
     }
+
     Object ownerModel = bwOwnerModel.getWrappedInstance();
     Class<?> collectionGenericType = getGenericTypeOfCollection(ownerModel, propertyName);
     if (collectionGenericType == null) {
@@ -218,9 +214,7 @@ class QueryValidator {
           "Collections without generic types are not supported. Collection for property "
               + ownerType.getSimpleName() + "." + propertyName + " does not have a generic type.");
     }
-    // During development some IDE plugins (ex Spring Tools) could use different class loaders.
-    // Since this is just a check we use full class name. Assigning the value is done
-    // using reflection so its not a problem
+
     if (!collectionGenericType.getName().equals(relatedType.getName())) {
       throw new QueryException("Collection generic type and hasMany relationship type mismatch. "
           + ownerType.getSimpleName() + "." + propertyName + " has generic type "

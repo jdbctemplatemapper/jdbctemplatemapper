@@ -18,10 +18,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
-import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.core.convert.support.DefaultConversionService;
@@ -51,8 +49,6 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  */
 public final class JdbcTemplateMapper {
 
-  private static final int CACHE_MAX_ENTRIES = 1000;
-
   private final JdbcTemplate jdbcTemplate;
   private final NamedParameterJdbcTemplate npJdbcTemplate;
 
@@ -60,25 +56,26 @@ public final class JdbcTemplateMapper {
   private IRecordOperatorResolver recordOperatorResolver;
 
   // insert cache. Note that Spring SimpleJdbcInsert is thread safe.
-  // Map key - object class
+  // Map key - class name
   // value - SimpleJdbcInsert
-  private Map<Class<?>, SimpleJdbcInsert> simpleJdbcInsertCache = new ConcurrentHashMap<>();
+  private SimpleCache<String, SimpleJdbcInsert> insertCache = new SimpleCache<>();
 
   // update sql cache
-  // Map key - object class
+  // Map key - class name
   // value - the update sql and params
-  private Map<Class<?>, SqlAndParams> updateSqlAndParamsCache = new ConcurrentHashMap<>();
+  private SimpleCache<String, SqlAndParams> updateCache = new SimpleCache<>();
 
   // update specified properties sql cache
-  // Map key - cacheKey
+  // Map key - class name and properties
   // value - the update sql and params
-  private Map<String, SqlAndParams> updatePropertiesSqlAndParamsCache = new ConcurrentHashMap<>();
+  private SimpleCache<String, SqlAndParams> updatePropertiesCache = new SimpleCache<>(1000);
 
   // the column sql string with column aliases for mapped properties of model for
   // find methods
-  // Map key - object class
+  // Map key - class name
   // value - the column sql string
-  private Map<Class<?>, String> findColumnsSqlCache = new ConcurrentHashMap<>();
+  private SimpleCache<String, String> findColumnsSqlCache = new SimpleCache<>();
+
 
   // JdbcTemplate uses this as its converter so use the same
   private DefaultConversionService conversionService =
@@ -472,7 +469,7 @@ public final class JdbcTemplateMapper {
     }
 
     boolean foundInCache = false;
-    SimpleJdbcInsertOperations jdbcInsert = simpleJdbcInsertCache.get(obj.getClass());
+    SimpleJdbcInsertOperations jdbcInsert = insertCache.get(obj.getClass().getName());
     if (jdbcInsert == null) {
       if (tableMapping.isIdAutoIncrement()) {
         jdbcInsert =
@@ -502,7 +499,7 @@ public final class JdbcTemplateMapper {
     }
 
     if (!foundInCache) {
-      simpleJdbcInsertCache.put(obj.getClass(), (SimpleJdbcInsert) jdbcInsert);
+      insertCache.put(obj.getClass().getName(), (SimpleJdbcInsert) jdbcInsert);
     }
   }
 
@@ -527,7 +524,7 @@ public final class JdbcTemplateMapper {
     TableMapping tableMapping = mappingHelper.getTableMapping(obj.getClass());
 
     boolean foundInCache = false;
-    SqlAndParams sqlAndParams = updateSqlAndParamsCache.get(obj.getClass());
+    SqlAndParams sqlAndParams = updateCache.get(obj.getClass().getName());
     if (sqlAndParams == null) {
       sqlAndParams = buildSqlAndParamsForUpdate(tableMapping);
     } else {
@@ -536,7 +533,7 @@ public final class JdbcTemplateMapper {
     Integer cnt = updateInternal(obj, sqlAndParams, tableMapping);
 
     if (!foundInCache && cnt > 0) {
-      updateSqlAndParamsCache.put(obj.getClass(), sqlAndParams);
+      updateCache.put(obj.getClass().getName(), sqlAndParams);
     }
 
     return cnt;
@@ -546,8 +543,8 @@ public final class JdbcTemplateMapper {
    * Updates the specified properties passed in as arguments. Use it when you want to update a
    * property or a few properties of the object and not the whole object. Issues an update for only
    * the specific properties and any auto assign properties. Comes in handy for tables with large
-   * number of columns and need to update only a few. Also you can instantiate a new Object, populate the
-   * id and just the properties needed and invoke updateProperties().
+   * number of columns and need to update only a few. Also you can instantiate a new Object,
+   * populate the id and just the properties needed and invoke updateProperties().
    *
    * <pre>
    * Will handle the following annotations:
@@ -570,7 +567,7 @@ public final class JdbcTemplateMapper {
 
     boolean foundInCache = false;
     String cacheKey = getUpdatePropertiesCacheKey(obj, propertyNames);
-    SqlAndParams sqlAndParams = updatePropertiesSqlAndParamsCache.get(cacheKey);
+    SqlAndParams sqlAndParams = updatePropertiesCache.get(cacheKey);
     if (sqlAndParams == null) {
       sqlAndParams = buildSqlAndParamsForUpdateProperties(tableMapping, propertyNames);
     } else {
@@ -580,7 +577,7 @@ public final class JdbcTemplateMapper {
     Integer cnt = updateInternal(obj, sqlAndParams, tableMapping);
 
     if (!foundInCache && cnt > 0) {
-      addToUpdatePropertiesCache(cacheKey, sqlAndParams);
+      updatePropertiesCache.put(cacheKey, sqlAndParams);
     }
 
     return cnt;
@@ -903,7 +900,7 @@ public final class JdbcTemplateMapper {
   }
 
   private <T> String getFindColumnsSql(TableMapping tableMapping, Class<T> clazz) {
-    String columnsSql = findColumnsSqlCache.get(clazz);
+    String columnsSql = findColumnsSqlCache.get(clazz.getName());
     if (columnsSql == null) {
       StringJoiner sj = new StringJoiner(", ", " ", " ");
       for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
@@ -911,7 +908,7 @@ public final class JdbcTemplateMapper {
             + MapperUtils.toUnderscoreName(propMapping.getPropertyName()));
       }
       columnsSql = sj.toString();
-      findColumnsSqlCache.put(clazz, columnsSql);
+      findColumnsSqlCache.put(clazz.getName(), columnsSql);
     }
     return columnsSql;
   }
@@ -934,16 +931,20 @@ public final class JdbcTemplateMapper {
     return obj.getClass().getName() + "-" + String.join("-", propertyNames);
   }
 
-  private void addToUpdatePropertiesCache(String key, SqlAndParams sqlAndParams) {
-    if (updatePropertiesSqlAndParamsCache.size() < CACHE_MAX_ENTRIES) {
-      updatePropertiesSqlAndParamsCache.put(key, sqlAndParams);
-    } else {
-      // remove a random entry from cache and add new entry
-      String k = updatePropertiesSqlAndParamsCache.keySet().iterator().next();
-      updatePropertiesSqlAndParamsCache.remove(k);
+  SimpleCache<String, SimpleJdbcInsert> getInsertCache() {
+    return insertCache;
+  }
 
-      updatePropertiesSqlAndParamsCache.put(key, sqlAndParams);
-    }
+  SimpleCache<String, SqlAndParams> getUpdateCache() {
+    return updateCache;
+  }
+
+  SimpleCache<String, SqlAndParams> getUpdatePropertiesCache() {
+    return updatePropertiesCache;
+  }
+
+  SimpleCache<String, String> findColumnsSqlCache() {
+    return findColumnsSqlCache;
   }
 
 }

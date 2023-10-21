@@ -47,12 +47,14 @@ class TableMapping {
   // these maps used for performance
   private Map<String, PropertyMapping> columnNameMap = new HashMap<>();
   private Map<String, PropertyMapping> propertyNameMap = new HashMap<>();
+  private Map<String, PropertyMapping> columnAliasMap = new HashMap<>();
 
   public TableMapping(Class<?> tableClass, String tableName, String schemaName, String catalogName,
-      String commonDatabaseName, String idPropertyName, List<PropertyMapping> propertyMappings) {
+      String commonDatabaseName, IdPropertyInfo idPropertyInfo,
+      List<PropertyMapping> propertyMappings) {
     Assert.notNull(tableClass, "tableClass must not be null");
     Assert.notNull(tableName, "tableName must not be null");
-    Assert.notNull(idPropertyName, "idPropertyName must not be null");
+    Assert.notNull(idPropertyInfo, "idPropertyInfo must not be null");
 
     this.tableClass = tableClass;
     this.tableName = tableName;
@@ -60,10 +62,13 @@ class TableMapping {
     this.catalogName = MapperUtils.isEmpty(catalogName) ? null : catalogName;
     this.commonDatabaseName = commonDatabaseName;
 
-    this.idPropertyName = idPropertyName;
+    this.idPropertyName = idPropertyInfo.getPropertyName();
+    this.idAutoIncrement = idPropertyInfo.isIdAutoIncrement();
+
     this.propertyMappings = propertyMappings;
 
     if (propertyMappings != null) {
+      int cnt = 1;
       for (PropertyMapping propMapping : propertyMappings) {
         if (propMapping.isVersionAnnotation()) {
           versionPropertyName = propMapping.getPropertyName();
@@ -81,8 +86,16 @@ class TableMapping {
           updatedByPropertyName = propMapping.getPropertyName();
         }
         // these maps used for performance
+        String colAliasSuffix = "c" + cnt;
+        propMapping.setColumnAliasSuffix(colAliasSuffix);
+        // creating alias lookups for queries generated through Query and QueryMerge
+        columnAliasMap.put(MapperUtils.OWNER_COL_ALIAS_PREFIX + colAliasSuffix, propMapping);
+        columnAliasMap.put(MapperUtils.RELATED_COL_ALIAS_PREFIX + colAliasSuffix, propMapping);
+
         columnNameMap.put(propMapping.getColumnName(), propMapping);
         propertyNameMap.put(propMapping.getPropertyName(), propMapping);
+
+        cnt++;
       }
     }
   }
@@ -131,10 +144,6 @@ class TableMapping {
     return getIdPropertyMapping().getColumnName();
   }
 
-  public void setIdAutoIncrement(boolean val) {
-    this.idAutoIncrement = val;
-  }
-
   public boolean isIdAutoIncrement() {
     return idAutoIncrement;
   }
@@ -161,6 +170,10 @@ class TableMapping {
     return propertyNameMap.get(propertyName);
   }
 
+  public PropertyMapping getPropertyMappingByColumnAlias(String columnAlias) {
+    return columnAliasMap.get(columnAlias);
+  }
+
   public String fullyQualifiedTableName() {
     if (MapperUtils.isNotEmpty(schemaName)) {
       return schemaName + "." + tableName;
@@ -185,7 +198,6 @@ class TableMapping {
 
     return "";
   }
-
 
   public PropertyMapping getVersionPropertyMapping() {
     return versionPropertyName != null ? propertyNameMap.get(versionPropertyName) : null;

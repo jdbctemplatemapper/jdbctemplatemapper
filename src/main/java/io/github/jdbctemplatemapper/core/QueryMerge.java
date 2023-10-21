@@ -13,6 +13,21 @@
  */
 package io.github.jdbctemplatemapper.core;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.PropertyAccessorFactory;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.util.Assert;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeFluent;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeHasMany;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeHasOne;
@@ -23,22 +38,6 @@ import io.github.jdbctemplatemapper.querymerge.IQueryMergePopulateProperty;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeThroughJoinColumns;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeThroughJoinTable;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeType;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.PropertyAccessorFactory;
-import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.ResultSetExtractor;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.util.Assert;
 
 
 /**
@@ -53,9 +52,8 @@ import org.springframework.util.Assert;
  * @author ajoseph
  */
 public class QueryMerge<T> implements IQueryMergeFluent<T> {
-  private static final int CACHE_MAX_ENTRIES = 1000;
   // key - cacheKey, value - Sql
-  private static Map<String, String> successQueryMergeSqlCache = new ConcurrentHashMap<>();
+  private static SimpleCache<String, String> sqlCache = new SimpleCache<>(1000);
 
   private int inClauseChunkSize = 100;
   private Class<T> ownerType;
@@ -82,7 +80,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
    * @return interface with the next methods in the chain
    */
   public static <T> IQueryMergeType<T> type(Class<T> type) {
-    Assert.notNull(type, "Type cannot be null");
+    Assert.notNull(type, "type cannot be null");
     return new QueryMerge<T>(type);
   }
 
@@ -231,7 +229,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     Assert.notNull(jdbcTemplateMapper, "jdbcTemplateMapper cannot be null");
 
     String cacheKey = getCacheKey(jdbcTemplateMapper);
-    if (!previouslySuccessfulQuery(cacheKey)) {
+    if (sqlCache.get(cacheKey) == null) {
       QueryValidator.validate(jdbcTemplateMapper, ownerType, relationshipType, relatedType,
           joinColumnOwningSide, joinColumnManySide, propertyName, throughJoinTable,
           throughOwnerTypeJoinColumn, throughRelatedTypeJoinColumn);
@@ -282,11 +280,11 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     if (MapperUtils.isEmpty(params)) {
       return;
     }
-    SelectMapper<?> selectMapperRelatedType =
-        jtm.getSelectMapperInternal(relatedType, relatedTypeTableMapping.getTableName(), "r");
+    SelectMapper<?> selectMapperRelatedType = jtm.getSelectMapperInternal(relatedType,
+        relatedTypeTableMapping.getTableName(), MapperUtils.RELATED_COL_ALIAS_PREFIX);
 
     boolean foundInCache = false;
-    String sql = getSqlFromCache(cacheKey);
+    String sql = sqlCache.get(cacheKey);
     if (sql == null) {
       sql = "SELECT " + selectMapperRelatedType.getColumnsSql() + " FROM "
           + relatedTypeTableMapping.fullyQualifiedTableName() + " WHERE "
@@ -330,7 +328,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     }
     // code reaches here query success, handle caching
     if (!foundInCache) {
-      addToCache(cacheKey, sql);
+      sqlCache.put(cacheKey, sql);
     }
   }
 
@@ -365,11 +363,11 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     if (MapperUtils.isEmpty(params)) {
       return;
     }
-    SelectMapper<?> selectMapper =
-        jtm.getSelectMapperInternal(relatedType, relatedTypeTableMapping.getTableName(), "r");
+    SelectMapper<?> selectMapper = jtm.getSelectMapperInternal(relatedType,
+        relatedTypeTableMapping.getTableName(), MapperUtils.RELATED_COL_ALIAS_PREFIX);
 
     boolean foundInCache = false;
-    String sql = getSqlFromCache(cacheKey);
+    String sql = sqlCache.get(cacheKey);
     if (sql == null) {
       sql = "SELECT " + selectMapper.getColumnsSql() + " FROM "
           + relatedTypeTableMapping.fullyQualifiedTableName() + " WHERE " + joinColumnManySide
@@ -411,7 +409,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
 
     // code reaches here query success, handle caching
     if (!foundInCache) {
-      addToCache(cacheKey, sql);
+      sqlCache.put(cacheKey, sql);
     }
   }
 
@@ -452,17 +450,19 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
 
     // The select statement is build in such a way the buildBeanWrapperModel(rs) returns the
     // ownerType id value.
-    SelectMapper<?> selectMapperOwnerType = jtm.getSelectMapper(ownerType, "o");
+    SelectMapper<?> selectMapperOwnerType = jtm.getSelectMapperInternal(ownerType,
+        ownerTypeTableMapping.getTableName(), MapperUtils.OWNER_COL_ALIAS_PREFIX);
 
-    SelectMapper<?> selectMapperRelatedType =
-        jtm.getSelectMapperInternal(relatedType, relatedTypeTableMapping.getTableName(), "r");
+    SelectMapper<?> selectMapperRelatedType = jtm.getSelectMapperInternal(relatedType,
+        relatedTypeTableMapping.getTableName(), MapperUtils.RELATED_COL_ALIAS_PREFIX);
 
     boolean foundInCache = false;
-    String sql = successQueryMergeSqlCache.get(cacheKey);
+    String sql = sqlCache.get(cacheKey);
     if (sql == null) {
       sql = "SELECT " + MapperUtils.getTableNameOnly(throughJoinTable) + "."
-          + throughOwnerTypeJoinColumn + " as " + "o_" + ownerTypeTableMapping.getIdColumnName()
-          + ", " + selectMapperRelatedType.getColumnsSql() + " FROM "
+          + throughOwnerTypeJoinColumn + " as "
+          + selectMapperOwnerType.getResultSetModelIdColumnLabel() + ", "
+          + selectMapperRelatedType.getColumnsSql() + " FROM "
           + MapperUtils.getFullyQualifiedTableNameForThroughJoinTable(throughJoinTable,
               ownerTypeTableMapping)
           + " LEFT JOIN " + relatedTypeTableMapping.fullyQualifiedTableName() + " on "
@@ -509,7 +509,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
 
     // code reaches here query success, handle caching
     if (!foundInCache) {
-      addToCache(cacheKey, sql);
+      sqlCache.put(cacheKey, sql);
     }
   }
 
@@ -530,23 +530,8 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     // @formatter:on
   }
 
-  private String getSqlFromCache(String cacheKey) {
-    return successQueryMergeSqlCache.get(cacheKey);
+  SimpleCache<String, String> getSqlCache() {
+    return sqlCache;
   }
 
-  private boolean previouslySuccessfulQuery(String key) {
-    return successQueryMergeSqlCache.containsKey(key);
-  }
-
-  private void addToCache(String key, String sql) {
-    if (successQueryMergeSqlCache.size() < CACHE_MAX_ENTRIES) {
-      successQueryMergeSqlCache.put(key, sql);
-    } else {
-      // remove a random entry from cache and add new entry
-      String k = successQueryMergeSqlCache.keySet().iterator().next();
-      successQueryMergeSqlCache.remove(k);
-
-      successQueryMergeSqlCache.put(key, sql);
-    }
-  }
 }

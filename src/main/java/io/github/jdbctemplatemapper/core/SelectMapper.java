@@ -46,6 +46,8 @@ public class SelectMapper<T> {
   private String colPrefix;
   private String colAliasPrefix;
 
+  private boolean internal;
+
   SelectMapper(Class<T> clazz, String tableAlias, MappingHelper mappingHelper,
       ConversionService conversionService, boolean useColumnLabelForResultSetMetaData) {
     Assert.notNull(clazz, " clazz cannot be empty");
@@ -75,7 +77,8 @@ public class SelectMapper<T> {
     this.useColumnLabelForResultSetMetaData = useColumnLabelForResultSetMetaData;
 
     this.colPrefix = tableName + ".";
-    this.colAliasPrefix = columnAlias + "_";
+    this.colAliasPrefix = columnAlias;
+    this.internal = true;
   }
 
   /**
@@ -95,9 +98,15 @@ public class SelectMapper<T> {
   public String getColumnsSql() {
     StringJoiner sj = new StringJoiner(", ", " ", " ");
     TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
+
     for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
-      sj.add(colPrefix + propMapping.getColumnName() + " as " + colAliasPrefix
-          + propMapping.getColumnName());
+      if (internal) {
+        sj.add(colPrefix + propMapping.getColumnName() + " as " + colAliasPrefix
+            + propMapping.getColumnAliasSuffix());
+      } else {
+        sj.add(colPrefix + propMapping.getColumnName() + " as " + colAliasPrefix
+            + MapperUtils.OWNER_COL_ALIAS_PREFIX + propMapping.getColumnAliasSuffix());
+      }
     }
     return sj.toString();
   }
@@ -126,7 +135,13 @@ public class SelectMapper<T> {
    * @return the column alias of the models id in sql statement
    */
   public String getResultSetModelIdColumnLabel() {
-    return colAliasPrefix + mappingHelper.getTableMapping(clazz).getIdColumnName();
+    if (internal) {
+      return colAliasPrefix
+          + mappingHelper.getTableMapping(clazz).getIdPropertyMapping().getColumnAliasSuffix();
+    } else {
+      return colAliasPrefix + MapperUtils.OWNER_COL_ALIAS_PREFIX
+          + mappingHelper.getTableMapping(clazz).getIdPropertyMapping().getColumnAliasSuffix();
+    }
   }
 
   /**
@@ -179,8 +194,16 @@ public class SelectMapper<T> {
         if (columnLabel != null) {
           columnLabel = columnLabel.toLowerCase(Locale.US);
           if (columnLabel.startsWith(colAliasPrefix)) {
-            PropertyMapping propMapping = tableMapping
-                .getPropertyMappingByColumnName(columnLabel.substring(colAliasPrefix.length()));
+            PropertyMapping propMapping = null;
+            if (internal) {
+              // column alias would be something like oc1, rc1
+              propMapping = tableMapping.getPropertyMappingByColumnAlias(columnLabel);
+            } else {
+              // column alias would be something like tableAliasArgument_oc1,
+              // tableAliasArgument_oc2 ...
+              propMapping = tableMapping
+                  .getPropertyMappingByColumnAlias(columnLabel.substring(colAliasPrefix.length()));
+            }
             if (propMapping != null) {
               bw.setPropertyValue(propMapping.getPropertyName(),
                   JdbcUtils.getResultSetValue(rs, i, propMapping.getPropertyType()));

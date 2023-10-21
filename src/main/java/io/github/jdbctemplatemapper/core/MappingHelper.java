@@ -55,9 +55,9 @@ import org.springframework.util.StringUtils;
  * @author ajoseph
  */
 class MappingHelper {
-  // Map key - object class
+  // Map key - class name
   // value - the table mapping
-  private Map<Class<?>, TableMapping> objectToTableMappingCache = new ConcurrentHashMap<>();
+  private Map<String, TableMapping> modelToTableMappingCache = new ConcurrentHashMap<>();
 
   // workaround for postgres driver bug for ResultSetMetaData
   private boolean forcePostgresTimestampWithTimezone = false;
@@ -89,13 +89,13 @@ class MappingHelper {
    */
   public MappingHelper(JdbcTemplate jdbcTemplate, String schemaName, String catalogName,
       String metaDataColumnNamePattern) {
+    Assert.notNull(jdbcTemplate, "jdbcTemplate must not be null");
+
     this.jdbcTemplate = jdbcTemplate;
     this.schemaName = schemaName;
     this.catalogName = catalogName;
     this.metaDataColumnNamePattern = metaDataColumnNamePattern;
 
-    this.databaseProductName = getDatabaseProductName(jdbcTemplate);
-    validateMetaDataConfig(databaseProductName, catalogName, schemaName);
   }
 
   public void forcePostgresTimestampWithTimezone(boolean val) {
@@ -132,7 +132,7 @@ class MappingHelper {
   public TableMapping getTableMapping(Class<?> clazz) {
     Assert.notNull(clazz, "clazz must not be null");
 
-    TableMapping tableMapping = objectToTableMappingCache.get(clazz);
+    TableMapping tableMapping = modelToTableMappingCache.get(clazz.getName());
     if (tableMapping == null) {
       TableColumnInfo tableColumnInfo = getTableColumnInfo(clazz);
       String tableName = tableColumnInfo.getTableName();
@@ -195,11 +195,10 @@ class MappingHelper {
       validateAnnotations(propertyMappings, clazz);
 
       tableMapping = new TableMapping(clazz, tableName, tableColumnInfo.getSchemaName(),
-          tableColumnInfo.getCatalogName(), JdbcUtils.commonDatabaseName(databaseProductName),
-          idPropertyInfo.getPropertyName(), propertyMappings);
-      tableMapping.setIdAutoIncrement(idPropertyInfo.isIdAutoIncrement());
+          tableColumnInfo.getCatalogName(), JdbcUtils.commonDatabaseName(getDatabaseProductName()),
+          idPropertyInfo, propertyMappings);
 
-      objectToTableMappingCache.put(clazz, tableMapping);
+      modelToTableMappingCache.put(clazz.getName(), tableMapping);
     }
     return tableMapping;
   }
@@ -238,7 +237,7 @@ class MappingHelper {
     String catalog = getCatalogForTable(tableAnnotation);
     String schema = getSchemaForTable(tableAnnotation);
 
-    validateMetaDataConfig(databaseProductName, catalog, schema);
+    validateMetaDataConfig(catalog, schema);
 
     String tableName = tableAnnotation.name();
     List<ColumnInfo> columnInfoList = getColumnInfoFromDatabaseMetadata(tableName, schema, catalog);
@@ -268,18 +267,26 @@ class MappingHelper {
     return columnInfoList;
   }
 
-  private String getDatabaseProductName(JdbcTemplate jdbcTemplate) {
-    try {
-      return JdbcUtils.extractDatabaseMetaData(jdbcTemplate.getDataSource(),
-          new DatabaseMetaDataCallback<String>() {
-            public String processMetaData(DatabaseMetaData dbMetaData)
-                throws SQLException, MetaDataAccessException {
-              return dbMetaData.getDatabaseProductName();
-            }
-          });
-    } catch (Exception e) {
-      throw new MapperException(e);
+  private String getDatabaseProductName() {
+    if (this.databaseProductName != null) {
+      return this.databaseProductName;
+    } else {
+      try {
+        synchronized (this) {
+          this.databaseProductName = JdbcUtils.extractDatabaseMetaData(jdbcTemplate.getDataSource(),
+              new DatabaseMetaDataCallback<String>() {
+                public String processMetaData(DatabaseMetaData dbMetaData)
+                    throws SQLException, MetaDataAccessException {
+                  return dbMetaData.getDatabaseProductName();
+                }
+              });
+        }
+      } catch (Exception e) {
+        throw new MapperException(e);
+      }
+      return this.databaseProductName;
     }
+
   }
 
   boolean getForcePostgresTimestampWithTimezone() {
@@ -409,9 +416,8 @@ class MappingHelper {
     }
   }
 
-  private void validateMetaDataConfig(String databaseProductName, String catalogName,
-      String schemaName) {
-    String commonDatabaseName = JdbcUtils.commonDatabaseName(databaseProductName);
+  private void validateMetaDataConfig(String catalogName, String schemaName) {
+    String commonDatabaseName = JdbcUtils.commonDatabaseName(getDatabaseProductName());
     if ("mysql".equalsIgnoreCase(commonDatabaseName)) {
       if (MapperUtils.isNotEmpty(schemaName)) {
         throw new MapperException(databaseProductName + " does not support schema.");

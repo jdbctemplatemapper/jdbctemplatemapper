@@ -173,6 +173,24 @@ public class HasManyThroughTest {
     assertTrue(employees.get(3).getSkills().size() == 0);
     assertTrue(employees.get(4).getSkills().size() == 0);
   }
+  
+  @Test
+  public void query_hasManyThrough_tableAlias_success() {
+    List<Employee> employees = 
+        Query.type(Employee.class, "e")
+             .hasMany(Skill.class, "s")
+             .throughJoinTable("employee_skill")
+             .throughJoinColumns("employee_id", "SKILL_ID")
+             .populateProperty("skills")
+             .orderBy("e.id").execute(jtm);
+
+    assertTrue(employees.size() == 5);
+    assertTrue(employees.get(0).getSkills().size() == 1);
+    assertTrue(employees.get(1).getSkills().size() == 2);
+    assertTrue(employees.get(2).getSkills().size() == 3);
+    assertTrue(employees.get(3).getSkills().size() == 0);
+    assertTrue(employees.get(4).getSkills().size() == 0);
+  }
 
   @Test
   public void query_hasManyThrough2_success_test() {
@@ -194,7 +212,7 @@ public class HasManyThroughTest {
 
 
   @Test
-  public void queryMerger_hasManyThrough_invalidFirstJoinColumnBlank_test() {
+  public void queryMerge_hasManyThrough_invalidFirstJoinColumnBlank_test() {
     List<Employee> employees = Query.type(Employee.class).orderBy("employee.id").execute(jtm);
 
     Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
@@ -236,9 +254,8 @@ public class HasManyThroughTest {
 
   }
 
-
   @Test
-  public void queryMerge_hasManyThroughWithJoinTablePrefix() {
+  public void queryMerge_hasManyThroughWithJoinTablePrefix_success() {
     List<Employee> employees =
         Query.type(Employee.class)
              .orderBy("employee.id")
