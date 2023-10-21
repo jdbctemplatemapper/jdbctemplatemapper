@@ -159,6 +159,7 @@ public class CachingTest {
          .hasOne(Customer.class, "c")
          .joinColumnOwningSide("customer_id")
          .populateProperty("customer")
+         .orderBy("o.order_id")
          .limitOffsetClause(limitOffsetClause)
          .execute(jtm);
     assertEquals(4, cache.getSize());
@@ -167,6 +168,7 @@ public class CachingTest {
          .hasOne(Customer.class, "c")
          .joinColumnOwningSide("customer_id")
          .populateProperty("customer")
+         .orderBy("o.order_id")
          .limitOffsetClause(limitOffsetClause)
          .execute(jtm);
     assertEquals(4, cache.getSize());
