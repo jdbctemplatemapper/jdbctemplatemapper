@@ -365,16 +365,16 @@ public class QueryMergeTest {
   public void hasOne_orderByIsNotSupported_test() {
     List<Order> orders = Query.type(Order.class).execute(jtm);
 
-    //Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+    Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
       QueryMerge.type(Order.class)
                 .hasOne(Customer.class)
                 .joinColumnOwningSide("customer_id")
                 .populateProperty("customer")
                 .orderBy("customer_id")
                 .execute(jtm, orders);
-    //});
-    //assertTrue(exception.getMessage()
-     //                   .contains("For QueryMerge hasOne relationships orderBy is not supported"));
+    });
+    assertTrue(exception.getMessage()
+                        .contains("For QueryMerge hasOne relationships orderBy is not supported"));
 
   }
 

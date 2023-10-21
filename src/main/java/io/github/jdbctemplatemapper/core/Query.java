@@ -58,7 +58,7 @@ public class Query<T> implements IQueryFluent<T> {
   private String orderBy;
   private String limitOffsetClause;
 
-  private RelationshipType relationshipType;
+  private String relationshipType;
   private Class<?> relatedType;
   private String relatedTableAlias;
   private String propertyName; // propertyName on main class that needs to be populated
@@ -355,9 +355,9 @@ public class Query<T> implements IQueryFluent<T> {
                 idToBeanWrapperRelatedModelMap, false);
             Object relatedModel =
                 bwRelatedModel == null ? null : bwRelatedModel.getWrappedInstance();
-            if (RelationshipType.HAS_ONE.name().equals(relationshipType)) {
+            if (RelationshipType.HAS_ONE.equals(relationshipType)) {
               bwOwnerModel.setPropertyValue(propertyName, relatedModel);
-            } else if (RelationshipType.HAS_MANY.name().equals(relationshipType)
+            } else if (RelationshipType.HAS_MANY.equals(relationshipType)
                 || RelationshipType.HAS_MANY_THROUGH.equals(relationshipType)) {
               if (relatedModel != null) {
                 // the property has already been validated so we know it is a
@@ -397,8 +397,8 @@ public class Query<T> implements IQueryFluent<T> {
       bwModel = idToBeanWrapperModelMap.get(id);
       if (bwModel == null) {
         bwModel = selectMapper.buildBeanWrapperModel(rs); // builds the model from resultSet
-        if (isOwningModel && (RelationshipType.HAS_MANY == relationshipType
-            || RelationshipType.HAS_MANY_THROUGH == relationshipType)) {
+        if (isOwningModel && (RelationshipType.HAS_MANY.equals(relationshipType)
+            || RelationshipType.HAS_MANY_THROUGH.equals(relationshipType))) {
           // first time seeing the owning model. Make sure collection is clear.
           Collection collection = (Collection) bwModel.getPropertyValue(propertyName);
           if (collection.size() > 0) {
@@ -440,12 +440,12 @@ public class Query<T> implements IQueryFluent<T> {
       sql += "," + relatedTypeSelectMapper.getColumnsSql();
     }
 
-    if (relationshipType == RelationshipType.HAS_ONE) {
+    if (RelationshipType.HAS_ONE.equals(relationshipType)) {
       sql += hasOneFromClause(ownerTypeTableMapping, relatedTypeTableMapping);
-    } else if (relationshipType == RelationshipType.HAS_MANY) {
+    } else if (RelationshipType.HAS_MANY.equals(relationshipType)) {
       // joinColumn is on related table
       sql += hasManyFromClause(ownerTypeTableMapping, relatedTypeTableMapping);
-    } else if (relationshipType == RelationshipType.HAS_MANY_THROUGH) {
+    } else if (RelationshipType.HAS_MANY_THROUGH.equals(relationshipType)) {
       sql += hasManyThroughFromClause(ownerTypeTableMapping, relatedTypeTableMapping);
     } else {
       String ownerTableStr =
@@ -541,7 +541,7 @@ public class Query<T> implements IQueryFluent<T> {
         ownerTableAlias,
         relatedType == null ? null : relatedType.getName(),
         relatedTableAlias,
-        relationshipType == null ? null : relationshipType.name(),
+        relationshipType,
         joinColumnOwningSide, 
         joinColumnManySide, 
         throughJoinTable, 

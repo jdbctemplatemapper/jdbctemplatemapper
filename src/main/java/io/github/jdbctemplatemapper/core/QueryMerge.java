@@ -55,7 +55,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
 
   private int inClauseChunkSize = 100;
   private Class<T> ownerType;
-  private RelationshipType relationshipType;
+  private String relationshipType;
   private Class<?> relatedType;
   private String relatedTypeTableAlias;
   private String propertyName; // propertyName on ownerType that needs to be populated
@@ -255,7 +255,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
           joinColumnOwningSide, joinColumnManySide, propertyName, throughJoinTable,
           throughOwnerTypeJoinColumn, throughRelatedTypeJoinColumn);
 
-      if (relationshipType == RelationshipType.HAS_ONE) {
+      if (RelationshipType.HAS_ONE.equals(relationshipType)) {
         if (MapperUtils.isNotBlank(orderBy)) {
           throw new IllegalArgumentException(
               "For QueryMerge hasOne relationships orderBy is not supported."
@@ -264,11 +264,11 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
       }
     }
 
-    if (relationshipType == RelationshipType.HAS_ONE) {
+    if (RelationshipType.HAS_ONE.equals(relationshipType)) {
       processHasOne(jdbcTemplateMapper, mergeList, ownerType, relatedType, cacheKey);
-    } else if (relationshipType == RelationshipType.HAS_MANY) {
+    } else if (RelationshipType.HAS_MANY.equals(relationshipType)) {
       processHasMany(jdbcTemplateMapper, mergeList, ownerType, relatedType, cacheKey);
-    } else if (relationshipType == RelationshipType.HAS_MANY_THROUGH) {
+    } else if (RelationshipType.HAS_MANY_THROUGH.equals(relationshipType)) {
       processHasManyThrough(jdbcTemplateMapper, mergeList, ownerType, relatedType, cacheKey);
     }
   }
@@ -575,13 +575,14 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         ownerType.getName(),
         relatedType == null ? null : relatedType.getName(),
         relatedTypeTableAlias,
-        relationshipType == null ? null : relationshipType.name(),
+        relationshipType,
         joinColumnOwningSide,
         joinColumnManySide,
         throughJoinTable, 
         throughOwnerTypeJoinColumn,
         throughRelatedTypeJoinColumn,
-        propertyName);
+        propertyName,
+        orderBy);
     // @formatter:on
   }
   

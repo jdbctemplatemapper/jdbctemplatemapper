@@ -37,7 +37,7 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
   private String whereClause;
   private Object[] whereParams;
 
-  private RelationshipType relationshipType;
+  private String relationshipType;
   private Class<?> relatedType;
   private String relatedTableAlias;
   private String joinColumnOwningSide;
@@ -186,7 +186,7 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
       String relatedColumnPrefix =
           MapperUtils.columnPrefix(relatedTableAlias, relatedTypeTableMapping.getTableName());
 
-      if (relationshipType == RelationshipType.HAS_ONE) {
+      if (RelationshipType.HAS_ONE.equals(relationshipType)) {
         // joinColumn is on owner table
         sql += " LEFT JOIN " + relatedTableStr + " on " + ownerColumnPrefix + "."
             + joinColumnOwningSide + " = " + relatedColumnPrefix + "."
@@ -203,7 +203,7 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
         ownerTableAlias,
         relatedType == null ? null : relatedType.getName(),
         relatedTableAlias,
-        relationshipType == null ? null : relationshipType.name(),
+        relationshipType,
         joinColumnOwningSide);
     // @formatter:on
   }

@@ -33,7 +33,7 @@ class QueryValidator {
   private QueryValidator() {}
 
   static void validate(JdbcTemplateMapper jtm, Class<?> ownerType,
-      RelationshipType relationshipType, Class<?> relatedType, String joinColumnOwningSide,
+      String relationshipType, Class<?> relatedType, String joinColumnOwningSide,
       String joinColumnManySide, String propertyName, String throughJoinTable,
       String throughOwnerTypeJoinColumn, String throughRelatedTypeJoinColumn) {
 
@@ -56,13 +56,13 @@ class QueryValidator {
             "Invalid property name " + propertyName + " for class " + ownerType.getSimpleName());
       }
 
-      if (relationshipType.name().equals(RelationshipType.HAS_ONE.name())) {
+      if (RelationshipType.HAS_ONE.equals(relationshipType)) {
         validateHasOne(jtm, ownerType, relatedType, joinColumnOwningSide, propertyName,
             bwOwnerModel);
-      } else if (relationshipType.name().equals(RelationshipType.HAS_MANY.name())) {
+      } else if (RelationshipType.HAS_MANY.equals(relationshipType)) {
         validateHasMany(jtm, ownerType, relatedType, joinColumnManySide, propertyName,
             bwOwnerModel);
-      } else if (relationshipType.name().equals(RelationshipType.HAS_MANY_THROUGH.name())) {
+      } else if (RelationshipType.HAS_MANY_THROUGH.equals(relationshipType)) {
         validateHasManyThrough(ownerType, relatedType, throughJoinTable, throughOwnerTypeJoinColumn,
             throughRelatedTypeJoinColumn, propertyName, bwOwnerModel);
       }
@@ -70,7 +70,7 @@ class QueryValidator {
   }
 
   static void validateQueryCount(JdbcTemplateMapper jtm, Class<?> ownerType,
-      RelationshipType relationshipType, Class<?> relatedType, String joinColumnOwningSide) {
+      String relationshipType, Class<?> relatedType, String joinColumnOwningSide) {
 
     if (jtm == null) {
       throw new QueryException("JdbcTemplateMapper cannot be null");
@@ -85,18 +85,18 @@ class QueryValidator {
     }
 
     if (relatedType != null && relationshipType != null) {
-      if (relationshipType.name().equals(RelationshipType.HAS_ONE.name())) {
+      if (RelationshipType.HAS_ONE.equals(relationshipType)) {
         BeanWrapper bwOwnerModel = PropertyAccessorFactory.forBeanPropertyAccess(ownerModel);
         validateHasOne(jtm, ownerType, relatedType, joinColumnOwningSide, null, bwOwnerModel);
       }
     }
   }
 
-  static void validateQueryLimitOffsetClause(RelationshipType relationshipType,
+  static void validateQueryLimitOffsetClause(String relationshipType,
       String limitOffsetClause) {
     if (relationshipType != null
-        && (relationshipType.name().equals(RelationshipType.HAS_MANY.name())
-            || relationshipType.name().equals(RelationshipType.HAS_MANY_THROUGH.name()))) {
+        && (RelationshipType.HAS_MANY.equals(relationshipType)
+            || RelationshipType.HAS_MANY_THROUGH.equals(relationshipType))) {
       if (MapperUtils.isNotBlank(limitOffsetClause)) {
         throw new IllegalArgumentException(
             "limitOffsetClause is not supported for hasMany and hasMany through relationships. "

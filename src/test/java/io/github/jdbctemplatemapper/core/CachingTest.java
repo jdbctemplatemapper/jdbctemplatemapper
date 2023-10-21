@@ -382,7 +382,7 @@ public class CachingTest {
               .populateProperty("orderLines")
               .orderBy("order_line_id")
               .execute(jtm, orders);
-    assertEquals(1, cache.getSize());
+    assertEquals(2, cache.getSize());
 
     QueryMerge.type(Order.class)
               .hasMany(OrderLine.class)
@@ -390,14 +390,14 @@ public class CachingTest {
               .populateProperty("orderLines")
               .orderBy("order_line_id")
               .execute(jtm, orders);
-    assertEquals(1, cache.getSize());
+    assertEquals(2, cache.getSize());
 
     QueryMerge.type(Order.class)
               .hasMany(OrderLine.class, "ol")
               .joinColumnManySide("ORDER_ID")
               .populateProperty("orderLines")
               .execute(jtm, orders);
-    assertEquals(2, cache.getSize());
+    assertEquals(3, cache.getSize());
 
     QueryMerge.type(Order.class)
               .hasMany(OrderLine.class, "ol")
@@ -405,7 +405,7 @@ public class CachingTest {
               .populateProperty("orderLines")
               .orderBy("ol.order_line_id")
               .execute(jtm, orders);
-    assertEquals(2, cache.getSize());
+    assertEquals(4, cache.getSize());
 
   }
 
