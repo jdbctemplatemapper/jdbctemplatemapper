@@ -72,7 +72,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   }
 
   /**
-   * The type on which the query results are merged to.
+   * The type records the query results are merged to.
    *
    * @param <T> the type
    * @param type The type
@@ -82,6 +82,14 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     Assert.notNull(type, "type cannot be null");
     return new QueryMerge<T>(type);
   }
+  
+  /**
+   * The type on which the query results are merged to.
+   *
+   * @param <T> the type
+   * @param type The type
+   * @return interface with the next methods in the chain
+   */
 
   /**
    * hasOne relationship.
@@ -95,7 +103,14 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     this.relatedType = relatedType;
     return this;
   }
-
+  
+  /**
+   * hasOne relationship.
+   *
+   * @param relatedType the related type
+   * @param tableAlias the table alias.
+   * @return interface with the next methods in the chain
+   */
   public IQueryMergeHasOne<T> hasOne(Class<?> relatedType, String tableAlias) {
     Assert.notNull(relatedType, "relatedType cannot be null");
     if (MapperUtils.isBlank(tableAlias)) {
@@ -120,6 +135,13 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     return this;
   }
 
+  /**
+   * hasMany relationship.
+   *
+   * @param relatedType the related type
+   * @param tableAlias the table alias which can be used in orderBy clause
+   * @return interface with the next methods in the chain
+   */
   public IQueryMergeHasMany<T> hasMany(Class<?> relatedType, String tableAlias) {
     Assert.notNull(relatedType, "relatedType cannot be null");
     if (MapperUtils.isBlank(tableAlias)) {

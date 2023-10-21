@@ -21,7 +21,7 @@ import io.github.jdbctemplatemapper.querycount.IQueryCountType;
 import io.github.jdbctemplatemapper.querycount.IQueryCountWhere;
 
 /**
- * Gets the count of the records for a query. This is to mainly support pagination counts
+ * Gets the count of the records for a query. This is to support pagination counts.
  *
  * <pre>
  * See <a href=
@@ -51,9 +51,8 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
     this.ownerTableAlias = tableAlias;
   }
 
-
   /**
-   * The owning type.
+   * The type that needs to be counted.
    *
    * @param <T> The type
    * @param type the type
@@ -64,6 +63,14 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
     return new QueryCount<T>(type);
   }
 
+  /**
+   * The type that needs to be counted.
+   *
+   * @param <T> The type
+   * @param type the type
+   * @param tableAlias the table alias which can be used in where clause
+   * @return interface with the next methods in the chain
+   */
   public static <T> IQueryCountType<T> type(Class<T> type, String tableAlias) {
     Assert.notNull(type, "type cannot be null");
     if (MapperUtils.isBlank(tableAlias)) {
@@ -85,6 +92,13 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
     return this;
   }
 
+  /**
+   * The hasOne relationship.
+   *
+   * @param relatedType the related type
+   * @param tableAlias the table alias which can be used in where clause
+   * @return interface with the next methods in the chain
+   */
   public IQueryCountHasOne<T> hasOne(Class<?> relatedType, String tableAlias) {
     Assert.notNull(relatedType, "relatedType cannot be null");
     if (MapperUtils.isBlank(tableAlias)) {

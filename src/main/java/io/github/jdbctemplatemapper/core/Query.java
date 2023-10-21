@@ -90,6 +90,14 @@ public class Query<T> implements IQueryFluent<T> {
     return new Query<T>(type);
   }
 
+  /**
+   * The type being queried. The execute() method will return a list of this type.
+   *
+   * @param <T> The type
+   * @param type the type
+   * @param tableAlias the table alias. The alias can be used in the where and orderBy clauses
+   * @return interface with the next methods in the chain
+   */
   public static <T> IQueryType<T> type(Class<T> type, String tableAlias) {
     Assert.notNull(type, "type cannot be null");
     if (MapperUtils.isBlank(tableAlias)) {
@@ -111,6 +119,13 @@ public class Query<T> implements IQueryFluent<T> {
     return this;
   }
 
+  /**
+   * The hasOne relationship.
+   *
+   * @param relatedType the related type
+   * @param tableAlias the table alias which can be used in where and orderBy clauses
+   * @return interface with the next methods in the chain
+   */
   public IQueryHasOne<T> hasOne(Class<?> relatedType, String tableAlias) {
     Assert.notNull(relatedType, "relatedType cannot be null");
     if (MapperUtils.isBlank(tableAlias)) {
@@ -136,6 +151,14 @@ public class Query<T> implements IQueryFluent<T> {
     return this;
   }
 
+  /**
+   * The hasMany relationship. The 'populateProperty' for hasMany relationship should be a
+   * collection and has to be initialized.
+   *
+   * @param relatedType the related type
+   * @param tableAlias the table alias which can be used in where and orderBy clauses
+   * @return interface with the next methods in the chain
+   */
   public IQueryHasMany<T> hasMany(Class<?> relatedType, String tableAlias) {
     Assert.notNull(relatedType, "relatedType cannot be null");
     if (MapperUtils.isBlank(tableAlias)) {
