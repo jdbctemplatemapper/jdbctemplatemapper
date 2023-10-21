@@ -79,10 +79,19 @@ public final class JdbcTemplateMapper {
   // value - the column sql string
   private SimpleCache<String, String> beanColumnsSqlCache = new SimpleCache<>();
 
+  // Query sql cache
+  // Map key - see Query.getCacheKey()
+  // value - the partial sql.
   private SimpleCache<String, String> querySqlCache = new SimpleCache<>(1000);
   
+  // QueryMerge sql cache
+  // Map key - see QueryMerge.getCacheKey()
+  // value - the partial sql.
   private SimpleCache<String, String> queryMergeSqlCache = new SimpleCache<>(1000);
   
+  // QueryCount sql cache
+  // Map key - see QueryCount.getCacheKey()
+  // value - the partial sql.
   private SimpleCache<String, String> queryCountSqlCache = new SimpleCache<>(1000);
   
   // JdbcTemplate uses this as its converter so use the same
@@ -739,7 +748,7 @@ public final class JdbcTemplateMapper {
    * "id as id, last_name as name"
    * </pre>
    * 
-   * @deprecated as of 2.5.0. Use {@link getBeanColumnsSql()} instead.
+   * @deprecated as of 2.5.0. Use getBeanColumnsSql() instead.
    *
    * @param clazz the class
    * @return comma separated select column string
