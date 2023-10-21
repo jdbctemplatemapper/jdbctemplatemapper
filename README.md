@@ -75,7 +75,7 @@
   <dependency>
     <groupId>io.github.jdbctemplatemapper</groupId>
     <artifactId>jdbctemplatemapper</artifactId>
-    <version>2.4.0</version>
+    <version>2.5.0</version>
  </dependency>
  ```
  
