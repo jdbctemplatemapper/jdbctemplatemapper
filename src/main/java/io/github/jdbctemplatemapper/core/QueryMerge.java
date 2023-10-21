@@ -254,17 +254,14 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
       QueryValidator.validate(jdbcTemplateMapper, ownerType, relationshipType, relatedType,
           joinColumnOwningSide, joinColumnManySide, propertyName, throughJoinTable,
           throughOwnerTypeJoinColumn, throughRelatedTypeJoinColumn);
-
-      if (RelationshipType.HAS_ONE.equals(relationshipType)) {
-        if (MapperUtils.isNotBlank(orderBy)) {
-          throw new IllegalArgumentException(
-              "For QueryMerge hasOne relationships orderBy is not supported."
-                  + " The order is already dictated by the mergeList");
-        }
-      }
     }
 
     if (RelationshipType.HAS_ONE.equals(relationshipType)) {
+      if (MapperUtils.isNotBlank(orderBy)) {
+        throw new IllegalArgumentException(
+            "For QueryMerge hasOne relationships orderBy is not supported."
+                + " The order is already dictated by the mergeList");
+      }
       processHasOne(jdbcTemplateMapper, mergeList, ownerType, relatedType, cacheKey);
     } else if (RelationshipType.HAS_MANY.equals(relationshipType)) {
       processHasMany(jdbcTemplateMapper, mergeList, ownerType, relatedType, cacheKey);
@@ -581,8 +578,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         throughJoinTable, 
         throughOwnerTypeJoinColumn,
         throughRelatedTypeJoinColumn,
-        propertyName,
-        orderBy);
+        propertyName);
     // @formatter:on
   }
   
