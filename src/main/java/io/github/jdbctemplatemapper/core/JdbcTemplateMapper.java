@@ -38,12 +38,16 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
 /**
  * CRUD methods and configuration for JdbcTemplateMapper.
  *
+ * Should be prepared in a Spring application context and given to services as bean reference.
+ * JdbcTemplateMapper caches Table meta-data and SQL.
+ * 
+ * <b> Note: An instance of JdbcTemplateMapper is thread safe once instantiated.</b>
+ *  
  * <pre>
  * See <a href=
- * "https://github.com/jdbctemplatemapper/jdbctemplatemapper#jdbctemplatemapper">JdbcTemplateMapper documentation</a> for more info
+ * "https://github.com/jdbctemplatemapper/jdbctemplatemapper#jdbctemplatemapper">JdbcTemplateMapper documentation</a> 
+ * for more info
  * </pre>
- *
- * <b> Note: An instance of JdbcTemplateMapper is thread safe.</b>
  *
  * @author ajoseph
  */
@@ -70,13 +74,17 @@ public final class JdbcTemplateMapper {
   // value - the update sql and params
   private SimpleCache<String, SqlAndParams> updatePropertiesCache = new SimpleCache<>(1000);
 
-  // the column sql string with column aliases for mapped properties of model for
-  // find methods
+  // the column sql string with bean friendly column aliases for mapped properties of model.
   // Map key - class name
   // value - the column sql string
-  private SimpleCache<String, String> findColumnsSqlCache = new SimpleCache<>();
+  private SimpleCache<String, String> beanColumnsSqlCache = new SimpleCache<>();
 
-
+  private SimpleCache<String, String> querySqlCache = new SimpleCache<>(1000);
+  
+  private SimpleCache<String, String> queryMergeSqlCache = new SimpleCache<>(1000);
+  
+  private SimpleCache<String, String> queryCountSqlCache = new SimpleCache<>(1000);
+  
   // JdbcTemplate uses this as its converter so use the same
   private DefaultConversionService conversionService =
       (DefaultConversionService) DefaultConversionService.getSharedInstance();
@@ -240,7 +248,7 @@ public final class JdbcTemplateMapper {
     Assert.notNull(clazz, "Class must not be null");
 
     TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
-    String columnsSql = getFindColumnsSql(tableMapping, clazz);
+    String columnsSql = getBeanColumnsSqlInternal(tableMapping, clazz);
     String sql = "SELECT " + columnsSql + " FROM " + tableMapping.fullyQualifiedTableName()
         + " WHERE " + tableMapping.getIdColumnName() + " = ?";
 
@@ -308,7 +316,7 @@ public final class JdbcTemplateMapper {
           + " is either invalid or does not have a corresponding column in database.");
     }
 
-    String columnsSql = getFindColumnsSql(tableMapping, clazz);
+    String columnsSql = getBeanColumnsSqlInternal(tableMapping, clazz);
     String sql = "SELECT " + columnsSql + " FROM " + tableMapping.fullyQualifiedTableName()
         + " WHERE " + propColumnName;
 
@@ -364,7 +372,7 @@ public final class JdbcTemplateMapper {
     Assert.notNull(clazz, "Class must not be null");
 
     TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
-    String columnsSql = getFindColumnsSql(tableMapping, clazz);
+    String columnsSql = getBeanColumnsSqlInternal(tableMapping, clazz);
 
     String orderByColumnName = null;
     if (orderByPropertyName != null) {
@@ -499,6 +507,7 @@ public final class JdbcTemplateMapper {
     }
 
     if (!foundInCache) {
+      // SimpleJdbcInsert is thread safe.
       insertCache.put(obj.getClass().getName(), (SimpleJdbcInsert) jdbcInsert);
     }
   }
@@ -576,7 +585,8 @@ public final class JdbcTemplateMapper {
 
     Integer cnt = updateInternal(obj, sqlAndParams, tableMapping);
 
-    if (!foundInCache && cnt > 0) {
+    // don't cache if number of properties is > 5
+    if (!foundInCache && cnt > 0 && propertyNames.length <= 5) {
       updatePropertiesCache.put(cacheKey, sqlAndParams);
     }
 
@@ -590,8 +600,8 @@ public final class JdbcTemplateMapper {
     BeanWrapper bw = getBeanWrapper(obj);
 
     if (bw.getPropertyValue(tableMapping.getIdPropertyName()) == null) {
-      throw new IllegalArgumentException("Property " + tableMapping.getTableClass().getSimpleName()
-          + "." + tableMapping.getIdPropertyName() + " is the id and cannot be null.");
+      throw new IllegalArgumentException("Property " + tableMapping.getTableClassName() + "."
+          + tableMapping.getIdPropertyName() + " is the id and cannot be null.");
     }
 
     Set<String> parameters = sqlAndParams.getParams();
@@ -728,13 +738,36 @@ public final class JdbcTemplateMapper {
    * <pre>
    * "id as id, last_name as name"
    * </pre>
+   * 
+   * @deprecated as of 2.5.0. Use {@link getBeanColumnsSql()} instead.
    *
    * @param clazz the class
    * @return comma separated select column string
    * 
    */
+  @Deprecated
   public String getColumnsSql(Class<?> clazz) {
-    return getFindColumnsSql(mappingHelper.getTableMapping(clazz), clazz);
+    return getBeanColumnsSqlInternal(mappingHelper.getTableMapping(clazz), clazz);
+  }
+  
+  /**
+   * returns a string which can be used in a sql select statement. The column alias will be the
+   * underscore case name of property name, so it works well with JdbcTemplate's
+   * BeanPropertyRowMapper
+   *
+   * <p>
+   * Will return something like below if 'name' property is mapped to 'last_name':
+   *
+   * <pre>
+   * "id as id, last_name as name"
+   * </pre>
+   * 
+   * @param clazz the class
+   * @return comma separated select column string
+   * 
+   */
+  public String getBeanColumnsSql(Class<?> clazz) {
+    return getBeanColumnsSqlInternal(mappingHelper.getTableMapping(clazz), clazz);
   }
 
   /**
@@ -822,22 +855,21 @@ public final class JdbcTemplateMapper {
       PropertyMapping propertyMapping = tableMapping.getPropertyMappingByPropertyName(propertyName);
       if (propertyMapping == null) {
         throw new MapperException("No mapping found for property '" + propertyName + "' in class "
-            + tableMapping.getTableClass().getSimpleName());
+            + tableMapping.getTableClassName());
       }
 
       // id property cannot be updated
       if (propertyMapping.isIdAnnotation()) {
-        throw new MapperException("Id property " + tableMapping.getTableClass().getSimpleName()
-            + "." + propertyName + " cannot be updated.");
+        throw new MapperException("Id property " + tableMapping.getTableClassName() + "."
+            + propertyName + " cannot be updated.");
       }
 
       // auto assign properties cannot be updated
       if (propertyMapping.isCreatedByAnnotation() || propertyMapping.isCreatedOnAnnotation()
           || propertyMapping.isUpdatedByAnnotation() || propertyMapping.isUpdatedOnAnnotation()
           || propertyMapping.isVersionAnnotation()) {
-        throw new MapperException(
-            "Auto assign property " + tableMapping.getTableClass().getSimpleName() + "."
-                + propertyName + " cannot be updated.");
+        throw new MapperException("Auto assign property " + tableMapping.getTableClassName() + "."
+            + propertyName + " cannot be updated.");
       }
     }
 
@@ -899,8 +931,8 @@ public final class JdbcTemplateMapper {
     return updateSqlAndParams;
   }
 
-  private <T> String getFindColumnsSql(TableMapping tableMapping, Class<T> clazz) {
-    String columnsSql = findColumnsSqlCache.get(clazz.getName());
+  private <T> String getBeanColumnsSqlInternal(TableMapping tableMapping, Class<T> clazz) {
+    String columnsSql = beanColumnsSqlCache.get(clazz.getName());
     if (columnsSql == null) {
       StringJoiner sj = new StringJoiner(", ", " ", " ");
       for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
@@ -908,7 +940,7 @@ public final class JdbcTemplateMapper {
             + MapperUtils.toUnderscoreName(propMapping.getPropertyName()));
       }
       columnsSql = sj.toString();
-      findColumnsSqlCache.put(clazz.getName(), columnsSql);
+      beanColumnsSqlCache.put(clazz.getName(), columnsSql);
     }
     return columnsSql;
   }
@@ -943,8 +975,20 @@ public final class JdbcTemplateMapper {
     return updatePropertiesCache;
   }
 
-  SimpleCache<String, String> findColumnsSqlCache() {
-    return findColumnsSqlCache;
+  SimpleCache<String, String> getBeanColumnsSqlCache() {
+    return beanColumnsSqlCache;
   }
-
+  
+  SimpleCache<String, String> getQuerySqlCache() {
+    return querySqlCache;
+  }
+  
+  SimpleCache<String, String> getQueryMergeSqlCache() {
+    return queryMergeSqlCache;
+  }
+  
+  SimpleCache<String, String> getQueryCountSqlCache() {
+    return queryCountSqlCache; 
+  }
+  
 }

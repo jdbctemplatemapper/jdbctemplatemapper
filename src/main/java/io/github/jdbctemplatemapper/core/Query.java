@@ -51,10 +51,6 @@ import io.github.jdbctemplatemapper.query.IQueryWhere;
  * @author ajoseph
  */
 public class Query<T> implements IQueryFluent<T> {
-  // Cached SQL does not include limit offset clause
-  // key - cacheKey, value - sql
-  private static SimpleCache<String, String> partialSqlCache = new SimpleCache<>(1000);
-
   private Class<T> ownerType;
   private String ownerTableAlias;
   private String whereClause;
@@ -62,7 +58,7 @@ public class Query<T> implements IQueryFluent<T> {
   private String orderBy;
   private String limitOffsetClause;
 
-  private RelationshipType relationshipType;
+  private String relationshipType;
   private Class<?> relatedType;
   private String relatedTableAlias;
   private String propertyName; // propertyName on main class that needs to be populated
@@ -125,7 +121,6 @@ public class Query<T> implements IQueryFluent<T> {
     this.relatedTableAlias = tableAlias;
     return this;
   }
-
 
   /**
    * The hasMany relationship. The 'populateProperty' for hasMany relationship should be a
@@ -301,19 +296,24 @@ public class Query<T> implements IQueryFluent<T> {
     Assert.notNull(jdbcTemplateMapper, "jdbcTemplateMapper cannot be null");
 
     TableMapping ownerTypeTableMapping = jdbcTemplateMapper.getTableMapping(ownerType);
+    String ownerColumnPrefix =
+        MapperUtils.columnPrefix(ownerTableAlias, ownerTypeTableMapping.getTableName());
+
     SelectMapper<?> ownerTypeSelectMapper = jdbcTemplateMapper.getSelectMapperInternal(ownerType,
-        ownerTypeTableMapping.getTableName(), MapperUtils.OWNER_COL_ALIAS_PREFIX);
+        ownerColumnPrefix, MapperUtils.OWNER_COL_ALIAS_PREFIX);
 
     TableMapping relatedTypeTableMapping =
         relatedType == null ? null : jdbcTemplateMapper.getTableMapping(relatedType);
+
     // making it effectively final to be used in inner class ResultSetExtractor
     SelectMapper<?> relatedTypeSelectMapper = relatedType == null ? null
         : jdbcTemplateMapper.getSelectMapperInternal(relatedType,
-            relatedTypeTableMapping.getTableName(), MapperUtils.RELATED_COL_ALIAS_PREFIX);
+            MapperUtils.columnPrefix(relatedTableAlias, relatedTypeTableMapping.getTableName()),
+            MapperUtils.RELATED_COL_ALIAS_PREFIX);
 
     boolean foundInCache = false;
-    String cacheKey = getCacheKey(jdbcTemplateMapper);
-    String sql = partialSqlCache.get(cacheKey);
+    String cacheKey = getCacheKey();
+    String sql = jdbcTemplateMapper.getQuerySqlCache().get(cacheKey);
     if (sql == null) {
       QueryValidator.validate(jdbcTemplateMapper, ownerType, relationshipType, relatedType,
           joinColumnOwningSide, joinColumnManySide, propertyName, throughJoinTable,
@@ -355,10 +355,10 @@ public class Query<T> implements IQueryFluent<T> {
                 idToBeanWrapperRelatedModelMap, false);
             Object relatedModel =
                 bwRelatedModel == null ? null : bwRelatedModel.getWrappedInstance();
-            if (RelationshipType.HAS_ONE == relationshipType) {
+            if (RelationshipType.HAS_ONE.equals(relationshipType)) {
               bwOwnerModel.setPropertyValue(propertyName, relatedModel);
-            } else if (RelationshipType.HAS_MANY == relationshipType
-                || RelationshipType.HAS_MANY_THROUGH == relationshipType) {
+            } else if (RelationshipType.HAS_MANY.equals(relationshipType)
+                || RelationshipType.HAS_MANY_THROUGH.equals(relationshipType)) {
               if (relatedModel != null) {
                 // the property has already been validated so we know it is a
                 // collection that has been initialized
@@ -382,7 +382,7 @@ public class Query<T> implements IQueryFluent<T> {
 
     // code reaches here query success, handle caching
     if (!foundInCache) {
-      partialSqlCache.put(cacheKey, partialSqlForCache);
+      jdbcTemplateMapper.getQuerySqlCache().put(cacheKey, partialSqlForCache);
     }
     return resultList;
   }
@@ -397,8 +397,8 @@ public class Query<T> implements IQueryFluent<T> {
       bwModel = idToBeanWrapperModelMap.get(id);
       if (bwModel == null) {
         bwModel = selectMapper.buildBeanWrapperModel(rs); // builds the model from resultSet
-        if (isOwningModel && (RelationshipType.HAS_MANY == relationshipType
-            || RelationshipType.HAS_MANY_THROUGH == relationshipType)) {
+        if (isOwningModel && (RelationshipType.HAS_MANY.equals(relationshipType)
+            || RelationshipType.HAS_MANY_THROUGH.equals(relationshipType))) {
           // first time seeing the owning model. Make sure collection is clear.
           Collection collection = (Collection) bwModel.getPropertyValue(propertyName);
           if (collection.size() > 0) {
@@ -417,7 +417,7 @@ public class Query<T> implements IQueryFluent<T> {
     TableMapping ownerTypeTableMapping = jtm.getTableMapping(ownerType);
 
     String ownerColumnPrefix =
-        ownerTableAlias == null ? ownerTypeTableMapping.getTableName() : ownerTableAlias;
+        MapperUtils.columnPrefix(ownerTableAlias, ownerTypeTableMapping.getTableName());
 
     SelectMapper<?> ownerTypeSelectMapper = jtm.getSelectMapperInternal(ownerType,
         ownerColumnPrefix, MapperUtils.OWNER_COL_ALIAS_PREFIX);
@@ -428,7 +428,7 @@ public class Query<T> implements IQueryFluent<T> {
     String relatedColumnPrefix = null;
     if (relatedTypeTableMapping != null) {
       relatedColumnPrefix =
-          relatedTableAlias == null ? relatedTypeTableMapping.getTableName() : relatedTableAlias;
+          MapperUtils.columnPrefix(relatedTableAlias, relatedTypeTableMapping.getTableName());
     }
 
     SelectMapper<?> relatedTypeSelectMapper = relatedType == null ? null
@@ -440,17 +440,17 @@ public class Query<T> implements IQueryFluent<T> {
       sql += "," + relatedTypeSelectMapper.getColumnsSql();
     }
 
-    if (relationshipType == RelationshipType.HAS_ONE) {
+    if (RelationshipType.HAS_ONE.equals(relationshipType)) {
       sql += hasOneFromClause(ownerTypeTableMapping, relatedTypeTableMapping);
-    } else if (relationshipType == RelationshipType.HAS_MANY) {
+    } else if (RelationshipType.HAS_MANY.equals(relationshipType)) {
       // joinColumn is on related table
       sql += hasManyFromClause(ownerTypeTableMapping, relatedTypeTableMapping);
-    } else if (relationshipType == RelationshipType.HAS_MANY_THROUGH) {
+    } else if (RelationshipType.HAS_MANY_THROUGH.equals(relationshipType)) {
       sql += hasManyThroughFromClause(ownerTypeTableMapping, relatedTypeTableMapping);
-    }
-    else {
-      String ownerTableStr = ownerTableAlias == null ? ownerTypeTableMapping.fullyQualifiedTableName()
-          : ownerTypeTableMapping.fullyQualifiedTableName() + " " + ownerTableAlias;
+    } else {
+      String ownerTableStr =
+          ownerTableAlias == null ? ownerTypeTableMapping.fullyQualifiedTableName()
+              : ownerTypeTableMapping.fullyQualifiedTableName() + " " + ownerTableAlias;
 
       sql += " FROM " + ownerTableStr;
     }
@@ -458,39 +458,22 @@ public class Query<T> implements IQueryFluent<T> {
     return sql;
   }
 
-  String getCacheKey(JdbcTemplateMapper jdbcTemplateMapper) {
-    // @formatter:off
-    return String.join("-", 
-        ownerType.getName(),
-        ownerTableAlias,
-        relatedType == null ? null : relatedType.getName(),
-        relatedTableAlias,
-        relationshipType == null ? null : relationshipType.toString(),
-        joinColumnOwningSide, 
-        joinColumnManySide, 
-        throughJoinTable, 
-        throughOwnerTypeJoinColumn,
-        throughRelatedTypeJoinColumn,
-        propertyName,
-        jdbcTemplateMapper.toString());
-    // @formatter:on
-  }
-
   String hasOneFromClause(TableMapping ownerTableMapping, TableMapping relatedTableMapping) {
     // joinColumn is on owner table
-    String ownerTableStr = ownerTableAlias == null ? ownerTableMapping.fullyQualifiedTableName()
-        : ownerTableMapping.fullyQualifiedTableName() + " " + ownerTableAlias;
+    String ownerTableStr =
+        MapperUtils.tableStrForFrom(ownerTableAlias, ownerTableMapping.fullyQualifiedTableName());
 
     String str = " FROM " + ownerTableStr;
 
     if (relatedType != null) {
-      String relatedTableStr =
-          relatedTableAlias == null ? relatedTableMapping.fullyQualifiedTableName()
-              : relatedTableMapping.fullyQualifiedTableName() + " " + relatedTableAlias;
+      String relatedTableStr = MapperUtils.tableStrForFrom(relatedTableAlias,
+          relatedTableMapping.fullyQualifiedTableName());
+
       String onOwnerPrefix =
-          ownerTableAlias == null ? ownerTableMapping.getTableName() : ownerTableAlias;
+          MapperUtils.columnPrefix(ownerTableAlias, ownerTableMapping.getTableName());
+
       String onRelatedPrefix =
-          relatedTableAlias == null ? relatedTableMapping.getTableName() : relatedTableAlias;
+          MapperUtils.columnPrefix(relatedTableAlias, relatedTableMapping.getTableName());
 
       str += " LEFT JOIN " + relatedTableStr + " on " + onOwnerPrefix + "." + joinColumnOwningSide
           + " = " + onRelatedPrefix + "." + relatedTableMapping.getIdColumnName();
@@ -499,20 +482,19 @@ public class Query<T> implements IQueryFluent<T> {
   }
 
   String hasManyFromClause(TableMapping ownerTableMapping, TableMapping relatedTableMapping) {
-    String ownerTableStr = ownerTableAlias == null ? ownerTableMapping.fullyQualifiedTableName()
-        : ownerTableMapping.fullyQualifiedTableName() + " " + ownerTableAlias;
+    String ownerTableStr =
+        MapperUtils.tableStrForFrom(ownerTableAlias, ownerTableMapping.fullyQualifiedTableName());
 
     String str = " FROM " + ownerTableStr;
     if (relatedType != null) {
-      String relatedTableStr =
-          relatedTableAlias == null ? relatedTableMapping.fullyQualifiedTableName()
-              : relatedTableMapping.fullyQualifiedTableName() + " " + relatedTableAlias;
+      String relatedTableStr = MapperUtils.tableStrForFrom(relatedTableAlias,
+          relatedTableMapping.fullyQualifiedTableName());
 
       String onOwnerPrefix =
-          ownerTableAlias == null ? ownerTableMapping.getTableName() : ownerTableAlias;
+          MapperUtils.columnPrefix(ownerTableAlias, ownerTableMapping.getTableName());
 
       String onRelatedPrefix =
-          relatedTableAlias == null ? relatedTableMapping.getTableName() : relatedTableAlias;
+          MapperUtils.columnPrefix(relatedTableAlias, relatedTableMapping.getTableName());
 
       str += " LEFT JOIN " + relatedTableStr + " on " + onOwnerPrefix + "."
           + ownerTableMapping.getIdColumnName() + " = " + onRelatedPrefix + "."
@@ -522,23 +504,23 @@ public class Query<T> implements IQueryFluent<T> {
     return str;
   }
 
-  String hasManyThroughFromClause(TableMapping ownerTableMapping, TableMapping relatedTableMapping) {
+  String hasManyThroughFromClause(TableMapping ownerTableMapping,
+      TableMapping relatedTableMapping) {
 
-    String ownerTableStr = ownerTableAlias == null ? ownerTableMapping.fullyQualifiedTableName()
-        : ownerTableMapping.fullyQualifiedTableName() + " " + ownerTableAlias;
+    String ownerTableStr =
+        MapperUtils.tableStrForFrom(ownerTableAlias, ownerTableMapping.fullyQualifiedTableName());
 
     String str = " FROM " + ownerTableStr;
 
     if (relatedType != null) {
-      String relatedTableStr =
-          relatedTableAlias == null ? relatedTableMapping.fullyQualifiedTableName()
-              : relatedTableMapping.fullyQualifiedTableName() + " " + relatedTableAlias;
+      String relatedTableStr = MapperUtils.tableStrForFrom(relatedTableAlias,
+          relatedTableMapping.fullyQualifiedTableName());
 
       String onOwnerPrefix =
-          ownerTableAlias == null ? ownerTableMapping.getTableName() : ownerTableAlias;
+          MapperUtils.columnPrefix(ownerTableAlias, ownerTableMapping.getTableName());
 
       String onRelatedPrefix =
-          relatedTableAlias == null ? relatedTableMapping.getTableName() : relatedTableAlias;
+          MapperUtils.columnPrefix(relatedTableAlias, relatedTableMapping.getTableName());
 
       str += " LEFT JOIN "
           + MapperUtils.getFullyQualifiedTableNameForThroughJoinTable(throughJoinTable,
@@ -552,9 +534,20 @@ public class Query<T> implements IQueryFluent<T> {
     return str;
   }
 
-
-  SimpleCache<String, String> getPartialSqlCache() {
-    return partialSqlCache;
+  String getCacheKey() {
+    // @formatter:off
+    return String.join("-", 
+        ownerType.getName(),
+        ownerTableAlias,
+        relatedType == null ? null : relatedType.getName(),
+        relatedTableAlias,
+        relationshipType,
+        joinColumnOwningSide, 
+        joinColumnManySide, 
+        throughJoinTable, 
+        throughOwnerTypeJoinColumn,
+        throughRelatedTypeJoinColumn,
+        propertyName);
+    // @formatter:on
   }
-
 }

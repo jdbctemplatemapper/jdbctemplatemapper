@@ -22,28 +22,25 @@ public class QueryCountTest {
   @Autowired
   private JdbcTemplateMapper jtm;
 
+
   @Test
-  public void hasOne_executeCount_success_test() {
-
-    // @formatter:off
-    Integer count = QueryCount.type(Order.class)
-              .hasOne(Customer.class)
-              .joinColumnOwningSide("customer_id")
-              .where("orders.status = ?", "IN PROCESS")
-              .execute(jtm);
-    
-    assertTrue(2 == count);
-          
-    count = QueryCount.type(Order.class)
-              .execute(jtm);
+  public void singeTable_count_success() {
+    Integer count = QueryCount.type(Order.class).execute(jtm);
     assertTrue(3 == count);
-          
-    count = QueryCount.type(Order.class)
-              .where("orders.status = ?", "IN PROCESS")
-              .execute(jtm);
+
+    count = QueryCount.type(Order.class).where("orders.status = ?", "IN PROCESS").execute(jtm);
 
     assertTrue(2 == count);
-    // @formatter:on
   }
 
+  @Test
+  public void hasOne_count_success() {
+    Integer count = QueryCount.type(Order.class)
+                              .hasOne(Customer.class)
+                              .joinColumnOwningSide("customer_id")
+                              .where("orders.status = ?", "IN PROCESS")
+                              .execute(jtm);
+
+    assertTrue(2 == count);
+  }
 }

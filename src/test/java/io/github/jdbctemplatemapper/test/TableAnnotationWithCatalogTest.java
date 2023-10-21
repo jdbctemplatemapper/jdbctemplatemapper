@@ -86,7 +86,8 @@ public class TableAnnotationWithCatalogTest {
       jtm.insert(customer);
 
       List<CustomerCatalogSchema1> list = Query.type(CustomerCatalogSchema1.class)
-          .where("customer_id = ?", customer.getCustomerId()).execute(jtm);
+                                               .where("customer_id = ?", customer.getCustomerId())
+                                               .execute(jtm);
 
       assertEquals(1, list.size());
 
@@ -103,7 +104,8 @@ public class TableAnnotationWithCatalogTest {
       jtm.insert(customer);
 
       Integer count = QueryCount.type(CustomerCatalogSchema1.class)
-          .where("customer_id = ?", customer.getCustomerId()).execute(jtm);
+                                .where("customer_id = ?", customer.getCustomerId())
+                                .execute(jtm);
 
       assertEquals(1, count);
 
@@ -138,8 +140,9 @@ public class TableAnnotationWithCatalogTest {
 
       jtm.insert(company);
 
-      Integer count = QueryCount.type(CompanyCatalogSchema2.class).where("id = ?", company.getId())
-          .execute(jtm);
+      Integer count = QueryCount.type(CompanyCatalogSchema2.class)
+                                .where("id = ?", company.getId())
+                                .execute(jtm);
 
       assertEquals(1, count);
 
@@ -165,8 +168,11 @@ public class TableAnnotationWithCatalogTest {
       List<CompanyCatalogSchema2> companies =
           Query.type(CompanyCatalogSchema2.class).where("id = ?", company.getId()).execute(jtm);
 
-      QueryMerge.type(CompanyCatalogSchema2.class).hasMany(OfficeCatalogSchema2.class)
-          .joinColumnManySide("company_id").populateProperty("offices").execute(jtm, companies);
+      QueryMerge.type(CompanyCatalogSchema2.class)
+                .hasMany(OfficeCatalogSchema2.class)
+                .joinColumnManySide("company_id")
+                .populateProperty("offices")
+                .execute(jtm, companies);
 
     }
   }

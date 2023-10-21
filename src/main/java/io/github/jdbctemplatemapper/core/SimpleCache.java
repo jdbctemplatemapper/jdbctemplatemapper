@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 class SimpleCache<K, V> {
   private Map<K, V> cache = new ConcurrentHashMap<>();
-  private int capacity = -1; // no limits
+  private int capacity = -1; // no limit
 
   public SimpleCache() {}
 
@@ -22,12 +22,12 @@ class SimpleCache<K, V> {
       cache.put(key, value);
     } else {
       if (cache.size() < capacity) {
-        cache.put(key, value);
+        cache.putIfAbsent(key, value);
       } else {
         // remove a random entry from cache and add new entry
         K k = cache.keySet().iterator().next();
         cache.remove(k);
-        cache.put(key, value);
+        cache.putIfAbsent(key, value);
       }
     }
   }

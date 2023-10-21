@@ -13,17 +13,6 @@
  */
 package io.github.jdbctemplatemapper.core;
 
-import io.github.jdbctemplatemapper.annotation.Column;
-import io.github.jdbctemplatemapper.annotation.CreatedBy;
-import io.github.jdbctemplatemapper.annotation.CreatedOn;
-import io.github.jdbctemplatemapper.annotation.Id;
-import io.github.jdbctemplatemapper.annotation.IdType;
-import io.github.jdbctemplatemapper.annotation.Table;
-import io.github.jdbctemplatemapper.annotation.UpdatedBy;
-import io.github.jdbctemplatemapper.annotation.UpdatedOn;
-import io.github.jdbctemplatemapper.annotation.Version;
-import io.github.jdbctemplatemapper.exception.AnnotationException;
-import io.github.jdbctemplatemapper.exception.MapperException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.sql.DatabaseMetaData;
@@ -35,7 +24,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
@@ -48,6 +37,17 @@ import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.jdbc.support.MetaDataAccessException;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+import io.github.jdbctemplatemapper.annotation.Column;
+import io.github.jdbctemplatemapper.annotation.CreatedBy;
+import io.github.jdbctemplatemapper.annotation.CreatedOn;
+import io.github.jdbctemplatemapper.annotation.Id;
+import io.github.jdbctemplatemapper.annotation.IdType;
+import io.github.jdbctemplatemapper.annotation.Table;
+import io.github.jdbctemplatemapper.annotation.UpdatedBy;
+import io.github.jdbctemplatemapper.annotation.UpdatedOn;
+import io.github.jdbctemplatemapper.annotation.Version;
+import io.github.jdbctemplatemapper.exception.AnnotationException;
+import io.github.jdbctemplatemapper.exception.MapperException;
 
 /**
  * Mapping helper.
@@ -57,7 +57,7 @@ import org.springframework.util.StringUtils;
 class MappingHelper {
   // Map key - class name
   // value - the table mapping
-  private Map<String, TableMapping> modelToTableMappingCache = new ConcurrentHashMap<>();
+  private SimpleCache<String, TableMapping> modelToTableMappingCache = new SimpleCache<>();
 
   // workaround for postgres driver bug for ResultSetMetaData
   private boolean forcePostgresTimestampWithTimezone = false;
@@ -271,8 +271,10 @@ class MappingHelper {
     if (this.databaseProductName != null) {
       return this.databaseProductName;
     } else {
+      // java21 friendly
+      ReentrantLock rlock = new ReentrantLock();
+      rlock.lock();
       try {
-        synchronized (this) {
           this.databaseProductName = JdbcUtils.extractDatabaseMetaData(jdbcTemplate.getDataSource(),
               new DatabaseMetaDataCallback<String>() {
                 public String processMetaData(DatabaseMetaData dbMetaData)
@@ -280,13 +282,14 @@ class MappingHelper {
                   return dbMetaData.getDatabaseProductName();
                 }
               });
-        }
       } catch (Exception e) {
         throw new MapperException(e);
       }
+      finally {
+        rlock.unlock();
+      }
       return this.databaseProductName;
     }
-
   }
 
   boolean getForcePostgresTimestampWithTimezone() {

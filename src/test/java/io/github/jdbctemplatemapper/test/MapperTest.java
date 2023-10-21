@@ -96,8 +96,10 @@ public class MapperTest {
     Exception exception = Assertions.assertThrows(MapperException.class, () -> {
       jtm.insert(order);
     });
-    assertTrue(exception.getMessage()
-        .contains("has to be null since this insert is for an object whose id is auto increment"));
+    assertTrue(
+        exception.getMessage()
+                 .contains(
+                     "has to be null since this insert is for an object whose id is auto increment"));
   }
 
   @Test
@@ -179,7 +181,7 @@ public class MapperTest {
     Order order = jtm.findById(Order.class, 1);
     LocalDateTime prevUpdatedOn = order.getUpdatedOn();
 
-    Thread.sleep(1000); // avoid timing issue.
+    Thread.sleep(1000); // provide interval so timestamps end up different
 
     order.setStatus("COMPLETE");
     jtm.update(order);
@@ -236,8 +238,9 @@ public class MapperTest {
       jtm.insert(person);
     });
 
-    assertTrue(exception.getMessage()
-        .contains("is auto increment id so has to be a non-primitive Number object"));
+    assertTrue(
+        exception.getMessage()
+                 .contains("is auto increment id so has to be a non-primitive Number object"));
   }
 
   @Test
@@ -482,8 +485,10 @@ public class MapperTest {
     Exception exception = Assertions.assertThrows(MapperException.class, () -> {
       jtm.findByProperty(OrderLine.class, "x", 1);
     });
-    assertTrue(exception.getMessage()
-        .contains("is either invalid or does not have a corresponding column in database"));
+    assertTrue(
+        exception.getMessage()
+                 .contains(
+                     "is either invalid or does not have a corresponding column in database"));
   }
 
   @Test
@@ -499,8 +504,10 @@ public class MapperTest {
     Exception exception = Assertions.assertThrows(MapperException.class, () -> {
       jtm.findByProperty(OrderLine.class, "orderId", 1, "x");
     });
-    assertTrue(exception.getMessage()
-        .contains("is either invalid or does not have a corresponding column in database"));
+    assertTrue(
+        exception.getMessage()
+                 .contains(
+                     "is either invalid or does not have a corresponding column in database"));
   }
 
   @Test

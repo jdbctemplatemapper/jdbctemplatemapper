@@ -20,7 +20,6 @@ import io.github.jdbctemplatemapper.querycount.IQueryCountJoinColumnOwningSide;
 import io.github.jdbctemplatemapper.querycount.IQueryCountType;
 import io.github.jdbctemplatemapper.querycount.IQueryCountWhere;
 
-
 /**
  * Gets the count of the records for a query. This is to mainly support pagination counts
  *
@@ -33,20 +32,25 @@ import io.github.jdbctemplatemapper.querycount.IQueryCountWhere;
  * @author ajoseph
  */
 public class QueryCount<T> implements IQueryCountFluent<T> {
-  // key - cacheKey, value - sql
-  private static SimpleCache<String, String> sqlCache = new SimpleCache<>(1000);
-
   private Class<T> ownerType;
+  private String ownerTableAlias;
   private String whereClause;
   private Object[] whereParams;
 
-  private RelationshipType relationshipType;
+  private String relationshipType;
   private Class<?> relatedType;
+  private String relatedTableAlias;
   private String joinColumnOwningSide;
 
   private QueryCount(Class<T> type) {
     this.ownerType = type;
   }
+
+  private QueryCount(Class<T> type, String tableAlias) {
+    this.ownerType = type;
+    this.ownerTableAlias = tableAlias;
+  }
+
 
   /**
    * The owning type.
@@ -60,6 +64,14 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
     return new QueryCount<T>(type);
   }
 
+  public static <T> IQueryCountType<T> type(Class<T> type, String tableAlias) {
+    Assert.notNull(type, "type cannot be null");
+    if (MapperUtils.isBlank(tableAlias)) {
+      throw new IllegalArgumentException("tableAlias for type cannot be null or blank");
+    }
+    return new QueryCount<T>(type, tableAlias);
+  }
+
   /**
    * The hasOne relationship.
    *
@@ -70,6 +82,17 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
     Assert.notNull(relatedType, "relatedType cannot be null");
     this.relationshipType = RelationshipType.HAS_ONE;
     this.relatedType = relatedType;
+    return this;
+  }
+
+  public IQueryCountHasOne<T> hasOne(Class<?> relatedType, String tableAlias) {
+    Assert.notNull(relatedType, "relatedType cannot be null");
+    if (MapperUtils.isBlank(tableAlias)) {
+      throw new IllegalArgumentException("tableAlias for type cannot be null or blank");
+    }
+    this.relationshipType = RelationshipType.HAS_ONE;
+    this.relatedType = relatedType;
+    this.relatedTableAlias = tableAlias;
     return this;
   }
 
@@ -114,14 +137,19 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
     Assert.notNull(jdbcTemplateMapper, "jdbcTemplateMapper cannot be null");
 
     boolean foundInCache = false;
-    String cacheKey = getCacheKey(jdbcTemplateMapper);
-    String sql = sqlCache.get(cacheKey);
+    String cacheKey = getCacheKey();
+    String sql = jdbcTemplateMapper.getQueryCountSqlCache().get(cacheKey);
     if (sql == null) {
       QueryValidator.validateQueryCount(jdbcTemplateMapper, ownerType, relationshipType,
           relatedType, joinColumnOwningSide);
-      sql = generateQuerySql(jdbcTemplateMapper);
+      sql = generatePartialQuerySql(jdbcTemplateMapper);
     } else {
       foundInCache = true;
+    }
+
+    String partialSqlForCache = sql;
+    if (MapperUtils.isNotBlank(whereClause)) {
+      sql += " WHERE " + whereClause;
     }
 
     Integer count = 0;
@@ -133,49 +161,51 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
 
     // code reaches here query success, handle caching
     if (!foundInCache) {
-      sqlCache.put(cacheKey, sql);
+      jdbcTemplateMapper.getQueryCountSqlCache().put(cacheKey, partialSqlForCache);
     }
     return count;
   }
 
-  private String generateQuerySql(JdbcTemplateMapper jtm) {
+  private String generatePartialQuerySql(JdbcTemplateMapper jtm) {
     TableMapping ownerTypeTableMapping = jtm.getTableMapping(ownerType);
-    String ownerTypeTableName = ownerTypeTableMapping.getTableName();
     TableMapping relatedTypeTableMapping =
         relatedType == null ? null : jtm.getTableMapping(relatedType);
 
+    String ownerTableStr = MapperUtils.tableStrForFrom(ownerTableAlias,
+        ownerTypeTableMapping.fullyQualifiedTableName());
+
+    String ownerColumnPrefix =
+        MapperUtils.columnPrefix(ownerTableAlias, ownerTypeTableMapping.getTableName());
+
     String sql = "SELECT count(*) as record_count ";
-    sql += " FROM " + ownerTypeTableMapping.fullyQualifiedTableName();
+    sql += " FROM " + ownerTableStr;
     if (relatedType != null) {
-      String relatedTypeTableName = relatedTypeTableMapping.getTableName();
-      if (relationshipType == RelationshipType.HAS_ONE) {
+      String relatedTableStr = MapperUtils.tableStrForFrom(relatedTableAlias,
+          relatedTypeTableMapping.fullyQualifiedTableName());
+
+      String relatedColumnPrefix =
+          MapperUtils.columnPrefix(relatedTableAlias, relatedTypeTableMapping.getTableName());
+
+      if (RelationshipType.HAS_ONE.equals(relationshipType)) {
         // joinColumn is on owner table
-        sql += " LEFT JOIN " + relatedTypeTableMapping.fullyQualifiedTableName() + " on "
-            + ownerTypeTableName + "." + joinColumnOwningSide + " = " + relatedTypeTableName + "."
+        sql += " LEFT JOIN " + relatedTableStr + " on " + ownerColumnPrefix + "."
+            + joinColumnOwningSide + " = " + relatedColumnPrefix + "."
             + relatedTypeTableMapping.getIdColumnName();
       }
     }
-    if (MapperUtils.isNotBlank(whereClause)) {
-      sql += " WHERE " + whereClause;
-    }
-
     return sql;
   }
 
-  private String getCacheKey(JdbcTemplateMapper jdbcTemplateMapper) {
+  private String getCacheKey() {
     // @formatter:off
     return String.join("-", 
         ownerType.getName(), 
+        ownerTableAlias,
         relatedType == null ? null : relatedType.getName(),
-        relationshipType == null ? null : relationshipType.toString(),
-        joinColumnOwningSide, 
-        whereClause,
-        jdbcTemplateMapper.toString());
+        relatedTableAlias,
+        relationshipType,
+        joinColumnOwningSide);
     // @formatter:on
-  }
-
-  SimpleCache<String, String> getSqlCache() {
-    return sqlCache;
   }
 
 }

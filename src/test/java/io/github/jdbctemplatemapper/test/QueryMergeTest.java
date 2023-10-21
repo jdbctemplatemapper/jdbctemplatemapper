@@ -43,189 +43,142 @@ public class QueryMergeTest {
   @Test
   public void hasOne_null_test() {
     List<Order> orders = new ArrayList<>();
-    // @formatter:off
-    Exception exception =
-        Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> {
-              QueryMerge.type(Order.class)
-                  .hasOne(null)
-                  .joinColumnOwningSide("customer_id")
-                  .populateProperty("customer")
-                  .execute(jtm, orders);
-            });
+    Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+      QueryMerge.type(Order.class)
+                .hasOne(null)
+                .joinColumnOwningSide("customer_id")
+                .populateProperty("customer")
+                .execute(jtm, orders);
+    });
 
-    // @formatter:on
     assertTrue(exception.getMessage().contains("relatedType cannot be null"));
   }
 
   @Test
   public void hasMany_null_test() {
     List<Order> orders = new ArrayList<>();
-    // @formatter:off
-    Exception exception =
-        Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> {
-              QueryMerge.type(Order.class)
-                  .hasMany(null)
-                  .joinColumnManySide("order_id")
-                  .populateProperty("orderLines")
-                  .execute(jtm, orders);
-            });
-    // @formatter:on
+    Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+      QueryMerge.type(Order.class)
+                .hasMany(null)
+                .joinColumnManySide("order_id")
+                .populateProperty("orderLines")
+                .execute(jtm, orders);
+    });
     assertTrue(exception.getMessage().contains("relatedType cannot be null"));
   }
 
   @Test
   public void hasOne_joinColumnNull_test() {
     List<Order> orders = new ArrayList<>();
-    // @formatter:off
-    Exception exception =
-        Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> {
-              QueryMerge.type(Order.class)
-                  .hasOne(Customer.class)
-                  .joinColumnOwningSide(null)
-                  .populateProperty("customer")
-                  .execute(jtm, orders);
-            });
-    // @formatter:on
+    Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+      QueryMerge.type(Order.class)
+                .hasOne(Customer.class)
+                .joinColumnOwningSide(null)
+                .populateProperty("customer")
+                .execute(jtm, orders);
+    });
     assertTrue(exception.getMessage().contains("joinColumnOwningSide cannot be null"));
   }
 
   @Test
   public void hasMany_joinColumnNull_test() {
     List<Order> orders = new ArrayList<>();
-    // @formatter:off
-    Exception exception =
-        Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> {
-              QueryMerge.type(Order.class)
-                  .hasMany(OrderLine.class)
-                  .joinColumnManySide(null)
-                  .populateProperty("orderLines")
-                  .execute(jtm, orders);
-            });
-    // @formatter:on
+    Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+      QueryMerge.type(Order.class)
+                .hasMany(OrderLine.class)
+                .joinColumnManySide(null)
+                .populateProperty("orderLines")
+                .execute(jtm, orders);
+    });
     assertTrue(exception.getMessage().contains("joinColumnManySide cannot be null"));
   }
 
   @Test
   public void hasOne_populatePropertyNull_test() {
     List<Order> orders = new ArrayList<>();
-    // @formatter:off
-    Exception exception =
-        Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> {
-              QueryMerge.type(Order.class)
-                  .hasOne(Customer.class)
-                  .joinColumnOwningSide("customer_id")
-                  .populateProperty(null)
-                  .execute(jtm, orders);
-            });
-    // @formatter:on
+    Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+      QueryMerge.type(Order.class)
+                .hasOne(Customer.class)
+                .joinColumnOwningSide("customer_id")
+                .populateProperty(null)
+                .execute(jtm, orders);
+    });
     assertTrue(exception.getMessage().contains("propertyName cannot be null"));
   }
 
   @Test
   public void hasMany_populatePropertyNull_test() {
     List<Order> orders = new ArrayList<>();
-    // @formatter:off
-    Exception exception =
-        Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> {
-              QueryMerge.type(Order.class)
-                  .hasMany(OrderLine.class)
-                  .joinColumnManySide("order_id")
-                  .populateProperty(null)
-                  .execute(jtm, orders);
-            });
-    // @formatter:on
+    Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+      QueryMerge.type(Order.class)
+                .hasMany(OrderLine.class)
+                .joinColumnManySide("order_id")
+                .populateProperty(null)
+                .execute(jtm, orders);
+    });
     assertTrue(exception.getMessage().contains("propertyName cannot be null"));
   }
 
   @Test
   public void hasOne_jdbcTemplateMapperNull_test() {
     List<Order> orders = new ArrayList<>();
-    // @formatter:off
-    Exception exception =
-        Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> {
-              QueryMerge.type(Order.class)
-                  .hasOne(Customer.class)
-                  .joinColumnOwningSide("customer_id")
-                  .populateProperty("customer")
-                  .execute(null, orders);
-            });
-    // @formatter:on
+    Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+      QueryMerge.type(Order.class)
+                .hasOne(Customer.class)
+                .joinColumnOwningSide("customer_id")
+                .populateProperty("customer")
+                .execute(null, orders);
+    });
     assertTrue(exception.getMessage().contains("jdbcTemplateMapper cannot be null"));
   }
 
   @Test
   public void hasMany_jdbcTemplateMapperNull_test() {
     List<Order> orders = new ArrayList<>();
-    // @formatter:off
-    Exception exception =
-        Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> {
-              QueryMerge.type(Order.class)
-                  .hasMany(OrderLine.class)
-                  .joinColumnManySide("order_id")
-                  .populateProperty("orderLines")
-                  .execute(null, orders);
-            });
-    // @formatter:on
+    Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+      QueryMerge.type(Order.class)
+                .hasMany(OrderLine.class)
+                .joinColumnManySide("order_id")
+                .populateProperty("orderLines")
+                .execute(null, orders);
+    });
     assertTrue(exception.getMessage().contains("jdbcTemplateMapper cannot be null"));
   }
 
   @Test
   public void hasMany_joinTypeMismatch_test() {
     List<Order5> orders = new ArrayList<>();
-    // @formatter:off
-    Exception exception =
-        Assertions.assertThrows(
-            QueryException.class,
-            () -> {
-              QueryMerge.type(Order5.class)
-                  .hasMany(OrderLine1.class)
-                  .joinColumnManySide("order_id")
-                  .populateProperty("orderLines")
-                  .execute(jtm, orders);
-            });
-    // @formatter:on
+    Exception exception = Assertions.assertThrows(QueryException.class, () -> {
+      QueryMerge.type(Order5.class)
+                .hasMany(OrderLine1.class)
+                .joinColumnManySide("order_id")
+                .populateProperty("orderLines")
+                .execute(jtm, orders);
+    });
     assertTrue(exception.getMessage().contains("Property type mismatch."));
   }
 
   @Test
   public void hasOne_joinTypeMismatch_test() {
     List<Order6> orders = new ArrayList<>();
-    // @formatter:off
-    Exception exception =
-        Assertions.assertThrows(
-            QueryException.class,
-            () -> {
-              QueryMerge.type(Order6.class)
-                  .hasOne(Customer2.class)
-                  .joinColumnOwningSide("customer_id")
-                  .populateProperty("customer")
-                  .execute(jtm, orders);
-            });
-    // @formatter:on
+    Exception exception = Assertions.assertThrows(QueryException.class, () -> {
+      QueryMerge.type(Order6.class)
+                .hasOne(Customer2.class)
+                .joinColumnOwningSide("customer_id")
+                .populateProperty("customer")
+                .execute(jtm, orders);
+    });
     assertTrue(exception.getMessage().contains("Property type mismatch."));
   }
 
   @Test
   public void hasOne_mergeListNull_success() {
     Assertions.assertDoesNotThrow(() -> {
-      QueryMerge.type(Order.class).hasOne(Customer.class).joinColumnOwningSide("customer_id")
-          .populateProperty("customer").execute(jtm, null);
+      QueryMerge.type(Order.class)
+                .hasOne(Customer.class)
+                .joinColumnOwningSide("customer_id")
+                .populateProperty("customer")
+                .execute(jtm, null);
     });
   }
 
@@ -234,8 +187,11 @@ public class QueryMergeTest {
 
     List<Order> orders = new ArrayList<Order>();
     Assertions.assertDoesNotThrow(() -> {
-      QueryMerge.type(Order.class).hasOne(Customer.class).joinColumnOwningSide("customer_id")
-          .populateProperty("customer").execute(jtm, orders);
+      QueryMerge.type(Order.class)
+                .hasOne(Customer.class)
+                .joinColumnOwningSide("customer_id")
+                .populateProperty("customer")
+                .execute(jtm, orders);
     });
 
     assertTrue(orders.size() == 0);
@@ -244,8 +200,11 @@ public class QueryMergeTest {
   @Test
   public void hasMany_mergeListNull_success() {
     Assertions.assertDoesNotThrow(() -> {
-      QueryMerge.type(Order.class).hasMany(OrderLine.class).joinColumnManySide("order_id")
-          .populateProperty("orderLines").execute(jtm, null);
+      QueryMerge.type(Order.class)
+                .hasMany(OrderLine.class)
+                .joinColumnManySide("order_id")
+                .populateProperty("orderLines")
+                .execute(jtm, null);
     });
   }
 
@@ -253,8 +212,11 @@ public class QueryMergeTest {
   public void hasMany_mergeListEmpty_success() {
     List<Order> orders = new ArrayList<Order>();
     Assertions.assertDoesNotThrow(() -> {
-      QueryMerge.type(Order.class).hasMany(OrderLine.class).joinColumnManySide("order_id")
-          .populateProperty("orderLines").execute(jtm, orders);
+      QueryMerge.type(Order.class)
+                .hasMany(OrderLine.class)
+                .joinColumnManySide("order_id")
+                .populateProperty("orderLines")
+                .execute(jtm, orders);
     });
 
     assertTrue(orders.size() == 0);
@@ -262,21 +224,16 @@ public class QueryMergeTest {
 
   @Test
   public void hasOne_success_test() {
-    // @formatter:off
-    List<Order> orders =
-        Query.type(Order.class)
-            .where("orders.status = ?", "IN PROCESS")
-            .orderBy("orders.order_id DESC")
-            .execute(jtm);
-    // @formatter:on
+    List<Order> orders = Query.type(Order.class)
+                              .where("orders.status = ?", "IN PROCESS")
+                              .orderBy("orders.order_id DESC")
+                              .execute(jtm);
 
-    // @formatter:off
     QueryMerge.type(Order.class)
-        .hasOne(Customer.class)
-        .joinColumnOwningSide("CUSTOMER_ID")
-        .populateProperty("customer")
-        .execute(jtm, orders);
-    // @formatter:on
+              .hasOne(Customer.class)
+              .joinColumnOwningSide("CUSTOMER_ID")
+              .populateProperty("customer")
+              .execute(jtm, orders);
 
     assertTrue("jane".equals(orders.get(0).getCustomer().getFirstName()));
     assertTrue("joe".equals(orders.get(1).getCustomer().getLastName()));
@@ -284,20 +241,16 @@ public class QueryMergeTest {
 
   @Test
   public void hasOne_success_withEdgeCaseCustomerIntialized_test() {
-    // @formatter:off
-    List<Order8> orders =
-        Query.type(Order8.class)  // Customer is initialized but since query returns null should be set to null
-            .where("orders.order_id = ?", 3)
-            .execute(jtm);
-    // @formatter:on
+    List<Order8> orders = Query.type(Order8.class) // Customer is initialized but since query
+                                                   // returns null should be set to null
+                               .where("orders.order_id = ?", 3)
+                               .execute(jtm);
 
-    // @formatter:off
     QueryMerge.type(Order8.class)
-        .hasOne(Customer.class)
-        .joinColumnOwningSide("customer_id")
-        .populateProperty("customer")
-        .execute(jtm, orders);
-    // @formatter:on
+              .hasOne(Customer.class)
+              .joinColumnOwningSide("customer_id")
+              .populateProperty("customer")
+              .execute(jtm, orders);
 
     assertNull(orders.get(0).getCustomer());
   }
@@ -306,21 +259,16 @@ public class QueryMergeTest {
 
   @Test
   public void hasMany_success_test() {
-    // @formatter:off
-    List<Order> orders =
-        Query.type(Order.class)
-            .where("orders.status = ?", "IN PROCESS")
-            .orderBy("orders.order_id DESC")
-            .execute(jtm);
-    // @formatter:on
+    List<Order> orders = Query.type(Order.class)
+                              .where("orders.status = ?", "IN PROCESS")
+                              .orderBy("orders.order_id DESC")
+                              .execute(jtm);
 
-    // @formatter:off
     QueryMerge.type(Order.class)
-        .hasMany(OrderLine.class)
-        .joinColumnManySide("order_id")
-        .populateProperty("orderLines")
-        .execute(jtm, orders);
-    // @formatter:on
+              .hasMany(OrderLine.class)
+              .joinColumnManySide("order_id")
+              .populateProperty("orderLines")
+              .execute(jtm, orders);
 
     boolean oneOrderLines = false;
     boolean twoOrderLines = false;
@@ -347,20 +295,16 @@ public class QueryMergeTest {
     order.setCustomerId(2);
     jtm.insert(order);
 
-    // @formatter:off
-    List<Order9> orders =
-        Query.type(Order9.class) // order9.orderLines initialized with value while query returns null.
-            .where("orders.order_id = ?", order.getOrderId())
-            .execute(jtm);
-    // @formatter:on
+    List<Order9> orders = Query.type(Order9.class) // order9.orderLines initialized with value while
+                                                   // query returns null.
+                               .where("orders.order_id = ?", order.getOrderId())
+                               .execute(jtm);
 
-    // @formatter:off
     QueryMerge.type(Order9.class)
-        .hasMany(OrderLine.class)
-        .joinColumnManySide("order_id")
-        .populateProperty("orderLines")
-        .execute(jtm, orders);
-    // @formatter:on
+              .hasMany(OrderLine.class)
+              .joinColumnManySide("order_id")
+              .populateProperty("orderLines")
+              .execute(jtm, orders);
 
     assertEquals(0, orders.get(0).getOrderLines().size());
 
@@ -370,21 +314,16 @@ public class QueryMergeTest {
 
   @Test
   public void hasOne_nonDefaultNaming_success_test() {
-    // @formatter:off
-    List<Order7> orders =
-        Query.type(Order7.class)
-            .where("orders.status = ?", "IN PROCESS")
-            .orderBy("orders.order_id")
-            .execute(jtm);
-    // @formatter:on
+    List<Order7> orders = Query.type(Order7.class)
+                               .where("orders.status = ?", "IN PROCESS")
+                               .orderBy("orders.order_id")
+                               .execute(jtm);
 
-    // @formatter:off
     QueryMerge.type(Order7.class)
-        .hasOne(Customer7.class)
-        .joinColumnOwningSide("customer_id")
-        .populateProperty("customer")
-        .execute(jtm, orders);
-    // @formatter:on
+              .hasOne(Customer7.class)
+              .joinColumnOwningSide("customer_id")
+              .populateProperty("customer")
+              .execute(jtm, orders);
 
     boolean tonyFound = false;
     boolean doeFound = false;
@@ -402,21 +341,16 @@ public class QueryMergeTest {
 
   @Test
   public void hasMany_nonDefaultNaming_success_test() {
-    // @formatter:off
-    List<Order7> orders =
-        Query.type(Order7.class)
-            .where("orders.status = ?", "IN PROCESS")
-            .orderBy("orders.order_id")
-            .execute(jtm);
-    // @formatter:on
+    List<Order7> orders = Query.type(Order7.class)
+                               .where("orders.status = ?", "IN PROCESS")
+                               .orderBy("orders.order_id")
+                               .execute(jtm);
 
-    // @formatter:off
     QueryMerge.type(Order7.class)
-        .hasMany(OrderLine7.class)
-        .joinColumnManySide("order_id")
-        .populateProperty("orderLines")
-        .execute(jtm, orders);
-    // @formatter:on
+              .hasMany(OrderLine7.class)
+              .joinColumnManySide("order_id")
+              .populateProperty("orderLines")
+              .execute(jtm, orders);
 
     assertTrue(orders.get(0).getOrderLines().size() == 2);
     assertTrue(orders.get(1).getOrderLines().size() == 1);
@@ -429,46 +363,34 @@ public class QueryMergeTest {
 
   @Test
   public void hasOne_orderByIsNotSupported_test() {
-    // @formatter:off
-    List<Order> orders =
-        Query.type(Order.class)
-            .execute(jtm);
-    // @formatter:on
+    List<Order> orders = Query.type(Order.class).execute(jtm);
 
-    Exception exception = Assertions.assertThrows(IllegalStateException.class, () -> {
-    // @formatter:off
-    QueryMerge.type(Order.class)
-        .hasOne(Customer.class)
-        .joinColumnOwningSide("customer_id")
-        .populateProperty("customer")
-        .orderBy("customer_id")
-        .execute(jtm, orders);
-            });
-    assertTrue(exception.getMessage().contains("For QueryMerge hasOne relationships orderBy is not supported"));
-    
-    // @formatter:on
+    Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+      QueryMerge.type(Order.class)
+                .hasOne(Customer.class)
+                .joinColumnOwningSide("customer_id")
+                .populateProperty("customer")
+                .orderBy("customer_id")
+                .execute(jtm, orders);
+    });
+    assertTrue(exception.getMessage()
+                        .contains("For QueryMerge hasOne relationships orderBy is not supported"));
+
   }
-
-
 
   @Test
   public void hasMany_withOrderBy_success_test() {
-    // @formatter:off
-    List<Order> orders =
-        Query.type(Order.class)
-            .where("orders.status = ?", "IN PROCESS")
-            .orderBy("orders.order_id")
-            .execute(jtm);
-    // @formatter:on
-
-    // @formatter:off
+    List<Order> orders = Query.type(Order.class)
+                              .where("orders.status = ?", "IN PROCESS")
+                              .orderBy("orders.order_id")
+                              .execute(jtm);
+    
     QueryMerge.type(Order.class)
-        .hasMany(OrderLine.class)
-        .joinColumnManySide("ORDER_ID")
-        .populateProperty("orderLines")
-        .orderBy("order_line_id")
-        .execute(jtm, orders);
-    // @formatter:on
+              .hasMany(OrderLine.class)
+              .joinColumnManySide("ORDER_ID")
+              .populateProperty("orderLines")
+              .orderBy("order_line_id")
+              .execute(jtm, orders);
 
     assertTrue(orders.get(0).getOrderLines().size() == 2);
     assertTrue(orders.get(1).getOrderLines().size() == 1);
@@ -477,34 +399,34 @@ public class QueryMergeTest {
 
   @Test
   public void queryMerge_methodChainingSequence_test() {
-    // @formatter:off
-    List<Order> orders =
-        Query.type(Order.class)
-            .execute(jtm);
-    // @formatter:on
+    List<Order> orders = Query.type(Order.class).execute(jtm);
 
-    QueryMerge.type(Order.class).hasMany(OrderLine.class).joinColumnManySide("order_id")
-        .populateProperty("orderLines").execute(jtm, orders);
-
-    QueryMerge.type(Order.class).hasMany(OrderLine.class).joinColumnManySide("order_id")
-        .populateProperty("orderLines").execute(jtm, orders);
-
-    // @formatter:off
     QueryMerge.type(Order.class)
-        .hasMany(OrderLine.class)
-        .joinColumnManySide("order_id")
-        .populateProperty("orderLines")
-        .orderBy("order_line_id")
-        .execute(jtm, orders);
-    
-    QueryMerge.type(Order.class)
-    .hasMany(OrderLine.class)
-    .joinColumnManySide("order_id")
-    .populateProperty("orderLines")
-    .orderBy("order_line_id")
-    .execute(jtm, orders);
-    
-    // @formatter:on
+              .hasMany(OrderLine.class)
+              .joinColumnManySide("order_id")
+              .populateProperty("orderLines")
+              .execute(jtm, orders);
 
+    QueryMerge.type(Order.class)
+              .hasMany(OrderLine.class)
+              .joinColumnManySide("order_id")
+              .populateProperty("orderLines")
+              .execute(jtm, orders);
+
+    QueryMerge.type(Order.class)
+              .hasMany(OrderLine.class)
+              .joinColumnManySide("order_id")
+              .populateProperty("orderLines")
+              .orderBy("order_line_id")
+              .execute(jtm, orders);
+
+    QueryMerge.type(Order.class)
+              .hasMany(OrderLine.class)
+              .joinColumnManySide("order_id")
+              .populateProperty("orderLines")
+              .orderBy("order_line_id")
+              .execute(jtm, orders);
+
+    
   }
 }

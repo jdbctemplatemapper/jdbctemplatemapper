@@ -40,59 +40,59 @@ public class QueryTest {
 
   @Test
   public void type_null_test() {
-    // @formatter:off
+     
     Exception exception =
         Assertions.assertThrows(
             IllegalArgumentException.class,
             () -> {
               Query.type(null).execute(jtm);
             });
-    // @formatter:on
+     
     assertTrue(exception.getMessage().contains("type cannot be null"));
   }
 
   @Test
   public void where_null_test() {
-    // @formatter:off
+     
     Exception exception =
         Assertions.assertThrows(
             IllegalArgumentException.class,
             () -> {
               Query.type(Order.class).where(null).execute(jtm);
             });
-    // @formatter:on
+     
     assertTrue(exception.getMessage().contains("whereClause cannot be null"));
   }
 
   @Test
   public void orderBy_null_test() {
-    // @formatter:off
+     
     Exception exception =
         Assertions.assertThrows(
             IllegalArgumentException.class,
             () -> {
               Query.type(Order.class).orderBy(null).execute(jtm);
             });
-    // @formatter:on
+     
     assertTrue(exception.getMessage().contains("orderBy cannot be null"));
   }
 
   @Test
   public void limitOffsetClause_null_test() {
-    // @formatter:off
+     
     Exception exception =
         Assertions.assertThrows(
             IllegalArgumentException.class,
             () -> {
               Query.type(Order.class).limitOffsetClause(null).execute(jtm);
             });
-    // @formatter:on
+     
     assertTrue(exception.getMessage().contains("limitOffsetClause cannot be null"));
   }
 
   @Test
   public void hasOne_null_test() {
-    // @formatter:off
+     
     Exception exception =
         Assertions.assertThrows(
             IllegalArgumentException.class,
@@ -103,13 +103,13 @@ public class QueryTest {
                   .populateProperty("customer")
                   .execute(jtm);
             });
-    // @formatter:on
+     
     assertTrue(exception.getMessage().contains("relatedType cannot be null"));
   }
 
   @Test
   public void hasMany_null_test() {
-    // @formatter:off
+     
     Exception exception =
         Assertions.assertThrows(
             IllegalArgumentException.class,
@@ -120,13 +120,13 @@ public class QueryTest {
                   .populateProperty("orderLines")
                   .execute(jtm);
             });
-    // @formatter:on
+     
     assertTrue(exception.getMessage().contains("relatedType cannot be null"));
   }
 
   @Test
   public void hasOne_joinColumnNull_test() {
-    // @formatter:off
+     
     Exception exception =
         Assertions.assertThrows(
             IllegalArgumentException.class,
@@ -137,13 +137,13 @@ public class QueryTest {
                   .populateProperty("customer")
                   .execute(jtm);
             });
-    // @formatter:on
+     
     assertTrue(exception.getMessage().contains("joinColumnOwningSide cannot be null"));
   }
 
   @Test
   public void hasMany_joinColumnNull_test() {
-    // @formatter:off
+     
     Exception exception =
         Assertions.assertThrows(
             IllegalArgumentException.class,
@@ -154,13 +154,13 @@ public class QueryTest {
                   .populateProperty("orderLines")
                   .execute(jtm);
             });
-    // @formatter:on
+     
     assertTrue(exception.getMessage().contains("joinColumnManySide cannot be null"));
   }
 
   @Test
   public void hasOne_populatePropertyNull_test() {
-    // @formatter:off
+     
     Exception exception =
         Assertions.assertThrows(
             IllegalArgumentException.class,
@@ -171,13 +171,13 @@ public class QueryTest {
                   .populateProperty(null)
                   .execute(jtm);
             });
-    // @formatter:on
+     
     assertTrue(exception.getMessage().contains("propertyName cannot be null"));
   }
 
   @Test
   public void hasMany_populatePropertyNull_test() {
-    // @formatter:off
+     
     Exception exception =
         Assertions.assertThrows(
             IllegalArgumentException.class,
@@ -188,13 +188,13 @@ public class QueryTest {
                   .populateProperty(null)
                   .execute(jtm);
             });
-    // @formatter:on
+     
     assertTrue(exception.getMessage().contains("propertyName cannot be null"));
   }
 
   @Test
   public void hasOne_jdbcTemplateMapperNull_test() {
-    // @formatter:off
+     
     Exception exception =
         Assertions.assertThrows(
             IllegalArgumentException.class,
@@ -205,13 +205,13 @@ public class QueryTest {
                   .populateProperty("customer")
                   .execute(null);
             });
-    // @formatter:on
+     
     assertTrue(exception.getMessage().contains("jdbcTemplateMapper cannot be null"));
   }
 
   @Test
   public void hasMany_jdbcTemplateMapperNull_test() {
-    // @formatter:off
+     
     Exception exception =
         Assertions.assertThrows(
             IllegalArgumentException.class,
@@ -222,26 +222,26 @@ public class QueryTest {
                   .populateProperty("orderLines")
                   .execute(null);
             });
-    // @formatter:on
+     
     assertTrue(exception.getMessage().contains("jdbcTemplateMapper cannot be null"));
   }
 
   @Test
   public void invalidType_test() {
-    // @formatter:off
+     
     Exception exception =
         Assertions.assertThrows(
             AnnotationException.class,
             () -> {
               Query.type(InvalidTableObject.class).execute(jtm);
             });
-    // @formatter:on
+     
     assertTrue(exception.getMessage().contains("Unable to locate meta-data for table"));
   }
 
   @Test
   public void hasMany_invalidHasManyClass_test() {
-    // @formatter:off
+     
     Exception exception =
         Assertions.assertThrows(
             AnnotationException.class,
@@ -252,13 +252,13 @@ public class QueryTest {
                   .populateProperty("orderLines")
                   .execute(jtm);
             });
-    // @formatter:on
+     
     assertTrue(exception.getMessage().contains("does not have the @Table annotation"));
   }
 
   @Test
   public void hasOne_invalidHasManyClass2_test() {
-    // @formatter:off
+     
     Exception exception =
         Assertions.assertThrows(
             AnnotationException.class,
@@ -269,13 +269,13 @@ public class QueryTest {
                   .populateProperty("orderLines")
                   .execute(jtm);
             });
-    // @formatter:on
+     
     assertTrue(exception.getMessage().contains("does not have the @Table annotation"));
   }
 
   @Test
   public void hasMany_invalidJoinColumn_test() {
-    // @formatter:off
+     
     Exception exception =
         Assertions.assertThrows(
             QueryException.class,
@@ -286,13 +286,13 @@ public class QueryTest {
                   .populateProperty("orderLines")
                   .execute(jtm);
             });
-    // @formatter:on
+     
     assertTrue(exception.getMessage().contains("Invalid join column"));
   }
 
   @Test
   public void hasMany_invalidJoinColumnWithPrefix_test() {
-    // @formatter:off
+     
     Exception exception =
         Assertions.assertThrows(
             QueryException.class,
@@ -303,13 +303,13 @@ public class QueryTest {
                   .populateProperty("orderLines")
                   .execute(jtm);
             });
-    // @formatter:on
+     
     assertTrue(exception.getMessage().contains("Invalid joinColumn"));
   }
 
   @Test
   public void hasMany_invalidJoinColumnBlank_test() {
-    // @formatter:off
+     
     Exception exception =
         Assertions.assertThrows(
             IllegalArgumentException.class,
@@ -320,13 +320,13 @@ public class QueryTest {
                   .populateProperty("orderLines")
                   .execute(jtm);
             });
-    // @formatter:on
+     
     assertTrue(exception.getMessage().contains("joinColumnManySide cannot be null or blank"));
   }
 
   @Test
   public void hasOne_invalidJoinColumnWithPrefix_test() {
-    // @formatter:off
+     
     Exception exception =
         Assertions.assertThrows(
             QueryException.class,
@@ -337,13 +337,13 @@ public class QueryTest {
                   .populateProperty("customer")
                   .execute(jtm);
             });
-    // @formatter:on
+     
     assertTrue(exception.getMessage().contains("Invalid joinColumn"));
   }
 
   @Test
   public void hasOne_invalidJoinColumnBlank_test() {
-    // @formatter:off
+     
     Exception exception =
         Assertions.assertThrows(
             IllegalArgumentException.class,
@@ -354,13 +354,13 @@ public class QueryTest {
                   .populateProperty("customer")
                   .execute(jtm);
             });
-    // @formatter:on
+     
     assertTrue(exception.getMessage().contains("joinColumnOwningSide cannot be null or blank"));
   }
 
   @Test
   public void hasOne_invalidJoinColumn_test() {
-    // @formatter:off
+     
     Exception exception =
         Assertions.assertThrows(
             QueryException.class,
@@ -371,13 +371,13 @@ public class QueryTest {
                   .populateProperty("customer")
                   .execute(jtm);
             });
-    // @formatter:on
+     
     assertTrue(exception.getMessage().contains("Invalid join column"));
   }
 
   @Test
   public void hasMany_populatePropertyNotACollection_test() {
-    // @formatter:off
+     
     Exception exception =
         Assertions.assertThrows(
             QueryException.class,
@@ -388,13 +388,13 @@ public class QueryTest {
                   .populateProperty("customer")
                   .execute(jtm);
             });
-    // @formatter:on
+     
     assertTrue(exception.getMessage().contains("is not a collection"));
   }
 
   @Test
   public void hasMany_populatePropertyCollectionHasNoGenericType_test() {
-    // @formatter:off
+     
     Exception exception =
         Assertions.assertThrows(
             QueryException.class,
@@ -405,14 +405,14 @@ public class QueryTest {
                   .populateProperty("orderLines")
                   .execute(jtm);
             });
-    // @formatter:on
+     
     assertTrue(
         exception.getMessage().contains("Collections without generic types are not supported"));
   }
 
   @Test
   public void hasMany_populatePropertyCollectionNotInitialized_test() {
-    // @formatter:off
+     
     Exception exception =
         Assertions.assertThrows(
             QueryException.class,
@@ -423,14 +423,14 @@ public class QueryTest {
                   .populateProperty("orderLines")
                   .execute(jtm);
             });
-    // @formatter:on
+     
     assertTrue(exception.getMessage()
-        .contains("Only initialized collections can be populated by queries"));
+                        .contains("Only initialized collections can be populated by queries"));
   }
 
   @Test
   public void hasMany_populatePropertyCollectionTypeMismatch_test() {
-    // @formatter:off
+     
     Exception exception =
         Assertions.assertThrows(
             QueryException.class,
@@ -441,14 +441,15 @@ public class QueryTest {
                   .populateProperty("orderLines")
                   .execute(jtm);
             });
-    // @formatter:on
-    assertTrue(exception.getMessage()
-        .contains("Collection generic type and hasMany relationship type mismatch"));
+     
+    assertTrue(
+        exception.getMessage()
+                 .contains("Collection generic type and hasMany relationship type mismatch"));
   }
 
   @Test
   public void hasOne_populatePropertyTypeConflict_test() {
-    // @formatter:off
+     
     Exception exception =
         Assertions.assertThrows(
             QueryException.class,
@@ -459,7 +460,7 @@ public class QueryTest {
                   .populateProperty("status")
                   .execute(jtm);
             });
-    // @formatter:on
+     
     assertTrue(exception.getMessage().contains("property type conflict"));
   }
 
@@ -470,7 +471,7 @@ public class QueryTest {
     order.setCustomerId(2);
     jtm.insert(order);
 
-    // @formatter:off
+     
     List<Order9> orders =
         Query.type(Order9.class)
             .hasMany(OrderLine.class)
@@ -483,12 +484,12 @@ public class QueryTest {
     
     jtm.delete(order);
 
-    // @formatter:on
+     
   }
 
   @Test
   public void hasMany_List_success_test() {
-    // @formatter:off
+     
     List<Order> orders =
         Query.type(Order.class)
             .hasMany(OrderLine.class)
@@ -501,58 +502,15 @@ public class QueryTest {
     assertTrue(orders.size() == 2);
     assertTrue(orders.get(0).getOrderLines().size() == 2);
     assertEquals("IN PROCESS", orders.get(1).getStatus());
+    assertTrue(orders.get(0).getOrderLines().get(0).getNumOfUnits() > 0);
     assertTrue(orders.get(1).getOrderLines().size() == 1);
 
-    // @formatter:on
+     
   }
-  
-  
-  /*********************/
-  @Test
-  public void hasMany_tableAlias_success() {
-    // @formatter:off
-    List<Order> orders =  Query.type(Order.class, "o")
-        .hasMany(OrderLine.class, "ol")
-        .joinColumnManySide("order_id")
-        .populateProperty("orderLines")
-        .where("o.status = ?", "IN PROCESS")
-        .orderBy("o.order_id, ol.order_line_id")
-        .execute(jtm);
-    
-    assertTrue(orders.size() == 2);
-    assertTrue(orders.get(0).getOrderLines().size() == 2);
-    assertEquals("IN PROCESS", orders.get(1).getStatus());
-    assertTrue(orders.get(1).getOrderLines().size() == 1);
-
-    // @formatter:on
-  }
-  
-  
-  @Test
-  public void hasOne_tableAlias_success() {
-    // @formatter:off
-    List<Order> orders =
-        Query.type(Order.class, "o")
-            .hasOne(Customer.class, "c")
-            .joinColumnOwningSide("customer_id")
-            .populateProperty("customer")
-            .where("o.status = ?", "IN PROCESS")
-            .orderBy("o.status   DESC")
-            .execute(jtm);
-
-    assertTrue(orders.size() == 2);
-    assertTrue("tony".equals(orders.get(0).getCustomer().getFirstName()));
-    assertTrue("jane".equals(orders.get(1).getCustomer().getFirstName()));
-
-    // @formatter:on
-  }
-  
-  
-  /***************************************/
 
   @Test
   public void hasMany_Set_success_test() {
-    // @formatter:off
+     
     List<Order4> orders =
         Query.type(Order4.class)
             .hasMany(OrderLine.class)
@@ -564,12 +522,12 @@ public class QueryTest {
 
     assertTrue(orders.size() == 2);
 
-    // @formatter:on
+     
   }
 
   @Test
   public void hasOne_success_test() {
-    // @formatter:off
+     
     List<Order> orders =
         Query.type(Order.class)
             .hasOne(Customer.class)
@@ -583,32 +541,35 @@ public class QueryTest {
     assertTrue("tony".equals(orders.get(0).getCustomer().getFirstName()));
     assertTrue("jane".equals(orders.get(1).getCustomer().getFirstName()));
 
-    // @formatter:on
+     
   }
 
   @Test
   public void typeOnly_success_test() {
-    // @formatter:off
-    List<Order> orders = Query.type(Order.class).execute(jtm);
+     
+    List<Order> orders = Query.type(Order.class)
+                              .execute(jtm);
     assertTrue(orders.size() == 3);
 
-    // @formatter:on
+     
   }
 
   @Test
   public void whereonly_success_test() {
-    // @formatter:off
+     
     List<Order> orders =
-        Query.type(Order.class).where("orders.status = ?", "IN PROCESS").execute(jtm);
+        Query.type(Order.class)
+             .where("orders.status = ?", "IN PROCESS")
+             .execute(jtm);
 
     assertTrue(orders.size() == 2);
 
-    // @formatter:on
+     
   }
 
   @Test
   public void whereAndOrderBy_success_test() {
-    // @formatter:off
+     
     List<Order> orders =
         Query.type(Order.class)
             .where("orders.status = ?", "IN PROCESS")
@@ -618,12 +579,12 @@ public class QueryTest {
     assertTrue(orders.size() == 2);
     assertTrue(orders.get(0).getOrderId() == 1);
     assertTrue(orders.get(1).getOrderId() == 2);
-    // @formatter:on
+     
   }
 
   @Test
   public void hasOne_withoutWhereAndOrderBy_success_test() {
-    // @formatter:off
+     
     List<Order> orders =
         Query.type(Order.class)
             .hasOne(Customer.class)
@@ -633,12 +594,12 @@ public class QueryTest {
 
     assertNotNull(orders.get(0).getCustomer());
 
-    // @formatter:on
+     
   }
 
   @Test
   public void hasMany_withoutWhereAndOrderBy_success_test() {
-    // @formatter:off
+     
     List<Order> orders =
         Query.type(Order.class)
             .hasMany(OrderLine.class)
@@ -647,13 +608,13 @@ public class QueryTest {
             .execute(jtm);
 
     assertTrue(orders.get(0).getOrderLines().size() > 0);
-    // @formatter:on
+     
 
   }
 
   @Test
   public void hasOne_nonDefaultNaming_success_test() {
-    // @formatter:off
+     
     List<Order7> orders =
         Query.type(Order7.class)
             .hasOne(Customer7.class)
@@ -667,12 +628,12 @@ public class QueryTest {
     assertTrue("tony".equals(orders.get(0).getCustomer().getFirstName()));
     assertTrue("jane".equals(orders.get(1).getCustomer().getFirstName()));
 
-    // @formatter:on
+     
   }
 
   @Test
   public void hasMany_NonDefaultNaming_success_test() {
-    // @formatter:off
+     
     List<Order7> orders =
         Query.type(Order7.class)
             .hasMany(OrderLine7.class)
@@ -689,14 +650,14 @@ public class QueryTest {
     assertEquals("IN PROCESS", orders.get(1).getStatus());
     assertTrue(orders.get(1).getOrderLines().size() == 1);
 
-    // @formatter:on
+     
   }
 
 
   @Test
   public void hasMany_limitOffsetClause_failure_test() {
-    // @formatter:off
-    Exception exception = Assertions.assertThrows(IllegalStateException.class, () -> {
+     
+    Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
       Query.type(Order.class)
            .hasMany(OrderLine.class)
            .joinColumnManySide("order_id")
@@ -704,9 +665,11 @@ public class QueryTest {
            .limitOffsetClause("OFFSET 0 ROWS FETCH FIRST 10 ROWS ONLY")
            .execute(jtm);
     });
-    // @formatter:on
-    assertTrue(exception.getMessage().contains(
-        "limitOffsetClause is not supported for hasMany and hasMany through relationships."));
+     
+    assertTrue(
+        exception.getMessage()
+                 .contains(
+                     "limitOffsetClause is not supported for hasMany and hasMany through relationships."));
   }
 
   @Test
@@ -724,7 +687,7 @@ public class QueryTest {
     if (jdbcDriver.contains("sqlserver")) {
       limitOffsetClause = "OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY";
     }
-    // @formatter:off
+     
     List<Order> orders =
         Query.type(Order.class)
              .orderBy("orders.order_id") // SQLServer needs orderBy to work with offset
@@ -732,7 +695,6 @@ public class QueryTest {
 
     assertTrue(orders.size() == 3);
 
-    // @formatter:on
   }
 
   @Test
@@ -750,7 +712,7 @@ public class QueryTest {
     if (jdbcDriver.contains("sqlserver")) {
       limitOffsetClause = "OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY";
     }
-    // @formatter:off
+     
     List<Order> orders =
         Query.type(Order.class)
              .hasOne(Customer.class)
@@ -761,10 +723,7 @@ public class QueryTest {
              .execute(jtm);
 
     assertTrue(orders.size() == 3);
-
-    // @formatter:on
   }
-
 
   @Test
   public void query_methodChainingSequenceTest_success_test() {
@@ -782,7 +741,6 @@ public class QueryTest {
       limitOffsetClause = "OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY";
     }
 
-    // @formatter:off
     Query.type(Order.class)
          .execute(jtm);
 
@@ -837,10 +795,5 @@ public class QueryTest {
          .orderBy("customer.customer_id")
          .limitOffsetClause(limitOffsetClause)
          .execute(jtm);
-
-    // @formatter:on
   }
-
-
-
 }

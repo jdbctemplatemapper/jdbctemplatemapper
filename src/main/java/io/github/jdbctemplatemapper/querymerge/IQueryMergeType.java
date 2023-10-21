@@ -22,5 +22,9 @@ package io.github.jdbctemplatemapper.querymerge;
 public interface IQueryMergeType<T> {
   IQueryMergeHasMany<T> hasMany(Class<?> relatedType);
 
+  IQueryMergeHasMany<T> hasMany(Class<?> relatedType, String tableAlias);
+
   IQueryMergeHasOne<T> hasOne(Class<?> relatedType);
+
+  IQueryMergeHasOne<T> hasOne(Class<?> relatedType, String tableAlias);
 }

@@ -14,10 +14,12 @@
 package io.github.jdbctemplatemapper.core;
 
 /**
- * Relationship enum
+ * Relationship types
  *
  * @author ajoseph
  */
-enum RelationshipType {
-  HAS_ONE, HAS_MANY, HAS_MANY_THROUGH;
+class RelationshipType {
+  public static final String HAS_ONE = "HAS_ONE";
+  public static final String HAS_MANY = "HAS_MANY";
+  public static final String HAS_MANY_THROUGH = "HAS_MANY_THROUGH";
 }

@@ -35,6 +35,15 @@ class MapperUtils {
     return str;
   }
 
+  public static String columnPrefix(String tableAlias, String tableName) {
+    return tableAlias == null ? tableName : tableAlias;
+  }
+
+  public static String tableStrForFrom(String tableAlias, String fullyQualifiedTableName) {
+    return tableAlias == null ? fullyQualifiedTableName
+        : fullyQualifiedTableName + " " + tableAlias;
+  }
+
   // if user entered someschema.tablename use that. otherwise get the
   // schema/catalog(table prefix) and concatenate with tableName
   public static String getFullyQualifiedTableNameForThroughJoinTable(String throughJoinTable,
