@@ -45,8 +45,12 @@ public class FlywayMigrationConfigForTest {
   @PostConstruct
   public void flyWayDsAll() {
     if (jdbcDriver.contains("postgres")) {
-      Flyway.configure().dataSource(dsAll).defaultSchema("schema2").locations(locations).load()
-          .migrate();
+      Flyway.configure()
+            .dataSource(dsAll)
+            .defaultSchema("schema2")
+            .locations(locations)
+            .load()
+            .migrate();
 
     } else {
       Flyway.configure().dataSource(dsAll).locations(locations).load().migrate();

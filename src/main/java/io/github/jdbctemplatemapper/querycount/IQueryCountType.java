@@ -25,6 +25,8 @@ public interface IQueryCountType<T> {
 
   IQueryCountHasOne<T> hasOne(Class<?> relatedType);
 
+  IQueryCountHasOne<T> hasOne(Class<?> relatedType, String tableAlias);
+
   IQueryCountWhere<T> where(String whereClause, Object... params);
 
 

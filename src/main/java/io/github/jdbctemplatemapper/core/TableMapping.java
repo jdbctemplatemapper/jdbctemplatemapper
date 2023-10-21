@@ -27,7 +27,7 @@ import io.github.jdbctemplatemapper.exception.MapperException;
  * @author ajoseph
  */
 class TableMapping {
-  private Class<?> tableClass;
+  private String tableClassName;
   private String tableName;
   private String schemaName;
   private String catalogName;
@@ -56,7 +56,7 @@ class TableMapping {
     Assert.notNull(tableName, "tableName must not be null");
     Assert.notNull(idPropertyInfo, "idPropertyInfo must not be null");
 
-    this.tableClass = tableClass;
+    this.tableClassName = tableClass.getName();
     this.tableName = tableName;
     this.schemaName = MapperUtils.isEmpty(schemaName) ? null : schemaName;
     this.catalogName = MapperUtils.isEmpty(catalogName) ? null : catalogName;
@@ -120,8 +120,8 @@ class TableMapping {
     return propMapping == null ? Types.NULL : propMapping.getColumnSqlDataType();
   }
 
-  public Class<?> getTableClass() {
-    return tableClass;
+  public String getTableClassName() {
+    return tableClassName;
   }
 
   public String getTableName() {

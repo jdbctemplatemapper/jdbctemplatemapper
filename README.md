@@ -86,8 +86,9 @@
 
  **Note: An instance of JdbcTemplateMapper is thread safe**
  
- See an example of JdbcTemplateMapper configuration used in an application [here](https://github.com/jdbctemplatemapper/using-spring-jdbctemplate-with-jdbctemplatemapper/blob/master/src/test/java/io/github/ajoseph88/jdbctemplatemapper/config/JdbcTemplateMapperConfig.java).
-
+JdbcTemplateMapper should be prepared in a Spring application context and given to services as a bean reference. JdbcTemplateMapper caches Table meta-data and SQL.
+ 
+See an example of JdbcTemplateMapper configuration used in an application [here](https://github.com/jdbctemplatemapper/using-spring-jdbctemplate-with-jdbctemplatemapper/blob/master/src/test/java/io/github/ajoseph88/jdbctemplatemapper/config/JdbcTemplateMapperConfig.java).
 
  ```java
  
@@ -263,7 +264,7 @@ This will map property to a column using the default naming convention of camel 
 
 @Column(name="some_column_name")  
 This will map the property to the column specified by name attribute.   
-Note that this will impact using "SELECT * " with Spring BeanPropertyRowMapper in custom queries. The mismatch of column and property names will cause BeanPropertyRowMapper to ignore these properties. Use "SELECT " + jdbcTemplateMapper.getColumnsSql(someClass) which will create column aliases to match property names so will work with BeanPropertyRowMapper.
+Note that this will impact using "SELECT * " with Spring BeanPropertyRowMapper in custom queries. The mismatch of column and property names will cause BeanPropertyRowMapper to ignore these properties. Use "SELECT " + jdbcTemplateMapper.getBeanColumnsSql(someClass) which will create column aliases to match property names so will work with BeanPropertyRowMapper.
 
 **@Version**
 
@@ -737,7 +738,7 @@ Uses the same logging configurations as Spring's JdbcTemplate to log the SQL. In
 ## Notes
  1. Models should have a no argument constructor so they can be instantiated.
  2. Database changes will require a restart of the application since JdbcTemplateMapper caches table metadata.
- 3. When using @Column(name="some_column_name") to map a property to a non default column, it will impact using "SELECT * " with Spring BeanPropertyRowMapper in custom queries. The mismatch of column and property names will cause Spring BeanPropertyRowMapper to ignore these properties. Use "SELECT " + jdbcTemplateMapper.getColumnsSql(Class) which will create column aliases to match property names so will work with BeanPropertyRowMapper.
+ 3. When using @Column(name="some_column_name") to map a property to a non default column, it will impact using "SELECT * " with Spring BeanPropertyRowMapper in custom queries. The mismatch of column and property names will cause Spring BeanPropertyRowMapper to ignore these properties. Use "SELECT " + jdbcTemplateMapper.getBeanColumnsSql(Class) which will create column aliases to match property names so will work with BeanPropertyRowMapper.
  4. If insert/update fails do not reuse the object since it could be in an inconsistent state.
  5. For Oracle/SqlServer no support for blob/clob. Use JdbcTemplate directly for this with custom code
  

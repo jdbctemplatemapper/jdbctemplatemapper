@@ -15,7 +15,7 @@ public class OrderLine {
   @Column
   private Integer productId;
   @Column
-  private Integer numOfUnits;
+  private int numOfUnits;
 
   private Order order;
 
@@ -47,11 +47,11 @@ public class OrderLine {
     this.productId = productId;
   }
 
-  public Integer getNumOfUnits() {
+  public int getNumOfUnits() {
     return numOfUnits;
   }
 
-  public void setNumOfUnits(Integer numOfUnits) {
+  public void setNumOfUnits(int numOfUnits) {
     this.numOfUnits = numOfUnits;
   }
 

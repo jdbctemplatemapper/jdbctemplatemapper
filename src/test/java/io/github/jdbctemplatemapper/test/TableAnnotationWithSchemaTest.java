@@ -85,7 +85,8 @@ public class TableAnnotationWithSchemaTest {
       jtm.insert(customer);
 
       List<CustomerSchema1> list = Query.type(CustomerSchema1.class)
-          .where("customer_id = ?", customer.getCustomerId()).execute(jtm);
+                                        .where("customer_id = ?", customer.getCustomerId())
+                                        .execute(jtm);
 
       assertEquals(1, list.size());
 
@@ -102,7 +103,8 @@ public class TableAnnotationWithSchemaTest {
       jtm.insert(customer);
 
       Integer count = QueryCount.type(CustomerSchema1.class)
-          .where("customer_id = ?", customer.getCustomerId()).execute(jtm);
+                                .where("customer_id = ?", customer.getCustomerId())
+                                .execute(jtm);
 
       assertEquals(1, count);
 
@@ -164,8 +166,11 @@ public class TableAnnotationWithSchemaTest {
       List<CompanySchema2> companies =
           Query.type(CompanySchema2.class).where("id = ?", company.getId()).execute(jtm);
 
-      QueryMerge.type(CompanySchema2.class).hasMany(OfficeSchema2.class)
-          .joinColumnManySide("company_id").populateProperty("offices").execute(jtm, companies);
+      QueryMerge.type(CompanySchema2.class)
+                .hasMany(OfficeSchema2.class)
+                .joinColumnManySide("company_id")
+                .populateProperty("offices")
+                .execute(jtm, companies);
 
     }
   }
