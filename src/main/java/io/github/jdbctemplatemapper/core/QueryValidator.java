@@ -94,9 +94,8 @@ class QueryValidator {
 
   static void validateQueryLimitOffsetClause(String relationshipType,
       String limitOffsetClause) {
-    if (relationshipType != null
-        && (RelationshipType.HAS_MANY.equals(relationshipType)
-            || RelationshipType.HAS_MANY_THROUGH.equals(relationshipType))) {
+    if (RelationshipType.HAS_MANY.equals(relationshipType)
+            || RelationshipType.HAS_MANY_THROUGH.equals(relationshipType)) {
       if (MapperUtils.isNotBlank(limitOffsetClause)) {
         throw new IllegalArgumentException(
             "limitOffsetClause is not supported for hasMany and hasMany through relationships. "
