@@ -66,17 +66,17 @@ public class SelectMapper<T> {
   }
 
   // internal use only
-  SelectMapper(Class<T> clazz, String tableName, String columnAlias, MappingHelper mappingHelper,
+  SelectMapper(Class<T> clazz, String tableAlias, String columnAlias, MappingHelper mappingHelper,
       ConversionService conversionService, boolean useColumnLabelForResultSetMetaData) {
     Assert.notNull(clazz, " clazz cannot be null");
-    Assert.notNull(tableName, " tableName cannot be null");
+    Assert.notNull(tableAlias, " tableAlias cannot be null");
     Assert.notNull(columnAlias, " columnAlias cannot be null");
     this.clazz = clazz;
     this.mappingHelper = mappingHelper;
     this.conversionService = conversionService;
     this.useColumnLabelForResultSetMetaData = useColumnLabelForResultSetMetaData;
 
-    this.colPrefix = tableName + ".";
+    this.colPrefix = tableAlias + ".";
     this.colAliasPrefix = columnAlias;
     this.internal = true;
   }

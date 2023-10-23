@@ -241,8 +241,9 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
 
   /**
    * The orderBy clause for QueryMerge. For QueryMerge orderBy is only supported for hasMany and
-   * hasMany through. For others it does not makes sense because the order will be dictated by the
-   * mergeList. orderBy columns have to be on the table of the hasMany/hasMany through side.
+   * hasMany through. orderBy columns have to be on the table of the hasMany/hasMany through side. 
+   * For hasOne orderBy does not makes sense because the order will be dictated by the
+   * mergeList argument in the execute method. 
    *
    * @param orderBy the orderBy clause.
    * @return interface with the next methods in the chain

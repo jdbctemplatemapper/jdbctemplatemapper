@@ -290,7 +290,7 @@ public class Query<T> implements IQueryFluent<T> {
 
   /**
    * The SQL limit Offset clause for the query specific to the database being used. The limit offset
-   * clause for hasMany/hasMany through relationship is not supported.
+   * clause is not supported for hasMany/hasMany through relationships.
    * 
    * <pre>
    * See <a href=

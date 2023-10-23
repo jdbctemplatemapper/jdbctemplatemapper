@@ -89,7 +89,9 @@ class TableMapping {
         String colAliasSuffix = "c" + cnt;
         propMapping.setColumnAliasSuffix(colAliasSuffix);
         // creating alias lookups for queries generated through Query and QueryMerge
+        // aliases oc1, oc2, oc3 ...
         columnAliasMap.put(MapperUtils.OWNER_COL_ALIAS_PREFIX + colAliasSuffix, propMapping);
+        // aliases rc1, rc2, rc3
         columnAliasMap.put(MapperUtils.RELATED_COL_ALIAS_PREFIX + colAliasSuffix, propMapping);
 
         columnNameMap.put(propMapping.getColumnName(), propMapping);
