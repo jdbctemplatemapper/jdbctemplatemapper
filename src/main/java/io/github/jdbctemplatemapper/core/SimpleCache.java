@@ -19,7 +19,7 @@ class SimpleCache<K, V> {
 
   public void put(K key, V value) {
     if (capacity == -1) { // no limit
-      cache.put(key, value);
+      cache.putIfAbsent(key, value);
     } else {
       if (cache.size() < capacity) {
         cache.putIfAbsent(key, value);
