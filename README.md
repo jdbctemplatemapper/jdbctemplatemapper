@@ -81,13 +81,10 @@
  
 ## Spring bean configuration for JdbcTemplateMapper
 
- 1. Configure the JdbcTemplate bean as per Spring documentation
- 2. Configure the JdbcTemplateMapper bean. 
+JdbcTemplateMapper should be prepared in a Spring application context and given to services as a bean reference. It caches table meta-data and SQL.
 
- **Note: An instance of JdbcTemplateMapper is thread safe**
- 
-JdbcTemplateMapper should be prepared in a Spring application context and given to services as a bean reference. JdbcTemplateMapper caches Table meta-data and SQL.
- 
+**Note: An instance of JdbcTemplateMapper is thread safe**
+
 See an example of JdbcTemplateMapper configuration used in an application [here](https://github.com/jdbctemplatemapper/using-spring-jdbctemplate-with-jdbctemplatemapper/blob/master/src/test/java/io/github/ajoseph88/jdbctemplatemapper/config/JdbcTemplateMapperConfig.java).
 
  ```java
