@@ -337,7 +337,7 @@ public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
 The library provides multiple ways to query relationships.
 Fluent style queries allow querying of hasOne, hasMany and hasMany through (many to many using an associated table) relationships.
 The IDE will provide suggestions to help chain the methods. Turn logging on (see logging section) to see the generated queries.  
-The QueryMerge class allows the results of a previous query to be merged with results of a new query.
+The QueryMerge class allows the results of a previous query to be merged with results of a new query. This comes in handy where multiple relationships need to be queried.
 
 ### Fluent style queries
 
