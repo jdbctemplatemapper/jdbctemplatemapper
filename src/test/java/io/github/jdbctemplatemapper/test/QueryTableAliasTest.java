@@ -28,51 +28,51 @@ public class QueryTableAliasTest {
   @Test
   public void singleTable_tableAlias_success() {
     List<Order> orders = Query.type(Order.class, "o")
-        .where("o.status = ?", "IN PROCESS")
-        .orderBy("o.order_id")
-        .execute(jtm);
-    
+                              .where("o.status = ?", "IN PROCESS")
+                              .orderBy("o.order_id")
+                              .execute(jtm);
+
     assertTrue(orders.size() > 0);
   }
-  
+
   @Test
   public void hasMany_tableAlias_success() {
-    
-    List<Order>orders =  Query.type(Order.class, "o")
-        .hasMany(OrderLine.class, "ol")
-        .joinColumnManySide("order_id")
-        .populateProperty("orderLines")
-        .where("o.status = ? and ol.num_of_units > ?", "IN PROCESS", 0)
-        .orderBy("o.order_id, ol.order_line_id")
-        .execute(jtm);
-    
+
+    List<Order> orders = Query.type(Order.class, "o")
+                              .hasMany(OrderLine.class, "ol")
+                              .joinColumnManySide("order_id")
+                              .populateProperty("orderLines")
+                              .where("o.status = ? and ol.num_of_units > ?", "IN PROCESS", 0)
+                              .orderBy("o.order_id, ol.order_line_id")
+                              .execute(jtm);
+
     assertTrue(orders.size() == 2);
     assertTrue(orders.get(0).getOrderLines().size() == 2);
     assertEquals("IN PROCESS", orders.get(1).getStatus());
     assertTrue(orders.get(0).getOrderLines().get(0).getNumOfUnits() > 0);
     assertTrue(orders.get(1).getOrderLines().size() == 1);
-    
-    orders =  Query.type(Order.class, "o") 
-        .hasMany(OrderLine.class)  // no alias for hasMany
-        .joinColumnManySide("order_id")
-        .populateProperty("orderLines")
-        .where("o.status = ?", "IN PROCESS")
-        .orderBy("o.order_id, order_line.order_line_id")
-        .execute(jtm);
-    
+
+    orders = Query.type(Order.class, "o")
+                  .hasMany(OrderLine.class) // no alias for hasMany
+                  .joinColumnManySide("order_id")
+                  .populateProperty("orderLines")
+                  .where("o.status = ?", "IN PROCESS")
+                  .orderBy("o.order_id, order_line.order_line_id")
+                  .execute(jtm);
+
     assertTrue(orders.size() == 2);
     assertTrue(orders.get(0).getOrderLines().size() == 2);
     assertEquals("IN PROCESS", orders.get(1).getStatus());
     assertTrue(orders.get(1).getOrderLines().size() == 1);
-    
-    orders =  Query.type(Order.class) 
-        .hasMany(OrderLine.class, "ol")  // no alias for hasMany
-        .joinColumnManySide("order_id")
-        .populateProperty("orderLines")
-        .where("orders.status = ?", "IN PROCESS")
-        .orderBy("orders.order_id, ol.order_line_id")
-        .execute(jtm);
-    
+
+    orders = Query.type(Order.class)
+                  .hasMany(OrderLine.class, "ol") // no alias for hasMany
+                  .joinColumnManySide("order_id")
+                  .populateProperty("orderLines")
+                  .where("orders.status = ?", "IN PROCESS")
+                  .orderBy("orders.order_id, ol.order_line_id")
+                  .execute(jtm);
+
     assertTrue(orders.size() == 2);
     assertTrue(orders.get(0).getOrderLines().size() == 2);
     assertEquals("IN PROCESS", orders.get(1).getStatus());
@@ -81,14 +81,13 @@ public class QueryTableAliasTest {
 
   @Test
   public void hasOne_tableAlias_success() {
-    List<Order> orders =
-        Query.type(Order.class, "o")
-            .hasOne(Customer.class, "c")
-            .joinColumnOwningSide("customer_id")
-            .populateProperty("customer")
-            .where("o.status = ? and c.last_name like ?", "IN PROCESS", "%")
-            .orderBy("o.status DESC, c.first_name desc")
-            .execute(jtm);
+    List<Order> orders = Query.type(Order.class, "o")
+                              .hasOne(Customer.class, "c")
+                              .joinColumnOwningSide("customer_id")
+                              .populateProperty("customer")
+                              .where("o.status = ? and c.last_name like ?", "IN PROCESS", "%")
+                              .orderBy("o.status DESC, c.first_name desc")
+                              .execute(jtm);
 
     assertTrue(orders.size() == 2);
     assertTrue("tony".equals(orders.get(0).getCustomer().getFirstName()));

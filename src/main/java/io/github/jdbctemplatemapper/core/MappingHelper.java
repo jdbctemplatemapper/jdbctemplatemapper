@@ -140,8 +140,10 @@ class MappingHelper {
       IdPropertyInfo idPropertyInfo = getIdPropertyInfo(clazz);
 
       // key:column name, value: ColumnInfo
-      Map<String, ColumnInfo> columnNameToColumnInfo = tableColumnInfo.getColumnInfos().stream()
-          .collect(Collectors.toMap(o -> o.getColumnName(), o -> o));
+      Map<String, ColumnInfo> columnNameToColumnInfo =
+          tableColumnInfo.getColumnInfos()
+                         .stream()
+                         .collect(Collectors.toMap(o -> o.getColumnName(), o -> o));
 
       // key:propertyName, value:PropertyMapping. LinkedHashMap to maintain order of
       // properties
@@ -275,17 +277,16 @@ class MappingHelper {
       ReentrantLock rlock = new ReentrantLock();
       rlock.lock();
       try {
-          this.databaseProductName = JdbcUtils.extractDatabaseMetaData(jdbcTemplate.getDataSource(),
-              new DatabaseMetaDataCallback<String>() {
-                public String processMetaData(DatabaseMetaData dbMetaData)
-                    throws SQLException, MetaDataAccessException {
-                  return dbMetaData.getDatabaseProductName();
-                }
-              });
+        this.databaseProductName = JdbcUtils.extractDatabaseMetaData(jdbcTemplate.getDataSource(),
+            new DatabaseMetaDataCallback<String>() {
+              public String processMetaData(DatabaseMetaData dbMetaData)
+                  throws SQLException, MetaDataAccessException {
+                return dbMetaData.getDatabaseProductName();
+              }
+            });
       } catch (Exception e) {
         throw new MapperException(e);
-      }
-      finally {
+      } finally {
         rlock.unlock();
       }
       return this.databaseProductName;

@@ -32,10 +32,10 @@ class QueryValidator {
 
   private QueryValidator() {}
 
-  static void validate(JdbcTemplateMapper jtm, Class<?> ownerType,
-      String relationshipType, Class<?> relatedType, String joinColumnOwningSide,
-      String joinColumnManySide, String propertyName, String throughJoinTable,
-      String throughOwnerTypeJoinColumn, String throughRelatedTypeJoinColumn) {
+  static void validate(JdbcTemplateMapper jtm, Class<?> ownerType, String relationshipType,
+      Class<?> relatedType, String joinColumnOwningSide, String joinColumnManySide,
+      String propertyName, String throughJoinTable, String throughOwnerTypeJoinColumn,
+      String throughRelatedTypeJoinColumn) {
 
     if (jtm == null) {
       throw new QueryException("JdbcTemplateMapper cannot be null");
@@ -92,10 +92,9 @@ class QueryValidator {
     }
   }
 
-  static void validateQueryLimitOffsetClause(String relationshipType,
-      String limitOffsetClause) {
+  static void validateQueryLimitOffsetClause(String relationshipType, String limitOffsetClause) {
     if (RelationshipType.HAS_MANY.equals(relationshipType)
-            || RelationshipType.HAS_MANY_THROUGH.equals(relationshipType)) {
+        || RelationshipType.HAS_MANY_THROUGH.equals(relationshipType)) {
       if (MapperUtils.isNotBlank(limitOffsetClause)) {
         throw new IllegalArgumentException(
             "limitOffsetClause is not supported for hasMany and hasMany through relationships. "

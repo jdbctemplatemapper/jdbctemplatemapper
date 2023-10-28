@@ -42,7 +42,7 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * JdbcTemplateMapper caches Table meta-data and SQL.
  * 
  * <b> Note: An instance of JdbcTemplateMapper is thread safe once instantiated.</b>
- *  
+ * 
  * <pre>
  * See <a href=
  * "https://github.com/jdbctemplatemapper/jdbctemplatemapper#jdbctemplatemapper">JdbcTemplateMapper documentation</a> 
@@ -83,17 +83,17 @@ public final class JdbcTemplateMapper {
   // Map key - see Query.getCacheKey()
   // value - the partial sql.
   private SimpleCache<String, String> querySqlCache = new SimpleCache<>(1000);
-  
+
   // QueryMerge sql cache
   // Map key - see QueryMerge.getCacheKey()
   // value - the partial sql.
   private SimpleCache<String, String> queryMergeSqlCache = new SimpleCache<>(1000);
-  
+
   // QueryCount sql cache
   // Map key - see QueryCount.getCacheKey()
   // value - the partial sql.
   private SimpleCache<String, String> queryCountSqlCache = new SimpleCache<>(1000);
-  
+
   // JdbcTemplate uses this as its converter so use the same
   private DefaultConversionService conversionService =
       (DefaultConversionService) DefaultConversionService.getSharedInstance();
@@ -491,14 +491,17 @@ public final class JdbcTemplateMapper {
       if (tableMapping.isIdAutoIncrement()) {
         jdbcInsert =
             new SimpleJdbcInsert(jdbcTemplate).withCatalogName(tableMapping.getCatalogName())
-                .withSchemaName(tableMapping.getSchemaName())
-                .withTableName(tableNameForSimpleJdbcInsert(tableMapping))
-                .usingGeneratedKeyColumns(tableMapping.getIdColumnName());
+                                              .withSchemaName(tableMapping.getSchemaName())
+                                              .withTableName(
+                                                  tableNameForSimpleJdbcInsert(tableMapping))
+                                              .usingGeneratedKeyColumns(
+                                                  tableMapping.getIdColumnName());
       } else {
         jdbcInsert =
             new SimpleJdbcInsert(jdbcTemplate).withCatalogName(tableMapping.getCatalogName())
-                .withSchemaName(tableMapping.getSchemaName())
-                .withTableName(tableNameForSimpleJdbcInsert(tableMapping));
+                                              .withSchemaName(tableMapping.getSchemaName())
+                                              .withTableName(
+                                                  tableNameForSimpleJdbcInsert(tableMapping));
       }
       // for oracle synonym table metadata
       if (includeSynonyms) {
@@ -630,8 +633,8 @@ public final class JdbcTemplateMapper {
     MapSqlParameterSource mapSqlParameterSource = new MapSqlParameterSource();
     for (String paramName : parameters) {
       if (paramName.equals("incrementedVersion")) {
-        Integer versionVal = (Integer) bw
-            .getPropertyValue(tableMapping.getVersionPropertyMapping().getPropertyName());
+        Integer versionVal = (Integer) bw.getPropertyValue(
+            tableMapping.getVersionPropertyMapping().getPropertyName());
         if (versionVal == null) {
           throw new MapperException(obj.getClass().getSimpleName() + "."
               + tableMapping.getVersionPropertyMapping().getPropertyName()
@@ -758,7 +761,7 @@ public final class JdbcTemplateMapper {
   public String getColumnsSql(Class<?> clazz) {
     return getBeanColumnsSqlInternal(mappingHelper.getTableMapping(clazz), clazz);
   }
-  
+
   /**
    * returns a string which can be used in a sql select statement. The column alias will be the
    * underscore case name of property name, so it works well with JdbcTemplate's
@@ -843,8 +846,10 @@ public final class JdbcTemplateMapper {
         " WHERE " + tableMapping.getIdColumnName() + " = :" + tableMapping.getIdPropertyName());
     params.add(tableMapping.getIdPropertyName());
     if (versionPropMapping != null) {
-      sqlBuilder.append(" AND ").append(versionPropMapping.getColumnName()).append(" = :")
-          .append(versionPropMapping.getPropertyName());
+      sqlBuilder.append(" AND ")
+                .append(versionPropMapping.getColumnName())
+                .append(" = :")
+                .append(versionPropMapping.getPropertyName());
       params.add(versionPropMapping.getPropertyName());
     }
 
@@ -929,8 +934,10 @@ public final class JdbcTemplateMapper {
         " WHERE " + tableMapping.getIdColumnName() + " = :" + tableMapping.getIdPropertyName());
     params.add(tableMapping.getIdPropertyName());
     if (versionPropMapping != null) {
-      sqlBuilder.append(" AND ").append(versionPropMapping.getColumnName()).append(" = :")
-          .append(versionPropMapping.getPropertyName());
+      sqlBuilder.append(" AND ")
+                .append(versionPropMapping.getColumnName())
+                .append(" = :")
+                .append(versionPropMapping.getPropertyName());
       params.add(versionPropMapping.getPropertyName());
     }
 
@@ -987,17 +994,17 @@ public final class JdbcTemplateMapper {
   SimpleCache<String, String> getBeanColumnsSqlCache() {
     return beanColumnsSqlCache;
   }
-  
+
   SimpleCache<String, String> getQuerySqlCache() {
     return querySqlCache;
   }
-  
+
   SimpleCache<String, String> getQueryMergeSqlCache() {
     return queryMergeSqlCache;
   }
-  
+
   SimpleCache<String, String> getQueryCountSqlCache() {
-    return queryCountSqlCache; 
+    return queryCountSqlCache;
   }
-  
+
 }

@@ -201,8 +201,8 @@ public class SelectMapper<T> {
             } else {
               // column alias would be something like tableAliasArgument_oc1,
               // tableAliasArgument_oc2 ...
-              propMapping = tableMapping
-                  .getPropertyMappingByColumnAlias(columnLabel.substring(colAliasPrefix.length()));
+              propMapping = tableMapping.getPropertyMappingByColumnAlias(
+                  columnLabel.substring(colAliasPrefix.length()));
             }
             if (propMapping != null) {
               bw.setPropertyValue(propMapping.getPropertyName(),

@@ -491,28 +491,28 @@ public class CachingTest {
     jtm.delete(product);
 
   }
-  
+
   @Test
   public void jtm_updatePropertiesCache_test() {
     SimpleCache<String, SqlAndParams> cache = jtm.getUpdatePropertiesCache();
     cache.clear();
-    
+
     Customer customer = new Customer();
     customer.setLastName("xyz");
     customer.setFirstName("abc");
     jtm.insert(customer);
-    
+
     jtm.updateProperties(customer, "lastName");
     assertEquals(1, cache.getSize());
-    
+
     jtm.updateProperties(customer, "lastName");
     assertEquals(1, cache.getSize());
-    
+
     jtm.updateProperties(customer, "firstName");
     assertEquals(2, cache.getSize());
-    
+
     jtm.delete(customer);
-    
+
   }
 
 }

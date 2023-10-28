@@ -391,8 +391,10 @@ public class Query<T> implements IQueryFluent<T> {
             }
           }
         }
-        return idToBeanWrapperOwnerModelMap.values().stream().map(bw -> (T) bw.getWrappedInstance())
-            .collect(Collectors.toList());
+        return idToBeanWrapperOwnerModelMap.values()
+                                           .stream()
+                                           .map(bw -> (T) bw.getWrappedInstance())
+                                           .collect(Collectors.toList());
       }
     };
 

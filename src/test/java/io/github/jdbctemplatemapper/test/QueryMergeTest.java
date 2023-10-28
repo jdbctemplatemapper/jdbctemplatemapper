@@ -384,7 +384,7 @@ public class QueryMergeTest {
                               .where("orders.status = ?", "IN PROCESS")
                               .orderBy("orders.order_id")
                               .execute(jtm);
-    
+
     QueryMerge.type(Order.class)
               .hasMany(OrderLine.class)
               .joinColumnManySide("ORDER_ID")
@@ -427,6 +427,6 @@ public class QueryMergeTest {
               .orderBy("order_line_id")
               .execute(jtm, orders);
 
-    
+
   }
 }
