@@ -82,7 +82,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     Assert.notNull(type, "type cannot be null");
     return new QueryMerge<T>(type);
   }
-  
+
   /**
    * The type on which the query results are merged to.
    *
@@ -103,7 +103,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     this.relatedType = relatedType;
     return this;
   }
-  
+
   /**
    * hasOne relationship.
    *
@@ -241,9 +241,9 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
 
   /**
    * The orderBy clause for QueryMerge. For QueryMerge orderBy is only supported for hasMany and
-   * hasMany through. orderBy columns have to be on the table of the hasMany/hasMany through side. 
-   * For hasOne orderBy does not makes sense because the order will be dictated by the
-   * mergeList argument in the execute method. 
+   * hasMany through. orderBy columns have to be on the table of the hasMany/hasMany through side.
+   * For hasOne orderBy does not makes sense because the order will be dictated by the mergeList
+   * argument in the execute method.
    *
    * @param orderBy the orderBy clause.
    * @return interface with the next methods in the chain
@@ -449,8 +449,8 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         while (rs.next()) {
           BeanWrapper bwRelatedModel = selectMapper.buildBeanWrapperModel(rs);
           if (bwRelatedModel != null) {
-            Object joinPropertyValue = bwRelatedModel.getPropertyValue(joinPropertyName);
-            BeanWrapper bwOwnerModel = idToBeanWrapperOwnerModelMap.get(joinPropertyValue);
+            BeanWrapper bwOwnerModel =
+                idToBeanWrapperOwnerModelMap.get(bwRelatedModel.getPropertyValue(joinPropertyName));
             if (bwOwnerModel != null) {
               // already validated so we know collection is initialized
               Collection collection = (Collection) bwOwnerModel.getPropertyValue(propertyName);
@@ -604,5 +604,5 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         propertyName);
     // @formatter:on
   }
-  
+
 }
