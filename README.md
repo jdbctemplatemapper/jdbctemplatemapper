@@ -119,10 +119,6 @@ spring.datasource.driver-class-name=org.postgresql.Driver
     return new JdbcTemplateMapper(jdbcTemplate, THE_SCHEMA_NAME);
   }
   
- // To access a table in another schema (The connection should have the appropriate privileges)
- @Table(name="product", schema="someotherschema")
-  class Product {...}
-  
 ```
  
 **MySQL**
@@ -139,10 +135,7 @@ spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
   public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
     return new JdbcTemplateMapper(jdbcTemplate, null, THE_DATABASE_NAME); // catalog name is synonymous to database name for mysql
   }
-  
-  // To access a table in another database (The connection should have the appropriate privileges)
- @Table(name="product", catalog="someotherdatabase")
-  class Product {...}
+
 ```
 
 **Oracle**
@@ -167,9 +160,6 @@ spring.datasource.driver-class-name=oracle.jdbc.driver.OracleDriver
     */
   }
   
- // To access a table in another schema (The connection should have the appropriate privileges)
- @Table(name="product", schema="someotherschema")
-  class Product {...}
 
 ```
 
@@ -187,10 +177,6 @@ spring.datasource.driver-class-name=com.microsoft.sqlserver.jdbc.SQLServerDriver
   public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
     return new JdbcTemplateMapper(jdbcTemplate, THE_SCHEMA_NAME);
   }
-  
- // To access a table in another schema (The connection should have the appropriate privileges)
- @Table(name="product", schema="someotherschema")
-  class Product {...}
   
 ```
 
