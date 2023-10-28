@@ -184,7 +184,7 @@ class MappingHelper {
         if (forcePostgresTimestampWithTimezone) {
           PropertyMapping propMapping = propNameToPropertyMapping.get(propertyName);
           if (propMapping != null) {
-            if (OffsetDateTime.class == propMapping.getPropertyType()
+            if (OffsetDateTime.class.getName().equals(propMapping.getPropertyType().getName())
                 && propMapping.getColumnSqlDataType() == Types.TIMESTAMP) {
               propMapping.setColumnSqlDataType(Types.TIMESTAMP_WITH_TIMEZONE);
             }
@@ -272,7 +272,7 @@ class MappingHelper {
     if (this.databaseProductName != null) {
       return this.databaseProductName;
     } else {
-      // the synchronized block will be only run once for a JdbcTemplateMapper
+      // this synchronized block only runs once for a JdbcTemplateMapper
       synchronized (this) {
         if (this.databaseProductName == null) {
           try {
