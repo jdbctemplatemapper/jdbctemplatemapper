@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
@@ -273,23 +272,23 @@ class MappingHelper {
     if (this.databaseProductName != null) {
       return this.databaseProductName;
     } else {
-      // java21 friendly
-      ReentrantLock rlock = new ReentrantLock();
-      rlock.lock();
-      try {
-        this.databaseProductName = JdbcUtils.extractDatabaseMetaData(jdbcTemplate.getDataSource(),
-            new DatabaseMetaDataCallback<String>() {
-              public String processMetaData(DatabaseMetaData dbMetaData)
-                  throws SQLException, MetaDataAccessException {
-                return dbMetaData.getDatabaseProductName();
-              }
-            });
-      } catch (Exception e) {
-        throw new MapperException(e);
-      } finally {
-        rlock.unlock();
+      // the synchronized block will be only run once for a JdbcTemplateMapper
+      synchronized (this) {
+        if (this.databaseProductName == null) {
+          try {
+            this.databaseProductName = JdbcUtils.extractDatabaseMetaData(
+                jdbcTemplate.getDataSource(), new DatabaseMetaDataCallback<String>() {
+                  public String processMetaData(DatabaseMetaData dbMetaData)
+                      throws SQLException, MetaDataAccessException {
+                    return dbMetaData.getDatabaseProductName();
+                  }
+                });
+          } catch (Exception e) {
+            throw new MapperException(e);
+          }
+        }
+        return this.databaseProductName;
       }
-      return this.databaseProductName;
     }
   }
 
