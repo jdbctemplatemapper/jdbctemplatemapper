@@ -488,20 +488,14 @@ public final class JdbcTemplateMapper {
     boolean foundInCache = false;
     SimpleJdbcInsertOperations jdbcInsert = insertCache.get(obj.getClass().getName());
     if (jdbcInsert == null) {
+      jdbcInsert =
+          new SimpleJdbcInsert(jdbcTemplate).withCatalogName(tableMapping.getCatalogName())
+                                            .withSchemaName(tableMapping.getSchemaName())
+                                            .withTableName(
+                                                tableNameForSimpleJdbcInsert(tableMapping));
+
       if (tableMapping.isIdAutoIncrement()) {
-        jdbcInsert =
-            new SimpleJdbcInsert(jdbcTemplate).withCatalogName(tableMapping.getCatalogName())
-                                              .withSchemaName(tableMapping.getSchemaName())
-                                              .withTableName(
-                                                  tableNameForSimpleJdbcInsert(tableMapping))
-                                              .usingGeneratedKeyColumns(
-                                                  tableMapping.getIdColumnName());
-      } else {
-        jdbcInsert =
-            new SimpleJdbcInsert(jdbcTemplate).withCatalogName(tableMapping.getCatalogName())
-                                              .withSchemaName(tableMapping.getSchemaName())
-                                              .withTableName(
-                                                  tableNameForSimpleJdbcInsert(tableMapping));
+        jdbcInsert.usingGeneratedKeyColumns(tableMapping.getIdColumnName());
       }
       // for oracle synonym table metadata
       if (includeSynonyms) {
