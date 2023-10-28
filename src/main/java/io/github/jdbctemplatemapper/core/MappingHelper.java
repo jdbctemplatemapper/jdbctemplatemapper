@@ -242,7 +242,7 @@ class MappingHelper {
     validateMetaDataConfig(catalog, schema);
 
     String tableName = tableAnnotation.name();
-    List<ColumnInfo> columnInfoList = getColumnInfoFromDatabaseMetadata(tableName, schema, catalog);
+    List<ColumnInfo> columnInfoList = getColumnInfoFromTableMetadata(tableName, schema, catalog);
     if (MapperUtils.isEmpty(columnInfoList)) {
       throw new AnnotationException(
           getTableMetaDataNotFoundErrMsg(clazz, tableName, schema, catalog));
@@ -251,7 +251,7 @@ class MappingHelper {
     return new TableColumnInfo(tableName, schema, catalog, columnInfoList);
   }
 
-  private List<ColumnInfo> getColumnInfoFromDatabaseMetadata(String tableName, String schema,
+  private List<ColumnInfo> getColumnInfoFromTableMetadata(String tableName, String schema,
       String catalog) {
     Assert.hasLength(tableName, "tableName must not be empty");
 
