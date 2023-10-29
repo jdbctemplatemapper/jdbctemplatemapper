@@ -85,14 +85,17 @@ class TableMapping {
         if (propMapping.isUpdatedByAnnotation()) {
           updatedByPropertyName = propMapping.getPropertyName();
         }
-        // these maps used for performance
-        String colAliasSuffix = "c" + cnt;
+        // these maps used for performance. Using intern() since aliases are similar for other table
+        // mappings.
+        String colAliasSuffix = ("c" + cnt).intern();
         propMapping.setColumnAliasSuffix(colAliasSuffix);
         // creating alias lookups for queries generated through Query and QueryMerge
         // aliases oc1, oc2, oc3 ...
-        columnAliasMap.put(MapperUtils.OWNER_COL_ALIAS_PREFIX + colAliasSuffix, propMapping);
+        columnAliasMap.put((MapperUtils.OWNER_COL_ALIAS_PREFIX + colAliasSuffix).intern(),
+            propMapping);
         // aliases rc1, rc2, rc3
-        columnAliasMap.put(MapperUtils.RELATED_COL_ALIAS_PREFIX + colAliasSuffix, propMapping);
+        columnAliasMap.put((MapperUtils.RELATED_COL_ALIAS_PREFIX + colAliasSuffix).intern(),
+            propMapping);
 
         columnNameMap.put(propMapping.getColumnName(), propMapping);
         propertyNameMap.put(propMapping.getPropertyName(), propMapping);

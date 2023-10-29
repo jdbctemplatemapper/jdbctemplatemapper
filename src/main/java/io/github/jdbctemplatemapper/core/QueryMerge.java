@@ -282,7 +282,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     if (RelationshipType.HAS_ONE.equals(relationshipType)) {
       if (MapperUtils.isNotBlank(orderBy)) {
         throw new IllegalArgumentException(
-            "For QueryMerge hasOne relationships, orderBy is not supported."
+            "For QueryMerge hasOne relationships orderBy is not supported."
                 + " The order is already dictated by the mergeList order");
       }
       processHasOne(jdbcTemplateMapper, mergeList, ownerType, relatedType, cacheKey);
