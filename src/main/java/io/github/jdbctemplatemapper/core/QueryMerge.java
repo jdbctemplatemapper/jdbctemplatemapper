@@ -54,7 +54,7 @@ import io.github.jdbctemplatemapper.querymerge.IQueryMergeType;
  */
 public class QueryMerge<T> implements IQueryMergeFluent<T> {
 
-  private int inClauseChunkSize = 100;
+  private static final int IN_CLAUSE_CHUNK_SIZE = 100;
   private Class<T> ownerType;
   private String relationshipType;
   private Class<?> relatedType;
@@ -364,7 +364,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     // some databases have limits on number of entries in a 'IN' clause
     // Chunk the list and make multiple calls as needed.
     List<List<?>> chunkedJoinPropertyOwningSideValues =
-        MapperUtils.chunkTheList(new ArrayList(params), inClauseChunkSize);
+        MapperUtils.chunkTheList(new ArrayList(params), IN_CLAUSE_CHUNK_SIZE);
     for (List<?> joinPropertyOwningSideValues : chunkedJoinPropertyOwningSideValues) {
       MapSqlParameterSource queryParams =
           new MapSqlParameterSource("joinPropertyOwningSideValues", joinPropertyOwningSideValues);
@@ -465,7 +465,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     // some databases have limits on number of entries in a 'IN' clause
     // Chunk the list and make multiple calls as needed.
     List<List<?>> chunkedOwnerTypeIds =
-        MapperUtils.chunkTheList(new ArrayList(params), inClauseChunkSize);
+        MapperUtils.chunkTheList(new ArrayList(params), IN_CLAUSE_CHUNK_SIZE);
     for (List ownerTypeIds : chunkedOwnerTypeIds) {
       MapSqlParameterSource queryParams = new MapSqlParameterSource("ownerTypeIds", ownerTypeIds);
       jtm.getNamedParameterJdbcTemplate().query(sql, queryParams, rsExtractor);
@@ -577,7 +577,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     // some databases have limits on number of entries in a 'IN' clause
     // Chunk the list and make multiple calls as needed.
     Collection<List<?>> chunkedOwnerTypeIds =
-        MapperUtils.chunkTheList(new ArrayList(params), inClauseChunkSize);
+        MapperUtils.chunkTheList(new ArrayList(params), IN_CLAUSE_CHUNK_SIZE);
     for (List ownerTypeIds : chunkedOwnerTypeIds) {
       MapSqlParameterSource queryParams = new MapSqlParameterSource("ownerTypeIds", ownerTypeIds);
       jtm.getNamedParameterJdbcTemplate().query(sql, queryParams, rsExtractor);
