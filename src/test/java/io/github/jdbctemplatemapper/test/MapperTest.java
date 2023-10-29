@@ -33,6 +33,7 @@ import io.github.jdbctemplatemapper.model.OrderLine;
 import io.github.jdbctemplatemapper.model.Person;
 import io.github.jdbctemplatemapper.model.Person2;
 import io.github.jdbctemplatemapper.model.Product;
+import io.github.jdbctemplatemapper.model.Product8;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
@@ -380,6 +381,27 @@ public class MapperTest {
 
     jtm.delete(order);
 
+  }
+
+  @Test
+  public void updateProperties_propertiesCountLargerThanCacheableSize_success() throws Exception {
+    Product8 product = new Product8();
+    product.setProductId(801);
+    product.setName("p-801");
+    product.setCost(4.75);
+    jtm.insert(product);
+
+    // number of properties larger than ACHEABLE_UPDATE_PROPERTIES_COUNT = 3. Just want to make sure
+    // it works.
+    product.setVersion(1);
+    product.setCreatedOn(LocalDateTime.now());
+    jtm.updateProperties(product, "cost", "name", "version", "createdOn");
+
+    Product8 product8 = jtm.findById(Product8.class, product.getProductId());
+    assertEquals(1, product8.getVersion());
+    assertNotNull(product8.getCreatedOn());
+
+    jtm.delete(product);
   }
 
   @Test

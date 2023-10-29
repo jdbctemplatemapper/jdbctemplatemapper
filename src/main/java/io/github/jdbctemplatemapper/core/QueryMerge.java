@@ -53,7 +53,6 @@ import io.github.jdbctemplatemapper.querymerge.IQueryMergeType;
  * @author ajoseph
  */
 public class QueryMerge<T> implements IQueryMergeFluent<T> {
-
   private static final int IN_CLAUSE_CHUNK_SIZE = 100;
   private Class<T> ownerType;
   private String relationshipType;

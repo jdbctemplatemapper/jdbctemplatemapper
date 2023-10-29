@@ -52,7 +52,7 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * @author ajoseph
  */
 public final class JdbcTemplateMapper {
-
+  private static final int CACHEABLE_UPDATE_PROPERTIES_COUNT = 3;
   private final JdbcTemplate jdbcTemplate;
   private final NamedParameterJdbcTemplate npJdbcTemplate;
 
@@ -581,8 +581,12 @@ public final class JdbcTemplateMapper {
     TableMapping tableMapping = mappingHelper.getTableMapping(obj.getClass());
 
     boolean foundInCache = false;
+    SqlAndParams sqlAndParams = null;
     String cacheKey = getUpdatePropertiesCacheKey(obj, propertyNames);
-    SqlAndParams sqlAndParams = updatePropertiesCache.get(cacheKey);
+    if (cacheKey != null) {
+      sqlAndParams = updatePropertiesCache.get(cacheKey);
+    }
+
     if (sqlAndParams == null) {
       sqlAndParams = buildSqlAndParamsForUpdateProperties(tableMapping, propertyNames);
     } else {
@@ -591,8 +595,7 @@ public final class JdbcTemplateMapper {
 
     Integer cnt = updateInternal(obj, sqlAndParams, tableMapping);
 
-    // don't cache if number of properties is > 5
-    if (!foundInCache && cnt > 0 && propertyNames.length <= 5) {
+    if (cacheKey != null && !foundInCache && cnt > 0) {
       updatePropertiesCache.put(cacheKey, sqlAndParams);
     }
 
@@ -969,8 +972,13 @@ public final class JdbcTemplateMapper {
     }
   }
 
+  // will return null updateProperties property count is more than CACHEABLE_UPDATE_PROPERTY_COUNT
   private String getUpdatePropertiesCacheKey(Object obj, String[] propertyNames) {
-    return obj.getClass().getName() + "-" + String.join("-", propertyNames);
+    if (propertyNames.length > CACHEABLE_UPDATE_PROPERTIES_COUNT) {
+      return null;
+    } else {
+      return obj.getClass().getName() + "-" + String.join("-", propertyNames);
+    }
   }
 
   SimpleCache<String, SimpleJdbcInsert> getInsertCache() {

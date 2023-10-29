@@ -14,6 +14,7 @@ import io.github.jdbctemplatemapper.model.Customer;
 import io.github.jdbctemplatemapper.model.Order;
 import io.github.jdbctemplatemapper.model.OrderLine;
 import io.github.jdbctemplatemapper.model.Product;
+import io.github.jdbctemplatemapper.model.Product8;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
@@ -497,21 +498,37 @@ public class CachingTest {
     SimpleCache<String, SqlAndParams> cache = jtm.getUpdatePropertiesCache();
     cache.clear();
 
-    Customer customer = new Customer();
-    customer.setLastName("xyz");
-    customer.setFirstName("abc");
-    jtm.insert(customer);
+    Product8 product = new Product8();
+    product.setProductId(811);
+    product.setName("p-811");
+    product.setCost(4.75);
+    jtm.insert(product);
 
-    jtm.updateProperties(customer, "lastName");
+    jtm.updateProperties(product, "cost");
     assertEquals(1, cache.getSize());
 
-    jtm.updateProperties(customer, "lastName");
+    jtm.updateProperties(product, "cost");
     assertEquals(1, cache.getSize());
 
-    jtm.updateProperties(customer, "firstName");
+    jtm.updateProperties(product, "name");
     assertEquals(2, cache.getSize());
 
-    jtm.delete(customer);
+    jtm.updateProperties(product, "cost", "name");
+    assertEquals(3, cache.getSize());
+
+    jtm.updateProperties(product, "cost", "name");
+    assertEquals(3, cache.getSize());
+
+    product.setVersion(1);
+    jtm.updateProperties(product, "cost", "name", "version");
+    assertEquals(4, cache.getSize());
+
+    // larger than ACHEABLE_UPDATE_PROPERTIES_COUNT = 3, so no caching
+    product.setCreatedOn(LocalDateTime.now());
+    jtm.updateProperties(product, "cost", "name", "version", "createdOn");
+    assertEquals(4, cache.getSize()); // no caching so count remains the same
+
+    jtm.delete(product);
 
   }
 
