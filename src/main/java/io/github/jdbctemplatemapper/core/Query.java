@@ -310,10 +310,10 @@ public class Query<T> implements IQueryFluent<T> {
   }
 
   /**
-   * Execute the query using the jdbcTemplateMapper.
+   * Execute the query using the jdbcTemplateMapper. 
    *
    * @param jdbcTemplateMapper the jdbcTemplateMapper
-   * @return List a list of the owning type with its relationship property populated
+   * @return List a list of the owning type. If no records found returns empty list.
    */
   public List<T> execute(JdbcTemplateMapper jdbcTemplateMapper) {
     Assert.notNull(jdbcTemplateMapper, "jdbcTemplateMapper cannot be null");
