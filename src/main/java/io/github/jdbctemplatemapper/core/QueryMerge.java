@@ -41,7 +41,8 @@ import io.github.jdbctemplatemapper.querymerge.IQueryMergeType;
 
 
 /**
- * QueryMerge allows query results to be merged with results of another query.
+ * QueryMerge allows query results to be merged with results of another query. Generally used when
+ * multiple relationships need to be populated.
  *
  * <pre>
  *
