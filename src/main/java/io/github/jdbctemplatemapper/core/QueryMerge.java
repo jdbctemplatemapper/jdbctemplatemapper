@@ -261,8 +261,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
    * through) objects and merges those with the objects in the mergeList.
    *
    * <pre>
-   * Some databases have limits on size of 'IN' clause.
-   * If the the mergeList is larger than 100, multiple 'IN' queries will be issued with each query
+   * If the the mergeList size is larger than 100, multiple 'IN' queries will be issued with each query
    * having up to 100 IN clause parameters to get the records.
    * </pre>
    *
@@ -282,8 +281,8 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     if (RelationshipType.HAS_ONE.equals(relationshipType)) {
       if (MapperUtils.isNotBlank(orderBy)) {
         throw new IllegalArgumentException(
-            "For QueryMerge hasOne relationships orderBy is not supported."
-                + " The order is already dictated by the mergeList argument");
+            "For QueryMerge hasOne relationships, orderBy is not supported."
+                + " The order is already dictated by the mergeList order");
       }
       processHasOne(jdbcTemplateMapper, mergeList, ownerType, relatedType, cacheKey);
     } else if (RelationshipType.HAS_MANY.equals(relationshipType)) {
