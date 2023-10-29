@@ -272,7 +272,7 @@ class MappingHelper {
     if (this.databaseProductName != null) {
       return this.databaseProductName;
     } else {
-      // this synchronized block only runs once for a JdbcTemplateMapper
+      // this synchronized block only runs once
       synchronized (this) {
         if (this.databaseProductName == null) {
           try {
