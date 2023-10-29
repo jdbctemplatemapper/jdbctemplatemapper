@@ -30,7 +30,7 @@ class PropertyMapping {
   private boolean versionAnnotation = false;
   private boolean createdByAnnotation = false;
   private boolean updatedByAnnotation = false;
-  private String columnAliasSuffix = "";
+  private String columnAliasSuffix;
 
   public PropertyMapping(String propertyName, Class<?> propertyType, String columnName,
       int columnSqlDataType) {
