@@ -310,7 +310,7 @@ public class Query<T> implements IQueryFluent<T> {
   }
 
   /**
-   * Execute the query using the jdbcTemplateMapper. 
+   * Execute the query using the jdbcTemplateMapper.
    *
    * @param jdbcTemplateMapper the jdbcTemplateMapper
    * @return List a list of the owning type. If no records found returns empty list.
