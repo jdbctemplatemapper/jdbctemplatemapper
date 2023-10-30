@@ -94,7 +94,7 @@ public final class JdbcTemplateMapper {
   // value - the partial sql.
   private SimpleCache<String, String> queryCountSqlCache = new SimpleCache<>(1000);
 
-  // JdbcTemplate uses this as its converter so use the same
+  // Spring BeanPropertyRowMapper uses this as its converter so use the same
   private DefaultConversionService conversionService =
       (DefaultConversionService) DefaultConversionService.getSharedInstance();
 

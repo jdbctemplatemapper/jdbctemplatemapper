@@ -40,6 +40,8 @@ import org.springframework.util.StringUtils;
 public class SelectMapper<T> {
   private final MappingHelper mappingHelper;
   private final Class<T> clazz;
+
+  // This is same converter used by Spring BeanPropertyRowMapper
   private final ConversionService conversionService;
   private final boolean useColumnLabelForResultSetMetaData;
   private String tableAlias;
@@ -136,9 +138,13 @@ public class SelectMapper<T> {
    */
   public String getResultSetModelIdColumnLabel() {
     if (internal) {
+      // This is an internal call from Query, QueryMerge
+      // returned values something like oc1 ... or rc1 ...
       return colAliasPrefix
           + mappingHelper.getTableMapping(clazz).getIdPropertyMapping().getColumnAliasSuffix();
     } else {
+      // This is when user is using the the jtm.getSelectMapper(type, tableAlias) to write custom
+      // queries. returned values something like tableAlias_oc1 ...
       return colAliasPrefix + MapperUtils.OWNER_COL_ALIAS_PREFIX
           + mappingHelper.getTableMapping(clazz).getIdPropertyMapping().getColumnAliasSuffix();
     }
@@ -196,15 +202,20 @@ public class SelectMapper<T> {
           if (columnLabel.startsWith(colAliasPrefix)) {
             PropertyMapping propMapping = null;
             if (internal) {
-              // column alias would be something like oc1, rc1
+              // This is an internal call from Query, QueryMerge
+              // column alias would be something like oc1 ... or rc1 ...
               propMapping = tableMapping.getPropertyMappingByColumnAlias(columnLabel);
             } else {
-              // column alias would be something like tableAliasArgument_oc1,
-              // tableAliasArgument_oc2 ...
+              // This is when user is using the the jtm.getSelectMapper(type, tableAlias) to write
+              // custom queries. Column alias would be something like tableAlias_oc1,
+              // tableAlias_oc2 ...
               propMapping = tableMapping.getPropertyMappingByColumnAlias(
                   columnLabel.substring(colAliasPrefix.length()));
             }
             if (propMapping != null) {
+              // JdbcUtils assigns value from a ResultSet using the specified propertyType.
+              // The values which are not assignable by JdbcUtils is converted using
+              // ConversionService configured on BeanWrapper.
               bw.setPropertyValue(propMapping.getPropertyName(),
                   JdbcUtils.getResultSetValue(rs, i, propMapping.getPropertyType()));
             }
