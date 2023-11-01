@@ -13,6 +13,7 @@
  */
 package io.github.jdbctemplatemapper.core;
 
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -27,6 +28,10 @@ import org.springframework.jdbc.support.JdbcUtils;
 class MapperUtils {
   public static final String OWNER_COL_ALIAS_PREFIX = "o";
   public static final String RELATED_COL_ALIAS_PREFIX = "r";
+
+  public static boolean isNumericSqlType(int sqlType) {
+    return JdbcUtils.isNumeric(sqlType);
+  }
 
   public static String getTableNameOnly(String str) {
     if (str != null && str.contains(".")) {

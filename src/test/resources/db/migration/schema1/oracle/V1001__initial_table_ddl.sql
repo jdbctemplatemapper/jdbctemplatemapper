@@ -64,6 +64,8 @@ CREATE TABLE SCHEMA1.type_check (
    local_date_time_data timestamp,
    java_util_date_ts_data timestamp,
    big_decimal_data number(10,2),
+   int_enum NUMBER,
+   string_enum varchar(100),
    non_model_column varchar(100),
    offset_date_time_data timestamp with time zone
 );

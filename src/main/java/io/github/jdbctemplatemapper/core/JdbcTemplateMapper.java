@@ -52,7 +52,9 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * @author ajoseph
  */
 public final class JdbcTemplateMapper {
+  
   private static final int CACHEABLE_UPDATE_PROPERTIES_COUNT = 3;
+  
   private final JdbcTemplate jdbcTemplate;
   private final NamedParameterJdbcTemplate npJdbcTemplate;
 
@@ -191,9 +193,12 @@ public final class JdbcTemplateMapper {
   /**
    * Attempted Support for old/non standard jdbc drivers. For old drivers set this value to false
    * and see whether it makes a difference.
+   * 
+   * @deprecated as of v2.5.1 JDBC drivers used should support JDBC 4.x
    *
    * @param val boolean value
    */
+  @Deprecated
   public void useColumnLabelForResultSetMetaData(boolean val) {
     this.useColumnLabelForResultSetMetaData = val;
   }
@@ -203,7 +208,9 @@ public final class JdbcTemplateMapper {
    * fields. If this value is set to true it will force system to use
    * java.sql.Types.TIMESTAMP_WITH_TIMEZONE for properties of models which are of type
    * OffsetDateTime.
-   *
+   * 
+   * @deprecated as of 2.5.1 Will be removed in next release
+   * 
    * @param val boolean value
    */
   public void forcePostgresTimestampWithTimezone(boolean val) {
@@ -466,6 +473,7 @@ public final class JdbcTemplateMapper {
 
     PropertyMapping versionPropMapping = tableMapping.getVersionPropertyMapping();
     if (versionPropMapping != null) {
+      // version property value defaults to 1 on inserts
       bw.setPropertyValue(versionPropMapping.getPropertyName(), 1);
     }
 
@@ -972,7 +980,8 @@ public final class JdbcTemplateMapper {
     }
   }
 
-  // will return null updateProperties property count is more than CACHEABLE_UPDATE_PROPERTY_COUNT
+  // will return null when updateProperties property count is more than
+  // CACHEABLE_UPDATE_PROPERTY_COUNT
   private String getUpdatePropertiesCacheKey(Object obj, String[] propertyNames) {
     if (propertyNames.length > CACHEABLE_UPDATE_PROPERTIES_COUNT) {
       return null;
