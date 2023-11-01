@@ -18,7 +18,7 @@
   6. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with other relational databases.
   7. Distribution is compiled with java8. Works with java8, java11, java17 
 
-## Example CRUD
+## Example code
   ```java 
  //@Table annotation is required
  @Table(name="product")
@@ -81,10 +81,10 @@
  
 ## Spring bean configuration for JdbcTemplateMapper
 
-JdbcTemplateMapper should be prepared in a Spring application context and given to services as a bean reference. JdbcTemplateMapper caches Table meta-data and SQL.
+JdbcTemplateMapper should be prepared in a Spring application context and given to services as a bean reference. It caches table meta-data and SQL.
 
- **Note: An instance of JdbcTemplateMapper is thread safe**
- 
+**Note: An instance of JdbcTemplateMapper is thread safe**
+
 See an example of JdbcTemplateMapper configuration used in an application [here](https://github.com/jdbctemplatemapper/using-spring-jdbctemplate-with-jdbctemplatemapper/blob/master/src/test/java/io/github/ajoseph88/jdbctemplatemapper/config/JdbcTemplateMapperConfig.java).
 
  ```java
@@ -159,7 +159,6 @@ spring.datasource.driver-class-name=oracle.jdbc.driver.OracleDriver
     return jdbcTemplateMapper;
     */
   }
-  
 
 ```
 
@@ -201,7 +200,6 @@ class Product {
 class Product {
   ...
 }
-
 
 ```
 
@@ -323,7 +321,7 @@ public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
 The library provides multiple ways to query relationships.
 Fluent style queries allow querying of hasOne, hasMany and hasMany through (many to many using an associated table) relationships.
 The IDE will provide suggestions to help chain the methods. Turn logging on (see logging section) to see the generated queries.  
-The QueryMerge class allows the results of a previous query to be merged with results of a new query.
+The QueryMerge class allows the results of a previous query to be merged with results of a new query. This comes in handy where multiple relationships need to be queried.
 
 ### Fluent style queries
 
