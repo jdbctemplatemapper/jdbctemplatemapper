@@ -20,7 +20,7 @@ package io.github.jdbctemplatemapper.querymerge;
  * @param <T> the type
  */
 public interface IQueryMergeFluent<T> extends IQueryMergeType<T>, IQueryMergeHasMany<T>,
-    IQueryMergeBelongsTo<T>, IQueryMergeJoinColumnOwningSide<T>, IQueryMergeJoinColumnManySide<T>,
+    IQueryMergeToOne<T>, IQueryMergeJoinColumnOwningSide<T>, IQueryMergeJoinColumnManySide<T>,
     IQueryMergeThroughJoinTable<T>, IQueryMergeThroughJoinColumns<T>,
     IQueryMergePopulateProperty<T>, IQueryMergeOrderBy<T>, IQueryMergeExecute<T> {
 }

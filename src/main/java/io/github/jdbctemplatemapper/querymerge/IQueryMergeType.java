@@ -24,7 +24,7 @@ public interface IQueryMergeType<T> {
 
   IQueryMergeHasMany<T> hasMany(Class<?> relatedType, String tableAlias);
 
-  IQueryMergeBelongsTo<T> belongsTo(Class<?> relatedType);
+  IQueryMergeToOne<T> toOne(Class<?> relatedType);
 
-  IQueryMergeBelongsTo<T> belongsTo(Class<?> relatedType, String tableAlias);
+  IQueryMergeToOne<T> toOne(Class<?> relatedType, String tableAlias);
 }

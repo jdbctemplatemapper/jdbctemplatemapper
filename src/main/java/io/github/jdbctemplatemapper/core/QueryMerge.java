@@ -28,7 +28,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.util.Assert;
-import io.github.jdbctemplatemapper.querymerge.IQueryMergeBelongsTo;
+import io.github.jdbctemplatemapper.querymerge.IQueryMergeToOne;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeFluent;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeHasMany;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeJoinColumnManySide;
@@ -91,31 +91,31 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
    */
 
   /**
-   * belongsTo relationship.
+   * toOne relationship.
    *
    * @param relatedType the related type
    * @return interface with the next methods in the chain
    */
-  public IQueryMergeBelongsTo<T> belongsTo(Class<?> relatedType) {
+  public IQueryMergeToOne<T> toOne(Class<?> relatedType) {
     Assert.notNull(relatedType, "relatedType cannot be null");
-    this.relationshipType = RelationshipType.HAS_ONE;
+    this.relationshipType = RelationshipType.BELONGS_TO;
     this.relatedType = relatedType;
     return this;
   }
 
   /**
-   * belongsTo relationship.
+   * toOne relationship.
    *
    * @param relatedType the related type
    * @param tableAlias the table alias.
    * @return interface with the next methods in the chain
    */
-  public IQueryMergeBelongsTo<T> belongsTo(Class<?> relatedType, String tableAlias) {
+  public IQueryMergeToOne<T> toOne(Class<?> relatedType, String tableAlias) {
     Assert.notNull(relatedType, "relatedType cannot be null");
     if (MapperUtils.isBlank(tableAlias)) {
       throw new IllegalArgumentException("tableAlias for type cannot be null or blank");
     }
-    this.relationshipType = RelationshipType.HAS_ONE;
+    this.relationshipType = RelationshipType.BELONGS_TO;
     this.relatedType = relatedType;
     this.relatedTypeTableAlias = tableAlias;
     return this;
@@ -153,8 +153,8 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   }
 
   /**
-   * Join column for belongsTo relationship. The join column (the foreign key) is on the table of the
-   * owning model. Example: Order belongsTo Customer. The join column(foreign key) will be on the table
+   * Join column for toOne relationship. The join column (the foreign key) is on the table of the
+   * owning model. Example: Order toOne Customer. The join column(foreign key) will be on the table
    * order (of the owning model). The join column should not have a table prefix.
    *
    * @param joinColumnOwningSide the join column on the owning side (with no table prefix)
@@ -224,7 +224,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   /**
    * The relationship property that needs to be populated on the owning type. For hasMany() this
    * property has to be an initialized collection (cannot be null) and the generic type should match
-   * the hasMany related type. For belongsTo this property has to be the same type as belongsTo related
+   * the hasMany related type. For toOne this property has to be the same type as toOne related
    * type
    *
    * @param propertyName name of property that needs to be populated
@@ -241,7 +241,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   /**
    * The orderBy clause for QueryMerge. For QueryMerge orderBy is only supported for hasMany and
    * hasMany through. orderBy columns have to be on the table of the hasMany/hasMany through side.
-   * For belongsTo orderBy does not makes sense because the order will be dictated by the mergeList
+   * For toOne orderBy does not makes sense because the order will be dictated by the mergeList
    * argument in the execute method.
    *
    * @param orderBy the orderBy clause.
@@ -256,7 +256,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   }
 
   /**
-   * The query executes an sql 'IN' clause to get the related side (belongsTo, hasMany, hasMany
+   * The query executes an sql 'IN' clause to get the related side (toOne, hasMany, hasMany
    * through) objects and merges those with the objects in the mergeList.
    *
    * <pre>
@@ -277,10 +277,10 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
           throughOwnerTypeJoinColumn, throughRelatedTypeJoinColumn);
     }
 
-    if (RelationshipType.HAS_ONE.equals(relationshipType)) {
+    if (RelationshipType.BELONGS_TO.equals(relationshipType)) {
       if (MapperUtils.isNotBlank(orderBy)) {
         throw new IllegalArgumentException(
-            "For QueryMerge belongsTo relationships orderBy is not supported."
+            "For QueryMerge toOne relationships orderBy is not supported."
                 + " The order is already dictated by the mergeList order");
       }
       processHasOne(jdbcTemplateMapper, mergeList, ownerType, relatedType, cacheKey);

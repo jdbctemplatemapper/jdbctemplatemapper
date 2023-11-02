@@ -11,7 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.github.jdbctemplatemapper.query;
+package io.github.jdbctemplatemapper.querymerge;
 
 /**
  * interface with the next methods in the chain.
@@ -19,6 +19,6 @@ package io.github.jdbctemplatemapper.query;
  * @author ajoseph
  * @param <T> the type
  */
-public interface IQueryBelongsTo<T> {
-  IQueryJoinColumnOwningSide<T> joinColumnOwningSide(String joinColumnOwningSide);
+public interface IQueryMergeToOne<T> {
+  IQueryMergeJoinColumnOwningSide<T> joinColumnOwningSide(String joinColumnOwningSide);
 }

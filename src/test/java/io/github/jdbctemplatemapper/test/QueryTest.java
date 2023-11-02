@@ -79,11 +79,11 @@ public class QueryTest {
   }
 
   @Test
-  public void belongsTo_null_test() {
+  public void toOne_null_test() {
 
     Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
       Query.type(Order.class)
-           .belongsTo(null)
+           .toOne(null)
            .joinColumnOwningSide("customer_id")
            .populateProperty("customer")
            .execute(jtm);
@@ -107,11 +107,11 @@ public class QueryTest {
   }
 
   @Test
-  public void belongsTo_joinColumnNull_test() {
+  public void toOne_joinColumnNull_test() {
 
     Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
       Query.type(Order.class)
-           .belongsTo(Customer.class)
+           .toOne(Customer.class)
            .joinColumnOwningSide(null)
            .populateProperty("customer")
            .execute(jtm);
@@ -135,11 +135,11 @@ public class QueryTest {
   }
 
   @Test
-  public void belongsTo_populatePropertyNull_test() {
+  public void toOne_populatePropertyNull_test() {
 
     Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
       Query.type(Order.class)
-           .belongsTo(Customer.class)
+           .toOne(Customer.class)
            .joinColumnOwningSide("customer_id")
            .populateProperty(null)
            .execute(jtm);
@@ -163,11 +163,11 @@ public class QueryTest {
   }
 
   @Test
-  public void belongsTo_jdbcTemplateMapperNull_test() {
+  public void toOne_jdbcTemplateMapperNull_test() {
 
     Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
       Query.type(Order.class)
-           .belongsTo(Customer.class)
+           .toOne(Customer.class)
            .joinColumnOwningSide("customer_id")
            .populateProperty("customer")
            .execute(null);
@@ -215,11 +215,11 @@ public class QueryTest {
   }
 
   @Test
-  public void belongsTo_invalidHasManyClass2_test() {
+  public void toOne_invalidHasManyClass2_test() {
 
     Exception exception = Assertions.assertThrows(AnnotationException.class, () -> {
       Query.type(Order.class)
-           .belongsTo(NoTableAnnotationModel.class)
+           .toOne(NoTableAnnotationModel.class)
            .joinColumnOwningSide("order_id")
            .populateProperty("orderLines")
            .execute(jtm);
@@ -271,11 +271,11 @@ public class QueryTest {
   }
 
   @Test
-  public void belongsTo_invalidJoinColumnWithPrefix_test() {
+  public void toOne_invalidJoinColumnWithPrefix_test() {
 
     Exception exception = Assertions.assertThrows(QueryException.class, () -> {
       Query.type(Order.class)
-           .belongsTo(Customer.class)
+           .toOne(Customer.class)
            .joinColumnOwningSide("order.customer_id")
            .populateProperty("customer")
            .execute(jtm);
@@ -285,11 +285,11 @@ public class QueryTest {
   }
 
   @Test
-  public void belongsTo_invalidJoinColumnBlank_test() {
+  public void toOne_invalidJoinColumnBlank_test() {
 
     Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
       Query.type(Order.class)
-           .belongsTo(Customer.class)
+           .toOne(Customer.class)
            .joinColumnOwningSide("")
            .populateProperty("customer")
            .execute(jtm);
@@ -299,11 +299,11 @@ public class QueryTest {
   }
 
   @Test
-  public void belongsTo_invalidJoinColumn_test() {
+  public void toOne_invalidJoinColumn_test() {
 
     Exception exception = Assertions.assertThrows(QueryException.class, () -> {
       Query.type(Order.class)
-           .belongsTo(Customer.class)
+           .toOne(Customer.class)
            .joinColumnOwningSide("x")
            .populateProperty("customer")
            .execute(jtm);
@@ -373,11 +373,11 @@ public class QueryTest {
   }
 
   @Test
-  public void belongsTo_populatePropertyTypeConflict_test() {
+  public void toOne_populatePropertyTypeConflict_test() {
 
     Exception exception = Assertions.assertThrows(QueryException.class, () -> {
       Query.type(Order.class)
-           .belongsTo(Customer.class)
+           .toOne(Customer.class)
            .joinColumnOwningSide("customer_id")
            .populateProperty("status")
            .execute(jtm);
@@ -445,10 +445,10 @@ public class QueryTest {
   }
 
   @Test
-  public void belongsTo_success_test() {
+  public void toOne_success_test() {
 
     List<Order> orders = Query.type(Order.class)
-                              .belongsTo(Customer.class)
+                              .toOne(Customer.class)
                               .joinColumnOwningSide("customer_id")
                               .populateProperty("customer")
                               .where("orders.status = ?", "IN PROCESS")
@@ -497,10 +497,10 @@ public class QueryTest {
   }
 
   @Test
-  public void belongsTo_withoutWhereAndOrderBy_success_test() {
+  public void toOne_withoutWhereAndOrderBy_success_test() {
 
     List<Order> orders = Query.type(Order.class)
-                              .belongsTo(Customer.class)
+                              .toOne(Customer.class)
                               .joinColumnOwningSide("customer_id")
                               .populateProperty("customer")
                               .execute(jtm);
@@ -525,10 +525,10 @@ public class QueryTest {
   }
 
   @Test
-  public void belongsTo_nonDefaultNaming_success_test() {
+  public void toOne_nonDefaultNaming_success_test() {
 
     List<Order7> orders = Query.type(Order7.class)
-                               .belongsTo(Customer7.class)
+                               .toOne(Customer7.class)
                                .joinColumnOwningSide("customer_id")
                                .populateProperty("customer")
                                .where("orders.status = ?", "IN PROCESS")
@@ -609,7 +609,7 @@ public class QueryTest {
   }
 
   @Test
-  public void belongsTo_limitOffsetClause_success_test() {
+  public void toOne_limitOffsetClause_success_test() {
     String limitOffsetClause = null;
     if (jdbcDriver.contains("postgres")) {
       limitOffsetClause = "OFFSET 0 ROWS FETCH FIRST 10 ROWS ONLY";
@@ -625,7 +625,7 @@ public class QueryTest {
     }
 
     List<Order> orders = Query.type(Order.class)
-                              .belongsTo(Customer.class)
+                              .toOne(Customer.class)
                               .joinColumnOwningSide("customer_id")
                               .populateProperty("customer")
                               .orderBy("customer.customer_id")
@@ -674,21 +674,21 @@ public class QueryTest {
          .execute(jtm);
 
     Query.type(Order.class)
-         .belongsTo(Customer.class)
+         .toOne(Customer.class)
          .joinColumnOwningSide("customer_id")
          .populateProperty("customer")
          .where("orders.status = ?", "IN PROCESS")
          .execute(jtm);
 
     Query.type(Order.class)
-         .belongsTo(Customer.class)
+         .toOne(Customer.class)
          .joinColumnOwningSide("customer_id")
          .populateProperty("customer")
          .orderBy("customer.customer_id")
          .execute(jtm);
 
     Query.type(Order.class)
-         .belongsTo(Customer.class)
+         .toOne(Customer.class)
          .joinColumnOwningSide("CUSTOMER_ID")
          .populateProperty("customer")
          .orderBy("orders.order_id")
@@ -696,7 +696,7 @@ public class QueryTest {
          .execute(jtm);
 
     Query.type(Order.class)
-         .belongsTo(Customer.class)
+         .toOne(Customer.class)
          .joinColumnOwningSide("customer_id")
          .populateProperty("customer")
          .where("orders.status = ? and customer.last_name like ?", "IN PROCESS", "%")

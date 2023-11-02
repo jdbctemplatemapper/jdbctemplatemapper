@@ -41,11 +41,11 @@ public class QueryMergeTest {
   private JdbcTemplateMapper jtm;
 
   @Test
-  public void belongsTo_null_test() {
+  public void toOne_null_test() {
     List<Order> orders = new ArrayList<>();
     Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
       QueryMerge.type(Order.class)
-                .belongsTo(null)
+                .toOne(null)
                 .joinColumnOwningSide("customer_id")
                 .populateProperty("customer")
                 .execute(jtm, orders);
@@ -68,11 +68,11 @@ public class QueryMergeTest {
   }
 
   @Test
-  public void belongsTo_joinColumnNull_test() {
+  public void toOne_joinColumnNull_test() {
     List<Order> orders = new ArrayList<>();
     Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
       QueryMerge.type(Order.class)
-                .belongsTo(Customer.class)
+                .toOne(Customer.class)
                 .joinColumnOwningSide(null)
                 .populateProperty("customer")
                 .execute(jtm, orders);
@@ -94,11 +94,11 @@ public class QueryMergeTest {
   }
 
   @Test
-  public void belongsTo_populatePropertyNull_test() {
+  public void toOne_populatePropertyNull_test() {
     List<Order> orders = new ArrayList<>();
     Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
       QueryMerge.type(Order.class)
-                .belongsTo(Customer.class)
+                .toOne(Customer.class)
                 .joinColumnOwningSide("customer_id")
                 .populateProperty(null)
                 .execute(jtm, orders);
@@ -120,11 +120,11 @@ public class QueryMergeTest {
   }
 
   @Test
-  public void belongsTo_jdbcTemplateMapperNull_test() {
+  public void toOne_jdbcTemplateMapperNull_test() {
     List<Order> orders = new ArrayList<>();
     Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
       QueryMerge.type(Order.class)
-                .belongsTo(Customer.class)
+                .toOne(Customer.class)
                 .joinColumnOwningSide("customer_id")
                 .populateProperty("customer")
                 .execute(null, orders);
@@ -159,11 +159,11 @@ public class QueryMergeTest {
   }
 
   @Test
-  public void belongsTo_joinTypeMismatch_test() {
+  public void toOne_joinTypeMismatch_test() {
     List<Order6> orders = new ArrayList<>();
     Exception exception = Assertions.assertThrows(QueryException.class, () -> {
       QueryMerge.type(Order6.class)
-                .belongsTo(Customer2.class)
+                .toOne(Customer2.class)
                 .joinColumnOwningSide("customer_id")
                 .populateProperty("customer")
                 .execute(jtm, orders);
@@ -172,10 +172,10 @@ public class QueryMergeTest {
   }
 
   @Test
-  public void belongsTo_mergeListNull_success() {
+  public void toOne_mergeListNull_success() {
     Assertions.assertDoesNotThrow(() -> {
       QueryMerge.type(Order.class)
-                .belongsTo(Customer.class)
+                .toOne(Customer.class)
                 .joinColumnOwningSide("customer_id")
                 .populateProperty("customer")
                 .execute(jtm, null);
@@ -183,12 +183,12 @@ public class QueryMergeTest {
   }
 
   @Test
-  public void belongsTo_mergeListEmpty_success() {
+  public void toOne_mergeListEmpty_success() {
 
     List<Order> orders = new ArrayList<Order>();
     Assertions.assertDoesNotThrow(() -> {
       QueryMerge.type(Order.class)
-                .belongsTo(Customer.class)
+                .toOne(Customer.class)
                 .joinColumnOwningSide("customer_id")
                 .populateProperty("customer")
                 .execute(jtm, orders);
@@ -223,14 +223,14 @@ public class QueryMergeTest {
   }
 
   @Test
-  public void belongsTo_success_test() {
+  public void toOne_success_test() {
     List<Order> orders = Query.type(Order.class)
                               .where("orders.status = ?", "IN PROCESS")
                               .orderBy("orders.order_id DESC")
                               .execute(jtm);
 
     QueryMerge.type(Order.class)
-              .belongsTo(Customer.class)
+              .toOne(Customer.class)
               .joinColumnOwningSide("CUSTOMER_ID")
               .populateProperty("customer")
               .execute(jtm, orders);
@@ -240,14 +240,14 @@ public class QueryMergeTest {
   }
 
   @Test
-  public void belongsTo_success_withEdgeCaseCustomerIntialized_test() {
+  public void toOne_success_withEdgeCaseCustomerIntialized_test() {
     List<Order8> orders = Query.type(Order8.class) // Customer is initialized but since query
                                                    // returns null should be set to null
                                .where("orders.order_id = ?", 3)
                                .execute(jtm);
 
     QueryMerge.type(Order8.class)
-              .belongsTo(Customer.class)
+              .toOne(Customer.class)
               .joinColumnOwningSide("customer_id")
               .populateProperty("customer")
               .execute(jtm, orders);
@@ -313,14 +313,14 @@ public class QueryMergeTest {
   }
 
   @Test
-  public void belongsTo_nonDefaultNaming_success_test() {
+  public void toOne_nonDefaultNaming_success_test() {
     List<Order7> orders = Query.type(Order7.class)
                                .where("orders.status = ?", "IN PROCESS")
                                .orderBy("orders.order_id")
                                .execute(jtm);
 
     QueryMerge.type(Order7.class)
-              .belongsTo(Customer7.class)
+              .toOne(Customer7.class)
               .joinColumnOwningSide("customer_id")
               .populateProperty("customer")
               .execute(jtm, orders);
@@ -362,19 +362,19 @@ public class QueryMergeTest {
 
 
   @Test
-  public void belongsTo_orderByIsNotSupported_test() {
+  public void toOne_orderByIsNotSupported_test() {
     List<Order> orders = Query.type(Order.class).execute(jtm);
 
     Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
       QueryMerge.type(Order.class)
-                .belongsTo(Customer.class)
+                .toOne(Customer.class)
                 .joinColumnOwningSide("customer_id")
                 .populateProperty("customer")
                 .orderBy("customer_id")
                 .execute(jtm, orders);
     });
     assertTrue(exception.getMessage()
-                        .contains("For QueryMerge belongsTo relationships orderBy is not supported"));
+                        .contains("For QueryMerge toOne relationships orderBy is not supported"));
 
   }
 

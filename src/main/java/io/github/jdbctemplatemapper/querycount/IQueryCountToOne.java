@@ -19,6 +19,6 @@ package io.github.jdbctemplatemapper.querycount;
  * @author ajoseph
  * @param <T> the type
  */
-public interface IQueryCountBelongsTo<T> {
+public interface IQueryCountToOne<T> {
   IQueryCountJoinColumnOwningSide<T> joinColumnOwningSide(String joinColumnOwningSide);
 }

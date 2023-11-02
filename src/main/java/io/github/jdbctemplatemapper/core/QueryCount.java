@@ -14,9 +14,9 @@
 package io.github.jdbctemplatemapper.core;
 
 import org.springframework.util.Assert;
-import io.github.jdbctemplatemapper.querycount.IQueryCountBelongsTo;
 import io.github.jdbctemplatemapper.querycount.IQueryCountFluent;
 import io.github.jdbctemplatemapper.querycount.IQueryCountJoinColumnOwningSide;
+import io.github.jdbctemplatemapper.querycount.IQueryCountToOne;
 import io.github.jdbctemplatemapper.querycount.IQueryCountType;
 import io.github.jdbctemplatemapper.querycount.IQueryCountWhere;
 
@@ -80,39 +80,39 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
   }
 
   /**
-   * The belongsTo relationship.
+   * The toOne relationship.
    *
    * @param relatedType the related type
    * @return interface with the next methods in the chain
    */
-  public IQueryCountBelongsTo<T> belongsTo(Class<?> relatedType) {
+  public IQueryCountToOne<T> toOne(Class<?> relatedType) {
     Assert.notNull(relatedType, "relatedType cannot be null");
-    this.relationshipType = RelationshipType.HAS_ONE;
+    this.relationshipType = RelationshipType.BELONGS_TO;
     this.relatedType = relatedType;
     return this;
   }
 
   /**
-   * The belongsTo relationship.
+   * The toOne relationship.
    *
    * @param relatedType the related type
    * @param tableAlias the table alias which can be used in where clause
    * @return interface with the next methods in the chain
    */
-  public IQueryCountBelongsTo<T> belongsTo(Class<?> relatedType, String tableAlias) {
+  public IQueryCountToOne<T> toOne(Class<?> relatedType, String tableAlias) {
     Assert.notNull(relatedType, "relatedType cannot be null");
     if (MapperUtils.isBlank(tableAlias)) {
       throw new IllegalArgumentException("tableAlias for type cannot be null or blank");
     }
-    this.relationshipType = RelationshipType.HAS_ONE;
+    this.relationshipType = RelationshipType.BELONGS_TO;
     this.relatedType = relatedType;
     this.relatedTableAlias = tableAlias;
     return this;
   }
 
   /**
-   * Join column for belongsTo relationship: The join column (the foreign key) is on the table of the
-   * owning model. Example: Order belongsTo Customer. The join column(foreign key) will be on the table
+   * Join column for toOne relationship: The join column (the foreign key) is on the table of the
+   * owning model. Example: Order toOne Customer. The join column(foreign key) will be on the table
    * order (of the owning model). The join column should not have a table prefix.
    *
    * @param joinColumnOwningSide the join column on the owning side (with no table prefix)
@@ -200,7 +200,7 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
       String relatedColumnPrefix =
           MapperUtils.columnPrefix(relatedTableAlias, relatedTypeTableMapping.getTableName());
 
-      if (RelationshipType.HAS_ONE.equals(relationshipType)) {
+      if (RelationshipType.BELONGS_TO.equals(relationshipType)) {
         // joinColumn is on owner table
         sql += " LEFT JOIN " + relatedTableStr + " on " + ownerColumnPrefix + "."
             + joinColumnOwningSide + " = " + relatedColumnPrefix + "."

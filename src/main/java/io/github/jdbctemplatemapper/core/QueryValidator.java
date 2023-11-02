@@ -56,7 +56,7 @@ class QueryValidator {
             "Invalid property name " + propertyName + " for class " + ownerType.getSimpleName());
       }
 
-      if (RelationshipType.HAS_ONE.equals(relationshipType)) {
+      if (RelationshipType.BELONGS_TO.equals(relationshipType)) {
         validateHasOne(jtm, ownerType, relatedType, joinColumnOwningSide, propertyName,
             bwOwnerModel);
       } else if (RelationshipType.HAS_MANY.equals(relationshipType)) {
@@ -85,7 +85,7 @@ class QueryValidator {
     }
 
     if (relatedType != null && relationshipType != null) {
-      if (RelationshipType.HAS_ONE.equals(relationshipType)) {
+      if (RelationshipType.BELONGS_TO.equals(relationshipType)) {
         BeanWrapper bwOwnerModel = PropertyAccessorFactory.forBeanPropertyAccess(ownerModel);
         validateHasOne(jtm, ownerType, relatedType, joinColumnOwningSide, null, bwOwnerModel);
       }
@@ -112,7 +112,7 @@ class QueryValidator {
       if (relatedType != null && !relatedType.getName().equals(pd.getPropertyType().getName())) {
         throw new QueryException("property type conflict. property " + ownerType.getSimpleName()
             + "." + propertyName + " is of type " + pd.getPropertyType().getSimpleName()
-            + " while type for belongsTo relationship is " + relatedType.getSimpleName());
+            + " while type for toOne relationship is " + relatedType.getSimpleName());
       }
     }
 
