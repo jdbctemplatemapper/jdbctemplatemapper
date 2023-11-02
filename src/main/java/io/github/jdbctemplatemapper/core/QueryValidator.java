@@ -33,7 +33,7 @@ class QueryValidator {
   private QueryValidator() {}
 
   static void validate(JdbcTemplateMapper jtm, Class<?> ownerType, String relationshipType,
-      Class<?> relatedType, String joinColumnOwningSide, String joinColumnManySide,
+      Class<?> relatedType, String joinColumnTypeSide, String joinColumnManySide,
       String propertyName, String throughJoinTable, String throughOwnerTypeJoinColumn,
       String throughRelatedTypeJoinColumn) {
 
@@ -57,7 +57,7 @@ class QueryValidator {
       }
 
       if (RelationshipType.BELONGS_TO.equals(relationshipType)) {
-        validateHasOne(jtm, ownerType, relatedType, joinColumnOwningSide, propertyName,
+        validateHasOne(jtm, ownerType, relatedType, joinColumnTypeSide, propertyName,
             bwOwnerModel);
       } else if (RelationshipType.HAS_MANY.equals(relationshipType)) {
         validateHasMany(jtm, ownerType, relatedType, joinColumnManySide, propertyName,
@@ -70,7 +70,7 @@ class QueryValidator {
   }
 
   static void validateQueryCount(JdbcTemplateMapper jtm, Class<?> ownerType,
-      String relationshipType, Class<?> relatedType, String joinColumnOwningSide) {
+      String relationshipType, Class<?> relatedType, String joinColumnTypeSide) {
 
     if (jtm == null) {
       throw new QueryException("JdbcTemplateMapper cannot be null");
@@ -87,7 +87,7 @@ class QueryValidator {
     if (relatedType != null && relationshipType != null) {
       if (RelationshipType.BELONGS_TO.equals(relationshipType)) {
         BeanWrapper bwOwnerModel = PropertyAccessorFactory.forBeanPropertyAccess(ownerModel);
-        validateHasOne(jtm, ownerType, relatedType, joinColumnOwningSide, null, bwOwnerModel);
+        validateHasOne(jtm, ownerType, relatedType, joinColumnTypeSide, null, bwOwnerModel);
       }
     }
   }
@@ -104,7 +104,7 @@ class QueryValidator {
   }
 
   private static void validateHasOne(JdbcTemplateMapper jtm, Class<?> ownerType,
-      Class<?> relatedType, String joinColumnOwningSide, String propertyName,
+      Class<?> relatedType, String joinColumnTypeSide, String propertyName,
       BeanWrapper bwOwnerModel) {
 
     if (propertyName != null) {
@@ -116,19 +116,19 @@ class QueryValidator {
       }
     }
 
-    if (joinColumnOwningSide.contains(".")) {
-      throw new QueryException("Invalid joinColumnOwningSide. It should have no table prefix");
+    if (joinColumnTypeSide.contains(".")) {
+      throw new QueryException("Invalid joinColumnTypeSide. It should have no table prefix");
     }
 
     TableMapping ownerTypeTableMapping = jtm.getTableMapping(ownerType);
     TableMapping relatedTypeTableMapping = jtm.getTableMapping(relatedType);
     String joinColumnPropertyName =
-        ownerTypeTableMapping.getPropertyName(MapperUtils.toLowerCase(joinColumnOwningSide));
+        ownerTypeTableMapping.getPropertyName(MapperUtils.toLowerCase(joinColumnTypeSide));
 
     if (joinColumnPropertyName == null) {
-      throw new QueryException("Invalid join column " + joinColumnOwningSide + " . Table "
+      throw new QueryException("Invalid join column " + joinColumnTypeSide + " . Table "
           + ownerTypeTableMapping.getTableName() + " for class " + ownerType.getSimpleName()
-          + " either does not have column " + joinColumnOwningSide
+          + " either does not have column " + joinColumnTypeSide
           + " or the column has not been mapped in the class.");
     }
 
@@ -137,7 +137,7 @@ class QueryValidator {
         relatedTypeTableMapping.getIdPropertyMapping().getPropertyType();
 
     if (!joinColumnPropertyType.getName().equals(relatedTypeIdPropertyType.getName())) {
-      throw new QueryException("Property type mismatch. join column " + joinColumnOwningSide
+      throw new QueryException("Property type mismatch. join column " + joinColumnTypeSide
           + " property " + ownerType.getSimpleName() + "." + joinColumnPropertyName + " is of type "
           + joinColumnPropertyType.getSimpleName() + " but the property being joined to "
           + relatedType.getSimpleName() + "." + relatedTypeTableMapping.getIdPropertyName()

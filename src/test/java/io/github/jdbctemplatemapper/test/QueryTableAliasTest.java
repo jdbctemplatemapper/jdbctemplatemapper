@@ -83,7 +83,7 @@ public class QueryTableAliasTest {
   public void toOne_tableAlias_success() {
     List<Order> orders = Query.type(Order.class, "o")
                               .toOne(Customer.class, "c")
-                              .joinColumnOwningSide("customer_id")
+                              .joinColumnTypeSide("customer_id")
                               .populateProperty("customer")
                               .where("o.status = ? and c.last_name like ?", "IN PROCESS", "%")
                               .orderBy("o.status DESC, c.first_name desc")

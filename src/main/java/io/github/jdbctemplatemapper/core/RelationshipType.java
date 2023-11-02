@@ -20,7 +20,7 @@ package io.github.jdbctemplatemapper.core;
  */
 class RelationshipType {
 
-  public static final String HAS_ONE = "HAS_ONE";
+  //public static final String HAS_ONE = "HAS_ONE";
   public static final String HAS_MANY = "HAS_MANY";
   public static final String HAS_MANY_THROUGH = "HAS_MANY_THROUGH";
   

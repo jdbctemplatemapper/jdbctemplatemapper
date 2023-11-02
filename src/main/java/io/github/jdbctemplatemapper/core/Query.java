@@ -25,18 +25,16 @@ import org.springframework.beans.BeanWrapper;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.util.Assert;
-import io.github.jdbctemplatemapper.query.IQueryToOne;
 import io.github.jdbctemplatemapper.query.IQueryFluent;
 import io.github.jdbctemplatemapper.query.IQueryHasMany;
-import io.github.jdbctemplatemapper.query.IQueryHasOne;
 import io.github.jdbctemplatemapper.query.IQueryJoinColumnManySide;
-import io.github.jdbctemplatemapper.query.IQueryJoinColumnOneSide;
-import io.github.jdbctemplatemapper.query.IQueryJoinColumnOwningSide;
+import io.github.jdbctemplatemapper.query.IQueryJoinColumnTypeSide;
 import io.github.jdbctemplatemapper.query.IQueryLimitOffsetClause;
 import io.github.jdbctemplatemapper.query.IQueryOrderBy;
 import io.github.jdbctemplatemapper.query.IQueryPopulateProperty;
 import io.github.jdbctemplatemapper.query.IQueryThroughJoinColumns;
 import io.github.jdbctemplatemapper.query.IQueryThroughJoinTable;
+import io.github.jdbctemplatemapper.query.IQueryToOne;
 import io.github.jdbctemplatemapper.query.IQueryType;
 import io.github.jdbctemplatemapper.query.IQueryWhere;
 
@@ -63,9 +61,8 @@ public class Query<T> implements IQueryFluent<T> {
   private Class<?> relatedType;
   private String relatedTableAlias;
   private String propertyName; // propertyName on main class that needs to be populated
-  private String joinColumnOwningSide;
+  private String joinColumnTypeSide;
   private String joinColumnManySide;
-  private String joinColumnOneSide;
 
   private String throughJoinTable;
   private String throughTypeJoinColumn;
@@ -115,30 +112,14 @@ public class Query<T> implements IQueryFluent<T> {
    * @param relatedType the related type
    * @return interface with the next methods in the chain
    */
-  public IQueryHasOne<T> hasOne(Class<?> relatedType) {
+  public IQueryToOne<T> toOne(Class<?> relatedType) {
     Assert.notNull(relatedType, "relatedType cannot be null");
-    this.relationshipType = RelationshipType.HAS_ONE;
+    this.relationshipType = RelationshipType.BELONGS_TO;
     this.relatedType = relatedType;
     return this;
   }
   
-  /**
-   * The hasOne relationship.
-   *
-   * @param relatedType the related type
-   * @param tableAlias the table alias which can be used in where and orderBy clauses
-   * @return interface with the next methods in the chain
-   */
-  public IQueryToOne<T> hasOne(Class<?> relatedType, String tableAlias) {
-    Assert.notNull(relatedType, "relatedType cannot be null");
-    if (MapperUtils.isBlank(tableAlias)) {
-      throw new IllegalArgumentException("tableAlias for type cannot be null or blank");
-    }
-    this.relationshipType = RelationshipType.HAS_ONE;
-    this.relatedType = relatedType;
-    this.relatedTableAlias = tableAlias;
-    return this;
-  }
+
   
   /**
    * The hasMany relationship. The 'populateProperty' for hasMany relationship should be a
@@ -173,18 +154,6 @@ public class Query<T> implements IQueryFluent<T> {
     return this;
   }
   
-  /**
-   * The toOne relationship.
-   *
-   * @param relatedType the related type
-   * @return interface with the next methods in the chain
-   */
-  public IQueryToOne<T> toOne(Class<?> relatedType) {
-    Assert.notNull(relatedType, "relatedType cannot be null");
-    this.relationshipType = RelationshipType.BELONGS_TO;
-    this.relatedType = relatedType;
-    return this;
-  }
 
   /**
    * The toOne relationship.
@@ -208,14 +177,14 @@ public class Query<T> implements IQueryFluent<T> {
    * Join column for hasOne relationship: The join column (the foreign key) is on the table of the
    * One side. The join column should not have a table prefix.
    *
-   * @param joinColumnOneSide the join column on the one side (with no table prefix)
+   * @param joinColumnTypeSide the join column on the one side (with no table prefix)
    * @return interface with the next methods in the chain
    */
-  public IQueryJoinColumnOneSide<T> joinColumnOneSide(String joinColumnOneSide) {
-    if (MapperUtils.isBlank(joinColumnOneSide)) {
-      throw new IllegalArgumentException("joinColumnOneSide cannot be null or blank");
+  public IQueryJoinColumnTypeSide<T> joinColumnTypeSide(String joinColumnTypeSide) {
+    if (MapperUtils.isBlank(joinColumnTypeSide)) {
+      throw new IllegalArgumentException("joinColumnTypeSide cannot be null or blank");
     }
-    this.joinColumnOneSide = MapperUtils.toLowerCase(joinColumnOneSide.trim());
+    this.joinColumnTypeSide = MapperUtils.toLowerCase(joinColumnTypeSide.trim());
     return this;
   }
   
@@ -247,22 +216,6 @@ public class Query<T> implements IQueryFluent<T> {
     }
     this.relationshipType = RelationshipType.HAS_MANY_THROUGH;
     this.throughJoinTable = tableName;
-    return this;
-  }
-  
-  /**
-   * Join column for toOne relationship: The join column (the foreign key) is on the table of the
-   * owning model. Example: Order toOne Customer. The join column(foreign key) will be on the table
-   * order (of the owning model). The join column should not have a table prefix.
-   *
-   * @param joinColumnOwningSide the join column on the owning side (with no table prefix)
-   * @return interface with the next methods in the chain
-   */
-  public IQueryJoinColumnOwningSide<T> joinColumnOwningSide(String joinColumnOwningSide) {
-    if (MapperUtils.isBlank(joinColumnOwningSide)) {
-      throw new IllegalArgumentException("joinColumnOwningSide cannot be null or blank");
-    }
-    this.joinColumnOwningSide = MapperUtils.toLowerCase(joinColumnOwningSide.trim());
     return this;
   }
 
@@ -388,7 +341,7 @@ public class Query<T> implements IQueryFluent<T> {
     String sql = jdbcTemplateMapper.getQuerySqlCache().get(cacheKey);
     if (sql == null) {
       QueryValidator.validate(jdbcTemplateMapper, type, relationshipType, relatedType,
-          joinColumnOwningSide, joinColumnManySide, propertyName, throughJoinTable,
+          joinColumnTypeSide, joinColumnManySide, propertyName, throughJoinTable,
           throughTypeJoinColumn, throughRelatedTypeJoinColumn);
 
       // does not include where,orderBy,offsetLimit
@@ -516,9 +469,6 @@ public class Query<T> implements IQueryFluent<T> {
 
     if (RelationshipType.BELONGS_TO.equals(relationshipType)) {
       sql += toOneFromClause(typeTableMapping, relatedTypeTableMapping);
-    } else if (RelationshipType.HAS_ONE.equals(relationshipType)) {
-      // joinColumn is on related table
-      sql += hasOneFromClause(typeTableMapping, relatedTypeTableMapping);
     } else if (RelationshipType.HAS_MANY.equals(relationshipType)) {
       // joinColumn is on related table
       sql += hasManyFromClause(typeTableMapping, relatedTypeTableMapping);
@@ -534,30 +484,6 @@ public class Query<T> implements IQueryFluent<T> {
 
     return sql;
   }
-
-  String hasOneFromClause(TableMapping typeTableMapping, TableMapping relatedTableMapping) {
-    String typeTableStr =
-        MapperUtils.tableStrForFrom(typeTableAlias, typeTableMapping.fullyQualifiedTableName());
-
-    String str = " FROM " + typeTableStr;
-    if (relatedType != null) {
-      String relatedTableStr = MapperUtils.tableStrForFrom(relatedTableAlias,
-          relatedTableMapping.fullyQualifiedTableName());
-
-      String onTypePrefix =
-          MapperUtils.columnPrefix(typeTableAlias, typeTableMapping.getTableName());
-
-      String onRelatedPrefix =
-          MapperUtils.columnPrefix(relatedTableAlias, relatedTableMapping.getTableName());
-
-      str += " LEFT JOIN " + relatedTableStr + " on " + onTypePrefix + "."
-          + typeTableMapping.getIdColumnName() + " = " + onRelatedPrefix + "."
-          + joinColumnManySide;
-    }
-
-    return str;
-  }
-
 
   String hasManyFromClause(TableMapping typeTableMapping, TableMapping relatedTableMapping) {
     String typeTableStr =
@@ -599,7 +525,7 @@ public class Query<T> implements IQueryFluent<T> {
       String onRelatedPrefix =
           MapperUtils.columnPrefix(relatedTableAlias, relatedTableMapping.getTableName());
 
-      str += " LEFT JOIN " + relatedTableStr + " on " + onTypePrefix + "." + joinColumnOwningSide
+      str += " LEFT JOIN " + relatedTableStr + " on " + onTypePrefix + "." + joinColumnTypeSide
           + " = " + onRelatedPrefix + "." + relatedTableMapping.getIdColumnName();
     }
     return str;
@@ -643,9 +569,9 @@ public class Query<T> implements IQueryFluent<T> {
         relatedType == null ? null : relatedType.getName(),
         relatedTableAlias,
         relationshipType,
-        joinColumnOwningSide, 
+        joinColumnTypeSide, 
         joinColumnManySide,
-        joinColumnOneSide,
+        joinColumnTypeSide,
         throughJoinTable, 
         throughTypeJoinColumn,
         throughRelatedTypeJoinColumn,

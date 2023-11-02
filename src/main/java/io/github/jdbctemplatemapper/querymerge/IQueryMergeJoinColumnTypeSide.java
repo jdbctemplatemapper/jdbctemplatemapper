@@ -19,6 +19,6 @@ package io.github.jdbctemplatemapper.querymerge;
  * @author ajoseph
  * @param <T> the type
  */
-public interface IQueryMergeJoinColumnOwningSide<T> {
+public interface IQueryMergeJoinColumnTypeSide<T> {
   IQueryMergePopulateProperty<T> populateProperty(String propertyName);
 }

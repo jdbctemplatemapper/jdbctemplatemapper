@@ -21,7 +21,7 @@ import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
  * @author ajoseph
  * @param <T> the type
  */
-public interface IQueryCountJoinColumnOwningSide<T> {
+public interface IQueryCountJoinColumnTypeSide<T> {
   IQueryCountWhere<T> where(String whereClause, Object... params);
 
   Integer execute(JdbcTemplateMapper jdbcTemplateMapper);

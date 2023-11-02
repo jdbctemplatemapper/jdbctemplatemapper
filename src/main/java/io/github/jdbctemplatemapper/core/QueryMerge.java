@@ -32,7 +32,7 @@ import io.github.jdbctemplatemapper.querymerge.IQueryMergeToOne;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeFluent;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeHasMany;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeJoinColumnManySide;
-import io.github.jdbctemplatemapper.querymerge.IQueryMergeJoinColumnOwningSide;
+import io.github.jdbctemplatemapper.querymerge.IQueryMergeJoinColumnTypeSide;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeOrderBy;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergePopulateProperty;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeThroughJoinColumns;
@@ -58,7 +58,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   private Class<?> relatedType;
   private String relatedTypeTableAlias;
   private String propertyName; // propertyName on ownerType that needs to be populated
-  private String joinColumnOwningSide;
+  private String joinColumnTypeSide;
   private String joinColumnManySide;
 
   private String throughJoinTable;
@@ -157,14 +157,14 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
    * owning model. Example: Order toOne Customer. The join column(foreign key) will be on the table
    * order (of the owning model). The join column should not have a table prefix.
    *
-   * @param joinColumnOwningSide the join column on the owning side (with no table prefix)
+   * @param joinColumnTypeSide the join column on the owning side (with no table prefix)
    * @return interface with the next methods in the chain
    */
-  public IQueryMergeJoinColumnOwningSide<T> joinColumnOwningSide(String joinColumnOwningSide) {
-    if (MapperUtils.isBlank(joinColumnOwningSide)) {
-      throw new IllegalArgumentException("joinColumnOwningSide cannot be null or blank");
+  public IQueryMergeJoinColumnTypeSide<T> joinColumnTypeSide(String joinColumnTypeSide) {
+    if (MapperUtils.isBlank(joinColumnTypeSide)) {
+      throw new IllegalArgumentException("joinColumnTypeSide cannot be null or blank");
     }
-    this.joinColumnOwningSide = MapperUtils.toLowerCase(joinColumnOwningSide.trim());
+    this.joinColumnTypeSide = MapperUtils.toLowerCase(joinColumnTypeSide.trim());
     return this;
   }
 
@@ -273,7 +273,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     String cacheKey = getCacheKey();
     if (jdbcTemplateMapper.getQueryMergeSqlCache().get(cacheKey) == null) {
       QueryValidator.validate(jdbcTemplateMapper, ownerType, relationshipType, relatedType,
-          joinColumnOwningSide, joinColumnManySide, propertyName, throughJoinTable,
+          joinColumnTypeSide, joinColumnManySide, propertyName, throughJoinTable,
           throughOwnerTypeJoinColumn, throughRelatedTypeJoinColumn);
     }
 
@@ -301,7 +301,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
 
     TableMapping ownerTypeTableMapping = jtm.getTableMapping(ownerType);
     TableMapping relatedTypeTableMapping = jtm.getTableMapping(relatedType);
-    String joinPropertyName = ownerTypeTableMapping.getPropertyName(joinColumnOwningSide);
+    String joinPropertyName = ownerTypeTableMapping.getPropertyName(joinColumnTypeSide);
 
     List<BeanWrapper> bwMergeList = new ArrayList<>(mergeList.size());
     Set params = new HashSet<>(mergeList.size());
@@ -594,7 +594,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         relatedType == null ? null : relatedType.getName(),
         relatedTypeTableAlias,
         relationshipType,
-        joinColumnOwningSide,
+        joinColumnTypeSide,
         joinColumnManySide,
         throughJoinTable, 
         throughOwnerTypeJoinColumn,

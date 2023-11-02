@@ -84,7 +84,7 @@ public class QueryTest {
     Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
       Query.type(Order.class)
            .toOne(null)
-           .joinColumnOwningSide("customer_id")
+           .joinColumnTypeSide("customer_id")
            .populateProperty("customer")
            .execute(jtm);
     });
@@ -112,12 +112,12 @@ public class QueryTest {
     Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
       Query.type(Order.class)
            .toOne(Customer.class)
-           .joinColumnOwningSide(null)
+           .joinColumnTypeSide(null)
            .populateProperty("customer")
            .execute(jtm);
     });
 
-    assertTrue(exception.getMessage().contains("joinColumnOwningSide cannot be null"));
+    assertTrue(exception.getMessage().contains("joinColumnTypeSide cannot be null"));
   }
 
   @Test
@@ -140,7 +140,7 @@ public class QueryTest {
     Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
       Query.type(Order.class)
            .toOne(Customer.class)
-           .joinColumnOwningSide("customer_id")
+           .joinColumnTypeSide("customer_id")
            .populateProperty(null)
            .execute(jtm);
     });
@@ -168,7 +168,7 @@ public class QueryTest {
     Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
       Query.type(Order.class)
            .toOne(Customer.class)
-           .joinColumnOwningSide("customer_id")
+           .joinColumnTypeSide("customer_id")
            .populateProperty("customer")
            .execute(null);
     });
@@ -220,7 +220,7 @@ public class QueryTest {
     Exception exception = Assertions.assertThrows(AnnotationException.class, () -> {
       Query.type(Order.class)
            .toOne(NoTableAnnotationModel.class)
-           .joinColumnOwningSide("order_id")
+           .joinColumnTypeSide("order_id")
            .populateProperty("orderLines")
            .execute(jtm);
     });
@@ -276,7 +276,7 @@ public class QueryTest {
     Exception exception = Assertions.assertThrows(QueryException.class, () -> {
       Query.type(Order.class)
            .toOne(Customer.class)
-           .joinColumnOwningSide("order.customer_id")
+           .joinColumnTypeSide("order.customer_id")
            .populateProperty("customer")
            .execute(jtm);
     });
@@ -290,12 +290,12 @@ public class QueryTest {
     Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
       Query.type(Order.class)
            .toOne(Customer.class)
-           .joinColumnOwningSide("")
+           .joinColumnTypeSide("")
            .populateProperty("customer")
            .execute(jtm);
     });
 
-    assertTrue(exception.getMessage().contains("joinColumnOwningSide cannot be null or blank"));
+    assertTrue(exception.getMessage().contains("joinColumnTypeSide cannot be null or blank"));
   }
 
   @Test
@@ -304,7 +304,7 @@ public class QueryTest {
     Exception exception = Assertions.assertThrows(QueryException.class, () -> {
       Query.type(Order.class)
            .toOne(Customer.class)
-           .joinColumnOwningSide("x")
+           .joinColumnTypeSide("x")
            .populateProperty("customer")
            .execute(jtm);
     });
@@ -378,7 +378,7 @@ public class QueryTest {
     Exception exception = Assertions.assertThrows(QueryException.class, () -> {
       Query.type(Order.class)
            .toOne(Customer.class)
-           .joinColumnOwningSide("customer_id")
+           .joinColumnTypeSide("customer_id")
            .populateProperty("status")
            .execute(jtm);
     });
@@ -449,7 +449,7 @@ public class QueryTest {
 
     List<Order> orders = Query.type(Order.class)
                               .toOne(Customer.class)
-                              .joinColumnOwningSide("customer_id")
+                              .joinColumnTypeSide("customer_id")
                               .populateProperty("customer")
                               .where("orders.status = ?", "IN PROCESS")
                               .orderBy("orders.status    DESC")
@@ -501,7 +501,7 @@ public class QueryTest {
 
     List<Order> orders = Query.type(Order.class)
                               .toOne(Customer.class)
-                              .joinColumnOwningSide("customer_id")
+                              .joinColumnTypeSide("customer_id")
                               .populateProperty("customer")
                               .execute(jtm);
 
@@ -529,7 +529,7 @@ public class QueryTest {
 
     List<Order7> orders = Query.type(Order7.class)
                                .toOne(Customer7.class)
-                               .joinColumnOwningSide("customer_id")
+                               .joinColumnTypeSide("customer_id")
                                .populateProperty("customer")
                                .where("orders.status = ?", "IN PROCESS")
                                .orderBy("orders.status    DESC")
@@ -626,7 +626,7 @@ public class QueryTest {
 
     List<Order> orders = Query.type(Order.class)
                               .toOne(Customer.class)
-                              .joinColumnOwningSide("customer_id")
+                              .joinColumnTypeSide("customer_id")
                               .populateProperty("customer")
                               .orderBy("customer.customer_id")
                               .limitOffsetClause(limitOffsetClause)
@@ -675,21 +675,21 @@ public class QueryTest {
 
     Query.type(Order.class)
          .toOne(Customer.class)
-         .joinColumnOwningSide("customer_id")
+         .joinColumnTypeSide("customer_id")
          .populateProperty("customer")
          .where("orders.status = ?", "IN PROCESS")
          .execute(jtm);
 
     Query.type(Order.class)
          .toOne(Customer.class)
-         .joinColumnOwningSide("customer_id")
+         .joinColumnTypeSide("customer_id")
          .populateProperty("customer")
          .orderBy("customer.customer_id")
          .execute(jtm);
 
     Query.type(Order.class)
          .toOne(Customer.class)
-         .joinColumnOwningSide("CUSTOMER_ID")
+         .joinColumnTypeSide("CUSTOMER_ID")
          .populateProperty("customer")
          .orderBy("orders.order_id")
          .limitOffsetClause(limitOffsetClause)
@@ -697,7 +697,7 @@ public class QueryTest {
 
     Query.type(Order.class)
          .toOne(Customer.class)
-         .joinColumnOwningSide("customer_id")
+         .joinColumnTypeSide("customer_id")
          .populateProperty("customer")
          .where("orders.status = ? and customer.last_name like ?", "IN PROCESS", "%")
          .orderBy("customer.customer_id")
