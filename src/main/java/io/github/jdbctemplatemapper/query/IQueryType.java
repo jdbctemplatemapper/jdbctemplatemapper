@@ -28,9 +28,9 @@ public interface IQueryType<T> {
 
   IQueryHasMany<T> hasMany(Class<?> relatedType, String tableAlias);
 
-  IQueryHasOne<T> hasOne(Class<?> relatedType);
+  IQueryBelongsTo<T> belongsTo(Class<?> relatedType);
 
-  IQueryHasOne<T> hasOne(Class<?> relatedType, String tableAlias);
+  IQueryBelongsTo<T> belongsTo(Class<?> relatedType, String tableAlias);
 
   IQueryWhere<T> where(String whereClause, Object... params);
 

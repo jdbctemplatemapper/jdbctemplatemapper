@@ -35,24 +35,24 @@ public class QueryCountTableAliasTest {
   }
 
   @Test
-  public void hasOne_executeCount_tableAlias_success_test() {
+  public void belongsTo_executeCount_tableAlias_success_test() {
 
     Integer count = QueryCount.type(Order.class, "o")
-                              .hasOne(Customer.class, "c")
+                              .belongsTo(Customer.class, "c")
                               .joinColumnOwningSide("customer_id")
                               .where("o.status = ?", "IN PROCESS")
                               .execute(jtm);
     assertTrue(2 == count);
 
     count = QueryCount.type(Order.class)
-                      .hasOne(Customer.class, "c") // alias only for related
+                      .belongsTo(Customer.class, "c") // alias only for related
                       .joinColumnOwningSide("customer_id")
                       .where("orders.status = ?", "IN PROCESS")
                       .execute(jtm);
     assertTrue(2 == count);
 
     count = QueryCount.type(Order.class, "o") // alias only for owning
-                      .hasOne(Customer.class)
+                      .belongsTo(Customer.class)
                       .joinColumnOwningSide("customer_id")
                       .where("o.status = ?", "IN PROCESS")
                       .execute(jtm);

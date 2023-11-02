@@ -26,7 +26,7 @@ public class QueryMergeTableAliasTest {
   private JdbcTemplateMapper jtm;
 
   @Test
-  public void hasOne_tableAlias_success() {
+  public void belongsTo_tableAlias_success() {
 
     List<Order> orders = Query.type(Order.class)
                               .where("orders.status = ?", "IN PROCESS")
@@ -34,7 +34,7 @@ public class QueryMergeTableAliasTest {
                               .execute(jtm);
 
     QueryMerge.type(Order.class)
-              .hasOne(Customer.class, "c")
+              .belongsTo(Customer.class, "c")
               .joinColumnOwningSide("CUSTOMER_ID")
               .populateProperty("customer")
               .execute(jtm, orders);

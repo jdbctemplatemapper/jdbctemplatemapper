@@ -19,6 +19,6 @@ package io.github.jdbctemplatemapper.querycount;
  * @author ajoseph
  * @param <T> the type
  */
-public interface IQueryCountFluent<T> extends IQueryCountType<T>, IQueryCountHasOne<T>,
+public interface IQueryCountFluent<T> extends IQueryCountType<T>, IQueryCountBelongsTo<T>,
     IQueryCountJoinColumnOwningSide<T>, IQueryCountWhere<T>, IQueryCountExecute<T> {
 }

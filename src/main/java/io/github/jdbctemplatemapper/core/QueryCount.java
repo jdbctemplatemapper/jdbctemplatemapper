@@ -14,8 +14,8 @@
 package io.github.jdbctemplatemapper.core;
 
 import org.springframework.util.Assert;
+import io.github.jdbctemplatemapper.querycount.IQueryCountBelongsTo;
 import io.github.jdbctemplatemapper.querycount.IQueryCountFluent;
-import io.github.jdbctemplatemapper.querycount.IQueryCountHasOne;
 import io.github.jdbctemplatemapper.querycount.IQueryCountJoinColumnOwningSide;
 import io.github.jdbctemplatemapper.querycount.IQueryCountType;
 import io.github.jdbctemplatemapper.querycount.IQueryCountWhere;
@@ -80,12 +80,12 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
   }
 
   /**
-   * The hasOne relationship.
+   * The belongsTo relationship.
    *
    * @param relatedType the related type
    * @return interface with the next methods in the chain
    */
-  public IQueryCountHasOne<T> hasOne(Class<?> relatedType) {
+  public IQueryCountBelongsTo<T> belongsTo(Class<?> relatedType) {
     Assert.notNull(relatedType, "relatedType cannot be null");
     this.relationshipType = RelationshipType.HAS_ONE;
     this.relatedType = relatedType;
@@ -93,13 +93,13 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
   }
 
   /**
-   * The hasOne relationship.
+   * The belongsTo relationship.
    *
    * @param relatedType the related type
    * @param tableAlias the table alias which can be used in where clause
    * @return interface with the next methods in the chain
    */
-  public IQueryCountHasOne<T> hasOne(Class<?> relatedType, String tableAlias) {
+  public IQueryCountBelongsTo<T> belongsTo(Class<?> relatedType, String tableAlias) {
     Assert.notNull(relatedType, "relatedType cannot be null");
     if (MapperUtils.isBlank(tableAlias)) {
       throw new IllegalArgumentException("tableAlias for type cannot be null or blank");
@@ -111,8 +111,8 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
   }
 
   /**
-   * Join column for hasOne relationship: The join column (the foreign key) is on the table of the
-   * owning model. Example: Order hasOne Customer. The join column(foreign key) will be on the table
+   * Join column for belongsTo relationship: The join column (the foreign key) is on the table of the
+   * owning model. Example: Order belongsTo Customer. The join column(foreign key) will be on the table
    * order (of the owning model). The join column should not have a table prefix.
    *
    * @param joinColumnOwningSide the join column on the owning side (with no table prefix)

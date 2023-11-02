@@ -112,7 +112,7 @@ class QueryValidator {
       if (relatedType != null && !relatedType.getName().equals(pd.getPropertyType().getName())) {
         throw new QueryException("property type conflict. property " + ownerType.getSimpleName()
             + "." + propertyName + " is of type " + pd.getPropertyType().getSimpleName()
-            + " while type for hasOne relationship is " + relatedType.getSimpleName());
+            + " while type for belongsTo relationship is " + relatedType.getSimpleName());
       }
     }
 

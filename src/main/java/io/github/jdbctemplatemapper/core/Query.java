@@ -25,9 +25,9 @@ import org.springframework.beans.BeanWrapper;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.util.Assert;
+import io.github.jdbctemplatemapper.query.IQueryBelongsTo;
 import io.github.jdbctemplatemapper.query.IQueryFluent;
 import io.github.jdbctemplatemapper.query.IQueryHasMany;
-import io.github.jdbctemplatemapper.query.IQueryHasOne;
 import io.github.jdbctemplatemapper.query.IQueryJoinColumnManySide;
 import io.github.jdbctemplatemapper.query.IQueryJoinColumnOwningSide;
 import io.github.jdbctemplatemapper.query.IQueryLimitOffsetClause;
@@ -39,7 +39,7 @@ import io.github.jdbctemplatemapper.query.IQueryType;
 import io.github.jdbctemplatemapper.query.IQueryWhere;
 
 /**
- * Fluent style queries for relationships hasOne, hasMany, hasMany through (many to many).
+ * Fluent style queries for relationships belongsTo, hasMany, hasMany through (many to many).
  *
  * <pre>
  * See <a href=
@@ -106,12 +106,12 @@ public class Query<T> implements IQueryFluent<T> {
   }
 
   /**
-   * The hasOne relationship.
+   * The belongsTo relationship.
    *
    * @param relatedType the related type
    * @return interface with the next methods in the chain
    */
-  public IQueryHasOne<T> hasOne(Class<?> relatedType) {
+  public IQueryBelongsTo<T> belongsTo(Class<?> relatedType) {
     Assert.notNull(relatedType, "relatedType cannot be null");
     this.relationshipType = RelationshipType.HAS_ONE;
     this.relatedType = relatedType;
@@ -119,13 +119,13 @@ public class Query<T> implements IQueryFluent<T> {
   }
 
   /**
-   * The hasOne relationship.
+   * The belongsTo relationship.
    *
    * @param relatedType the related type
    * @param tableAlias the table alias which can be used in where and orderBy clauses
    * @return interface with the next methods in the chain
    */
-  public IQueryHasOne<T> hasOne(Class<?> relatedType, String tableAlias) {
+  public IQueryBelongsTo<T> belongsTo(Class<?> relatedType, String tableAlias) {
     Assert.notNull(relatedType, "relatedType cannot be null");
     if (MapperUtils.isBlank(tableAlias)) {
       throw new IllegalArgumentException("tableAlias for type cannot be null or blank");
@@ -170,8 +170,8 @@ public class Query<T> implements IQueryFluent<T> {
   }
 
   /**
-   * Join column for hasOne relationship: The join column (the foreign key) is on the table of the
-   * owning model. Example: Order hasOne Customer. The join column(foreign key) will be on the table
+   * Join column for belongsTo relationship: The join column (the foreign key) is on the table of the
+   * owning model. Example: Order belongsTo Customer. The join column(foreign key) will be on the table
    * order (of the owning model). The join column should not have a table prefix.
    *
    * @param joinColumnOwningSide the join column on the owning side (with no table prefix)
@@ -241,7 +241,7 @@ public class Query<T> implements IQueryFluent<T> {
   /**
    * The relationship property that needs to be populated on the owning type. For hasMany() this
    * property has to be an initialized collection (cannot be null) and the generic type should match
-   * the hasMany related type. For hasOne this property has to be the same type as hasOne related
+   * the hasMany related type. For belongsTo this property has to be the same type as belongsTo related
    * type
    *
    * @param propertyName name of property that needs to be populated
@@ -273,7 +273,7 @@ public class Query<T> implements IQueryFluent<T> {
   }
 
   /**
-   * The SQL orderBy clause for the query. When querying relationships (hasOne, hasMany, hasMany
+   * The SQL orderBy clause for the query. When querying relationships (belongsTo, hasMany, hasMany
    * through) the orderBy can include columns from both owning and related tables.
    *
    * @param orderBy the orderBy clause.
@@ -465,7 +465,7 @@ public class Query<T> implements IQueryFluent<T> {
     }
 
     if (RelationshipType.HAS_ONE.equals(relationshipType)) {
-      sql += hasOneFromClause(ownerTypeTableMapping, relatedTypeTableMapping);
+      sql += belongsToFromClause(ownerTypeTableMapping, relatedTypeTableMapping);
     } else if (RelationshipType.HAS_MANY.equals(relationshipType)) {
       // joinColumn is on related table
       sql += hasManyFromClause(ownerTypeTableMapping, relatedTypeTableMapping);
@@ -482,7 +482,7 @@ public class Query<T> implements IQueryFluent<T> {
     return sql;
   }
 
-  String hasOneFromClause(TableMapping ownerTableMapping, TableMapping relatedTableMapping) {
+  String belongsToFromClause(TableMapping ownerTableMapping, TableMapping relatedTableMapping) {
     // joinColumn is on owner table
     String ownerTableStr =
         MapperUtils.tableStrForFrom(ownerTableAlias, ownerTableMapping.fullyQualifiedTableName());

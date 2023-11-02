@@ -34,9 +34,9 @@ public class QueryCountTest {
   }
 
   @Test
-  public void hasOne_count_success() {
+  public void belongsTo_count_success() {
     Integer count = QueryCount.type(Order.class)
-                              .hasOne(Customer.class)
+                              .belongsTo(Customer.class)
                               .joinColumnOwningSide("customer_id")
                               .where("orders.status = ?", "IN PROCESS")
                               .execute(jtm);
