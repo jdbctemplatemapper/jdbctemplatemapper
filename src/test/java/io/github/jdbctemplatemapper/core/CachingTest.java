@@ -59,13 +59,13 @@ public class CachingTest {
   }
 
   @Test
-  public void query_toOne_caching() {
+  public void query_hasOne_caching() {
     SimpleCache<String, String> cache = jtm.getQuerySqlCache();
     cache.clear();
 
     Query.type(Order.class)
-         .toOne(Customer.class)
-         .joinColumnTypeSide("customer_id")
+         .hasOne(Customer.class)
+         .joinColumnOwningSide("customer_id")
          .populateProperty("customer")
          .where("orders.status = ?", "IN PROCESS")
          .orderBy("orders.status    DESC")
@@ -74,8 +74,8 @@ public class CachingTest {
 
     // same query again
     Query.type(Order.class)
-         .toOne(Customer.class)
-         .joinColumnTypeSide("customer_id")
+         .hasOne(Customer.class)
+         .joinColumnOwningSide("customer_id")
          .populateProperty("customer")
          .where("orders.status = ?", "IN PROCESS")
          .orderBy("orders.status    DESC")
@@ -83,60 +83,60 @@ public class CachingTest {
     assertEquals(1, cache.getSize());
 
     Query.type(Order.class)
-         .toOne(Customer.class)
-         .joinColumnTypeSide("customer_id")
+         .hasOne(Customer.class)
+         .joinColumnOwningSide("customer_id")
          .populateProperty("customer")
          .orderBy("orders.status    DESC")
          .execute(jtm);
     assertEquals(1, cache.getSize());
 
     Query.type(Order.class)
-         .toOne(Customer.class)
-         .joinColumnTypeSide("customer_id")
+         .hasOne(Customer.class)
+         .joinColumnOwningSide("customer_id")
          .populateProperty("customer")
          .execute(jtm);
     assertEquals(1, cache.getSize());
 
     Query.type(Order.class, "o")
-         .toOne(Customer.class)
-         .joinColumnTypeSide("customer_id")
+         .hasOne(Customer.class)
+         .joinColumnOwningSide("customer_id")
          .populateProperty("customer")
          .execute(jtm);
     assertEquals(2, cache.getSize());
 
     Query.type(Order.class, "o")
-         .toOne(Customer.class)
-         .joinColumnTypeSide("customer_id")
+         .hasOne(Customer.class)
+         .joinColumnOwningSide("customer_id")
          .populateProperty("customer")
          .execute(jtm);
     assertEquals(2, cache.getSize());
 
 
     Query.type(Order.class)
-         .toOne(Customer.class, "c")
-         .joinColumnTypeSide("customer_id")
+         .hasOne(Customer.class, "c")
+         .joinColumnOwningSide("customer_id")
          .populateProperty("customer")
          .execute(jtm);
     assertEquals(3, cache.getSize());
 
     Query.type(Order.class)
-         .toOne(Customer.class, "c")
-         .joinColumnTypeSide("customer_id")
+         .hasOne(Customer.class, "c")
+         .joinColumnOwningSide("customer_id")
          .populateProperty("customer")
          .execute(jtm);
     assertEquals(3, cache.getSize());
 
     Query.type(Order.class, "o")
-         .toOne(Customer.class, "c")
-         .joinColumnTypeSide("customer_id")
+         .hasOne(Customer.class, "c")
+         .joinColumnOwningSide("customer_id")
          .populateProperty("customer")
          .execute(jtm);
     assertEquals(4, cache.getSize());
 
     // same query
     Query.type(Order.class, "o")
-         .toOne(Customer.class, "c")
-         .joinColumnTypeSide("customer_id")
+         .hasOne(Customer.class, "c")
+         .joinColumnOwningSide("customer_id")
          .populateProperty("customer")
          .execute(jtm);
     assertEquals(4, cache.getSize());
@@ -157,8 +157,8 @@ public class CachingTest {
     }
 
     Query.type(Order.class, "o")
-         .toOne(Customer.class, "c")
-         .joinColumnTypeSide("customer_id")
+         .hasOne(Customer.class, "c")
+         .joinColumnOwningSide("customer_id")
          .populateProperty("customer")
          .orderBy("o.order_id")
          .limitOffsetClause(limitOffsetClause)
@@ -166,8 +166,8 @@ public class CachingTest {
     assertEquals(4, cache.getSize());
 
     Query.type(Order.class, "o")
-         .toOne(Customer.class, "c")
-         .joinColumnTypeSide("customer_id")
+         .hasOne(Customer.class, "c")
+         .joinColumnOwningSide("customer_id")
          .populateProperty("customer")
          .orderBy("o.order_id")
          .limitOffsetClause(limitOffsetClause)
@@ -290,39 +290,39 @@ public class CachingTest {
   }
 
   @Test
-  public void queryCount_toOneCache_success() {
+  public void queryCount_hasOneCache_success() {
     SimpleCache<String, String> cache = jtm.getQueryCountSqlCache();
     cache.clear();
 
     QueryCount.type(Order.class)
-              .toOne(Customer.class)
-              .joinColumnTypeSide("customer_id")
+              .hasOne(Customer.class)
+              .joinColumnOwningSide("customer_id")
               .execute(jtm);
     assertEquals(1, cache.getSize());
 
     QueryCount.type(Order.class)
-              .toOne(Customer.class)
-              .joinColumnTypeSide("customer_id")
+              .hasOne(Customer.class)
+              .joinColumnOwningSide("customer_id")
               .where("orders.status = ?", "IN PROCESS")
               .execute(jtm);
     assertEquals(1, cache.getSize());
 
     QueryCount.type(Order.class)
-              .toOne(Customer.class, "c")
-              .joinColumnTypeSide("customer_id")
+              .hasOne(Customer.class, "c")
+              .joinColumnOwningSide("customer_id")
               .execute(jtm);
     assertEquals(2, cache.getSize());
 
     QueryCount.type(Order.class)
-              .toOne(Customer.class, "c")
-              .joinColumnTypeSide("customer_id")
+              .hasOne(Customer.class, "c")
+              .joinColumnOwningSide("customer_id")
               .execute(jtm);
     assertEquals(2, cache.getSize());
 
   }
 
   @Test
-  public void queryMerge_toOneCache_success() {
+  public void queryMerge_hasOneCache_success() {
     SimpleCache<String, String> cache = jtm.getQueryMergeSqlCache();
     cache.clear();
 
@@ -332,29 +332,29 @@ public class CachingTest {
                               .execute(jtm);
 
     QueryMerge.type(Order.class)
-              .toOne(Customer.class)
-              .joinColumnTypeSide("CUSTOMER_ID")
+              .hasOne(Customer.class)
+              .joinColumnOwningSide("CUSTOMER_ID")
               .populateProperty("customer")
               .execute(jtm, orders);
     assertEquals(1, cache.getSize());
 
     QueryMerge.type(Order.class)
-              .toOne(Customer.class)
-              .joinColumnTypeSide("CUSTOMER_ID")
+              .hasOne(Customer.class)
+              .joinColumnOwningSide("CUSTOMER_ID")
               .populateProperty("customer")
               .execute(jtm, orders);
     assertEquals(1, cache.getSize());
 
     QueryMerge.type(Order.class)
-              .toOne(Customer.class, "c")
-              .joinColumnTypeSide("CUSTOMER_ID")
+              .hasOne(Customer.class, "c")
+              .joinColumnOwningSide("CUSTOMER_ID")
               .populateProperty("customer")
               .execute(jtm, orders);
     assertEquals(2, cache.getSize());
 
     QueryMerge.type(Order.class)
-              .toOne(Customer.class, "c")
-              .joinColumnTypeSide("CUSTOMER_ID")
+              .hasOne(Customer.class, "c")
+              .joinColumnOwningSide("CUSTOMER_ID")
               .populateProperty("customer")
               .execute(jtm, orders);
     assertEquals(2, cache.getSize());

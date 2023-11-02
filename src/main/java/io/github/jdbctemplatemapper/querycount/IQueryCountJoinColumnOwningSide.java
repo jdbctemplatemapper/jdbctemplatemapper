@@ -11,7 +11,9 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.github.jdbctemplatemapper.querymerge;
+package io.github.jdbctemplatemapper.querycount;
+
+import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
 
 /**
  * interface with the next methods in the chain.
@@ -19,6 +21,8 @@ package io.github.jdbctemplatemapper.querymerge;
  * @author ajoseph
  * @param <T> the type
  */
-public interface IQueryMergeToOne<T> {
-  IQueryMergeJoinColumnTypeSide<T> joinColumnTypeSide(String joinColumnTypeSide);
+public interface IQueryCountJoinColumnOwningSide<T> {
+  IQueryCountWhere<T> where(String whereClause, Object... params);
+
+  Integer execute(JdbcTemplateMapper jdbcTemplateMapper);
 }

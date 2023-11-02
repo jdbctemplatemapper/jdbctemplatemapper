@@ -33,7 +33,7 @@ class QueryValidator {
   private QueryValidator() {}
 
   static void validate(JdbcTemplateMapper jtm, Class<?> ownerType, String relationshipType,
-      Class<?> relatedType, String joinColumnTypeSide, String joinColumnManySide,
+      Class<?> relatedType, String joinColumnOwningSide, String joinColumnManySide,
       String propertyName, String throughJoinTable, String throughOwnerTypeJoinColumn,
       String throughRelatedTypeJoinColumn) {
 
@@ -56,8 +56,8 @@ class QueryValidator {
             "Invalid property name " + propertyName + " for class " + ownerType.getSimpleName());
       }
 
-      if (RelationshipType.BELONGS_TO.equals(relationshipType)) {
-        validateHasOne(jtm, ownerType, relatedType, joinColumnTypeSide, propertyName,
+      if (RelationshipType.HAS_ONE.equals(relationshipType)) {
+        validateHasOne(jtm, ownerType, relatedType, joinColumnOwningSide, propertyName,
             bwOwnerModel);
       } else if (RelationshipType.HAS_MANY.equals(relationshipType)) {
         validateHasMany(jtm, ownerType, relatedType, joinColumnManySide, propertyName,
@@ -70,7 +70,7 @@ class QueryValidator {
   }
 
   static void validateQueryCount(JdbcTemplateMapper jtm, Class<?> ownerType,
-      String relationshipType, Class<?> relatedType, String joinColumnTypeSide) {
+      String relationshipType, Class<?> relatedType, String joinColumnOwningSide) {
 
     if (jtm == null) {
       throw new QueryException("JdbcTemplateMapper cannot be null");
@@ -85,9 +85,9 @@ class QueryValidator {
     }
 
     if (relatedType != null && relationshipType != null) {
-      if (RelationshipType.BELONGS_TO.equals(relationshipType)) {
+      if (RelationshipType.HAS_ONE.equals(relationshipType)) {
         BeanWrapper bwOwnerModel = PropertyAccessorFactory.forBeanPropertyAccess(ownerModel);
-        validateHasOne(jtm, ownerType, relatedType, joinColumnTypeSide, null, bwOwnerModel);
+        validateHasOne(jtm, ownerType, relatedType, joinColumnOwningSide, null, bwOwnerModel);
       }
     }
   }
@@ -104,7 +104,7 @@ class QueryValidator {
   }
 
   private static void validateHasOne(JdbcTemplateMapper jtm, Class<?> ownerType,
-      Class<?> relatedType, String joinColumnTypeSide, String propertyName,
+      Class<?> relatedType, String joinColumnOwningSide, String propertyName,
       BeanWrapper bwOwnerModel) {
 
     if (propertyName != null) {
@@ -112,23 +112,23 @@ class QueryValidator {
       if (relatedType != null && !relatedType.getName().equals(pd.getPropertyType().getName())) {
         throw new QueryException("property type conflict. property " + ownerType.getSimpleName()
             + "." + propertyName + " is of type " + pd.getPropertyType().getSimpleName()
-            + " while type for toOne relationship is " + relatedType.getSimpleName());
+            + " while type for hasOne relationship is " + relatedType.getSimpleName());
       }
     }
 
-    if (joinColumnTypeSide.contains(".")) {
-      throw new QueryException("Invalid joinColumnTypeSide. It should have no table prefix");
+    if (joinColumnOwningSide.contains(".")) {
+      throw new QueryException("Invalid joinColumnOwningSide. It should have no table prefix");
     }
 
     TableMapping ownerTypeTableMapping = jtm.getTableMapping(ownerType);
     TableMapping relatedTypeTableMapping = jtm.getTableMapping(relatedType);
     String joinColumnPropertyName =
-        ownerTypeTableMapping.getPropertyName(MapperUtils.toLowerCase(joinColumnTypeSide));
+        ownerTypeTableMapping.getPropertyName(MapperUtils.toLowerCase(joinColumnOwningSide));
 
     if (joinColumnPropertyName == null) {
-      throw new QueryException("Invalid join column " + joinColumnTypeSide + " . Table "
+      throw new QueryException("Invalid join column " + joinColumnOwningSide + " . Table "
           + ownerTypeTableMapping.getTableName() + " for class " + ownerType.getSimpleName()
-          + " either does not have column " + joinColumnTypeSide
+          + " either does not have column " + joinColumnOwningSide
           + " or the column has not been mapped in the class.");
     }
 
@@ -137,7 +137,7 @@ class QueryValidator {
         relatedTypeTableMapping.getIdPropertyMapping().getPropertyType();
 
     if (!joinColumnPropertyType.getName().equals(relatedTypeIdPropertyType.getName())) {
-      throw new QueryException("Property type mismatch. join column " + joinColumnTypeSide
+      throw new QueryException("Property type mismatch. join column " + joinColumnOwningSide
           + " property " + ownerType.getSimpleName() + "." + joinColumnPropertyName + " is of type "
           + joinColumnPropertyType.getSimpleName() + " but the property being joined to "
           + relatedType.getSimpleName() + "." + relatedTypeTableMapping.getIdPropertyName()

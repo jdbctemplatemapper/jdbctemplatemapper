@@ -23,9 +23,9 @@ import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
  */
 public interface IQueryCountType<T> {
 
-  IQueryCountToOne<T> toOne(Class<?> relatedType);
+  IQueryCountHasOne<T> hasOne(Class<?> relatedType);
 
-  IQueryCountToOne<T> toOne(Class<?> relatedType, String tableAlias);
+  IQueryCountHasOne<T> hasOne(Class<?> relatedType, String tableAlias);
 
   IQueryCountWhere<T> where(String whereClause, Object... params);
 

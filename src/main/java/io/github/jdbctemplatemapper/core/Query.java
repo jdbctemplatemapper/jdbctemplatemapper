@@ -27,19 +27,19 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.util.Assert;
 import io.github.jdbctemplatemapper.query.IQueryFluent;
 import io.github.jdbctemplatemapper.query.IQueryHasMany;
+import io.github.jdbctemplatemapper.query.IQueryHasOne;
 import io.github.jdbctemplatemapper.query.IQueryJoinColumnManySide;
-import io.github.jdbctemplatemapper.query.IQueryJoinColumnTypeSide;
+import io.github.jdbctemplatemapper.query.IQueryJoinColumnOwningSide;
 import io.github.jdbctemplatemapper.query.IQueryLimitOffsetClause;
 import io.github.jdbctemplatemapper.query.IQueryOrderBy;
 import io.github.jdbctemplatemapper.query.IQueryPopulateProperty;
 import io.github.jdbctemplatemapper.query.IQueryThroughJoinColumns;
 import io.github.jdbctemplatemapper.query.IQueryThroughJoinTable;
-import io.github.jdbctemplatemapper.query.IQueryToOne;
 import io.github.jdbctemplatemapper.query.IQueryType;
 import io.github.jdbctemplatemapper.query.IQueryWhere;
 
 /**
- * Fluent style queries for relationships hasOne, hasMany, hasMany through (many to many), toOne .
+ * Fluent style queries for relationships hasOne, hasMany, hasMany through (many to many).
  *
  * <pre>
  * See <a href=
@@ -50,8 +50,8 @@ import io.github.jdbctemplatemapper.query.IQueryWhere;
  * @author ajoseph
  */
 public class Query<T> implements IQueryFluent<T> {
-  private Class<T> type;
-  private String typeTableAlias;
+  private Class<T> ownerType;
+  private String ownerTableAlias;
   private String whereClause;
   private Object[] whereParams;
   private String orderBy;
@@ -61,20 +61,20 @@ public class Query<T> implements IQueryFluent<T> {
   private Class<?> relatedType;
   private String relatedTableAlias;
   private String propertyName; // propertyName on main class that needs to be populated
-  private String joinColumnTypeSide;
+  private String joinColumnOwningSide;
   private String joinColumnManySide;
 
   private String throughJoinTable;
-  private String throughTypeJoinColumn;
+  private String throughOwnerTypeJoinColumn;
   private String throughRelatedTypeJoinColumn;
 
   private Query(Class<T> type) {
-    this.type = type;
+    this.ownerType = type;
   }
 
   private Query(Class<T> type, String tableAlias) {
-    this.type = type;
-    this.typeTableAlias = tableAlias;
+    this.ownerType = type;
+    this.ownerTableAlias = tableAlias;
   }
 
   /**
@@ -104,23 +104,38 @@ public class Query<T> implements IQueryFluent<T> {
     }
     return new Query<T>(type, tableAlias);
   }
-  
-  
+
   /**
    * The hasOne relationship.
    *
    * @param relatedType the related type
    * @return interface with the next methods in the chain
    */
-  public IQueryToOne<T> toOne(Class<?> relatedType) {
+  public IQueryHasOne<T> hasOne(Class<?> relatedType) {
     Assert.notNull(relatedType, "relatedType cannot be null");
-    this.relationshipType = RelationshipType.BELONGS_TO;
+    this.relationshipType = RelationshipType.HAS_ONE;
     this.relatedType = relatedType;
     return this;
   }
-  
 
-  
+  /**
+   * The hasOne relationship.
+   *
+   * @param relatedType the related type
+   * @param tableAlias the table alias which can be used in where and orderBy clauses
+   * @return interface with the next methods in the chain
+   */
+  public IQueryHasOne<T> hasOne(Class<?> relatedType, String tableAlias) {
+    Assert.notNull(relatedType, "relatedType cannot be null");
+    if (MapperUtils.isBlank(tableAlias)) {
+      throw new IllegalArgumentException("tableAlias for type cannot be null or blank");
+    }
+    this.relationshipType = RelationshipType.HAS_ONE;
+    this.relatedType = relatedType;
+    this.relatedTableAlias = tableAlias;
+    return this;
+  }
+
   /**
    * The hasMany relationship. The 'populateProperty' for hasMany relationship should be a
    * collection and has to be initialized.
@@ -153,41 +168,23 @@ public class Query<T> implements IQueryFluent<T> {
     this.relatedTableAlias = tableAlias;
     return this;
   }
-  
-
-  /**
-   * The toOne relationship.
-   *
-   * @param relatedType the related type
-   * @param tableAlias the table alias which can be used in where and orderBy clauses
-   * @return interface with the next methods in the chain
-   */
-  public IQueryToOne<T> toOne(Class<?> relatedType, String tableAlias) {
-    Assert.notNull(relatedType, "relatedType cannot be null");
-    if (MapperUtils.isBlank(tableAlias)) {
-      throw new IllegalArgumentException("tableAlias for type cannot be null or blank");
-    }
-    this.relationshipType = RelationshipType.BELONGS_TO;
-    this.relatedType = relatedType;
-    this.relatedTableAlias = tableAlias;
-    return this;
-  }
 
   /**
    * Join column for hasOne relationship: The join column (the foreign key) is on the table of the
-   * One side. The join column should not have a table prefix.
+   * owning model. Example: Order hasOne Customer. The join column(foreign key) will be on the table
+   * order (of the owning model). The join column should not have a table prefix.
    *
-   * @param joinColumnTypeSide the join column on the one side (with no table prefix)
+   * @param joinColumnOwningSide the join column on the owning side (with no table prefix)
    * @return interface with the next methods in the chain
    */
-  public IQueryJoinColumnTypeSide<T> joinColumnTypeSide(String joinColumnTypeSide) {
-    if (MapperUtils.isBlank(joinColumnTypeSide)) {
-      throw new IllegalArgumentException("joinColumnTypeSide cannot be null or blank");
+  public IQueryJoinColumnOwningSide<T> joinColumnOwningSide(String joinColumnOwningSide) {
+    if (MapperUtils.isBlank(joinColumnOwningSide)) {
+      throw new IllegalArgumentException("joinColumnOwningSide cannot be null or blank");
     }
-    this.joinColumnTypeSide = MapperUtils.toLowerCase(joinColumnTypeSide.trim());
+    this.joinColumnOwningSide = MapperUtils.toLowerCase(joinColumnOwningSide.trim());
     return this;
   }
-  
+
   /**
    * Join column for hasMany relationship: The join column (the foreign key) is on the table of the
    * many side. Example: Order hasMany OrderLine. The join column will be on the table order_line
@@ -236,7 +233,7 @@ public class Query<T> implements IQueryFluent<T> {
       throw new IllegalArgumentException(
           "throughJoinColumns() relatedTypeJoinColumn cannot be null or blank");
     }
-    this.throughTypeJoinColumn = ownerTypeJoinColumn;
+    this.throughOwnerTypeJoinColumn = ownerTypeJoinColumn;
     this.throughRelatedTypeJoinColumn = relatedTypeJoinColumn;
     return this;
   }
@@ -244,7 +241,7 @@ public class Query<T> implements IQueryFluent<T> {
   /**
    * The relationship property that needs to be populated on the owning type. For hasMany() this
    * property has to be an initialized collection (cannot be null) and the generic type should match
-   * the hasMany related type. For toOne this property has to be the same type as toOne related
+   * the hasMany related type. For hasOne this property has to be the same type as hasOne related
    * type
    *
    * @param propertyName name of property that needs to be populated
@@ -276,7 +273,7 @@ public class Query<T> implements IQueryFluent<T> {
   }
 
   /**
-   * The SQL orderBy clause for the query. When querying relationships (toOne, hasMany, hasMany
+   * The SQL orderBy clause for the query. When querying relationships (hasOne, hasMany, hasMany
    * through) the orderBy can include columns from both owning and related tables.
    *
    * @param orderBy the orderBy clause.
@@ -320,11 +317,11 @@ public class Query<T> implements IQueryFluent<T> {
   public List<T> execute(JdbcTemplateMapper jdbcTemplateMapper) {
     Assert.notNull(jdbcTemplateMapper, "jdbcTemplateMapper cannot be null");
 
-    TableMapping ownerTypeTableMapping = jdbcTemplateMapper.getTableMapping(type);
+    TableMapping ownerTypeTableMapping = jdbcTemplateMapper.getTableMapping(ownerType);
     String ownerColumnPrefix =
-        MapperUtils.columnPrefix(typeTableAlias, ownerTypeTableMapping.getTableName());
+        MapperUtils.columnPrefix(ownerTableAlias, ownerTypeTableMapping.getTableName());
 
-    SelectMapper<?> ownerTypeSelectMapper = jdbcTemplateMapper.getSelectMapperInternal(type,
+    SelectMapper<?> ownerTypeSelectMapper = jdbcTemplateMapper.getSelectMapperInternal(ownerType,
         ownerColumnPrefix, MapperUtils.OWNER_COL_ALIAS_PREFIX);
 
     TableMapping relatedTypeTableMapping =
@@ -340,9 +337,9 @@ public class Query<T> implements IQueryFluent<T> {
     String cacheKey = getCacheKey();
     String sql = jdbcTemplateMapper.getQuerySqlCache().get(cacheKey);
     if (sql == null) {
-      QueryValidator.validate(jdbcTemplateMapper, type, relationshipType, relatedType,
-          joinColumnTypeSide, joinColumnManySide, propertyName, throughJoinTable,
-          throughTypeJoinColumn, throughRelatedTypeJoinColumn);
+      QueryValidator.validate(jdbcTemplateMapper, ownerType, relationshipType, relatedType,
+          joinColumnOwningSide, joinColumnManySide, propertyName, throughJoinTable,
+          throughOwnerTypeJoinColumn, throughRelatedTypeJoinColumn);
 
       // does not include where,orderBy,offsetLimit
       sql = generatePartialQuerySql(jdbcTemplateMapper);
@@ -380,7 +377,7 @@ public class Query<T> implements IQueryFluent<T> {
                 idToBeanWrapperRelatedModelMap, false);
             Object relatedModel =
                 bwRelatedModel == null ? null : bwRelatedModel.getWrappedInstance();
-            if (RelationshipType.BELONGS_TO.equals(relationshipType)) {
+            if (RelationshipType.HAS_ONE.equals(relationshipType)) {
               bwOwnerModel.setPropertyValue(propertyName, relatedModel);
             } else if (RelationshipType.HAS_MANY.equals(relationshipType)
                 || RelationshipType.HAS_MANY_THROUGH.equals(relationshipType)) {
@@ -441,13 +438,13 @@ public class Query<T> implements IQueryFluent<T> {
   // The sql generated does not include where, orderBy, offsetLimit
   private String generatePartialQuerySql(JdbcTemplateMapper jtm) {
 
-    TableMapping typeTableMapping = jtm.getTableMapping(type);
+    TableMapping ownerTypeTableMapping = jtm.getTableMapping(ownerType);
 
-    String typeColumnPrefix =
-        MapperUtils.columnPrefix(typeTableAlias, typeTableMapping.getTableName());
+    String ownerColumnPrefix =
+        MapperUtils.columnPrefix(ownerTableAlias, ownerTypeTableMapping.getTableName());
 
-    SelectMapper<?> typeSelectMapper = jtm.getSelectMapperInternal(type,
-        typeColumnPrefix, MapperUtils.OWNER_COL_ALIAS_PREFIX);
+    SelectMapper<?> ownerTypeSelectMapper = jtm.getSelectMapperInternal(ownerType,
+        ownerColumnPrefix, MapperUtils.OWNER_COL_ALIAS_PREFIX);
 
     TableMapping relatedTypeTableMapping =
         relatedType == null ? null : jtm.getTableMapping(relatedType);
@@ -462,98 +459,98 @@ public class Query<T> implements IQueryFluent<T> {
         : jtm.getSelectMapperInternal(relatedType, relatedColumnPrefix,
             MapperUtils.RELATED_COL_ALIAS_PREFIX);
 
-    String sql = "SELECT " + typeSelectMapper.getColumnsSql();
+    String sql = "SELECT " + ownerTypeSelectMapper.getColumnsSql();
     if (relatedType != null) {
       sql += "," + relatedTypeSelectMapper.getColumnsSql();
     }
 
-    if (RelationshipType.BELONGS_TO.equals(relationshipType)) {
-      sql += toOneFromClause(typeTableMapping, relatedTypeTableMapping);
+    if (RelationshipType.HAS_ONE.equals(relationshipType)) {
+      sql += hasOneFromClause(ownerTypeTableMapping, relatedTypeTableMapping);
     } else if (RelationshipType.HAS_MANY.equals(relationshipType)) {
       // joinColumn is on related table
-      sql += hasManyFromClause(typeTableMapping, relatedTypeTableMapping);
+      sql += hasManyFromClause(ownerTypeTableMapping, relatedTypeTableMapping);
     } else if (RelationshipType.HAS_MANY_THROUGH.equals(relationshipType)) {
-      sql += hasManyThroughFromClause(typeTableMapping, relatedTypeTableMapping);
+      sql += hasManyThroughFromClause(ownerTypeTableMapping, relatedTypeTableMapping);
     } else {
-      String typeTableStr =
-          typeTableAlias == null ? typeTableMapping.fullyQualifiedTableName()
-              : typeTableMapping.fullyQualifiedTableName() + " " + typeTableAlias;
+      String ownerTableStr =
+          ownerTableAlias == null ? ownerTypeTableMapping.fullyQualifiedTableName()
+              : ownerTypeTableMapping.fullyQualifiedTableName() + " " + ownerTableAlias;
 
-      sql += " FROM " + typeTableStr;
+      sql += " FROM " + ownerTableStr;
     }
 
     return sql;
   }
 
-  String hasManyFromClause(TableMapping typeTableMapping, TableMapping relatedTableMapping) {
-    String typeTableStr =
-        MapperUtils.tableStrForFrom(typeTableAlias, typeTableMapping.fullyQualifiedTableName());
+  String hasOneFromClause(TableMapping ownerTableMapping, TableMapping relatedTableMapping) {
+    // joinColumn is on owner table
+    String ownerTableStr =
+        MapperUtils.tableStrForFrom(ownerTableAlias, ownerTableMapping.fullyQualifiedTableName());
 
-    String str = " FROM " + typeTableStr;
-    if (relatedType != null) {
-      String relatedTableStr = MapperUtils.tableStrForFrom(relatedTableAlias,
-          relatedTableMapping.fullyQualifiedTableName());
-
-      String onTypePrefix =
-          MapperUtils.columnPrefix(typeTableAlias, typeTableMapping.getTableName());
-
-      String onRelatedPrefix =
-          MapperUtils.columnPrefix(relatedTableAlias, relatedTableMapping.getTableName());
-
-      str += " LEFT JOIN " + relatedTableStr + " on " + onTypePrefix + "."
-          + typeTableMapping.getIdColumnName() + " = " + onRelatedPrefix + "."
-          + joinColumnManySide;
-    }
-
-    return str;
-  }
-  
-  String toOneFromClause(TableMapping typeTableMapping, TableMapping relatedTableMapping) {
-    // joinColumn is on type table
-    String typeTableStr =
-        MapperUtils.tableStrForFrom(typeTableAlias, typeTableMapping.fullyQualifiedTableName());
-
-    String str = " FROM " + typeTableStr;
+    String str = " FROM " + ownerTableStr;
 
     if (relatedType != null) {
       String relatedTableStr = MapperUtils.tableStrForFrom(relatedTableAlias,
           relatedTableMapping.fullyQualifiedTableName());
 
-      String onTypePrefix =
-          MapperUtils.columnPrefix(typeTableAlias, typeTableMapping.getTableName());
+      String onOwnerPrefix =
+          MapperUtils.columnPrefix(ownerTableAlias, ownerTableMapping.getTableName());
 
       String onRelatedPrefix =
           MapperUtils.columnPrefix(relatedTableAlias, relatedTableMapping.getTableName());
 
-      str += " LEFT JOIN " + relatedTableStr + " on " + onTypePrefix + "." + joinColumnTypeSide
+      str += " LEFT JOIN " + relatedTableStr + " on " + onOwnerPrefix + "." + joinColumnOwningSide
           + " = " + onRelatedPrefix + "." + relatedTableMapping.getIdColumnName();
     }
     return str;
   }
 
-  String hasManyThroughFromClause(TableMapping typeTableMapping,
+  String hasManyFromClause(TableMapping ownerTableMapping, TableMapping relatedTableMapping) {
+    String ownerTableStr =
+        MapperUtils.tableStrForFrom(ownerTableAlias, ownerTableMapping.fullyQualifiedTableName());
+
+    String str = " FROM " + ownerTableStr;
+    if (relatedType != null) {
+      String relatedTableStr = MapperUtils.tableStrForFrom(relatedTableAlias,
+          relatedTableMapping.fullyQualifiedTableName());
+
+      String onOwnerPrefix =
+          MapperUtils.columnPrefix(ownerTableAlias, ownerTableMapping.getTableName());
+
+      String onRelatedPrefix =
+          MapperUtils.columnPrefix(relatedTableAlias, relatedTableMapping.getTableName());
+
+      str += " LEFT JOIN " + relatedTableStr + " on " + onOwnerPrefix + "."
+          + ownerTableMapping.getIdColumnName() + " = " + onRelatedPrefix + "."
+          + joinColumnManySide;
+    }
+
+    return str;
+  }
+
+  String hasManyThroughFromClause(TableMapping ownerTableMapping,
       TableMapping relatedTableMapping) {
 
-    String typeTableStr =
-        MapperUtils.tableStrForFrom(typeTableAlias, typeTableMapping.fullyQualifiedTableName());
+    String ownerTableStr =
+        MapperUtils.tableStrForFrom(ownerTableAlias, ownerTableMapping.fullyQualifiedTableName());
 
-    String str = " FROM " + typeTableStr;
+    String str = " FROM " + ownerTableStr;
 
     if (relatedType != null) {
       String relatedTableStr = MapperUtils.tableStrForFrom(relatedTableAlias,
           relatedTableMapping.fullyQualifiedTableName());
 
-      String onTypePrefix =
-          MapperUtils.columnPrefix(typeTableAlias, typeTableMapping.getTableName());
+      String onOwnerPrefix =
+          MapperUtils.columnPrefix(ownerTableAlias, ownerTableMapping.getTableName());
 
       String onRelatedPrefix =
           MapperUtils.columnPrefix(relatedTableAlias, relatedTableMapping.getTableName());
 
       str += " LEFT JOIN "
           + MapperUtils.getFullyQualifiedTableNameForThroughJoinTable(throughJoinTable,
-              typeTableMapping)
-          + " on " + onTypePrefix + "." + typeTableMapping.getIdColumnName() + " = "
-          + MapperUtils.getTableNameOnly(throughJoinTable) + "." + throughTypeJoinColumn
+              ownerTableMapping)
+          + " on " + onOwnerPrefix + "." + ownerTableMapping.getIdColumnName() + " = "
+          + MapperUtils.getTableNameOnly(throughJoinTable) + "." + throughOwnerTypeJoinColumn
           + " LEFT JOIN " + relatedTableStr + " on "
           + MapperUtils.getTableNameOnly(throughJoinTable) + "." + throughRelatedTypeJoinColumn
           + " = " + onRelatedPrefix + "." + relatedTableMapping.getIdColumnName();
@@ -564,16 +561,15 @@ public class Query<T> implements IQueryFluent<T> {
   String getCacheKey() {
     // @formatter:off
     return String.join("-", 
-        type.getName(),
-        typeTableAlias,
+        ownerType.getName(),
+        ownerTableAlias,
         relatedType == null ? null : relatedType.getName(),
         relatedTableAlias,
         relationshipType,
-        joinColumnTypeSide, 
-        joinColumnManySide,
-        joinColumnTypeSide,
+        joinColumnOwningSide, 
+        joinColumnManySide, 
         throughJoinTable, 
-        throughTypeJoinColumn,
+        throughOwnerTypeJoinColumn,
         throughRelatedTypeJoinColumn,
         propertyName);
     // @formatter:on

@@ -34,10 +34,10 @@ public class QueryCountTest {
   }
 
   @Test
-  public void toOne_count_success() {
+  public void hasOne_count_success() {
     Integer count = QueryCount.type(Order.class)
-                              .toOne(Customer.class)
-                              .joinColumnTypeSide("customer_id")
+                              .hasOne(Customer.class)
+                              .joinColumnOwningSide("customer_id")
                               .where("orders.status = ?", "IN PROCESS")
                               .execute(jtm);
 
