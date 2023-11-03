@@ -200,7 +200,7 @@ public class Query<T> implements IQueryFluent<T> {
    */
   public IQueryJoinColumnTypeSide<T> joinColumnTypeSide(String joinColumnTypeSide) {
     if (MapperUtils.isBlank(joinColumnTypeSide)) {
-      throw new IllegalArgumentException("joinColumnOwningSide cannot be null or blank");
+      throw new IllegalArgumentException("joinColumnTypeSide cannot be null or blank");
     }
     this.joinColumnTypeSide = MapperUtils.toLowerCase(joinColumnTypeSide.trim());
     return this;

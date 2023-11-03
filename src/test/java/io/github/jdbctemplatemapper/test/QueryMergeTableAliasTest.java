@@ -35,7 +35,7 @@ public class QueryMergeTableAliasTest {
 
     QueryMerge.type(Order.class)
               .hasOne(Customer.class, "c")
-              .joinColumnOwningSide("CUSTOMER_ID")
+              .joinColumnTypeSide("CUSTOMER_ID")
               .populateProperty("customer")
               .execute(jtm, orders);
 
