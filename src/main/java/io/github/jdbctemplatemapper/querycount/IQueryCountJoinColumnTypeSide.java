@@ -11,16 +11,18 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.github.jdbctemplatemapper.query;
+package io.github.jdbctemplatemapper.querycount;
+
+import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
 
 /**
- * The fluent style interface for Query.
+ * interface with the next methods in the chain.
  *
  * @author ajoseph
  * @param <T> the type
  */
-public interface IQueryFluent<T> extends IQueryType<T>, IQueryHasMany<T>, IQueryHasOne<T>,
-    IQueryJoinColumnOwningSide<T>, IQueryJoinColumnTypeSide<T>, IQueryJoinColumnManySide<T>,
-    IQueryThroughJoinTable<T>, IQueryThroughJoinColumns<T>, IQueryPopulateProperty<T>,
-    IQueryWhere<T>, IQueryOrderBy<T>, IQueryLimitOffsetClause<T>, IQueryExecute<T> {
+public interface IQueryCountJoinColumnTypeSide<T> {
+  IQueryCountWhere<T> where(String whereClause, Object... params);
+
+  Integer execute(JdbcTemplateMapper jdbcTemplateMapper);
 }

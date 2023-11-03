@@ -185,7 +185,7 @@ public class SelectMapper<T> {
     try {
       TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
       BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
-      // need this when jdbcUtils cannot convert 
+      // need this when jdbcUtils cannot convert
       bw.setConversionService(conversionService);
 
       ResultSetMetaData rsMetaData = rs.getMetaData();

@@ -20,5 +20,8 @@ package io.github.jdbctemplatemapper.querycount;
  * @param <T> the type
  */
 public interface IQueryCountHasOne<T> {
+  @Deprecated
   IQueryCountJoinColumnOwningSide<T> joinColumnOwningSide(String joinColumnOwningSide);
+
+  IQueryCountJoinColumnTypeSide<T> joinColumnTypeSide(String joinColumnTypeSide);
 }

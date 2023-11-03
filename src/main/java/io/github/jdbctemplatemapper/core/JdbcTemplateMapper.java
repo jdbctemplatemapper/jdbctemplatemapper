@@ -52,9 +52,9 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * @author ajoseph
  */
 public final class JdbcTemplateMapper {
-  
+
   private static final int CACHEABLE_UPDATE_PROPERTIES_COUNT = 3;
-  
+
   private final JdbcTemplate jdbcTemplate;
   private final NamedParameterJdbcTemplate npJdbcTemplate;
 

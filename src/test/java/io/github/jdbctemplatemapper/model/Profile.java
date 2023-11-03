@@ -10,7 +10,7 @@ public class Profile {
   private Integer id;
   @Column
   private String address;
-  
+
   private Person person;
 
   public Integer getId() {
@@ -36,6 +36,6 @@ public class Profile {
   public void setPerson(Person person) {
     this.person = person;
   }
-  
-  
+
+
 }
