@@ -356,8 +356,8 @@ List<Order> orders =
 List<Order> orders = 
   Query.type(Order.class) // type class
        .hasOne(Customer.class) // related Class
-       .joinColumnTypeSide("customer_id") // hasOne() join column is on type side table. No table prefixes.
-       .populateProperty("customer") // property on type class to populate. Its type should match related class
+       .joinColumnTypeSide("customer_id") // hasOne() join column is on type (Order) side table. No table prefixes.
+       .populateProperty("customer") // property on type class to populate. The properties class should match related class
        .where("orders.status = ?", "COMPLETE") 
        .orderBy("orders.id DESC, customer.id")  // type and related table columns can be used
        .execute(jdbcTemplateMapper);
@@ -367,7 +367,7 @@ List<Order> orders =
   Query.type(Order.class) 
        .hasMany(OrderLine.class) // related class
        .joinColumnManySide("order_id") // hasMany() join column is on the many side table. No table prefixes
-       .populateProperty("orderLines") // has to be an initialized collection and its generic type should match related class
+       .populateProperty("orderLines") // has to be an initialized collection and its generic class should match related class
        .where("orders.status = ?", "COMPLETE")
        .orderBy("orders.id, order_line.id")
        .execute(jdbcTemplateMapper); // execute with jdbcTemplateMapper   
