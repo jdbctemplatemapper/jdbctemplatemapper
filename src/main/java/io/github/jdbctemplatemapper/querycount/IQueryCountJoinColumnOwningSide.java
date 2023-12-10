@@ -18,9 +18,12 @@ import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
 /**
  * interface with the next methods in the chain.
  *
+ * @deprecated as of 2.6.0 Use IQueryCountJoinColumnTypeSide instead.
+ *
  * @author ajoseph
  * @param <T> the type
  */
+@Deprecated
 public interface IQueryCountJoinColumnOwningSide<T> {
   IQueryCountWhere<T> where(String whereClause, Object... params);
 

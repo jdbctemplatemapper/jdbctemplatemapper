@@ -116,7 +116,7 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
    * owning model. Example: Order hasOne Customer. The join column(foreign key) will be on the table
    * order (of the owning model). The join column should not have a table prefix.
    *
-   * @deprecated as of 2.5.1 Use joinColumnTypeSide() instead
+   * @deprecated as of 2.6.0 Use joinColumnTypeSide() instead
    * @param joinColumnOwningSide the join column on the owning side (with no table prefix)
    * @return interface with the next methods in the chain
    */

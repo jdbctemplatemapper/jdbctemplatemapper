@@ -16,9 +16,12 @@ package io.github.jdbctemplatemapper.query;
 /**
  * interface with the next methods in the chain.
  *
+ * @deprecated as of 2.6.0 Use IQueryJoinColumnTypeSide instead.
+ * 
  * @author ajoseph
  * @param <T> the type
  */
+@Deprecated
 public interface IQueryJoinColumnOwningSide<T> {
   IQueryPopulateProperty<T> populateProperty(String propertyName);
 }

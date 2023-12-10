@@ -16,9 +16,13 @@ package io.github.jdbctemplatemapper.querymerge;
 /**
  * interface with the next methods in the chain.
  *
+ * @deprecated as of 2.6.0 Use IQueryMergeJoinColumnTypeSide instead.
+ *
  * @author ajoseph
  * @param <T> the type
  */
+
+@Deprecated
 public interface IQueryMergeJoinColumnOwningSide<T> {
   IQueryMergePopulateProperty<T> populateProperty(String propertyName);
 }

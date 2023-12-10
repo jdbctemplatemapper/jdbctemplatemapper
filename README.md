@@ -75,7 +75,7 @@
   <dependency>
     <groupId>io.github.jdbctemplatemapper</groupId>
     <artifactId>jdbctemplatemapper</artifactId>
-    <version>2.5.0</version>
+    <version>2.6.0</version>
  </dependency>
  ```
  
@@ -87,7 +87,7 @@ JdbcTemplateMapper should be prepared in a Spring application context and given 
 
 See an example of JdbcTemplateMapper configuration used in an application [here](https://github.com/jdbctemplatemapper/using-spring-jdbctemplate-with-jdbctemplatemapper/blob/master/src/test/java/io/github/ajoseph88/jdbctemplatemapper/config/JdbcTemplateMapperConfig.java).
 
-Depending on the versions of the database/driver changes may be required for the properties.
+Depending on the versions of the database/driver, changes may be required for the properties.
 
 **PostgreSQL**
 
@@ -97,7 +97,6 @@ spring.datasource.jdbc-url=jdbc:postgresql://HOST:PORT/THE_DATABASE_NAME
 spring.datasource.username=username
 spring.datasource.password=password
 spring.datasource.driver-class-name=org.postgresql.Driver
-
 
   // DataSource properties are read from application.properties.
   @Bean
@@ -130,7 +129,6 @@ spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
   public DataSource sqlDataSource() {
     return DataSourceBuilder.create().build();
   }
-
 
  @Bean
   public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
