@@ -42,7 +42,7 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * JdbcTemplateMapper caches Table meta-data and SQL.
  * 
  * <b> Note: An instance of JdbcTemplateMapper is thread safe once instantiated.</b>
- *  
+ * 
  * <pre>
  * See <a href=
  * "https://github.com/jdbctemplatemapper/jdbctemplatemapper#jdbctemplatemapper">JdbcTemplateMapper documentation</a> 
@@ -52,6 +52,8 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
  * @author ajoseph
  */
 public final class JdbcTemplateMapper {
+
+  private static final int CACHEABLE_UPDATE_PROPERTIES_COUNT = 3;
 
   private final JdbcTemplate jdbcTemplate;
   private final NamedParameterJdbcTemplate npJdbcTemplate;
@@ -83,18 +85,18 @@ public final class JdbcTemplateMapper {
   // Map key - see Query.getCacheKey()
   // value - the partial sql.
   private SimpleCache<String, String> querySqlCache = new SimpleCache<>(1000);
-  
+
   // QueryMerge sql cache
   // Map key - see QueryMerge.getCacheKey()
   // value - the partial sql.
   private SimpleCache<String, String> queryMergeSqlCache = new SimpleCache<>(1000);
-  
+
   // QueryCount sql cache
   // Map key - see QueryCount.getCacheKey()
   // value - the partial sql.
   private SimpleCache<String, String> queryCountSqlCache = new SimpleCache<>(1000);
-  
-  // JdbcTemplate uses this as its converter so use the same
+
+  // Spring BeanPropertyRowMapper uses this as its converter so use the same
   private DefaultConversionService conversionService =
       (DefaultConversionService) DefaultConversionService.getSharedInstance();
 
@@ -191,9 +193,12 @@ public final class JdbcTemplateMapper {
   /**
    * Attempted Support for old/non standard jdbc drivers. For old drivers set this value to false
    * and see whether it makes a difference.
+   * 
+   * @deprecated as of v2.5.1 JDBC drivers used should support JDBC 4.x
    *
    * @param val boolean value
    */
+  @Deprecated
   public void useColumnLabelForResultSetMetaData(boolean val) {
     this.useColumnLabelForResultSetMetaData = val;
   }
@@ -203,7 +208,9 @@ public final class JdbcTemplateMapper {
    * fields. If this value is set to true it will force system to use
    * java.sql.Types.TIMESTAMP_WITH_TIMEZONE for properties of models which are of type
    * OffsetDateTime.
-   *
+   * 
+   * @deprecated as of 2.5.1 Will be removed in next release
+   * 
    * @param val boolean value
    */
   public void forcePostgresTimestampWithTimezone(boolean val) {
@@ -466,6 +473,7 @@ public final class JdbcTemplateMapper {
 
     PropertyMapping versionPropMapping = tableMapping.getVersionPropertyMapping();
     if (versionPropMapping != null) {
+      // version property value defaults to 1 on inserts
       bw.setPropertyValue(versionPropMapping.getPropertyName(), 1);
     }
 
@@ -488,17 +496,14 @@ public final class JdbcTemplateMapper {
     boolean foundInCache = false;
     SimpleJdbcInsertOperations jdbcInsert = insertCache.get(obj.getClass().getName());
     if (jdbcInsert == null) {
+      jdbcInsert =
+          new SimpleJdbcInsert(jdbcTemplate).withCatalogName(tableMapping.getCatalogName())
+                                            .withSchemaName(tableMapping.getSchemaName())
+                                            .withTableName(
+                                                tableNameForSimpleJdbcInsert(tableMapping));
+
       if (tableMapping.isIdAutoIncrement()) {
-        jdbcInsert =
-            new SimpleJdbcInsert(jdbcTemplate).withCatalogName(tableMapping.getCatalogName())
-                .withSchemaName(tableMapping.getSchemaName())
-                .withTableName(tableNameForSimpleJdbcInsert(tableMapping))
-                .usingGeneratedKeyColumns(tableMapping.getIdColumnName());
-      } else {
-        jdbcInsert =
-            new SimpleJdbcInsert(jdbcTemplate).withCatalogName(tableMapping.getCatalogName())
-                .withSchemaName(tableMapping.getSchemaName())
-                .withTableName(tableNameForSimpleJdbcInsert(tableMapping));
+        jdbcInsert.usingGeneratedKeyColumns(tableMapping.getIdColumnName());
       }
       // for oracle synonym table metadata
       if (includeSynonyms) {
@@ -584,8 +589,12 @@ public final class JdbcTemplateMapper {
     TableMapping tableMapping = mappingHelper.getTableMapping(obj.getClass());
 
     boolean foundInCache = false;
+    SqlAndParams sqlAndParams = null;
     String cacheKey = getUpdatePropertiesCacheKey(obj, propertyNames);
-    SqlAndParams sqlAndParams = updatePropertiesCache.get(cacheKey);
+    if (cacheKey != null) {
+      sqlAndParams = updatePropertiesCache.get(cacheKey);
+    }
+
     if (sqlAndParams == null) {
       sqlAndParams = buildSqlAndParamsForUpdateProperties(tableMapping, propertyNames);
     } else {
@@ -594,8 +603,7 @@ public final class JdbcTemplateMapper {
 
     Integer cnt = updateInternal(obj, sqlAndParams, tableMapping);
 
-    // don't cache if number of properties is > 5
-    if (!foundInCache && cnt > 0 && propertyNames.length <= 5) {
+    if (cacheKey != null && !foundInCache && cnt > 0) {
       updatePropertiesCache.put(cacheKey, sqlAndParams);
     }
 
@@ -630,8 +638,8 @@ public final class JdbcTemplateMapper {
     MapSqlParameterSource mapSqlParameterSource = new MapSqlParameterSource();
     for (String paramName : parameters) {
       if (paramName.equals("incrementedVersion")) {
-        Integer versionVal = (Integer) bw
-            .getPropertyValue(tableMapping.getVersionPropertyMapping().getPropertyName());
+        Integer versionVal = (Integer) bw.getPropertyValue(
+            tableMapping.getVersionPropertyMapping().getPropertyName());
         if (versionVal == null) {
           throw new MapperException(obj.getClass().getSimpleName() + "."
               + tableMapping.getVersionPropertyMapping().getPropertyName()
@@ -758,7 +766,7 @@ public final class JdbcTemplateMapper {
   public String getColumnsSql(Class<?> clazz) {
     return getBeanColumnsSqlInternal(mappingHelper.getTableMapping(clazz), clazz);
   }
-  
+
   /**
    * returns a string which can be used in a sql select statement. The column alias will be the
    * underscore case name of property name, so it works well with JdbcTemplate's
@@ -843,8 +851,10 @@ public final class JdbcTemplateMapper {
         " WHERE " + tableMapping.getIdColumnName() + " = :" + tableMapping.getIdPropertyName());
     params.add(tableMapping.getIdPropertyName());
     if (versionPropMapping != null) {
-      sqlBuilder.append(" AND ").append(versionPropMapping.getColumnName()).append(" = :")
-          .append(versionPropMapping.getPropertyName());
+      sqlBuilder.append(" AND ")
+                .append(versionPropMapping.getColumnName())
+                .append(" = :")
+                .append(versionPropMapping.getPropertyName());
       params.add(versionPropMapping.getPropertyName());
     }
 
@@ -929,8 +939,10 @@ public final class JdbcTemplateMapper {
         " WHERE " + tableMapping.getIdColumnName() + " = :" + tableMapping.getIdPropertyName());
     params.add(tableMapping.getIdPropertyName());
     if (versionPropMapping != null) {
-      sqlBuilder.append(" AND ").append(versionPropMapping.getColumnName()).append(" = :")
-          .append(versionPropMapping.getPropertyName());
+      sqlBuilder.append(" AND ")
+                .append(versionPropMapping.getColumnName())
+                .append(" = :")
+                .append(versionPropMapping.getPropertyName());
       params.add(versionPropMapping.getPropertyName());
     }
 
@@ -968,8 +980,14 @@ public final class JdbcTemplateMapper {
     }
   }
 
+  // will return null when updateProperties property count is more than
+  // CACHEABLE_UPDATE_PROPERTY_COUNT
   private String getUpdatePropertiesCacheKey(Object obj, String[] propertyNames) {
-    return obj.getClass().getName() + "-" + String.join("-", propertyNames);
+    if (propertyNames.length > CACHEABLE_UPDATE_PROPERTIES_COUNT) {
+      return null;
+    } else {
+      return obj.getClass().getName() + "-" + String.join("-", propertyNames);
+    }
   }
 
   SimpleCache<String, SimpleJdbcInsert> getInsertCache() {
@@ -987,17 +1005,17 @@ public final class JdbcTemplateMapper {
   SimpleCache<String, String> getBeanColumnsSqlCache() {
     return beanColumnsSqlCache;
   }
-  
+
   SimpleCache<String, String> getQuerySqlCache() {
     return querySqlCache;
   }
-  
+
   SimpleCache<String, String> getQueryMergeSqlCache() {
     return queryMergeSqlCache;
   }
-  
+
   SimpleCache<String, String> getQueryCountSqlCache() {
-    return queryCountSqlCache; 
+    return queryCountSqlCache;
   }
-  
+
 }

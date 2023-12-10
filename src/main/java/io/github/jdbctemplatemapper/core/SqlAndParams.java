@@ -17,7 +17,7 @@ import java.util.Set;
 import org.springframework.util.ObjectUtils;
 
 /**
- * This holds the sql and the sql params needed to issue and update.
+ * This holds the sql and the sql params needed to issue an update.
  *
  * @author ajoseph
  */

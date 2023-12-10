@@ -87,21 +87,6 @@ JdbcTemplateMapper should be prepared in a Spring application context and given 
 
 See an example of JdbcTemplateMapper configuration used in an application [here](https://github.com/jdbctemplatemapper/using-spring-jdbctemplate-with-jdbctemplatemapper/blob/master/src/test/java/io/github/ajoseph88/jdbctemplatemapper/config/JdbcTemplateMapperConfig.java).
 
- ```java
- 
-  // In the examples below the DataSource properties are read from application.properties.
-  // See examples of application.properties for different databases further below:
-  @Bean
-  @ConfigurationProperties(prefix = "spring.datasource")
-  public DataSource sqlDataSource() {
-    return DataSourceBuilder.create().build();
-  }
-
-  // Once Spring identifies that a DataSource bean is configured, it automatically configures a default JdbcTemplate
-  // bean using the DataSource. Use the JdbcTemplate bean to configure JdbcTemplateMapper.
-  // See examples for different databases below.
-  
-```
 Depending on the versions of the database/driver changes may be required for the properties.
 
 **PostgreSQL**
@@ -113,7 +98,16 @@ spring.datasource.username=username
 spring.datasource.password=password
 spring.datasource.driver-class-name=org.postgresql.Driver
 
- // JdbcTemplateMapper configuration
+
+  // DataSource properties are read from application.properties.
+  @Bean
+  @ConfigurationProperties(prefix = "spring.datasource")
+  public DataSource sqlDataSource() {
+    return DataSourceBuilder.create().build();
+  }
+
+ // Once Spring identifies that a DataSource bean is configured, it automatically configures a default JdbcTemplate
+ // bean using the DataSource. Use the JdbcTemplate bean to configure JdbcTemplateMapper.
  @Bean
   public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
     return new JdbcTemplateMapper(jdbcTemplate, THE_SCHEMA_NAME);
@@ -130,7 +124,14 @@ spring.datasource.username=username
 spring.datasource.password=password
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 
- // JdbcTemplateMapper configuration
+  // DataSource properties are read from application.properties.
+  @Bean
+  @ConfigurationProperties(prefix = "spring.datasource")
+  public DataSource sqlDataSource() {
+    return DataSourceBuilder.create().build();
+  }
+
+
  @Bean
   public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
     return new JdbcTemplateMapper(jdbcTemplate, null, THE_DATABASE_NAME); // catalog name is synonymous to database name for mysql
@@ -147,12 +148,20 @@ spring.datasource.username=username
 spring.datasource.password=password
 spring.datasource.driver-class-name=oracle.jdbc.driver.OracleDriver
 
- // JdbcTemplateMapper configuration
+  // DataSource properties are read from application.properties.
+  @Bean
+  @ConfigurationProperties(prefix = "spring.datasource")
+  public DataSource sqlDataSource() {
+    return DataSourceBuilder.create().build();
+  }
+  
+ // Once Spring identifies that a DataSource bean is configured, it automatically configures a default JdbcTemplate
+ // bean using the DataSource. Use the JdbcTemplate bean to configure JdbcTemplateMapper.
  @Bean
   public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
     return new JdbcTemplateMapper(jdbcTemplate, THE_SCHEMA_NAME);
     
-    // Specific to oracle when using table synonyms configure as below:
+    // Specific to oracle when using table synonyms, configure as below:
     /*
     JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate, THE_SCHEMA_NAME);
     jdbcTemplateMapper.includeSynonymsForTableColumnMetaData();
@@ -171,7 +180,15 @@ spring.datasource.username=username
 spring.datasource.password=password
 spring.datasource.driver-class-name=com.microsoft.sqlserver.jdbc.SQLServerDriver
 
- // JdbcTemplateMapper configuration
+  // DataSource properties are read from application.properties.
+  @Bean
+  @ConfigurationProperties(prefix = "spring.datasource")
+  public DataSource sqlDataSource() {
+    return DataSourceBuilder.create().build();
+  }
+  
+ // Once Spring identifies that a DataSource bean is configured, it automatically configures a default JdbcTemplate
+ // bean using the DataSource. Use the JdbcTemplate bean to configure JdbcTemplateMapper.
  @Bean
   public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
     return new JdbcTemplateMapper(jdbcTemplate, THE_SCHEMA_NAME);
@@ -339,12 +356,12 @@ List<Order> orders =
 
 // hasOne relationship         
 List<Order> orders = 
-  Query.type(Order.class) // owning class
+  Query.type(Order.class) // type class
        .hasOne(Customer.class) // related Class
-       .joinColumnOwningSide("customer_id") // hasOne() join column is on owning side table. No table prefixes.
-       .populateProperty("customer") // property on owning class to populate. Its type should match related class
+       .joinColumnTypeSide("customer_id") // hasOne() join column is on type side table. No table prefixes.
+       .populateProperty("customer") // property on type class to populate. Its type should match related class
        .where("orders.status = ?", "COMPLETE") 
-       .orderBy("orders.id DESC, customer.id")  // owning and related table columns can be used
+       .orderBy("orders.id DESC, customer.id")  // type and related table columns can be used
        .execute(jdbcTemplateMapper);
               
 // hasMany relationship         
@@ -359,10 +376,10 @@ List<Order> orders =
        
  // employees hasMany skills through associated table 'employee_skill' (many to many)
  List<Employee> employees =  
-   Query.type(Employee.class) // owning class
+   Query.type(Employee.class) // type class
         .hasMany(Skill.class) // related class
         .throughJoinTable("employee_skill") // the associated table
-        .throughJoinColumns("employee_id", "skill_id")  // note order of join columns. owning join column is first
+        .throughJoinColumns("employee_id", "skill_id")  // note order of join columns. type join column is first
         .populateProperty("skills") 
         .execute(jdbcTemplateMapper);                  
          
@@ -449,7 +466,7 @@ Relationship:  Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne 
   ``` 
    QueryMerge.type(Order.class)
              .hasOne(Customer.class)
-             .joinColumnOwningSide("customer_id")
+             .joinColumnTypeSide("customer_id")
              .populateProperty("customer")
              .execute(jdbcTemplateMapper, orders); // issues and IN clause to get customer records and merges into orders list
      
@@ -469,7 +486,7 @@ Relationship:  Order hasOne Customer, Order hasMany OrderLine, OrderLine hasOne 
                  
    QueryMerge.type(OrderLine.class)
              .hasOne(Product.class)
-             .joinColumnOwningSide("product_id")
+             .joinColumnTypeSide("product_id")
              .populateProperty("product") 
              .execute(jdbcTemplateMapper, consolidatedOrderLines); // issues an sql 'IN' clause to get product records and merges
              
@@ -516,19 +533,19 @@ public class EmployeeSkill {
     
  // employees with skills populated.
  List<Employee> employees =  
-   Query.type(Employee.class) //owning class
+   Query.type(Employee.class) //type class
         .hasMany(Skill.class)
         .throughJoinTable("employee_skill") // the associated table
-        .throughJoinColumns("employee_id", "skill_id") // note order of join columns. owning join column is first
+        .throughJoinColumns("employee_id", "skill_id") // note order of join columns. type join column is first
         .populateProperty("skills") 
         .execute(jdbcTemplateMapper);
  
  // Skills with employees populated
  List<Skill> skills = 
-   Query.type(Skill.class) // owning class
+   Query.type(Skill.class) // type class
         .hasMany(Employee.class) 
         .throughJoinTable("employee_skill") // the associated table
-        .throughJoinColumns("skill_id", "employee_id") // note order of join columns. owning join column is first
+        .throughJoinColumns("skill_id", "employee_id") // note order of join columns. type join column is first
         .populateProperty("employees")
         .execute(jdbcTemplateMapper);
  
@@ -540,14 +557,14 @@ Paginated queries are supported with some limitations.
 #### limitOffsetClause
 limitOffsetClause is supported for non relationship queries and hasOne relationship queries. There is no support for hasMany/hasManythrough relationships.  
 
-To achieve pagination functionality for hasMany/hasManythrough relationships one option is to issue a query for the owning class with the limitOffsetClause and then use QueryMerge to populate the hasMany/hasManythrough side of the relationship. Example below:
+To achieve pagination functionality for hasMany/hasManythrough relationships one option is to issue a query for the main class with the limitOffsetClause and then use QueryMerge to populate the hasMany/hasManythrough side of the relationship. Example below:
 
 ```
  // a paginated query for orders. Issuing a hasOne relationship query here. It could have been a non relationship query
  List<Order> orders = 
     Query.type(Order.class)
          .hasOne(Customer.class)
-         .joinColumnOwningSide("customer_id") 
+         .joinColumnTypeSide("customer_id") 
          .populateProperty("customer") 
          .where("orders.status = ?", "COMPLETE")
          .orderBy("orders.id") // always order paginated queries. Otherwise databases will return random records per query.
@@ -572,7 +589,7 @@ Example to get count for the paginated order query above:
 ```
  Integer count = QueryCount.type(Order.class)
                            .hasOne(Customer.class)
-                           .joinColumnOwningSide("customer_id") 
+                           .joinColumnTypeSide("customer_id") 
                            .where("orders.status = ?", "COMPLETE")
                            .execute(jdbcTemplateMapper);
                        

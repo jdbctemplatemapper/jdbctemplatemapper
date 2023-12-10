@@ -65,6 +65,8 @@ CREATE TABLE schema1.type_check (
    local_date_time_data datetime,
    java_util_date_dt_data datetime,
    big_decimal_data numeric(10,2),
+   int_enum int,
+   string_enum varchar(100),
    non_model_column varchar(100),
    offset_date_time_data varchar(100)
 );

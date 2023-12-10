@@ -20,5 +20,8 @@ package io.github.jdbctemplatemapper.querymerge;
  * @param <T> the type
  */
 public interface IQueryMergeHasOne<T> {
+  @Deprecated
   IQueryMergeJoinColumnOwningSide<T> joinColumnOwningSide(String joinColumnOwningSide);
+
+  IQueryMergeJoinColumnTypeSide<T> joinColumnTypeSide(String joinColumnTypeSide);
 }

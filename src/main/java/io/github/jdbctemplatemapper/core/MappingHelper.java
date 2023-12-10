@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
@@ -140,8 +139,10 @@ class MappingHelper {
       IdPropertyInfo idPropertyInfo = getIdPropertyInfo(clazz);
 
       // key:column name, value: ColumnInfo
-      Map<String, ColumnInfo> columnNameToColumnInfo = tableColumnInfo.getColumnInfos().stream()
-          .collect(Collectors.toMap(o -> o.getColumnName(), o -> o));
+      Map<String, ColumnInfo> columnNameToColumnInfo =
+          tableColumnInfo.getColumnInfos()
+                         .stream()
+                         .collect(Collectors.toMap(o -> o.getColumnName(), o -> o));
 
       // key:propertyName, value:PropertyMapping. LinkedHashMap to maintain order of
       // properties
@@ -183,7 +184,7 @@ class MappingHelper {
         if (forcePostgresTimestampWithTimezone) {
           PropertyMapping propMapping = propNameToPropertyMapping.get(propertyName);
           if (propMapping != null) {
-            if (OffsetDateTime.class == propMapping.getPropertyType()
+            if (OffsetDateTime.class.getName().equals(propMapping.getPropertyType().getName())
                 && propMapping.getColumnSqlDataType() == Types.TIMESTAMP) {
               propMapping.setColumnSqlDataType(Types.TIMESTAMP_WITH_TIMEZONE);
             }
@@ -240,7 +241,7 @@ class MappingHelper {
     validateMetaDataConfig(catalog, schema);
 
     String tableName = tableAnnotation.name();
-    List<ColumnInfo> columnInfoList = getColumnInfoFromDatabaseMetadata(tableName, schema, catalog);
+    List<ColumnInfo> columnInfoList = getColumnInfoFromTableMetadata(tableName, schema, catalog);
     if (MapperUtils.isEmpty(columnInfoList)) {
       throw new AnnotationException(
           getTableMetaDataNotFoundErrMsg(clazz, tableName, schema, catalog));
@@ -249,7 +250,7 @@ class MappingHelper {
     return new TableColumnInfo(tableName, schema, catalog, columnInfoList);
   }
 
-  private List<ColumnInfo> getColumnInfoFromDatabaseMetadata(String tableName, String schema,
+  private List<ColumnInfo> getColumnInfoFromTableMetadata(String tableName, String schema,
       String catalog) {
     Assert.hasLength(tableName, "tableName must not be empty");
 
@@ -271,24 +272,23 @@ class MappingHelper {
     if (this.databaseProductName != null) {
       return this.databaseProductName;
     } else {
-      // java21 friendly
-      ReentrantLock rlock = new ReentrantLock();
-      rlock.lock();
-      try {
-          this.databaseProductName = JdbcUtils.extractDatabaseMetaData(jdbcTemplate.getDataSource(),
-              new DatabaseMetaDataCallback<String>() {
-                public String processMetaData(DatabaseMetaData dbMetaData)
-                    throws SQLException, MetaDataAccessException {
-                  return dbMetaData.getDatabaseProductName();
-                }
-              });
-      } catch (Exception e) {
-        throw new MapperException(e);
+      // this synchronized block only runs once
+      synchronized (this) {
+        if (this.databaseProductName == null) {
+          try {
+            this.databaseProductName = JdbcUtils.extractDatabaseMetaData(
+                jdbcTemplate.getDataSource(), new DatabaseMetaDataCallback<String>() {
+                  public String processMetaData(DatabaseMetaData dbMetaData)
+                      throws SQLException, MetaDataAccessException {
+                    return dbMetaData.getDatabaseProductName();
+                  }
+                });
+          } catch (Exception e) {
+            throw new MapperException(e);
+          }
+        }
+        return this.databaseProductName;
       }
-      finally {
-        rlock.unlock();
-      }
-      return this.databaseProductName;
     }
   }
 

@@ -30,6 +30,7 @@ import io.github.jdbctemplatemapper.query.IQueryHasMany;
 import io.github.jdbctemplatemapper.query.IQueryHasOne;
 import io.github.jdbctemplatemapper.query.IQueryJoinColumnManySide;
 import io.github.jdbctemplatemapper.query.IQueryJoinColumnOwningSide;
+import io.github.jdbctemplatemapper.query.IQueryJoinColumnTypeSide;
 import io.github.jdbctemplatemapper.query.IQueryLimitOffsetClause;
 import io.github.jdbctemplatemapper.query.IQueryOrderBy;
 import io.github.jdbctemplatemapper.query.IQueryPopulateProperty;
@@ -37,7 +38,6 @@ import io.github.jdbctemplatemapper.query.IQueryThroughJoinColumns;
 import io.github.jdbctemplatemapper.query.IQueryThroughJoinTable;
 import io.github.jdbctemplatemapper.query.IQueryType;
 import io.github.jdbctemplatemapper.query.IQueryWhere;
-
 
 /**
  * Fluent style queries for relationships hasOne, hasMany, hasMany through (many to many).
@@ -62,7 +62,7 @@ public class Query<T> implements IQueryFluent<T> {
   private Class<?> relatedType;
   private String relatedTableAlias;
   private String propertyName; // propertyName on main class that needs to be populated
-  private String joinColumnOwningSide;
+  private String joinColumnTypeSide;
   private String joinColumnManySide;
 
   private String throughJoinTable;
@@ -175,14 +175,34 @@ public class Query<T> implements IQueryFluent<T> {
    * owning model. Example: Order hasOne Customer. The join column(foreign key) will be on the table
    * order (of the owning model). The join column should not have a table prefix.
    *
+   * @deprecated as of 2.6.0 Use joinColumnTypeSide() instead.
+   * 
    * @param joinColumnOwningSide the join column on the owning side (with no table prefix)
    * @return interface with the next methods in the chain
    */
+  @Deprecated
   public IQueryJoinColumnOwningSide<T> joinColumnOwningSide(String joinColumnOwningSide) {
     if (MapperUtils.isBlank(joinColumnOwningSide)) {
       throw new IllegalArgumentException("joinColumnOwningSide cannot be null or blank");
     }
-    this.joinColumnOwningSide = MapperUtils.toLowerCase(joinColumnOwningSide.trim());
+
+    this.joinColumnTypeSide = MapperUtils.toLowerCase(joinColumnOwningSide.trim());
+    return this;
+  }
+
+  /**
+   * Join column for hasOne relationship: The join column (the foreign key) is on the table of the
+   * owning model. Example: Order hasOne Customer. The join column(foreign key) will be on the table
+   * order (of the owning model). The join column should not have a table prefix.
+   *
+   * @param joinColumnTypeSide the join column on the owning side (with no table prefix)
+   * @return interface with the next methods in the chain
+   */
+  public IQueryJoinColumnTypeSide<T> joinColumnTypeSide(String joinColumnTypeSide) {
+    if (MapperUtils.isBlank(joinColumnTypeSide)) {
+      throw new IllegalArgumentException("joinColumnTypeSide cannot be null or blank");
+    }
+    this.joinColumnTypeSide = MapperUtils.toLowerCase(joinColumnTypeSide.trim());
     return this;
   }
 
@@ -290,7 +310,7 @@ public class Query<T> implements IQueryFluent<T> {
 
   /**
    * The SQL limit Offset clause for the query specific to the database being used. The limit offset
-   * clause for hasMany/hasMany through relationship is not supported.
+   * clause is not supported for hasMany/hasMany through relationships.
    * 
    * <pre>
    * See <a href=
@@ -313,7 +333,7 @@ public class Query<T> implements IQueryFluent<T> {
    * Execute the query using the jdbcTemplateMapper.
    *
    * @param jdbcTemplateMapper the jdbcTemplateMapper
-   * @return List a list of the owning type with its relationship property populated
+   * @return List a list of the owning type. If no records found returns empty list.
    */
   public List<T> execute(JdbcTemplateMapper jdbcTemplateMapper) {
     Assert.notNull(jdbcTemplateMapper, "jdbcTemplateMapper cannot be null");
@@ -339,7 +359,7 @@ public class Query<T> implements IQueryFluent<T> {
     String sql = jdbcTemplateMapper.getQuerySqlCache().get(cacheKey);
     if (sql == null) {
       QueryValidator.validate(jdbcTemplateMapper, ownerType, relationshipType, relatedType,
-          joinColumnOwningSide, joinColumnManySide, propertyName, throughJoinTable,
+          joinColumnTypeSide, joinColumnManySide, propertyName, throughJoinTable,
           throughOwnerTypeJoinColumn, throughRelatedTypeJoinColumn);
 
       // does not include where,orderBy,offsetLimit
@@ -391,8 +411,10 @@ public class Query<T> implements IQueryFluent<T> {
             }
           }
         }
-        return idToBeanWrapperOwnerModelMap.values().stream().map(bw -> (T) bw.getWrappedInstance())
-            .collect(Collectors.toList());
+        return idToBeanWrapperOwnerModelMap.values()
+                                           .stream()
+                                           .map(bw -> (T) bw.getWrappedInstance())
+                                           .collect(Collectors.toList());
       }
     };
 
@@ -498,7 +520,7 @@ public class Query<T> implements IQueryFluent<T> {
       String onRelatedPrefix =
           MapperUtils.columnPrefix(relatedTableAlias, relatedTableMapping.getTableName());
 
-      str += " LEFT JOIN " + relatedTableStr + " on " + onOwnerPrefix + "." + joinColumnOwningSide
+      str += " LEFT JOIN " + relatedTableStr + " on " + onOwnerPrefix + "." + joinColumnTypeSide
           + " = " + onRelatedPrefix + "." + relatedTableMapping.getIdColumnName();
     }
     return str;
@@ -565,7 +587,7 @@ public class Query<T> implements IQueryFluent<T> {
         relatedType == null ? null : relatedType.getName(),
         relatedTableAlias,
         relationshipType,
-        joinColumnOwningSide, 
+        joinColumnTypeSide, 
         joinColumnManySide, 
         throughJoinTable, 
         throughOwnerTypeJoinColumn,

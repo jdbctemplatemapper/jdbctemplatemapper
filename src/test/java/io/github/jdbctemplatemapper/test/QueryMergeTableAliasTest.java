@@ -27,38 +27,36 @@ public class QueryMergeTableAliasTest {
 
   @Test
   public void hasOne_tableAlias_success() {
-     
-    List<Order> orders =
-        Query.type(Order.class)
-            .where("orders.status = ?", "IN PROCESS")
-            .orderBy("orders.order_id DESC")
-            .execute(jtm);
-     
+
+    List<Order> orders = Query.type(Order.class)
+                              .where("orders.status = ?", "IN PROCESS")
+                              .orderBy("orders.order_id DESC")
+                              .execute(jtm);
+
     QueryMerge.type(Order.class)
-        .hasOne(Customer.class, "c")
-        .joinColumnOwningSide("CUSTOMER_ID")
-        .populateProperty("customer")
-        .execute(jtm, orders);
-     
+              .hasOne(Customer.class, "c")
+              .joinColumnTypeSide("CUSTOMER_ID")
+              .populateProperty("customer")
+              .execute(jtm, orders);
+
     assertTrue("jane".equals(orders.get(0).getCustomer().getFirstName()));
     assertTrue("joe".equals(orders.get(1).getCustomer().getLastName()));
   }
 
   @Test
   public void hasMany_tableAlias_success() {
-     
-    List<Order> orders =
-        Query.type(Order.class)
-             .where("orders.status = ?", "IN PROCESS")
-             .orderBy("orders.order_id DESC")
-             .execute(jtm);
-     
+
+    List<Order> orders = Query.type(Order.class)
+                              .where("orders.status = ?", "IN PROCESS")
+                              .orderBy("orders.order_id DESC")
+                              .execute(jtm);
+
     QueryMerge.type(Order.class)
-        .hasMany(OrderLine.class, "ol")
-        .joinColumnManySide("order_id")
-        .populateProperty("orderLines")
-        .execute(jtm, orders);
-     
+              .hasMany(OrderLine.class, "ol")
+              .joinColumnManySide("order_id")
+              .populateProperty("orderLines")
+              .execute(jtm, orders);
+
     boolean oneOrderLines = false;
     boolean twoOrderLines = false;
     int cnt = 0;
@@ -77,10 +75,10 @@ public class QueryMergeTableAliasTest {
     assertTrue(cnt == 3);
 
     QueryMerge.type(Order.class)
-        .hasMany(OrderLine.class, "ol")
-        .joinColumnManySide("order_id")
-        .populateProperty("orderLines")
-        .orderBy("ol.order_line_id")
-        .execute(jtm, orders);
+              .hasMany(OrderLine.class, "ol")
+              .joinColumnManySide("order_id")
+              .populateProperty("orderLines")
+              .orderBy("ol.order_line_id")
+              .execute(jtm, orders);
   }
 }

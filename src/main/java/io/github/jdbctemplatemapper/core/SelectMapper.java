@@ -13,7 +13,6 @@
  */
 package io.github.jdbctemplatemapper.core;
 
-import io.github.jdbctemplatemapper.exception.MapperException;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.Locale;
@@ -24,6 +23,7 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+import io.github.jdbctemplatemapper.exception.MapperException;
 
 /**
  * Allows population of the model from a ResultSet and generating the select columns string for the
@@ -40,6 +40,8 @@ import org.springframework.util.StringUtils;
 public class SelectMapper<T> {
   private final MappingHelper mappingHelper;
   private final Class<T> clazz;
+
+  // This is same converter used by Spring BeanPropertyRowMapper
   private final ConversionService conversionService;
   private final boolean useColumnLabelForResultSetMetaData;
   private String tableAlias;
@@ -66,18 +68,19 @@ public class SelectMapper<T> {
   }
 
   // internal use only
-  SelectMapper(Class<T> clazz, String tableName, String columnAlias, MappingHelper mappingHelper,
-      ConversionService conversionService, boolean useColumnLabelForResultSetMetaData) {
+  SelectMapper(Class<T> clazz, String tableAlias, String columnAliasPrefix,
+      MappingHelper mappingHelper, ConversionService conversionService,
+      boolean useColumnLabelForResultSetMetaData) {
     Assert.notNull(clazz, " clazz cannot be null");
-    Assert.notNull(tableName, " tableName cannot be null");
-    Assert.notNull(columnAlias, " columnAlias cannot be null");
+    Assert.notNull(tableAlias, " tableAlias cannot be null");
+    Assert.notNull(columnAliasPrefix, " columnAliasPrefix cannot be null");
     this.clazz = clazz;
     this.mappingHelper = mappingHelper;
     this.conversionService = conversionService;
     this.useColumnLabelForResultSetMetaData = useColumnLabelForResultSetMetaData;
 
-    this.colPrefix = tableName + ".";
-    this.colAliasPrefix = columnAlias;
+    this.colPrefix = tableAlias + ".";
+    this.colAliasPrefix = columnAliasPrefix;
     this.internal = true;
   }
 
@@ -136,9 +139,13 @@ public class SelectMapper<T> {
    */
   public String getResultSetModelIdColumnLabel() {
     if (internal) {
+      // This is an internal call from Query, QueryMerge
+      // returned values something like oc1 ... or rc1 ...
       return colAliasPrefix
           + mappingHelper.getTableMapping(clazz).getIdPropertyMapping().getColumnAliasSuffix();
     } else {
+      // This is when user is using the the jtm.getSelectMapper(type, tableAlias) to write custom
+      // queries. returned values something like tableAlias_oc1 ...
       return colAliasPrefix + MapperUtils.OWNER_COL_ALIAS_PREFIX
           + mappingHelper.getTableMapping(clazz).getIdPropertyMapping().getColumnAliasSuffix();
     }
@@ -178,7 +185,7 @@ public class SelectMapper<T> {
     try {
       TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
       BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
-      // need below for java.sql.Timestamp to java.time.LocalDateTime conversion etc
+      // need this when jdbcUtils cannot convert
       bw.setConversionService(conversionService);
 
       ResultSetMetaData rsMetaData = rs.getMetaData();
@@ -196,15 +203,19 @@ public class SelectMapper<T> {
           if (columnLabel.startsWith(colAliasPrefix)) {
             PropertyMapping propMapping = null;
             if (internal) {
-              // column alias would be something like oc1, rc1
+              // This is an internal call from Query, QueryMerge
+              // column alias would be something like oc1 ... or rc1 ...
               propMapping = tableMapping.getPropertyMappingByColumnAlias(columnLabel);
             } else {
-              // column alias would be something like tableAliasArgument_oc1,
-              // tableAliasArgument_oc2 ...
-              propMapping = tableMapping
-                  .getPropertyMappingByColumnAlias(columnLabel.substring(colAliasPrefix.length()));
+              // This is when user is using the the jtm.getSelectMapper(type, tableAlias) to write
+              // custom queries. Column alias would be something like colAliasPrefix_oc1,
+              // colAliasPrefix_oc2 ...
+              propMapping = tableMapping.getPropertyMappingByColumnAlias(
+                  columnLabel.substring(colAliasPrefix.length()));
             }
             if (propMapping != null) {
+              // JdbcUtils.getResultSetValue() assigns value using the specifically typed ResultSet
+              // accessor methods (getString(), getInt() etc) for the specified propertyType.
               bw.setPropertyValue(propMapping.getPropertyName(),
                   JdbcUtils.getResultSetValue(rs, i, propMapping.getPropertyType()));
             }

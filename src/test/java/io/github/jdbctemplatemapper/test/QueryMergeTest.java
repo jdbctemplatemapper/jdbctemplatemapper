@@ -46,7 +46,7 @@ public class QueryMergeTest {
     Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
       QueryMerge.type(Order.class)
                 .hasOne(null)
-                .joinColumnOwningSide("customer_id")
+                .joinColumnTypeSide("customer_id")
                 .populateProperty("customer")
                 .execute(jtm, orders);
     });
@@ -73,11 +73,11 @@ public class QueryMergeTest {
     Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
       QueryMerge.type(Order.class)
                 .hasOne(Customer.class)
-                .joinColumnOwningSide(null)
+                .joinColumnTypeSide(null)
                 .populateProperty("customer")
                 .execute(jtm, orders);
     });
-    assertTrue(exception.getMessage().contains("joinColumnOwningSide cannot be null"));
+    assertTrue(exception.getMessage().contains("joinColumnTypeSide cannot be null"));
   }
 
   @Test
@@ -99,7 +99,7 @@ public class QueryMergeTest {
     Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
       QueryMerge.type(Order.class)
                 .hasOne(Customer.class)
-                .joinColumnOwningSide("customer_id")
+                .joinColumnTypeSide("customer_id")
                 .populateProperty(null)
                 .execute(jtm, orders);
     });
@@ -125,7 +125,7 @@ public class QueryMergeTest {
     Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
       QueryMerge.type(Order.class)
                 .hasOne(Customer.class)
-                .joinColumnOwningSide("customer_id")
+                .joinColumnTypeSide("customer_id")
                 .populateProperty("customer")
                 .execute(null, orders);
     });
@@ -164,7 +164,7 @@ public class QueryMergeTest {
     Exception exception = Assertions.assertThrows(QueryException.class, () -> {
       QueryMerge.type(Order6.class)
                 .hasOne(Customer2.class)
-                .joinColumnOwningSide("customer_id")
+                .joinColumnTypeSide("customer_id")
                 .populateProperty("customer")
                 .execute(jtm, orders);
     });
@@ -176,7 +176,7 @@ public class QueryMergeTest {
     Assertions.assertDoesNotThrow(() -> {
       QueryMerge.type(Order.class)
                 .hasOne(Customer.class)
-                .joinColumnOwningSide("customer_id")
+                .joinColumnTypeSide("customer_id")
                 .populateProperty("customer")
                 .execute(jtm, null);
     });
@@ -189,7 +189,7 @@ public class QueryMergeTest {
     Assertions.assertDoesNotThrow(() -> {
       QueryMerge.type(Order.class)
                 .hasOne(Customer.class)
-                .joinColumnOwningSide("customer_id")
+                .joinColumnTypeSide("customer_id")
                 .populateProperty("customer")
                 .execute(jtm, orders);
     });
@@ -231,7 +231,7 @@ public class QueryMergeTest {
 
     QueryMerge.type(Order.class)
               .hasOne(Customer.class)
-              .joinColumnOwningSide("CUSTOMER_ID")
+              .joinColumnTypeSide("CUSTOMER_ID")
               .populateProperty("customer")
               .execute(jtm, orders);
 
@@ -248,7 +248,7 @@ public class QueryMergeTest {
 
     QueryMerge.type(Order8.class)
               .hasOne(Customer.class)
-              .joinColumnOwningSide("customer_id")
+              .joinColumnTypeSide("customer_id")
               .populateProperty("customer")
               .execute(jtm, orders);
 
@@ -321,7 +321,7 @@ public class QueryMergeTest {
 
     QueryMerge.type(Order7.class)
               .hasOne(Customer7.class)
-              .joinColumnOwningSide("customer_id")
+              .joinColumnTypeSide("customer_id")
               .populateProperty("customer")
               .execute(jtm, orders);
 
@@ -368,7 +368,7 @@ public class QueryMergeTest {
     Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
       QueryMerge.type(Order.class)
                 .hasOne(Customer.class)
-                .joinColumnOwningSide("customer_id")
+                .joinColumnTypeSide("customer_id")
                 .populateProperty("customer")
                 .orderBy("customer_id")
                 .execute(jtm, orders);
@@ -384,7 +384,7 @@ public class QueryMergeTest {
                               .where("orders.status = ?", "IN PROCESS")
                               .orderBy("orders.order_id")
                               .execute(jtm);
-    
+
     QueryMerge.type(Order.class)
               .hasMany(OrderLine.class)
               .joinColumnManySide("ORDER_ID")
@@ -427,6 +427,6 @@ public class QueryMergeTest {
               .orderBy("order_line_id")
               .execute(jtm, orders);
 
-    
+
   }
 }

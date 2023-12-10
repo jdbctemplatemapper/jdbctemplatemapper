@@ -1,50 +1,42 @@
 package io.github.jdbctemplatemapper.model;
 
 import java.time.LocalDateTime;
-
 import io.github.jdbctemplatemapper.annotation.Column;
-import io.github.jdbctemplatemapper.annotation.CreatedBy;
-import io.github.jdbctemplatemapper.annotation.CreatedOn;
 import io.github.jdbctemplatemapper.annotation.Id;
 import io.github.jdbctemplatemapper.annotation.Table;
-import io.github.jdbctemplatemapper.annotation.UpdatedBy;
-import io.github.jdbctemplatemapper.annotation.UpdatedOn;
-import io.github.jdbctemplatemapper.annotation.Version;
 
-// column product_id is mapped to id
+// No audit fields. Used to test updateProperties and its cache
 
 @Table(name = "product")
-public class Product7 {
+public class Product8 {
   @Id
-  @Column(name = "product_id")
-  private Integer id;
-
+  private Integer productId;
   @Column
   private String name;
   @Column
   private Double cost;
 
-  @CreatedOn
+  @Column
   private LocalDateTime createdOn;
 
-  @CreatedBy
+  @Column
   private String createdBy;
 
-  @UpdatedOn
+  @Column
   private LocalDateTime updatedOn;
 
-  @UpdatedBy
+  @Column
   private String updatedBy;
 
-  @Version
-  private Integer version;
+  @Column
+  private int version;
 
-  public Integer getId() {
-    return id;
+  public Integer getProductId() {
+    return productId;
   }
 
-  public void setId(Integer id) {
-    this.id = id;
+  public void setProductId(Integer id) {
+    this.productId = id;
   }
 
   public String getName() {
@@ -95,11 +87,12 @@ public class Product7 {
     this.updatedBy = updatedBy;
   }
 
-  public Integer getVersion() {
+  public int getVersion() {
     return version;
   }
 
-  public void setVersion(Integer version) {
+  public void setVersion(int version) {
     this.version = version;
   }
 }
+

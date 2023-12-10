@@ -14,7 +14,6 @@
 package io.github.jdbctemplatemapper.core;
 
 import java.sql.Types;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,12 +41,12 @@ class TableMapping {
   private String updatedByPropertyName = null;
 
   // model property to database column mapping.
-  private List<PropertyMapping> propertyMappings = new ArrayList<>();
+  private List<PropertyMapping> propertyMappings;
 
   // these maps used for performance
-  private Map<String, PropertyMapping> columnNameMap = new HashMap<>();
-  private Map<String, PropertyMapping> propertyNameMap = new HashMap<>();
-  private Map<String, PropertyMapping> columnAliasMap = new HashMap<>();
+  private Map<String, PropertyMapping> columnNameMap;
+  private Map<String, PropertyMapping> propertyNameMap;
+  private Map<String, PropertyMapping> columnAliasMap;
 
   public TableMapping(Class<?> tableClass, String tableName, String schemaName, String catalogName,
       String commonDatabaseName, IdPropertyInfo idPropertyInfo,
@@ -55,48 +54,58 @@ class TableMapping {
     Assert.notNull(tableClass, "tableClass must not be null");
     Assert.notNull(tableName, "tableName must not be null");
     Assert.notNull(idPropertyInfo, "idPropertyInfo must not be null");
+    if (MapperUtils.isEmpty(propertyMappings)) {
+      throw new IllegalArgumentException("propertyMappings cannot be null or empty");
+    }
 
     this.tableClassName = tableClass.getName();
     this.tableName = tableName;
     this.schemaName = MapperUtils.isEmpty(schemaName) ? null : schemaName;
     this.catalogName = MapperUtils.isEmpty(catalogName) ? null : catalogName;
     this.commonDatabaseName = commonDatabaseName;
-
     this.idPropertyName = idPropertyInfo.getPropertyName();
     this.idAutoIncrement = idPropertyInfo.isIdAutoIncrement();
-
     this.propertyMappings = propertyMappings;
 
-    if (propertyMappings != null) {
-      int cnt = 1;
-      for (PropertyMapping propMapping : propertyMappings) {
-        if (propMapping.isVersionAnnotation()) {
-          versionPropertyName = propMapping.getPropertyName();
-        }
-        if (propMapping.isCreatedOnAnnotation()) {
-          createdOnPropertyName = propMapping.getPropertyName();
-        }
-        if (propMapping.isCreatedByAnnotation()) {
-          createdByPropertyName = propMapping.getPropertyName();
-        }
-        if (propMapping.isUpdatedOnAnnotation()) {
-          updatedOnPropertyName = propMapping.getPropertyName();
-        }
-        if (propMapping.isUpdatedByAnnotation()) {
-          updatedByPropertyName = propMapping.getPropertyName();
-        }
-        // these maps used for performance
-        String colAliasSuffix = "c" + cnt;
-        propMapping.setColumnAliasSuffix(colAliasSuffix);
-        // creating alias lookups for queries generated through Query and QueryMerge
-        columnAliasMap.put(MapperUtils.OWNER_COL_ALIAS_PREFIX + colAliasSuffix, propMapping);
-        columnAliasMap.put(MapperUtils.RELATED_COL_ALIAS_PREFIX + colAliasSuffix, propMapping);
+    // initialize the maps
+    int size = propertyMappings.size();
+    columnNameMap = new HashMap<>(size);
+    propertyNameMap = new HashMap<>(size);
+    columnAliasMap = new HashMap<>(2 * size);
 
-        columnNameMap.put(propMapping.getColumnName(), propMapping);
-        propertyNameMap.put(propMapping.getPropertyName(), propMapping);
-
-        cnt++;
+    int cnt = 1;
+    for (PropertyMapping propMapping : propertyMappings) {
+      if (propMapping.isVersionAnnotation()) {
+        versionPropertyName = propMapping.getPropertyName();
       }
+      if (propMapping.isCreatedOnAnnotation()) {
+        createdOnPropertyName = propMapping.getPropertyName();
+      }
+      if (propMapping.isCreatedByAnnotation()) {
+        createdByPropertyName = propMapping.getPropertyName();
+      }
+      if (propMapping.isUpdatedOnAnnotation()) {
+        updatedOnPropertyName = propMapping.getPropertyName();
+      }
+      if (propMapping.isUpdatedByAnnotation()) {
+        updatedByPropertyName = propMapping.getPropertyName();
+      }
+      // these maps used for performance. Using intern() to save some memory since aliases are
+      // similar for other table mappings.
+      String colAliasSuffix = ("c" + cnt).intern();
+      propMapping.setColumnAliasSuffix(colAliasSuffix);
+      // creating alias lookups for queries generated through Query and QueryMerge
+      // aliases oc1, oc2, oc3 ...
+      columnAliasMap.put((MapperUtils.OWNER_COL_ALIAS_PREFIX + colAliasSuffix).intern(),
+          propMapping);
+      // aliases rc1, rc2, rc3
+      columnAliasMap.put((MapperUtils.RELATED_COL_ALIAS_PREFIX + colAliasSuffix).intern(),
+          propMapping);
+
+      columnNameMap.put(propMapping.getColumnName(), propMapping);
+      propertyNameMap.put(propMapping.getPropertyName(), propMapping);
+
+      cnt++;
     }
   }
 
