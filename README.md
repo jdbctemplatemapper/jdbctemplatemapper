@@ -158,15 +158,11 @@ spring.datasource.driver-class-name=oracle.jdbc.driver.OracleDriver
  // Once Spring identifies that a DataSource bean is configured, it automatically configures a default JdbcTemplate
  // bean using the DataSource. Use the JdbcTemplate bean to configure JdbcTemplateMapper.
  @Bean
-  public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
-    return new JdbcTemplateMapper(jdbcTemplate, THE_SCHEMA_NAME);
-    
-    // Specific to oracle when using table synonyms, configure as below:
-    /*
+  public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {   
     JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate, THE_SCHEMA_NAME);
+     // Need this for oracle to handle table synonyms 
     jdbcTemplateMapper.includeSynonymsForTableColumnMetaData();
     return jdbcTemplateMapper;
-    */
   }
 
 ```
@@ -337,6 +333,7 @@ public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
 ## Querying relationships
 The library provides multiple ways to query relationships.
 Fluent style queries allow querying of hasOne, hasMany and hasMany through (many to many using an associated table) relationships.
+The where() and orderBy() clauses use SQL.
 The IDE will provide suggestions to help chain the methods. Turn logging on (see logging section) to see the generated queries.  
 The QueryMerge class allows the results of a previous query to be merged with results of a new query. This comes in handy where multiple relationships need to be queried.
 
@@ -350,7 +347,7 @@ List<Order> orders = Query.type(Order.class)
 // with where and orderBy
 List<Order> orders = 
   Query.type(Order.class)
-       .where("orders.status = ?", "COMPLETE") // good practice to parameterize where clause
+       .where("orders.status = ? and orders.customer_id = ?", "COMPLETE", 1) // good practice to parameterize the where clause
        .orderBy("orders.id desc")  // good practice to prefix columns with table
        .execute(jdbcTemplateMapper);
 
