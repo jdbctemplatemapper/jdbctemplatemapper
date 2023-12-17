@@ -348,7 +348,7 @@ List<Order> orders = Query.type(Order.class)
 List<Order> orders = 
   Query.type(Order.class)
        .where("orders.status = ? and orders.customer_id = ?", "COMPLETE", 1) // good practice to parameterize the where clause
-       .orderBy("orders.id desc")  // good practice to prefix columns with table
+       .orderBy("orders.id desc")
        .execute(jdbcTemplateMapper);
 
 // hasOne relationship         

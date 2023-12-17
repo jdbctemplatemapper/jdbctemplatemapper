@@ -32,8 +32,8 @@ import io.github.jdbctemplatemapper.querycount.IQueryCountWhere;
  * @author ajoseph
  */
 public class QueryCount<T> implements IQueryCountFluent<T> {
-  private Class<T> ownerType;
-  private String ownerTableAlias;
+  private Class<T> type;
+  private String typeTableAlias;
   private String whereClause;
   private Object[] whereParams;
 
@@ -43,12 +43,12 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
   private String joinColumnTypeSide;
 
   private QueryCount(Class<T> type) {
-    this.ownerType = type;
+    this.type = type;
   }
 
   private QueryCount(Class<T> type, String tableAlias) {
-    this.ownerType = type;
-    this.ownerTableAlias = tableAlias;
+    this.type = type;
+    this.typeTableAlias = tableAlias;
   }
 
   /**
@@ -154,7 +154,7 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
     String cacheKey = getCacheKey();
     String sql = jdbcTemplateMapper.getQueryCountSqlCache().get(cacheKey);
     if (sql == null) {
-      QueryValidator.validateQueryCount(jdbcTemplateMapper, ownerType, relationshipType,
+      QueryValidator.validateQueryCount(jdbcTemplateMapper, type, relationshipType,
           relatedType, joinColumnTypeSide);
       sql = generatePartialQuerySql(jdbcTemplateMapper);
     } else {
@@ -181,15 +181,15 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
   }
 
   private String generatePartialQuerySql(JdbcTemplateMapper jtm) {
-    TableMapping ownerTypeTableMapping = jtm.getTableMapping(ownerType);
+    TableMapping ownerTypeTableMapping = jtm.getTableMapping(type);
     TableMapping relatedTypeTableMapping =
         relatedType == null ? null : jtm.getTableMapping(relatedType);
 
-    String ownerTableStr = MapperUtils.tableStrForFrom(ownerTableAlias,
+    String ownerTableStr = MapperUtils.tableStrForFrom(typeTableAlias,
         ownerTypeTableMapping.fullyQualifiedTableName());
 
     String ownerColumnPrefix =
-        MapperUtils.columnPrefix(ownerTableAlias, ownerTypeTableMapping.getTableName());
+        MapperUtils.columnPrefix(typeTableAlias, ownerTypeTableMapping.getTableName());
 
     String sql = "SELECT count(*) as record_count ";
     sql += " FROM " + ownerTableStr;
@@ -213,8 +213,8 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
   private String getCacheKey() {
     // @formatter:off
     return String.join("-", 
-        ownerType.getName(), 
-        ownerTableAlias,
+        type.getName(), 
+        typeTableAlias,
         relatedType == null ? null : relatedType.getName(),
         relatedTableAlias,
         relationshipType,

@@ -53,7 +53,7 @@ import io.github.jdbctemplatemapper.querymerge.IQueryMergeType;
  */
 public class QueryMerge<T> implements IQueryMergeFluent<T> {
   private static final int IN_CLAUSE_CHUNK_SIZE = 100;
-  private Class<T> ownerType;
+  private Class<T> type;
   private String relationshipType;
   private Class<?> relatedType;
   private String relatedTypeTableAlias;
@@ -67,7 +67,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   private String orderBy;
 
   private QueryMerge(Class<T> type) {
-    this.ownerType = type;
+    this.type = type;
   }
 
   /**
@@ -272,7 +272,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
 
     String cacheKey = getCacheKey();
     if (jdbcTemplateMapper.getQueryMergeSqlCache().get(cacheKey) == null) {
-      QueryValidator.validate(jdbcTemplateMapper, ownerType, relationshipType, relatedType,
+      QueryValidator.validate(jdbcTemplateMapper, type, relationshipType, relatedType,
           joinColumnTypeSide, joinColumnManySide, propertyName, throughJoinTable,
           throughOwnerTypeJoinColumn, throughRelatedTypeJoinColumn);
     }
@@ -283,11 +283,11 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
             "For QueryMerge hasOne relationships orderBy is not supported."
                 + " The order is already dictated by the mergeList order");
       }
-      processHasOne(jdbcTemplateMapper, mergeList, ownerType, relatedType, cacheKey);
+      processHasOne(jdbcTemplateMapper, mergeList, type, relatedType, cacheKey);
     } else if (RelationshipType.HAS_MANY.equals(relationshipType)) {
-      processHasMany(jdbcTemplateMapper, mergeList, ownerType, relatedType, cacheKey);
+      processHasMany(jdbcTemplateMapper, mergeList, type, relatedType, cacheKey);
     } else if (RelationshipType.HAS_MANY_THROUGH.equals(relationshipType)) {
-      processHasManyThrough(jdbcTemplateMapper, mergeList, ownerType, relatedType, cacheKey);
+      processHasManyThrough(jdbcTemplateMapper, mergeList, type, relatedType, cacheKey);
     }
   }
 
@@ -590,7 +590,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
   private String getCacheKey() {
     // @formatter:off
     return String.join("-", 
-        ownerType.getName(),
+        type.getName(),
         relatedType == null ? null : relatedType.getName(),
         relatedTypeTableAlias,
         relationshipType,
