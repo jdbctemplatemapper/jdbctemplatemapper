@@ -40,6 +40,7 @@ public class TypeCheckOracleTest {
 
   @BeforeEach
   public void beforeMethod() {
+    // tests will only run if oracle
     if (!jdbcDriver.contains("oracle")) {
       Assumptions.assumeTrue(false);
     }

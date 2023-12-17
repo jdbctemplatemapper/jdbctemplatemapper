@@ -41,6 +41,7 @@ public class TypeCheckMysqlTest {
 
   @BeforeEach
   public void beforeMethod() {
+    // tests will run only if mysql
     if (!jdbcDriver.contains("mysql")) {
       Assumptions.assumeTrue(false);
     }
@@ -70,9 +71,7 @@ public class TypeCheckMysqlTest {
 
     assertTrue(tc.getBigDecimalData().compareTo(obj.getBigDecimalData()) == 0);
 
-    if (jdbcDriver.contains("mysql") || jdbcDriver.contains("oracle")) {
-      assertNotNull(tc.getOffsetDateTimeData());
-    }
+    assertNotNull(tc.getOffsetDateTimeData());
 
     assertArrayEquals(obj.getImage(), tc.getImage());
 
@@ -187,21 +186,12 @@ public class TypeCheckMysqlTest {
     assertNotNull(tc.getJavaUtilDateData());
     assertNotNull(tc.getLocalDateTimeData());
 
-    if (jdbcDriver.contains("mysql") || jdbcDriver.contains("oracle")) {
-      assertNotNull(tc.getOffsetDateTimeData());
-    }
+    assertNotNull(tc.getOffsetDateTimeData());
     assertTrue(tc.getBigDecimalData().compareTo(obj.getBigDecimalData()) == 0);
 
-    // oracle and sqlserver do not support boolean
-    if (jdbcDriver.contains("mysql") || jdbcDriver.contains("postgres")) {
-      assertArrayEquals(obj.getImage(), tc.getImage());
-    }
+    assertArrayEquals(obj.getImage(), tc.getImage());
 
-    // oracle and sqlserver do not support boolean
-    if (jdbcDriver.contains("mysql") || jdbcDriver.contains("postgres")) {
-      assertTrue(tc.getBooleanVal());
-    }
-
+    assertTrue(tc.getBooleanVal());
     assertNotNull(tc.getJavaUtilDateTsData());
   }
 }
