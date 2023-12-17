@@ -41,7 +41,7 @@ public class SelectMapper<T> {
   private final Class<T> clazz;
 
   private final ConversionService conversionService;
-  
+
   private String tableAlias;
   private String colPrefix;
   private String colAliasPrefix;
