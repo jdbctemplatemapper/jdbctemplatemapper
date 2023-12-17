@@ -108,7 +108,7 @@ public class SelectMapper<T> {
             + propMapping.getColumnAliasSuffix());
       } else {
         sj.add(colPrefix + propMapping.getColumnName() + " as " + colAliasPrefix
-            + MapperUtils.OWNER_COL_ALIAS_PREFIX + propMapping.getColumnAliasSuffix());
+            + MapperUtils.TYPE_TABLE_COL_ALIAS_PREFIX + propMapping.getColumnAliasSuffix());
       }
     }
     return sj.toString();
@@ -146,7 +146,7 @@ public class SelectMapper<T> {
     } else {
       // This is when user is using the the jtm.getSelectMapper(type, tableAlias) to write custom
       // queries. returned values something like tableAlias_oc1 ...
-      return colAliasPrefix + MapperUtils.OWNER_COL_ALIAS_PREFIX
+      return colAliasPrefix + MapperUtils.TYPE_TABLE_COL_ALIAS_PREFIX
           + mappingHelper.getTableMapping(clazz).getIdPropertyMapping().getColumnAliasSuffix();
     }
   }

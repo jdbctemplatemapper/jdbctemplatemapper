@@ -344,7 +344,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         MapperUtils.columnPrefix(relatedTypeTableAlias, relatedTypeTableMapping.getTableName());
 
     SelectMapper<?> selectMapperRelatedType = jtm.getSelectMapperInternal(relatedType,
-        relatedColumnPrefix, MapperUtils.RELATED_COL_ALIAS_PREFIX);
+        relatedColumnPrefix, MapperUtils.RELATED_TABLE_COL_ALIAS_PREFIX);
 
     boolean foundInCache = false;
     String sql = jtm.getQueryMergeSqlCache().get(cacheKey);
@@ -438,7 +438,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         MapperUtils.columnPrefix(relatedTypeTableAlias, relatedTypeTableMapping.getTableName());
 
     SelectMapper<?> selectMapper = jtm.getSelectMapperInternal(relatedType, relatedColumnPrefix,
-        MapperUtils.RELATED_COL_ALIAS_PREFIX);
+        MapperUtils.RELATED_TABLE_COL_ALIAS_PREFIX);
 
     boolean foundInCache = false;
     String sql = jtm.getQueryMergeSqlCache().get(cacheKey);
@@ -532,14 +532,14 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     // The select statement is build in such a way the buildBeanWrapperModel(rs) returns the
     // ownerType id value. Note: For QueryMerge there is no alias for ownerType table
     SelectMapper<?> selectMapperOwnerType = jtm.getSelectMapperInternal(ownerType,
-        ownerTypeTableMapping.getTableName(), MapperUtils.OWNER_COL_ALIAS_PREFIX);
+        ownerTypeTableMapping.getTableName(), MapperUtils.TYPE_TABLE_COL_ALIAS_PREFIX);
 
     String relatedColumnPrefix =
         relatedTypeTableAlias == null ? relatedTypeTableMapping.getTableName()
             : relatedTypeTableAlias;
 
     SelectMapper<?> selectMapperRelatedType = jtm.getSelectMapperInternal(relatedType,
-        relatedColumnPrefix, MapperUtils.RELATED_COL_ALIAS_PREFIX);
+        relatedColumnPrefix, MapperUtils.RELATED_TABLE_COL_ALIAS_PREFIX);
 
     boolean foundInCache = false;
     String sql = jtm.getQueryMergeSqlCache().get(cacheKey);

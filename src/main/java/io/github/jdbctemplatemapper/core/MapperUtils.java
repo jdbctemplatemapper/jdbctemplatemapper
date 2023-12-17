@@ -25,8 +25,8 @@ import org.springframework.jdbc.support.JdbcUtils;
  * @author ajoseph
  */
 class MapperUtils {
-  public static final String OWNER_COL_ALIAS_PREFIX = "o";
-  public static final String RELATED_COL_ALIAS_PREFIX = "r";
+  public static final String TYPE_TABLE_COL_ALIAS_PREFIX = "t";
+  public static final String RELATED_TABLE_COL_ALIAS_PREFIX = "r";
 
   public static boolean isNumericSqlType(int sqlType) {
     return JdbcUtils.isNumeric(sqlType);

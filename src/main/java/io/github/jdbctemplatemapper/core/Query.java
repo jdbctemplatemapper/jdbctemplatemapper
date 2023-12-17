@@ -343,7 +343,7 @@ public class Query<T> implements IQueryFluent<T> {
         MapperUtils.columnPrefix(ownerTableAlias, ownerTypeTableMapping.getTableName());
 
     SelectMapper<?> ownerTypeSelectMapper = jdbcTemplateMapper.getSelectMapperInternal(ownerType,
-        ownerColumnPrefix, MapperUtils.OWNER_COL_ALIAS_PREFIX);
+        ownerColumnPrefix, MapperUtils.TYPE_TABLE_COL_ALIAS_PREFIX);
 
     TableMapping relatedTypeTableMapping =
         relatedType == null ? null : jdbcTemplateMapper.getTableMapping(relatedType);
@@ -352,7 +352,7 @@ public class Query<T> implements IQueryFluent<T> {
     SelectMapper<?> relatedTypeSelectMapper = relatedType == null ? null
         : jdbcTemplateMapper.getSelectMapperInternal(relatedType,
             MapperUtils.columnPrefix(relatedTableAlias, relatedTypeTableMapping.getTableName()),
-            MapperUtils.RELATED_COL_ALIAS_PREFIX);
+            MapperUtils.RELATED_TABLE_COL_ALIAS_PREFIX);
 
     boolean foundInCache = false;
     String cacheKey = getCacheKey();
@@ -465,7 +465,7 @@ public class Query<T> implements IQueryFluent<T> {
         MapperUtils.columnPrefix(ownerTableAlias, ownerTypeTableMapping.getTableName());
 
     SelectMapper<?> ownerTypeSelectMapper = jtm.getSelectMapperInternal(ownerType,
-        ownerColumnPrefix, MapperUtils.OWNER_COL_ALIAS_PREFIX);
+        ownerColumnPrefix, MapperUtils.TYPE_TABLE_COL_ALIAS_PREFIX);
 
     TableMapping relatedTypeTableMapping =
         relatedType == null ? null : jtm.getTableMapping(relatedType);
@@ -478,7 +478,7 @@ public class Query<T> implements IQueryFluent<T> {
 
     SelectMapper<?> relatedTypeSelectMapper = relatedType == null ? null
         : jtm.getSelectMapperInternal(relatedType, relatedColumnPrefix,
-            MapperUtils.RELATED_COL_ALIAS_PREFIX);
+            MapperUtils.RELATED_TABLE_COL_ALIAS_PREFIX);
 
     String sql = "SELECT " + ownerTypeSelectMapper.getColumnsSql();
     if (relatedType != null) {
