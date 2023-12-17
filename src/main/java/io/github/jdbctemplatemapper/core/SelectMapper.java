@@ -40,9 +40,8 @@ public class SelectMapper<T> {
   private final MappingHelper mappingHelper;
   private final Class<T> clazz;
 
-  // This is same converter used by Spring BeanPropertyRowMapper
   private final ConversionService conversionService;
-  // private final boolean useColumnLabelForResultSetMetaData;
+  
   private String tableAlias;
   private String colPrefix;
   private String colAliasPrefix;
@@ -136,12 +135,12 @@ public class SelectMapper<T> {
   public String getResultSetModelIdColumnLabel() {
     if (internal) {
       // This is an internal call from Query, QueryMerge
-      // returned values something like oc1 ... or rc1 ...
+      // returned values something like tc1 ... or rc1 ...
       return colAliasPrefix
           + mappingHelper.getTableMapping(clazz).getIdPropertyMapping().getColumnAliasSuffix();
     } else {
       // This is when user is using the the jtm.getSelectMapper(type, tableAlias) to write custom
-      // queries. returned values something like tableAlias_oc1 ...
+      // queries. returned values something like tableAlias_tc1 ...
       return colAliasPrefix + MapperUtils.TYPE_TABLE_COL_ALIAS_PREFIX
           + mappingHelper.getTableMapping(clazz).getIdPropertyMapping().getColumnAliasSuffix();
     }
