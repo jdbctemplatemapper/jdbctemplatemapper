@@ -46,22 +46,6 @@ public class NonDefaultNamingModelTest {
   }
 
   @Test
-  public void findByProperty_Test() {
-    List<NonDefaultNamingProduct> list =
-        jtm.findByProperty(NonDefaultNamingProduct.class, "productName", "socks");
-
-    NonDefaultNamingProduct prod = list.get(0);
-
-    assertEquals(2, prod.getId());
-    assertEquals("socks", prod.getProductName());
-    assertEquals("system", prod.getWhoCreated());
-    assertEquals("system", prod.getWhoUpdated());
-    assertEquals(1, prod.getOptiLock());
-    assertNotNull(prod.getCreatedAt());
-    assertNotNull(prod.getUpdatedAt());
-  }
-
-  @Test
   public void findAll_Test() {
     List<NonDefaultNamingProduct> list = jtm.findAll(NonDefaultNamingProduct.class);
 

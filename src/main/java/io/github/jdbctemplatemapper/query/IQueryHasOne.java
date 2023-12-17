@@ -20,8 +20,5 @@ package io.github.jdbctemplatemapper.query;
  * @param <T> the type
  */
 public interface IQueryHasOne<T> {
-  @Deprecated
-  IQueryJoinColumnOwningSide<T> joinColumnOwningSide(String joinColumnOwningSide);
-
   IQueryJoinColumnTypeSide<T> joinColumnTypeSide(String joinColumnTypeSide);
 }

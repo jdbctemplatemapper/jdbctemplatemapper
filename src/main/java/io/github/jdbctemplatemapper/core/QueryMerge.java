@@ -32,7 +32,6 @@ import io.github.jdbctemplatemapper.querymerge.IQueryMergeFluent;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeHasMany;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeHasOne;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeJoinColumnManySide;
-import io.github.jdbctemplatemapper.querymerge.IQueryMergeJoinColumnOwningSide;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeJoinColumnTypeSide;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergeOrderBy;
 import io.github.jdbctemplatemapper.querymerge.IQueryMergePopulateProperty;
@@ -150,25 +149,6 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     this.relationshipType = RelationshipType.HAS_MANY;
     this.relatedType = relatedType;
     this.relatedTypeTableAlias = tableAlias;
-    return this;
-  }
-
-  /**
-   * Join column for hasOne relationship. The join column (the foreign key) is on the table of the
-   * owning model. Example: Order hasOne Customer. The join column(foreign key) will be on the table
-   * order (of the owning model). The join column should not have a table prefix.
-   *
-   * @deprecated as of 2.6.0 Use joinColumnTypeSide() instead
-   * 
-   * @param joinColumnOwningSide the join column on the owning side (with no table prefix)
-   * @return interface with the next methods in the chain
-   */
-  @Deprecated
-  public IQueryMergeJoinColumnOwningSide<T> joinColumnOwningSide(String joinColumnOwningSide) {
-    if (MapperUtils.isBlank(joinColumnOwningSide)) {
-      throw new IllegalArgumentException("joinColumnOwningSide cannot be null or blank");
-    }
-    this.joinColumnTypeSide = MapperUtils.toLowerCase(joinColumnOwningSide.trim());
     return this;
   }
 

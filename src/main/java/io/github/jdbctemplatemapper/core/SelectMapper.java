@@ -22,7 +22,6 @@ import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 import io.github.jdbctemplatemapper.exception.MapperException;
 
 /**
@@ -43,7 +42,7 @@ public class SelectMapper<T> {
 
   // This is same converter used by Spring BeanPropertyRowMapper
   private final ConversionService conversionService;
-  private final boolean useColumnLabelForResultSetMetaData;
+  // private final boolean useColumnLabelForResultSetMetaData;
   private String tableAlias;
   private String colPrefix;
   private String colAliasPrefix;
@@ -51,7 +50,7 @@ public class SelectMapper<T> {
   private boolean internal;
 
   SelectMapper(Class<T> clazz, String tableAlias, MappingHelper mappingHelper,
-      ConversionService conversionService, boolean useColumnLabelForResultSetMetaData) {
+      ConversionService conversionService) {
     Assert.notNull(clazz, " clazz cannot be empty");
     if (MapperUtils.isBlank(tableAlias)) {
       throw new MapperException("tableAlias cannot be blank or empty");
@@ -61,7 +60,6 @@ public class SelectMapper<T> {
     this.mappingHelper = mappingHelper;
     this.conversionService = conversionService;
 
-    this.useColumnLabelForResultSetMetaData = useColumnLabelForResultSetMetaData;
     this.tableAlias = tableAlias.trim();
     this.colPrefix = this.tableAlias + ".";
     this.colAliasPrefix = MapperUtils.toLowerCase(this.tableAlias + "_");
@@ -69,15 +67,13 @@ public class SelectMapper<T> {
 
   // internal use only
   SelectMapper(Class<T> clazz, String tableAlias, String columnAliasPrefix,
-      MappingHelper mappingHelper, ConversionService conversionService,
-      boolean useColumnLabelForResultSetMetaData) {
+      MappingHelper mappingHelper, ConversionService conversionService) {
     Assert.notNull(clazz, " clazz cannot be null");
     Assert.notNull(tableAlias, " tableAlias cannot be null");
     Assert.notNull(columnAliasPrefix, " columnAliasPrefix cannot be null");
     this.clazz = clazz;
     this.mappingHelper = mappingHelper;
     this.conversionService = conversionService;
-    this.useColumnLabelForResultSetMetaData = useColumnLabelForResultSetMetaData;
 
     this.colPrefix = tableAlias + ".";
     this.colAliasPrefix = columnAliasPrefix;
@@ -192,24 +188,18 @@ public class SelectMapper<T> {
       int count = rsMetaData.getColumnCount();
       for (int i = 1; i <= count; i++) {
         String columnLabel = rsMetaData.getColumnLabel(i);
-        // attempted support for older drivers
-        if (!useColumnLabelForResultSetMetaData) {
-          if (StringUtils.hasLength(rsMetaData.getColumnName(i))) {
-            columnLabel = rsMetaData.getColumnName(i);
-          }
-        }
         if (columnLabel != null) {
           columnLabel = columnLabel.toLowerCase(Locale.US);
           if (columnLabel.startsWith(colAliasPrefix)) {
             PropertyMapping propMapping = null;
             if (internal) {
               // This is an internal call from Query, QueryMerge
-              // column alias would be something like oc1 ... or rc1 ...
+              // column alias would be something like tc1 ... or rc1 ...
               propMapping = tableMapping.getPropertyMappingByColumnAlias(columnLabel);
             } else {
               // This is when user is using the the jtm.getSelectMapper(type, tableAlias) to write
-              // custom queries. Column alias would be something like colAliasPrefix_oc1,
-              // colAliasPrefix_oc2 ...
+              // custom queries. Column alias would be something like colAliasPrefix_tc1,
+              // colAliasPrefix_tc2 ...
               propMapping = tableMapping.getPropertyMappingByColumnAlias(
                   columnLabel.substring(colAliasPrefix.length()));
             }

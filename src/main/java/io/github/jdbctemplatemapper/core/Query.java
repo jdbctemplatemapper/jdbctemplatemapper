@@ -29,7 +29,6 @@ import io.github.jdbctemplatemapper.query.IQueryFluent;
 import io.github.jdbctemplatemapper.query.IQueryHasMany;
 import io.github.jdbctemplatemapper.query.IQueryHasOne;
 import io.github.jdbctemplatemapper.query.IQueryJoinColumnManySide;
-import io.github.jdbctemplatemapper.query.IQueryJoinColumnOwningSide;
 import io.github.jdbctemplatemapper.query.IQueryJoinColumnTypeSide;
 import io.github.jdbctemplatemapper.query.IQueryLimitOffsetClause;
 import io.github.jdbctemplatemapper.query.IQueryOrderBy;
@@ -167,26 +166,6 @@ public class Query<T> implements IQueryFluent<T> {
     this.relationshipType = RelationshipType.HAS_MANY;
     this.relatedType = relatedType;
     this.relatedTableAlias = tableAlias;
-    return this;
-  }
-
-  /**
-   * Join column for hasOne relationship: The join column (the foreign key) is on the table of the
-   * owning model. Example: Order hasOne Customer. The join column(foreign key) will be on the table
-   * order (of the owning model). The join column should not have a table prefix.
-   *
-   * @deprecated as of 2.6.0 Use joinColumnTypeSide() instead.
-   * 
-   * @param joinColumnOwningSide the join column on the owning side (with no table prefix)
-   * @return interface with the next methods in the chain
-   */
-  @Deprecated
-  public IQueryJoinColumnOwningSide<T> joinColumnOwningSide(String joinColumnOwningSide) {
-    if (MapperUtils.isBlank(joinColumnOwningSide)) {
-      throw new IllegalArgumentException("joinColumnOwningSide cannot be null or blank");
-    }
-
-    this.joinColumnTypeSide = MapperUtils.toLowerCase(joinColumnOwningSide.trim());
     return this;
   }
 
