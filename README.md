@@ -1,9 +1,9 @@
 # JdbcTemplateMapper #
  
- A simple library that makes the usage of Spring JdbcTemplate less verbose for CRUD and relationship queries.
- Use it where appropriate and for other features keep using JdbcTemplate as you normally would.
+A simple library that makes the usage of Spring JdbcTemplate less verbose for CRUD and relationship queries.
+Use it where appropriate and for other features keep using JdbcTemplate as you normally would.
  
- Note that this is not an ORM so you don't need to worry about sessions, flushing, level 1 and 2 caches, detached objects, magical insert/update/deletes of relationships, N+1 queries, unproxy and all the other challenges of a leaky abstraction which an ORM is.
+Note that this is not an ORM. It's a wrapper around JdbcTemplate so you don't need to worry about sessions, flushing, level 1 and 2 caches, detached objects, magical inserts/updates/deletes of relationships, N+1 queries, unproxy and other challenges of an ORM.
   
 [Javadoc](https://jdbctemplatemapper.github.io/jdbctemplatemapper/javadoc.html) | [Website](https://jdbctemplatemapper.github.io/jdbctemplatemapper/)
  
@@ -333,7 +333,7 @@ public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
 ## Querying relationships
 The library provides multiple ways to query relationships.
 Fluent style queries allow querying of hasOne, hasMany and hasMany through (many to many using an associated table) relationships.
-The where() and orderBy() clauses use SQL.
+The query where  and order by clauses are just SQL.
 The IDE will provide suggestions to help chain the methods. Turn logging on (see logging section) to see the generated queries.  
 The QueryMerge class allows the results of a previous query to be merged with results of a new query. This comes in handy where multiple relationships need to be queried.
 
