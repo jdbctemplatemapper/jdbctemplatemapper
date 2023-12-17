@@ -62,12 +62,6 @@ class MappingHelper {
   private final String schemaName;
   private final String catalogName;
 
-  // For most jdbc drivers when getting column metadata using jdbc, the
-  // columnPattern argument null
-  // returns all the columns (which is the default for JdbcTemplateMapper). Some
-  // jdbc drivers may require to pass something like '%'.
-  private final String metaDataColumnNamePattern;
-
   private boolean includeSynonyms = false;
 
   /**
@@ -76,20 +70,13 @@ class MappingHelper {
    * @param jdbcTemplate The jdbcTemplate
    * @param schemaName database schema name.
    * @param catalogName database catalog name.
-   * @param metaDataColumnNamePattern For most jdbc drivers getting column metadata from database
-   *        the metaDataColumnNamePattern argument of null returns all the columns (which is the
-   *        default for JdbcTemplateMapper). Some jdbc drivers may require to pass something like
-   *        '%'.
    */
-  public MappingHelper(JdbcTemplate jdbcTemplate, String schemaName, String catalogName,
-      String metaDataColumnNamePattern) {
+  public MappingHelper(JdbcTemplate jdbcTemplate, String schemaName, String catalogName) {
     Assert.notNull(jdbcTemplate, "jdbcTemplate must not be null");
 
     this.jdbcTemplate = jdbcTemplate;
     this.schemaName = schemaName;
     this.catalogName = catalogName;
-    this.metaDataColumnNamePattern = metaDataColumnNamePattern;
-
   }
 
   public void includeSynonyms() {
@@ -102,10 +89,6 @@ class MappingHelper {
 
   public String getCatalogName() {
     return catalogName;
-  }
-
-  public String getMetaDataColumnNamePattern() {
-    return metaDataColumnNamePattern;
   }
 
   /**

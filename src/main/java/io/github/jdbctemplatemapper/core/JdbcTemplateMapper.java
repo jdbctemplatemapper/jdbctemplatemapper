@@ -108,7 +108,7 @@ public final class JdbcTemplateMapper {
    * @param jdbcTemplate the jdbcTemplate.
    */
   public JdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
-    this(jdbcTemplate, null, null, null);
+    this(jdbcTemplate, null, null);
   }
 
   /**
@@ -118,7 +118,7 @@ public final class JdbcTemplateMapper {
    * @param schemaName database schema name.
    */
   public JdbcTemplateMapper(JdbcTemplate jdbcTemplate, String schemaName) {
-    this(jdbcTemplate, schemaName, null, null);
+    this(jdbcTemplate, schemaName, null);
   }
 
   /**
@@ -129,30 +129,13 @@ public final class JdbcTemplateMapper {
    * @param catalogName database catalog name.
    */
   public JdbcTemplateMapper(JdbcTemplate jdbcTemplate, String schemaName, String catalogName) {
-    this(jdbcTemplate, schemaName, catalogName, null);
-  }
-
-  /**
-   * Constructor.
-   *
-   * @param jdbcTemplate The jdbcTemplate
-   * @param schemaName database schema name.
-   * @param catalogName database catalog name.
-   * @param metaDataColumnNamePattern For most jdbc drivers getting column metadata from database
-   *        the metaDataColumnNamePattern argument of null will return all the columns (which is the
-   *        default for JdbcTemplateMapper). Some jdbc drivers may require to pass something like
-   *        '%'.
-   */
-  public JdbcTemplateMapper(JdbcTemplate jdbcTemplate, String schemaName, String catalogName,
-      String metaDataColumnNamePattern) {
-
     Assert.notNull(jdbcTemplate, "jdbcTemplate must not be null");
     this.jdbcTemplate = jdbcTemplate;
 
     npJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
 
     mappingHelper =
-        new MappingHelper(jdbcTemplate, schemaName, catalogName, metaDataColumnNamePattern);
+        new MappingHelper(jdbcTemplate, schemaName, catalogName);
   }
 
   /**
