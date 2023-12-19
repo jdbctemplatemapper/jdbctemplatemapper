@@ -225,7 +225,7 @@ public class HasManyThroughTest {
     });
     assertTrue(
         exception.getMessage()
-                 .contains("throughJoinColumns() ownerTypeJoinColumn cannot be null or blank"));
+                 .contains("throughJoinColumns() typeJoinColumn cannot be null or blank"));
   }
 
   @Test
