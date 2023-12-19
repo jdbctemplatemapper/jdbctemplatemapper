@@ -124,9 +124,8 @@ public class HasManyThroughTest {
            .populateProperty("skills")
            .execute(jtm);
     });
-    assertTrue(
-        exception.getMessage()
-                 .contains("throughJoinColumns() typeJoinColumn cannot be null or blank"));
+    assertTrue(exception.getMessage()
+                        .contains("throughJoinColumns() typeJoinColumn cannot be null or blank"));
   }
 
   @Test
@@ -223,9 +222,8 @@ public class HasManyThroughTest {
                 .populateProperty("skills")
                 .execute(jtm, employees);
     });
-    assertTrue(
-        exception.getMessage()
-                 .contains("throughJoinColumns() typeJoinColumn cannot be null or blank"));
+    assertTrue(exception.getMessage()
+                        .contains("throughJoinColumns() typeJoinColumn cannot be null or blank"));
   }
 
   @Test

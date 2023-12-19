@@ -112,10 +112,10 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
 
   /**
    * Join column for hasOne relationship: The join column (the foreign key) is on the table of the
-   * owning model. Example: Order hasOne Customer. The join column(foreign key) will be on the table
-   * order (of the owning model). The join column should not have a table prefix.
+   * type model. Example: Order hasOne Customer. The join column(foreign key) will be on the table
+   * order (of the type model). The join column should not have a table prefix.
    *
-   * @param joinColumnTypeSide the join column on the owning side (with no table prefix)
+   * @param joinColumnTypeSide the join column on the type side (with no table prefix)
    * @return interface with the next methods in the chain
    */
   public IQueryCountJoinColumnTypeSide<T> joinColumnTypeSide(String joinColumnTypeSide) {
@@ -181,18 +181,18 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
   }
 
   private String generatePartialQuerySql(JdbcTemplateMapper jtm) {
-    TableMapping ownerTypeTableMapping = jtm.getTableMapping(type);
+    TableMapping typeTableMapping = jtm.getTableMapping(type);
     TableMapping relatedTypeTableMapping =
         relatedType == null ? null : jtm.getTableMapping(relatedType);
 
-    String ownerTableStr = MapperUtils.tableStrForFrom(typeTableAlias,
-        ownerTypeTableMapping.fullyQualifiedTableName());
+    String typeTableStr =
+        MapperUtils.tableStrForFrom(typeTableAlias, typeTableMapping.fullyQualifiedTableName());
 
-    String ownerColumnPrefix =
-        MapperUtils.columnPrefix(typeTableAlias, ownerTypeTableMapping.getTableName());
+    String typeColumnPrefix =
+        MapperUtils.columnPrefix(typeTableAlias, typeTableMapping.getTableName());
 
     String sql = "SELECT count(*) as record_count ";
-    sql += " FROM " + ownerTableStr;
+    sql += " FROM " + typeTableStr;
     if (relatedType != null) {
       String relatedTableStr = MapperUtils.tableStrForFrom(relatedTableAlias,
           relatedTypeTableMapping.fullyQualifiedTableName());
@@ -201,9 +201,9 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
           MapperUtils.columnPrefix(relatedTableAlias, relatedTypeTableMapping.getTableName());
 
       if (RelationshipType.HAS_ONE.equals(relationshipType)) {
-        // joinColumn is on owner table
+        // joinColumn is on type table
         sql +=
-            " LEFT JOIN " + relatedTableStr + " on " + ownerColumnPrefix + "." + joinColumnTypeSide
+            " LEFT JOIN " + relatedTableStr + " on " + typeColumnPrefix + "." + joinColumnTypeSide
                 + " = " + relatedColumnPrefix + "." + relatedTypeTableMapping.getIdColumnName();
       }
     }
