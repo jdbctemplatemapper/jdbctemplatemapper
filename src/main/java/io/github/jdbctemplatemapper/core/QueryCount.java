@@ -154,8 +154,8 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
     String cacheKey = getCacheKey();
     String sql = jdbcTemplateMapper.getQueryCountSqlCache().get(cacheKey);
     if (sql == null) {
-      QueryValidator.validateQueryCount(jdbcTemplateMapper, type, relationshipType,
-          relatedType, joinColumnTypeSide);
+      QueryValidator.validateQueryCount(jdbcTemplateMapper, type, relationshipType, relatedType,
+          joinColumnTypeSide);
       sql = generatePartialQuerySql(jdbcTemplateMapper);
     } else {
       foundInCache = true;

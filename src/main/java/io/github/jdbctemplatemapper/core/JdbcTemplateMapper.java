@@ -134,8 +134,7 @@ public final class JdbcTemplateMapper {
 
     npJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
 
-    mappingHelper =
-        new MappingHelper(jdbcTemplate, schemaName, catalogName);
+    mappingHelper = new MappingHelper(jdbcTemplate, schemaName, catalogName);
   }
 
   /**
