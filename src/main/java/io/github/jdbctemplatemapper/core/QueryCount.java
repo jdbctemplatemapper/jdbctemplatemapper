@@ -16,7 +16,6 @@ package io.github.jdbctemplatemapper.core;
 import org.springframework.util.Assert;
 import io.github.jdbctemplatemapper.querycount.IQueryCountFluent;
 import io.github.jdbctemplatemapper.querycount.IQueryCountHasOne;
-import io.github.jdbctemplatemapper.querycount.IQueryCountJoinColumnOwningSide;
 import io.github.jdbctemplatemapper.querycount.IQueryCountJoinColumnTypeSide;
 import io.github.jdbctemplatemapper.querycount.IQueryCountType;
 import io.github.jdbctemplatemapper.querycount.IQueryCountWhere;
@@ -33,8 +32,8 @@ import io.github.jdbctemplatemapper.querycount.IQueryCountWhere;
  * @author ajoseph
  */
 public class QueryCount<T> implements IQueryCountFluent<T> {
-  private Class<T> ownerType;
-  private String ownerTableAlias;
+  private Class<T> type;
+  private String typeTableAlias;
   private String whereClause;
   private Object[] whereParams;
 
@@ -44,12 +43,12 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
   private String joinColumnTypeSide;
 
   private QueryCount(Class<T> type) {
-    this.ownerType = type;
+    this.type = type;
   }
 
   private QueryCount(Class<T> type, String tableAlias) {
-    this.ownerType = type;
-    this.ownerTableAlias = tableAlias;
+    this.type = type;
+    this.typeTableAlias = tableAlias;
   }
 
   /**
@@ -113,27 +112,10 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
 
   /**
    * Join column for hasOne relationship: The join column (the foreign key) is on the table of the
-   * owning model. Example: Order hasOne Customer. The join column(foreign key) will be on the table
-   * order (of the owning model). The join column should not have a table prefix.
+   * type model. Example: Order hasOne Customer. The join column(foreign key) will be on the table
+   * order (of the type model). The join column should not have a table prefix.
    *
-   * @deprecated as of 2.6.0 Use joinColumnTypeSide() instead
-   * @param joinColumnOwningSide the join column on the owning side (with no table prefix)
-   * @return interface with the next methods in the chain
-   */
-  public IQueryCountJoinColumnOwningSide<T> joinColumnOwningSide(String joinColumnOwningSide) {
-    if (MapperUtils.isBlank(joinColumnOwningSide)) {
-      throw new IllegalArgumentException("joinColumnOwningSide cannot be null or blank");
-    }
-    this.joinColumnTypeSide = MapperUtils.toLowerCase(joinColumnOwningSide.trim());
-    return this;
-  }
-
-  /**
-   * Join column for hasOne relationship: The join column (the foreign key) is on the table of the
-   * owning model. Example: Order hasOne Customer. The join column(foreign key) will be on the table
-   * order (of the owning model). The join column should not have a table prefix.
-   *
-   * @param joinColumnTypeSide the join column on the owning side (with no table prefix)
+   * @param joinColumnTypeSide the join column on the type side (with no table prefix)
    * @return interface with the next methods in the chain
    */
   public IQueryCountJoinColumnTypeSide<T> joinColumnTypeSide(String joinColumnTypeSide) {
@@ -172,8 +154,8 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
     String cacheKey = getCacheKey();
     String sql = jdbcTemplateMapper.getQueryCountSqlCache().get(cacheKey);
     if (sql == null) {
-      QueryValidator.validateQueryCount(jdbcTemplateMapper, ownerType, relationshipType,
-          relatedType, joinColumnTypeSide);
+      QueryValidator.validateQueryCount(jdbcTemplateMapper, type, relationshipType, relatedType,
+          joinColumnTypeSide);
       sql = generatePartialQuerySql(jdbcTemplateMapper);
     } else {
       foundInCache = true;
@@ -199,18 +181,18 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
   }
 
   private String generatePartialQuerySql(JdbcTemplateMapper jtm) {
-    TableMapping ownerTypeTableMapping = jtm.getTableMapping(ownerType);
+    TableMapping typeTableMapping = jtm.getTableMapping(type);
     TableMapping relatedTypeTableMapping =
         relatedType == null ? null : jtm.getTableMapping(relatedType);
 
-    String ownerTableStr = MapperUtils.tableStrForFrom(ownerTableAlias,
-        ownerTypeTableMapping.fullyQualifiedTableName());
+    String typeTableStr =
+        MapperUtils.tableStrForFrom(typeTableAlias, typeTableMapping.fullyQualifiedTableName());
 
-    String ownerColumnPrefix =
-        MapperUtils.columnPrefix(ownerTableAlias, ownerTypeTableMapping.getTableName());
+    String typeColumnPrefix =
+        MapperUtils.columnPrefix(typeTableAlias, typeTableMapping.getTableName());
 
     String sql = "SELECT count(*) as record_count ";
-    sql += " FROM " + ownerTableStr;
+    sql += " FROM " + typeTableStr;
     if (relatedType != null) {
       String relatedTableStr = MapperUtils.tableStrForFrom(relatedTableAlias,
           relatedTypeTableMapping.fullyQualifiedTableName());
@@ -219,9 +201,9 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
           MapperUtils.columnPrefix(relatedTableAlias, relatedTypeTableMapping.getTableName());
 
       if (RelationshipType.HAS_ONE.equals(relationshipType)) {
-        // joinColumn is on owner table
+        // joinColumn is on type table
         sql +=
-            " LEFT JOIN " + relatedTableStr + " on " + ownerColumnPrefix + "." + joinColumnTypeSide
+            " LEFT JOIN " + relatedTableStr + " on " + typeColumnPrefix + "." + joinColumnTypeSide
                 + " = " + relatedColumnPrefix + "." + relatedTypeTableMapping.getIdColumnName();
       }
     }
@@ -231,8 +213,8 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
   private String getCacheKey() {
     // @formatter:off
     return String.join("-", 
-        ownerType.getName(), 
-        ownerTableAlias,
+        type.getName(), 
+        typeTableAlias,
         relatedType == null ? null : relatedType.getName(),
         relatedTableAlias,
         relationshipType,

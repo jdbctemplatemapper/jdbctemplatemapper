@@ -40,11 +40,11 @@ public class TypeCheckPostgresTest {
 
   @BeforeEach
   public void beforeMethod() {
+    // tests will only run if postgres
     if (!jdbcDriver.contains("postgres")) {
       Assumptions.assumeTrue(false);
     }
   }
-
 
   @Test
   public void insert_TypeCheckPostgresTest() {

@@ -100,9 +100,6 @@ public final class JdbcTemplateMapper {
   private DefaultConversionService conversionService =
       (DefaultConversionService) DefaultConversionService.getSharedInstance();
 
-  // used for an attempt to support for old/non standard jdbc drivers.
-  private boolean useColumnLabelForResultSetMetaData = true;
-
   private boolean includeSynonyms = false;
 
   /**
@@ -111,7 +108,7 @@ public final class JdbcTemplateMapper {
    * @param jdbcTemplate the jdbcTemplate.
    */
   public JdbcTemplateMapper(JdbcTemplate jdbcTemplate) {
-    this(jdbcTemplate, null, null, null);
+    this(jdbcTemplate, null, null);
   }
 
   /**
@@ -121,7 +118,7 @@ public final class JdbcTemplateMapper {
    * @param schemaName database schema name.
    */
   public JdbcTemplateMapper(JdbcTemplate jdbcTemplate, String schemaName) {
-    this(jdbcTemplate, schemaName, null, null);
+    this(jdbcTemplate, schemaName, null);
   }
 
   /**
@@ -132,30 +129,12 @@ public final class JdbcTemplateMapper {
    * @param catalogName database catalog name.
    */
   public JdbcTemplateMapper(JdbcTemplate jdbcTemplate, String schemaName, String catalogName) {
-    this(jdbcTemplate, schemaName, catalogName, null);
-  }
-
-  /**
-   * Constructor.
-   *
-   * @param jdbcTemplate The jdbcTemplate
-   * @param schemaName database schema name.
-   * @param catalogName database catalog name.
-   * @param metaDataColumnNamePattern For most jdbc drivers getting column metadata from database
-   *        the metaDataColumnNamePattern argument of null will return all the columns (which is the
-   *        default for JdbcTemplateMapper). Some jdbc drivers may require to pass something like
-   *        '%'.
-   */
-  public JdbcTemplateMapper(JdbcTemplate jdbcTemplate, String schemaName, String catalogName,
-      String metaDataColumnNamePattern) {
-
     Assert.notNull(jdbcTemplate, "jdbcTemplate must not be null");
     this.jdbcTemplate = jdbcTemplate;
 
     npJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
 
-    mappingHelper =
-        new MappingHelper(jdbcTemplate, schemaName, catalogName, metaDataColumnNamePattern);
+    mappingHelper = new MappingHelper(jdbcTemplate, schemaName, catalogName);
   }
 
   /**
@@ -187,34 +166,6 @@ public final class JdbcTemplateMapper {
       IRecordOperatorResolver recordOperatorResolver) {
     this.recordOperatorResolver = recordOperatorResolver;
     return this;
-  }
-
-
-  /**
-   * Attempted Support for old/non standard jdbc drivers. For old drivers set this value to false
-   * and see whether it makes a difference.
-   * 
-   * @deprecated as of v2.5.1 JDBC drivers used should support JDBC 4.x
-   *
-   * @param val boolean value
-   */
-  @Deprecated
-  public void useColumnLabelForResultSetMetaData(boolean val) {
-    this.useColumnLabelForResultSetMetaData = val;
-  }
-
-  /**
-   * Some postgres drivers seem to not return the correct meta data for TIMESTAMP WITH TIMEZONE
-   * fields. If this value is set to true it will force system to use
-   * java.sql.Types.TIMESTAMP_WITH_TIMEZONE for properties of models which are of type
-   * OffsetDateTime.
-   * 
-   * @deprecated as of 2.5.1 Will be removed in next release
-   * 
-   * @param val boolean value
-   */
-  public void forcePostgresTimestampWithTimezone(boolean val) {
-    mappingHelper.forcePostgresTimestampWithTimezone(val);
   }
 
   /**
@@ -275,93 +226,6 @@ public final class JdbcTemplateMapper {
       return clazz.cast(obj);
     } catch (EmptyResultDataAccessException e) {
       return null;
-    }
-  }
-
-  /**
-   * Returns list of objects which match the property value.
-   * 
-   * <pre>
-   * Query is constructed
-   * in such a way that if propertyValue is null it will return records in
-   * database which have null values for the property
-   * </pre>
-   * 
-   * @deprecated as of 2.4.0. Use {@link Query} with where clause instead.
-   *
-   * @param <T> the type
-   * @param clazz Class of List of objects returned
-   * @param propertyName the property name
-   * @param propertyValue the value of property to query by
-   * @return a List of objects of type T
-   */
-  @Deprecated
-  public <T> List<T> findByProperty(Class<T> clazz, String propertyName, Object propertyValue) {
-    return findByProperty(clazz, propertyName, propertyValue, null);
-  }
-
-  /**
-   * Returns list of objects which match the propertyValue ordered by the orderedByProperty
-   * ascending.
-   * 
-   * <pre>
-   * Query is constructed in such a way that if
-   * propertyValue is null it will return records in database which have null
-   * values for the property
-   * </pre>
-   * 
-   * @deprecated as of 2.4.0. Use {@link Query} with where clause and orderBy instead.
-   *
-   * @param <T> the type
-   * @param clazz Class of List of objects returned
-   * @param propertyName the property name
-   * @param propertyValue the value of property to query by
-   * @param orderByPropertyName the order by property name
-   * @return a List of objects for type T
-   */
-  @Deprecated
-  public <T> List<T> findByProperty(Class<T> clazz, String propertyName, Object propertyValue,
-      String orderByPropertyName) {
-    Assert.notNull(clazz, "Class must not be null");
-    Assert.notNull(propertyName, "propertyName must not be null");
-
-    TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
-    String propColumnName = tableMapping.getColumnName(propertyName);
-    if (propColumnName == null) {
-      throw new MapperException(clazz.getSimpleName() + "." + propertyName
-          + " is either invalid or does not have a corresponding column in database.");
-    }
-
-    String columnsSql = getBeanColumnsSqlInternal(tableMapping, clazz);
-    String sql = "SELECT " + columnsSql + " FROM " + tableMapping.fullyQualifiedTableName()
-        + " WHERE " + propColumnName;
-
-    if (propertyValue == null) {
-      sql += " IS NULL";
-    } else {
-      sql += " = ?";
-    }
-
-    String orderByColumnName = null;
-    if (orderByPropertyName != null) {
-      orderByColumnName = tableMapping.getColumnName(orderByPropertyName);
-      if (orderByColumnName == null) {
-        throw new MapperException(
-            "orderByPropertyName " + clazz.getSimpleName() + "." + orderByPropertyName
-                + " is either invalid or does not have a corresponding column in database.");
-      }
-    }
-
-    if (orderByColumnName != null) {
-      sql += " ORDER BY " + orderByColumnName + " ASC";
-    }
-
-    RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
-
-    if (propertyValue == null) {
-      return jdbcTemplate.query(sql, mapper);
-    } else {
-      return jdbcTemplate.query(sql, mapper, propertyValue);
     }
   }
 
@@ -478,19 +342,9 @@ public final class JdbcTemplateMapper {
     }
 
     MapSqlParameterSource mapSqlParameterSource = new MapSqlParameterSource();
-
-    if (mappingHelper.getForcePostgresTimestampWithTimezone()) {
-      // propertySqlTypes are included in this case.
-      for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
-        mapSqlParameterSource.addValue(propMapping.getColumnName(),
-            bw.getPropertyValue(propMapping.getPropertyName()),
-            tableMapping.getPropertySqlType(propMapping.getPropertyName()));
-      }
-    } else {
-      for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
-        mapSqlParameterSource.addValue(propMapping.getColumnName(),
-            bw.getPropertyValue(propMapping.getPropertyName()));
-      }
+    for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
+      mapSqlParameterSource.addValue(propMapping.getColumnName(),
+          bw.getPropertyValue(propMapping.getPropertyName()));
     }
 
     boolean foundInCache = false;
@@ -722,14 +576,12 @@ public final class JdbcTemplateMapper {
    * @return the SelectMapper
    */
   public <T> SelectMapper<T> getSelectMapper(Class<T> type, String tableAlias) {
-    return new SelectMapper<T>(type, tableAlias, mappingHelper, conversionService,
-        useColumnLabelForResultSetMetaData);
+    return new SelectMapper<T>(type, tableAlias, mappingHelper, conversionService);
   }
 
   // internal use only
   <T> SelectMapper<T> getSelectMapperInternal(Class<T> type, String tableName, String columnAlias) {
-    return new SelectMapper<T>(type, tableName, columnAlias, mappingHelper, conversionService,
-        useColumnLabelForResultSetMetaData);
+    return new SelectMapper<T>(type, tableName, columnAlias, mappingHelper, conversionService);
   }
 
   /**
@@ -742,29 +594,6 @@ public final class JdbcTemplateMapper {
    */
   public String getColumnName(Class<?> clazz, String propertyName) {
     return mappingHelper.getTableMapping(clazz).getColumnName(propertyName);
-  }
-
-  /**
-   * returns a string which can be used in a sql select statement. The column alias will be the
-   * underscore case name of property name, so it works well with JdbcTemplate's
-   * BeanPropertyRowMapper
-   *
-   * <p>
-   * Will return something like below if 'name' property is mapped to 'last_name':
-   *
-   * <pre>
-   * "id as id, last_name as name"
-   * </pre>
-   * 
-   * @deprecated as of 2.5.0. Use getBeanColumnsSql() instead.
-   *
-   * @param clazz the class
-   * @return comma separated select column string
-   * 
-   */
-  @Deprecated
-  public String getColumnsSql(Class<?> clazz) {
-    return getBeanColumnsSqlInternal(mappingHelper.getTableMapping(clazz), clazz);
   }
 
   /**

@@ -39,6 +39,7 @@ public class TypeCheckSqlServerTest {
 
   @BeforeEach
   public void beforeMethod() {
+    // tests will only run if sqlserver
     if (!jdbcDriver.contains("sqlserver")) {
       Assumptions.assumeTrue(false);
     }

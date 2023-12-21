@@ -17,9 +17,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -58,20 +56,11 @@ class MappingHelper {
   // value - the table mapping
   private SimpleCache<String, TableMapping> modelToTableMappingCache = new SimpleCache<>();
 
-  // workaround for postgres driver bug for ResultSetMetaData
-  private boolean forcePostgresTimestampWithTimezone = false;
-
   private String databaseProductName;
 
   private final JdbcTemplate jdbcTemplate;
   private final String schemaName;
   private final String catalogName;
-
-  // For most jdbc drivers when getting column metadata using jdbc, the
-  // columnPattern argument null
-  // returns all the columns (which is the default for JdbcTemplateMapper). Some
-  // jdbc drivers may require to pass something like '%'.
-  private final String metaDataColumnNamePattern;
 
   private boolean includeSynonyms = false;
 
@@ -81,24 +70,13 @@ class MappingHelper {
    * @param jdbcTemplate The jdbcTemplate
    * @param schemaName database schema name.
    * @param catalogName database catalog name.
-   * @param metaDataColumnNamePattern For most jdbc drivers getting column metadata from database
-   *        the metaDataColumnNamePattern argument of null returns all the columns (which is the
-   *        default for JdbcTemplateMapper). Some jdbc drivers may require to pass something like
-   *        '%'.
    */
-  public MappingHelper(JdbcTemplate jdbcTemplate, String schemaName, String catalogName,
-      String metaDataColumnNamePattern) {
+  public MappingHelper(JdbcTemplate jdbcTemplate, String schemaName, String catalogName) {
     Assert.notNull(jdbcTemplate, "jdbcTemplate must not be null");
 
     this.jdbcTemplate = jdbcTemplate;
     this.schemaName = schemaName;
     this.catalogName = catalogName;
-    this.metaDataColumnNamePattern = metaDataColumnNamePattern;
-
-  }
-
-  public void forcePostgresTimestampWithTimezone(boolean val) {
-    this.forcePostgresTimestampWithTimezone = val;
   }
 
   public void includeSynonyms() {
@@ -111,10 +89,6 @@ class MappingHelper {
 
   public String getCatalogName() {
     return catalogName;
-  }
-
-  public String getMetaDataColumnNamePattern() {
-    return metaDataColumnNamePattern;
   }
 
   /**
@@ -178,18 +152,6 @@ class MappingHelper {
             columnNameToColumnInfo);
         processAnnotation(UpdatedBy.class, field, tableName, propNameToPropertyMapping,
             columnNameToColumnInfo);
-
-        // postgres driver bug where the database metadata returns TIMESTAMP instead of
-        // TIMESTAMP_WITH_TIMEZONE for columns timestamptz.
-        if (forcePostgresTimestampWithTimezone) {
-          PropertyMapping propMapping = propNameToPropertyMapping.get(propertyName);
-          if (propMapping != null) {
-            if (OffsetDateTime.class.getName().equals(propMapping.getPropertyType().getName())
-                && propMapping.getColumnSqlDataType() == Types.TIMESTAMP) {
-              propMapping.setColumnSqlDataType(Types.TIMESTAMP_WITH_TIMEZONE);
-            }
-          }
-        }
       }
 
       List<PropertyMapping> propertyMappings = new ArrayList<>(propNameToPropertyMapping.values());
@@ -290,10 +252,6 @@ class MappingHelper {
         return this.databaseProductName;
       }
     }
-  }
-
-  boolean getForcePostgresTimestampWithTimezone() {
-    return forcePostgresTimestampWithTimezone;
   }
 
   private <T extends Annotation> void processAnnotation(Class<T> annotationClazz, Field field,
