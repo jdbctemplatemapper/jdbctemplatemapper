@@ -350,6 +350,15 @@ List<Order> orders =
        .where("orders.status = ? and orders.customer_id = ?", "COMPLETE", 1) // good practice to parameterize the where clause
        .orderBy("orders.id desc")
        .execute(jdbcTemplateMapper);
+       
+// with where and orderBy with named parameters
+List<Order> orders = 
+  Query.type(Order.class)
+       .where("orders.status = :status and orders.customer_id = :customerId", 
+                                       new MapSqlParameterSource().addValue("status", "COMPLETE").addValue("customerId", 1))
+       .orderBy("orders.id desc")
+       .execute(jdbcTemplateMapper);      
+       
 
 // hasOne relationship         
 List<Order> orders = 
