@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
 import io.github.jdbctemplatemapper.core.Query;
@@ -478,9 +479,19 @@ public class QueryTest {
         Query.type(Order.class).where("orders.status = ?", "IN PROCESS").execute(jtm);
 
     assertTrue(orders.size() == 2);
-
-
   }
+
+  @Test
+  public void whereWithMapSqlParameterSource_success_test() {
+
+    List<Order> orders = Query.type(Order.class)
+                              .where("orders.status = :status",
+                                  new MapSqlParameterSource().addValue("status", "IN PROCESS"))
+                              .execute(jtm);
+
+    assertTrue(orders.size() == 2);
+  }
+
 
   @Test
   public void whereAndOrderBy_success_test() {

@@ -13,6 +13,7 @@
  */
 package io.github.jdbctemplatemapper.core;
 
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.util.Assert;
 import io.github.jdbctemplatemapper.querycount.IQueryCountFluent;
 import io.github.jdbctemplatemapper.querycount.IQueryCountHasOne;
@@ -170,7 +171,14 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
     if (whereParams == null) {
       count = jdbcTemplateMapper.getJdbcTemplate().queryForObject(sql, Integer.class);
     } else {
-      count = jdbcTemplateMapper.getJdbcTemplate().queryForObject(sql, Integer.class, whereParams);
+      if (whereParams[0] instanceof MapSqlParameterSource) {
+        count = jdbcTemplateMapper.getNamedParameterJdbcTemplate()
+                                  .queryForObject(sql, (MapSqlParameterSource) whereParams[0],
+                                      Integer.class);
+      } else {
+        count =
+            jdbcTemplateMapper.getJdbcTemplate().queryForObject(sql, Integer.class, whereParams);
+      }
     }
 
     // code reaches here query success, handle caching

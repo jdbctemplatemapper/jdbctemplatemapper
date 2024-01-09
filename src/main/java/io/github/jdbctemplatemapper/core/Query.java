@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.util.Assert;
 import io.github.jdbctemplatemapper.query.IQueryFluent;
 import io.github.jdbctemplatemapper.query.IQueryHasMany;
@@ -401,7 +402,13 @@ public class Query<T> implements IQueryFluent<T> {
     if (whereParams == null) {
       resultList = jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor);
     } else {
-      resultList = jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor, whereParams);
+      if (whereParams[0] instanceof MapSqlParameterSource) {
+        resultList =
+            jdbcTemplateMapper.getNamedParameterJdbcTemplate()
+                              .query(sql, (MapSqlParameterSource) whereParams[0], rsExtractor);
+      } else {
+        resultList = jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor, whereParams);
+      }
     }
 
     // code reaches here query success, handle caching
