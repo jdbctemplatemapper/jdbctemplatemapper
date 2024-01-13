@@ -83,7 +83,7 @@ Note that this is not an ORM. It's a wrapper around JdbcTemplate so there are no
  
 ## Spring bean configuration for JdbcTemplateMapper
 
-JdbcTemplateMapper should be prepared in a Spring application context and given to services as a bean reference. It caches table meta-data and SQL.
+JdbcTemplateMapper should be prepared in a Spring application context and given to services as a bean reference. It caches table meta-data etc.
 
 **Note: An instance of JdbcTemplateMapper is thread safe**
 
@@ -160,7 +160,7 @@ spring.datasource.driver-class-name=oracle.jdbc.driver.OracleDriver
  @Bean
   public JdbcTemplateMapper jdbcTemplateMapper(JdbcTemplate jdbcTemplate) {   
     JdbcTemplateMapper jdbcTemplateMapper = new JdbcTemplateMapper(jdbcTemplate, THE_SCHEMA_NAME);
-     // Need this for oracle to handle table synonyms 
+     // This is oracle specific only. Need this for oracle to handle table synonyms 
     jdbcTemplateMapper.includeSynonymsForTableColumnMetaData();
     return jdbcTemplateMapper;
   }
