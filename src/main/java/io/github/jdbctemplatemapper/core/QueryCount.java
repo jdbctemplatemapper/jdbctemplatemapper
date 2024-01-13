@@ -13,6 +13,7 @@
  */
 package io.github.jdbctemplatemapper.core;
 
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.util.Assert;
 import io.github.jdbctemplatemapper.querycount.IQueryCountFluent;
 import io.github.jdbctemplatemapper.querycount.IQueryCountHasOne;
@@ -127,8 +128,16 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
   }
 
   /**
-   * The where clause.
-   *
+   * The SQL where clause. When querying relationships the where clause can include columns from
+   * both type and related tables. The parameters can be positional or named parameters.
+   * 
+   * <pre>
+   * Examples: 
+   * 1) where("orders.status = ? and orders.customer_id = ?", "COMPLETE", 1) 
+   * 2) where("orders.status = :status and orders.customer_id = :customerId", new
+   *       MapSqlParameterSource().addValue("status", "COMPLETE").addValue("customerId", 1))
+   * </pre>
+   * 
    * @param whereClause the whereClause for the type.
    * @param params varArgs for the whereClause.
    * @return interface with the next methods in the chain
@@ -170,7 +179,14 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
     if (whereParams == null) {
       count = jdbcTemplateMapper.getJdbcTemplate().queryForObject(sql, Integer.class);
     } else {
-      count = jdbcTemplateMapper.getJdbcTemplate().queryForObject(sql, Integer.class, whereParams);
+      if (whereParams[0] instanceof MapSqlParameterSource) {
+        count = jdbcTemplateMapper.getNamedParameterJdbcTemplate()
+                                  .queryForObject(sql, (MapSqlParameterSource) whereParams[0],
+                                      Integer.class);
+      } else {
+        count =
+            jdbcTemplateMapper.getJdbcTemplate().queryForObject(sql, Integer.class, whereParams);
+      }
     }
 
     // code reaches here query success, handle caching

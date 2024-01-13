@@ -523,7 +523,7 @@ public class CachingTest {
     jtm.updateProperties(product, "cost", "name", "version");
     assertEquals(4, cache.getSize());
 
-    // larger than ACHEABLE_UPDATE_PROPERTIES_COUNT = 3, so no caching
+    // larger than CACHEABLE_UPDATE_PROPERTIES_COUNT = 3, so no caching
     product.setCreatedOn(LocalDateTime.now());
     jtm.updateProperties(product, "cost", "name", "version", "createdOn");
     assertEquals(4, cache.getSize()); // no caching so count remains the same

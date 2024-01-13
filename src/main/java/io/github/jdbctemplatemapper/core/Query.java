@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.util.Assert;
 import io.github.jdbctemplatemapper.query.IQueryFluent;
 import io.github.jdbctemplatemapper.query.IQueryHasMany;
@@ -257,8 +258,15 @@ public class Query<T> implements IQueryFluent<T> {
 
   /**
    * The SQL where clause. When querying relationships the where clause can include columns from
-   * both type and related tables.
-   *
+   * both type and related tables. The parameters can be positional or named parameters.
+   * 
+   * <pre>
+   * Examples:
+   * 1) where("orders.status = ? and orders.customer_id = ?", "COMPLETE", 1)
+   * 2) where("orders.status = :status and orders.customer_id = :customerId", 
+   *       new MapSqlParameterSource().addValue("status", "COMPLETE").addValue("customerId", 1))
+   * </pre>
+   * 
    * @param whereClause the whereClause.
    * @param params varArgs for the whereClause.
    * @return interface with the next methods in the chain
@@ -401,7 +409,13 @@ public class Query<T> implements IQueryFluent<T> {
     if (whereParams == null) {
       resultList = jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor);
     } else {
-      resultList = jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor, whereParams);
+      if (whereParams[0] instanceof MapSqlParameterSource) {
+        resultList =
+            jdbcTemplateMapper.getNamedParameterJdbcTemplate()
+                              .query(sql, (MapSqlParameterSource) whereParams[0], rsExtractor);
+      } else {
+        resultList = jdbcTemplateMapper.getJdbcTemplate().query(sql, rsExtractor, whereParams);
+      }
     }
 
     // code reaches here query success, handle caching
