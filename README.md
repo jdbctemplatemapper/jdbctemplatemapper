@@ -5,7 +5,7 @@ Use it where appropriate and for other features keep using JdbcTemplate as you n
  
 Note that this is not an ORM. It's a wrapper around JdbcTemplate so there are no sessions, flushing, level 1 and 2 caches, detached objects, magical inserts/updates/deletes, N+1 queries, unproxy and other challenges of an ORM.
   
-[Javadoc](https://jdbctemplatemapper.github.io/jdbctemplatemapper/javadoc.html) | [Website](https://jdbctemplatemapper.github.io/jdbctemplatemapper/)
+[Javadoc](https://jdbctemplatemapper.github.io/jdbctemplatemapper/index.html) | [Website](https://jdbctemplatemapper.github.io/simple-crud-for-spring-jdbctemplate/)
  
 ## Features
 
