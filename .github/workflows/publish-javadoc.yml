@@ -12,7 +12,7 @@ jobs:
         uses: MathieuSoysal/Javadoc-publisher.yml@v2.4.0
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          javadoc-branch: javadoc
+          javadoc-branch: api
           java-version: 17
           target-folder: /
           project: maven
