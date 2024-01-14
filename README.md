@@ -93,7 +93,7 @@ JdbcTemplateMapper should be prepared in a Spring application context and given 
 
 See an example of JdbcTemplateMapper configuration used in an application [here](https://github.com/jdbctemplatemapper/simple-crud-for-spring-jdbctemplate/blob/master/src/test/java/io/github/ajoseph88/jdbctemplatemapper/config/JdbcTemplateMapperConfig.java).
 
-Depending on the versions of the database/driver, changes may be required for the properties.
+Depending on the versions of springboot/database/driver, changes may be required for the properties.
 
 **PostgreSQL**
 
@@ -361,7 +361,14 @@ List<Order> orders =
        .where("orders.status = :status and orders.customer_id = :customerId", 
                                        new MapSqlParameterSource().addValue("status", "COMPLETE").addValue("customerId", 1))
        .orderBy("orders.id desc")
-       .execute(jdbcTemplateMapper);      
+       .execute(jdbcTemplateMapper); 
+       
+// with where and orderBy with table alias. Aliases can be used in relationship queries too.
+List<Order> orders = 
+  Query.type(Order.class, "o")  // "o" is the table alias
+       .where("o.status = ? and o.customer_id = ?", "COMPLETE", 1)
+       .orderBy("o.id desc")
+       .execute(jdbcTemplateMapper);       
        
 
 // hasOne relationship         
@@ -610,6 +617,19 @@ populateProperty() - Not needed since we are just getting a count.
 orderBy()          - Not needed because orderBy does not change the count of records returned.  
 limitOffsetClause  - Not needed since we want the total count not a subset.  
 
+### Dynamic Queries
+A simple dynamic query example given below:
+
+```
+IQueryFluent<Person> qry = (IQueryFluent<Person>) Query.type(Person.class);
+
+qry.where(yourDynamicWhereClause());
+qry.orderBy(yourDynamicOrderByClause());
+qry.limitOffsetClause(yourDynamicLimitOffsetClause());
+
+List<Person> persons = qry.execute(jtm); // get the query results.
+```
+
 ### Querying multiple relationships with a single query
 To query multiple relationships with a single query use SelectMapper with Spring ResultSetExtractor.  
 SelectMapper allows generating the select columns string for the models and population of the models from a ResultSet. 
@@ -761,5 +781,13 @@ Discussions [here](https://github.com/jdbctemplatemapper/jdbctemplatemapper/disc
 When opening a ticket please provide the following:
 jdbcTemplateMapper version, Database name/version, jdbc driver version, version of java, version of Spring Boot
 
+## Migration to 3.x from 2.x
+Version 3.x removes all the deprecated methods in 2.x versions.
 
-  
+1. Query.joinColumnOwningSide() removed - Use Query.joinColumnTypeSide()
+   QueryMerge.joinColumnOwningSide() removed - Use QueryMerge.joinColumnTypeSide()
+   QueryCount.joinColumnOwningSide() removed - Use QueryCount.joinColumnTypeSide()
+2. JdbcTemplateMapper.getColumnsSql() removed - Use JdbcTemplateMapper.getBeanColumnsSql()
+3. JdbcTemplateMapper.findByProperty() removed - Use Query with where()
+4. JdbcTemplateMapper.useColumnLabelForResultSetMetaData() removed - No replacement method. Use jdbc 4.x drivers.
+
