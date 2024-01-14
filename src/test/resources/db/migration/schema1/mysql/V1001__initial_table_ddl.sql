@@ -56,6 +56,9 @@ CREATE TABLE schema1.person (
 	CONSTRAINT person_pk PRIMARY KEY (person_id)
 );
 
+CREATE VIEW schema1.person_view AS
+SELECT person_id, first_name, last_name
+FROM schema1.person;
 
 CREATE TABLE schema1.type_check (
    id integer NOT NULL AUTO_INCREMENT,

@@ -32,6 +32,7 @@ import io.github.jdbctemplatemapper.model.Order;
 import io.github.jdbctemplatemapper.model.OrderLine;
 import io.github.jdbctemplatemapper.model.Person;
 import io.github.jdbctemplatemapper.model.Person2;
+import io.github.jdbctemplatemapper.model.PersonView;
 import io.github.jdbctemplatemapper.model.Product;
 import io.github.jdbctemplatemapper.model.Product8;
 
@@ -417,6 +418,16 @@ public class MapperTest {
     assertNotNull(order.getVersion());
   }
 
+  @Test
+  public void findById_databaseView_Test() {
+    PersonView pv = jtm.findById(PersonView.class, "person101");
+
+    assertNotNull(pv.getPersonId());
+    assertNotNull(pv.getFirstName());
+    assertNotNull(pv.getLastName());
+  }
+  
+  
   @Test
   public void findAll_Test() {
     List<Order> orders = jtm.findAll(Order.class);
