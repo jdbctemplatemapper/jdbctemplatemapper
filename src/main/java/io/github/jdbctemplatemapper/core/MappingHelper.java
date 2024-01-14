@@ -381,13 +381,13 @@ class MappingHelper {
     String commonDatabaseName = JdbcUtils.commonDatabaseName(getDatabaseProductName());
     if ("mysql".equalsIgnoreCase(commonDatabaseName)) {
       if (MapperUtils.isNotEmpty(schemaName)) {
-        throw new MapperException(databaseProductName + " does not support schema.");
+        throw new MapperException(databaseProductName + " does not support schema. Try using catalog.");
       }
     }
 
     if ("oracle".equalsIgnoreCase(commonDatabaseName)) {
       if (MapperUtils.isNotEmpty(catalogName)) {
-        throw new MapperException(databaseProductName + " does not support catalog.");
+        throw new MapperException(databaseProductName + " does not support catalog. Try using schema.");
       }
     }
   }
