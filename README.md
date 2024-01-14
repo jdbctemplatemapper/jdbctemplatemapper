@@ -784,9 +784,9 @@ jdbcTemplateMapper version, Database name/version, jdbc driver version, version 
 ## Migration to 3.x from 2.x
 Version 3.x removes all the deprecated methods in 2.x versions.
 
-1. Query.joinColumnOwningSide() removed - Use Query.joinColumnTypeSide()
-   QueryMerge.joinColumnOwningSide() removed - Use QueryMerge.joinColumnTypeSide()
-   QueryCount.joinColumnOwningSide() removed - Use QueryCount.joinColumnTypeSide()
+1. Query.joinColumnOwningSide() removed - Use Query.joinColumnTypeSide()  
+   QueryMerge.joinColumnOwningSide() removed - Use QueryMerge.joinColumnTypeSide()  
+   QueryCount.joinColumnOwningSide() removed - Use QueryCount.joinColumnTypeSide()   
 2. JdbcTemplateMapper.getColumnsSql() removed - Use JdbcTemplateMapper.getBeanColumnsSql()
 3. JdbcTemplateMapper.findByProperty() removed - Use Query with where()
 4. JdbcTemplateMapper.useColumnLabelForResultSetMetaData() removed - No replacement method. Use jdbc 4.x drivers.
