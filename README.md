@@ -781,7 +781,7 @@ Discussions [here](https://github.com/jdbctemplatemapper/jdbctemplatemapper/disc
 When opening a ticket please provide the following:
 jdbcTemplateMapper version, Database name/version, jdbc driver version, version of java, version of Spring Boot
 
-## Migration to 3.x from 2.x
+## Upgrading to 3.x from 2.x
 Version 3.x removes all the deprecated methods in 2.x versions.
 
 1. Query.joinColumnOwningSide() removed - Use Query.joinColumnTypeSide()  
