@@ -87,7 +87,7 @@ JdbcTemplateMapper should be prepared in a Spring application context and given 
 
 **Note: An instance of JdbcTemplateMapper is thread safe**
 
-See an example of JdbcTemplateMapper configuration used in an application [here](https://github.com/jdbctemplatemapper/using-spring-jdbctemplate-with-jdbctemplatemapper/blob/master/src/test/java/io/github/ajoseph88/jdbctemplatemapper/config/JdbcTemplateMapperConfig.java).
+See an example of JdbcTemplateMapper configuration used in an application [here](https://github.com/jdbctemplatemapper/simple-crud-for-spring-jdbctemplate/blob/master/src/test/java/io/github/ajoseph88/jdbctemplatemapper/config/JdbcTemplateMapperConfig.java).
 
 Depending on the versions of the database/driver, changes may be required for the properties.
 
