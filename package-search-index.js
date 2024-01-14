@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"io.github.jdbctemplatemapper.annotation"},{"l":"io.github.jdbctemplatemapper.core"},{"l":"io.github.jdbctemplatemapper.exception"},{"l":"io.github.jdbctemplatemapper.query"},{"l":"io.github.jdbctemplatemapper.querycount"},{"l":"io.github.jdbctemplatemapper.querymerge"}];updateSearchResults();
