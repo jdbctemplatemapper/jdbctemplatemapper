@@ -200,7 +200,7 @@ spring.datasource.driver-class-name=com.microsoft.sqlserver.jdbc.SQLServerDriver
 
 **@Table**
 
-Required class level annotation. Examples below:
+Required class level annotation. The table or view should exist in database. Examples below:
 
 ```java
 @Table(name="product")
