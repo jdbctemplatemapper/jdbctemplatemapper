@@ -769,6 +769,7 @@ Uses the same logging configurations as Spring's JdbcTemplate to log the SQL. In
  3. When using @Column(name="some_column_name") to map a property to a non default column, it will impact using "SELECT * " with Spring BeanPropertyRowMapper in custom queries. The mismatch of column and property names will cause Spring BeanPropertyRowMapper to ignore these properties. Use "SELECT " + jdbcTemplateMapper.getBeanColumnsSql(Class) which will create column aliases to match property names so will work with BeanPropertyRowMapper.
  4. If insert/update fails do not reuse the object since it could be in an inconsistent state.
  5. For Oracle/SqlServer no support for blob/clob. Use JdbcTemplate directly for this with custom code
+ 6. Does not support quoted table and column names (needed when using reserved table and column names).
  
 ## TroubleShooting
 Make sure you can connect to your database and issue a simple query using Spring JdbcTemplate without the JdbcTemplateMapper.
