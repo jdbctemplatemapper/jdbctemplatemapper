@@ -19,6 +19,7 @@ Note that this is not an ORM. It's a wrapper around JdbcTemplate so there are no
   5. To log the SQL statements use the same logging configurations as JdbcTemplate. See the logging section.
   6. Tested against PostgreSQL, MySQL, Oracle, SQLServer (Unit tests are run against these databases). Should work with other relational databases.
   7. Distribution is compiled with java8. Works with java8, java11, java17, java21.
+  8. Only dependency is spring-boot-starter-jdbc which is needed for JdbcTemplate.
 
 ## Example code
   ```java 
