@@ -39,6 +39,8 @@ class TableMapping {
   private String createdByPropertyName = null;
   private String updatedOnPropertyName = null;
   private String updatedByPropertyName = null;
+  
+  private boolean autoAssignProperties = false;
 
   // model property to database column mapping.
   private List<PropertyMapping> propertyMappings;
@@ -77,18 +79,23 @@ class TableMapping {
     for (PropertyMapping propMapping : propertyMappings) {
       if (propMapping.isVersionAnnotation()) {
         versionPropertyName = propMapping.getPropertyName();
+        autoAssignProperties = true;
       }
       if (propMapping.isCreatedOnAnnotation()) {
         createdOnPropertyName = propMapping.getPropertyName();
+        autoAssignProperties = true;
       }
       if (propMapping.isCreatedByAnnotation()) {
         createdByPropertyName = propMapping.getPropertyName();
+        autoAssignProperties = true;
       }
       if (propMapping.isUpdatedOnAnnotation()) {
         updatedOnPropertyName = propMapping.getPropertyName();
+        autoAssignProperties = true;
       }
       if (propMapping.isUpdatedByAnnotation()) {
         updatedByPropertyName = propMapping.getPropertyName();
+        autoAssignProperties = true;
       }
       // these maps used for performance. Using intern() to save some memory since aliases are
       // similar for other table mappings.
@@ -230,6 +237,10 @@ class TableMapping {
 
   public boolean isMySql() {
     return "mysql".equalsIgnoreCase(commonDatabaseName);
+  }
+  
+  public boolean hasAutoAssignProperties() {
+    return autoAssignProperties;
   }
 
 }

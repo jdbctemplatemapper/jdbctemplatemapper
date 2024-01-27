@@ -311,34 +311,36 @@ public final class JdbcTemplateMapper {
       }
     }
 
-    LocalDateTime now = LocalDateTime.now();
+    if (tableMapping.hasAutoAssignProperties()) {
+      LocalDateTime now = LocalDateTime.now();
 
-    PropertyMapping createdOnPropMapping = tableMapping.getCreatedOnPropertyMapping();
-    if (createdOnPropMapping != null) {
-      bw.setPropertyValue(createdOnPropMapping.getPropertyName(), now);
-    }
+      PropertyMapping createdOnPropMapping = tableMapping.getCreatedOnPropertyMapping();
+      if (createdOnPropMapping != null) {
+        bw.setPropertyValue(createdOnPropMapping.getPropertyName(), now);
+      }
 
-    PropertyMapping updatedOnPropMapping = tableMapping.getUpdatedOnPropertyMapping();
-    if (updatedOnPropMapping != null) {
-      bw.setPropertyValue(updatedOnPropMapping.getPropertyName(), now);
-    }
+      PropertyMapping updatedOnPropMapping = tableMapping.getUpdatedOnPropertyMapping();
+      if (updatedOnPropMapping != null) {
+        bw.setPropertyValue(updatedOnPropMapping.getPropertyName(), now);
+      }
 
-    PropertyMapping createdByPropMapping = tableMapping.getCreatedByPropertyMapping();
-    if (createdByPropMapping != null && recordOperatorResolver != null) {
-      bw.setPropertyValue(createdByPropMapping.getPropertyName(),
-          recordOperatorResolver.getRecordOperator());
-    }
+      PropertyMapping createdByPropMapping = tableMapping.getCreatedByPropertyMapping();
+      if (createdByPropMapping != null && recordOperatorResolver != null) {
+        bw.setPropertyValue(createdByPropMapping.getPropertyName(),
+            recordOperatorResolver.getRecordOperator());
+      }
 
-    PropertyMapping updatedByPropMapping = tableMapping.getUpdatedByPropertyMapping();
-    if (updatedByPropMapping != null && recordOperatorResolver != null) {
-      bw.setPropertyValue(updatedByPropMapping.getPropertyName(),
-          recordOperatorResolver.getRecordOperator());
-    }
+      PropertyMapping updatedByPropMapping = tableMapping.getUpdatedByPropertyMapping();
+      if (updatedByPropMapping != null && recordOperatorResolver != null) {
+        bw.setPropertyValue(updatedByPropMapping.getPropertyName(),
+            recordOperatorResolver.getRecordOperator());
+      }
 
-    PropertyMapping versionPropMapping = tableMapping.getVersionPropertyMapping();
-    if (versionPropMapping != null) {
-      // version property value defaults to 1 on inserts
-      bw.setPropertyValue(versionPropMapping.getPropertyName(), 1);
+      PropertyMapping versionPropMapping = tableMapping.getVersionPropertyMapping();
+      if (versionPropMapping != null) {
+        // version property value defaults to 1 on inserts
+        bw.setPropertyValue(versionPropMapping.getPropertyName(), 1);
+      }
     }
 
     MapSqlParameterSource mapSqlParameterSource = new MapSqlParameterSource();
@@ -476,17 +478,20 @@ public final class JdbcTemplateMapper {
     }
 
     Set<String> parameters = sqlAndParams.getParams();
-    PropertyMapping updatedByPropMapping = tableMapping.getUpdatedByPropertyMapping();
-    if (updatedByPropMapping != null && recordOperatorResolver != null
-        && parameters.contains(updatedByPropMapping.getPropertyName())) {
-      bw.setPropertyValue(updatedByPropMapping.getPropertyName(),
-          recordOperatorResolver.getRecordOperator());
-    }
+    
+    if (tableMapping.hasAutoAssignProperties()) {
+      PropertyMapping updatedByPropMapping = tableMapping.getUpdatedByPropertyMapping();
+      if (updatedByPropMapping != null && recordOperatorResolver != null
+          && parameters.contains(updatedByPropMapping.getPropertyName())) {
+        bw.setPropertyValue(updatedByPropMapping.getPropertyName(),
+            recordOperatorResolver.getRecordOperator());
+      }
 
-    PropertyMapping updatedOnPropMapping = tableMapping.getUpdatedOnPropertyMapping();
-    if (updatedOnPropMapping != null
-        && parameters.contains(updatedOnPropMapping.getPropertyName())) {
-      bw.setPropertyValue(updatedOnPropMapping.getPropertyName(), LocalDateTime.now());
+      PropertyMapping updatedOnPropMapping = tableMapping.getUpdatedOnPropertyMapping();
+      if (updatedOnPropMapping != null
+          && parameters.contains(updatedOnPropMapping.getPropertyName())) {
+        bw.setPropertyValue(updatedOnPropMapping.getPropertyName(), LocalDateTime.now());
+      }
     }
 
     MapSqlParameterSource mapSqlParameterSource = new MapSqlParameterSource();
