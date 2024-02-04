@@ -203,24 +203,24 @@ class TableMapping {
 
   public String fullyQualifiedTableName() {
     if (MapperUtils.isNotEmpty(schemaName)) {
-      return getNameForSql(schemaName) + "." + getNameForSql(tableName);
+      return getStringForSql(schemaName) + "." + getStringForSql(tableName);
     }
 
     if (MapperUtils.isNotEmpty(catalogName) && isMySql()) {
-      return getNameForSql(catalogName) + "." + getNameForSql(tableName);
+      return getStringForSql(catalogName) + "." + getStringForSql(tableName);
     }
 
-    return getNameForSql(tableName);
+    return getStringForSql(tableName);
   }
 
   // if there is a schema or catalog it tacks a "." to them.
   public String fullyQualifiedTablePrefix() {
     if (MapperUtils.isNotEmpty(schemaName)) {
-      return getNameForSql(schemaName) + ".";
+      return getStringForSql(schemaName) + ".";
     }
 
     if (MapperUtils.isNotEmpty(catalogName) && isMySql()) {
-      return getNameForSql(catalogName) + ".";
+      return getStringForSql(catalogName) + ".";
     }
 
     return "";
@@ -259,18 +259,18 @@ class TableMapping {
   }
 
   public String getTableNameForSql() {
-    return getNameForSql(tableName);
+    return getStringForSql(tableName);
   }
   
   public String getIdColumnNameForSql() {
-    return getNameForSql(getIdPropertyMapping().getColumnName());
+    return getStringForSql(getIdPropertyMapping().getColumnName());
   }
   
   public String getColumnNameForSql(String columnName) {
-    return getNameForSql(columnName);
+    return getStringForSql(columnName);
   }
   
-  public String getNameForSql(String name) {
+  public String getStringForSql(String name) {
     if (identifierQuoteString == null) {
       return name;
     } else {
