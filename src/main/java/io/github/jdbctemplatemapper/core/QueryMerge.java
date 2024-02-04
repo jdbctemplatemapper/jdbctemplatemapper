@@ -335,7 +335,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
       // @formatter:off
       sql = "SELECT " + selectMapperRelatedType.getColumnsSql() 
           + " FROM " + relatedTableStr
-          + " WHERE " + relatedTypeTableMapping.getIdColumnName() + " IN (:joinPropertyTypeSideValues)";
+          + " WHERE " + relatedTypeTableMapping.getIdColumnNameForSql() + " IN (:joinPropertyTypeSideValues)";
       
       // @formatter:on
     } else {
@@ -414,7 +414,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
     }
 
     String relatedColumnPrefix =
-        MapperUtils.columnPrefix(relatedTypeTableAlias, relatedTypeTableMapping.getTableName());
+        MapperUtils.columnPrefix(relatedTypeTableAlias, relatedTypeTableMapping.getTableNameForSql());
 
     SelectMapper<?> selectMapper = jtm.getSelectMapperInternal(relatedType, relatedColumnPrefix,
         MapperUtils.RELATED_TABLE_COL_ALIAS_PREFIX);
@@ -514,7 +514,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
         typeTableMapping.getTableName(), MapperUtils.TYPE_TABLE_COL_ALIAS_PREFIX);
 
     String relatedColumnPrefix =
-        relatedTypeTableAlias == null ? relatedTypeTableMapping.getTableName()
+        relatedTypeTableAlias == null ? relatedTypeTableMapping.getTableNameForSql()
             : relatedTypeTableAlias;
 
     SelectMapper<?> selectMapperRelatedType = jtm.getSelectMapperInternal(relatedType,
@@ -528,7 +528,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
               : relatedTypeTableMapping.fullyQualifiedTableName() + " " + relatedTypeTableAlias;
 
       String onRelatedPrefix =
-          relatedTypeTableAlias == null ? relatedTypeTableMapping.getTableName()
+          relatedTypeTableAlias == null ? relatedTypeTableMapping.getTableNameForSql()
               : relatedTypeTableAlias;
 
       sql = "SELECT " + MapperUtils.getTableNameOnly(throughJoinTable) + "." + throughTypeJoinColumn
@@ -538,7 +538,7 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
               typeTableMapping)
           + " LEFT JOIN " + relatedTableStr + " on "
           + MapperUtils.getTableNameOnly(throughJoinTable) + "." + throughRelatedTypeJoinColumn
-          + " = " + onRelatedPrefix + "." + relatedTypeTableMapping.getIdColumnName() + " WHERE "
+          + " = " + onRelatedPrefix + "." + relatedTypeTableMapping.getIdColumnNameForSql() + " WHERE "
           + MapperUtils.getTableNameOnly(throughJoinTable) + "." + throughTypeJoinColumn
           + " IN (:typeIds)";
     } else {

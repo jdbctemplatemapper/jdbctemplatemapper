@@ -327,7 +327,7 @@ public class Query<T> implements IQueryFluent<T> {
 
     TableMapping typeTableMapping = jdbcTemplateMapper.getTableMapping(type);
     String typeColumnPrefix =
-        MapperUtils.columnPrefix(typeTableAlias, typeTableMapping.getTableName());
+        MapperUtils.columnPrefix(typeTableAlias, typeTableMapping.getTableNameForSql());
 
     SelectMapper<?> typeSelectMapper = jdbcTemplateMapper.getSelectMapperInternal(type,
         typeColumnPrefix, MapperUtils.TYPE_TABLE_COL_ALIAS_PREFIX);
@@ -338,7 +338,7 @@ public class Query<T> implements IQueryFluent<T> {
     // making it effectively final to be used in inner class ResultSetExtractor
     SelectMapper<?> relatedTypeSelectMapper = relatedType == null ? null
         : jdbcTemplateMapper.getSelectMapperInternal(relatedType,
-            MapperUtils.columnPrefix(relatedTableAlias, relatedTypeTableMapping.getTableName()),
+            MapperUtils.columnPrefix(relatedTableAlias, relatedTypeTableMapping.getTableNameForSql()),
             MapperUtils.RELATED_TABLE_COL_ALIAS_PREFIX);
 
     boolean foundInCache = false;
@@ -455,7 +455,7 @@ public class Query<T> implements IQueryFluent<T> {
     TableMapping typeTableMapping = jtm.getTableMapping(type);
 
     String typeColumnPrefix =
-        MapperUtils.columnPrefix(typeTableAlias, typeTableMapping.getTableName());
+        MapperUtils.columnPrefix(typeTableAlias, typeTableMapping.getTableNameForSql());
 
     SelectMapper<?> typeSelectMapper = jtm.getSelectMapperInternal(type, typeColumnPrefix,
         MapperUtils.TYPE_TABLE_COL_ALIAS_PREFIX);
@@ -466,7 +466,7 @@ public class Query<T> implements IQueryFluent<T> {
     String relatedColumnPrefix = null;
     if (relatedTypeTableMapping != null) {
       relatedColumnPrefix =
-          MapperUtils.columnPrefix(relatedTableAlias, relatedTypeTableMapping.getTableName());
+          MapperUtils.columnPrefix(relatedTableAlias, relatedTypeTableMapping.getTableNameForSql());
     }
 
     SelectMapper<?> relatedTypeSelectMapper = relatedType == null ? null
@@ -507,13 +507,13 @@ public class Query<T> implements IQueryFluent<T> {
           relatedTableMapping.fullyQualifiedTableName());
 
       String onTypePrefix =
-          MapperUtils.columnPrefix(typeTableAlias, typeTableMapping.getTableName());
+          MapperUtils.columnPrefix(typeTableAlias, typeTableMapping.getTableNameForSql());
 
       String onRelatedPrefix =
-          MapperUtils.columnPrefix(relatedTableAlias, relatedTableMapping.getTableName());
+          MapperUtils.columnPrefix(relatedTableAlias, relatedTableMapping.getTableNameForSql());
 
-      str += " LEFT JOIN " + relatedTableStr + " on " + onTypePrefix + "." + joinColumnTypeSide
-          + " = " + onRelatedPrefix + "." + relatedTableMapping.getIdColumnName();
+      str += " LEFT JOIN " + relatedTableStr + " on " + onTypePrefix + "." + typeTableMapping.getColumnNameForSql(joinColumnTypeSide)
+          + " = " + onRelatedPrefix + "." + relatedTableMapping.getIdColumnNameForSql();
     }
     return str;
   }
@@ -528,13 +528,13 @@ public class Query<T> implements IQueryFluent<T> {
           relatedTableMapping.fullyQualifiedTableName());
 
       String onTypePrefix =
-          MapperUtils.columnPrefix(typeTableAlias, typeTableMapping.getTableName());
+          MapperUtils.columnPrefix(typeTableAlias, typeTableMapping.getTableNameForSql());
 
       String onRelatedPrefix =
-          MapperUtils.columnPrefix(relatedTableAlias, relatedTableMapping.getTableName());
+          MapperUtils.columnPrefix(relatedTableAlias, relatedTableMapping.getTableNameForSql());
 
       str += " LEFT JOIN " + relatedTableStr + " on " + onTypePrefix + "."
-          + typeTableMapping.getIdColumnName() + " = " + onRelatedPrefix + "." + joinColumnManySide;
+          + typeTableMapping.getIdColumnNameForSql() + " = " + onRelatedPrefix + "." + relatedTableMapping.getColumnNameForSql(joinColumnManySide);
     }
 
     return str;
@@ -552,19 +552,19 @@ public class Query<T> implements IQueryFluent<T> {
           relatedTableMapping.fullyQualifiedTableName());
 
       String onTypePrefix =
-          MapperUtils.columnPrefix(typeTableAlias, typeTableMapping.getTableName());
+          MapperUtils.columnPrefix(typeTableAlias, typeTableMapping.getTableNameForSql());
 
       String onRelatedPrefix =
-          MapperUtils.columnPrefix(relatedTableAlias, relatedTableMapping.getTableName());
+          MapperUtils.columnPrefix(relatedTableAlias, relatedTableMapping.getTableNameForSql());
 
       str += " LEFT JOIN "
           + MapperUtils.getFullyQualifiedTableNameForThroughJoinTable(throughJoinTable,
               typeTableMapping)
-          + " on " + onTypePrefix + "." + typeTableMapping.getIdColumnName() + " = "
-          + MapperUtils.getTableNameOnly(throughJoinTable) + "." + throughTypeJoinColumn
+          + " on " + onTypePrefix + "." + typeTableMapping.getIdColumnNameForSql() + " = "
+          + MapperUtils.getTableNameOnly(throughJoinTable) + "." + typeTableMapping.getColumnNameForSql(throughTypeJoinColumn)
           + " LEFT JOIN " + relatedTableStr + " on "
-          + MapperUtils.getTableNameOnly(throughJoinTable) + "." + throughRelatedTypeJoinColumn
-          + " = " + onRelatedPrefix + "." + relatedTableMapping.getIdColumnName();
+          + MapperUtils.getTableNameOnly(throughJoinTable) + "." + relatedTableMapping.getColumnNameForSql(throughRelatedTypeJoinColumn)
+          + " = " + onRelatedPrefix + "." + relatedTableMapping.getIdColumnNameForSql();
     }
     return str;
   }

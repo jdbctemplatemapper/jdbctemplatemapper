@@ -99,11 +99,12 @@ public class SelectMapper<T> {
 
     for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
       if (internal) {
-        sj.add(colPrefix + propMapping.getColumnName() + " as " + colAliasPrefix
-            + propMapping.getColumnAliasSuffix());
+        sj.add(colPrefix + propMapping.getColumnNameForSql() + " as "
+            + colAliasPrefix + propMapping.getColumnAliasSuffix());
       } else {
-        sj.add(colPrefix + propMapping.getColumnName() + " as " + colAliasPrefix
-            + MapperUtils.TYPE_TABLE_COL_ALIAS_PREFIX + propMapping.getColumnAliasSuffix());
+        sj.add(colPrefix + propMapping.getColumnNameForSql() + " as "
+            + colAliasPrefix + MapperUtils.TYPE_TABLE_COL_ALIAS_PREFIX
+            + propMapping.getColumnAliasSuffix());
       }
     }
     return sj.toString();

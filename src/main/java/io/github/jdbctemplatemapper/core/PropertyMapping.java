@@ -22,6 +22,7 @@ class PropertyMapping {
   private String propertyName;
   private Class<?> propertyType;
   private String columnName;
+  private String identifierQuoteString;
   private int columnSqlDataType; // see java.sql.Types
 
   private boolean idAnnotation = false;
@@ -31,6 +32,7 @@ class PropertyMapping {
   private boolean createdByAnnotation = false;
   private boolean updatedByAnnotation = false;
   private String columnAliasSuffix;
+  
 
   public PropertyMapping(String propertyName, Class<?> propertyType, String columnName,
       int columnSqlDataType) {
@@ -41,7 +43,8 @@ class PropertyMapping {
     this.propertyType = propertyType;
     // column names stored in lower case always
     // No plans to support case sensitive table column names or column names with spaces in them
-    this.columnName = MapperUtils.toLowerCase(columnName);
+    //this.columnName = MapperUtils.toLowerCase(columnName);
+    this.columnName = columnName;
     this.columnSqlDataType = columnSqlDataType;
   }
 
@@ -59,6 +62,10 @@ class PropertyMapping {
 
   public String getColumnName() {
     return columnName;
+  }
+  
+  public void setColumnName(String columnName) {
+    this.columnName = columnName;
   }
 
   public int getColumnSqlDataType() {
@@ -120,4 +127,21 @@ class PropertyMapping {
   public void setColumnAliasSuffix(String colAliasSuffix) {
     this.columnAliasSuffix = colAliasSuffix;
   }
+
+  public String getIdentifierQuoteString() {
+    return identifierQuoteString;
+  }
+
+  public void setIdentifierQuoteString(String identifierQuoteString) {
+    this.identifierQuoteString = identifierQuoteString;
+  }
+  
+  public String getColumnNameForSql() {
+    if (identifierQuoteString == null) {
+      return this.columnName;
+    } else {
+      return identifierQuoteString + this.columnName + identifierQuoteString;
+    }
+  }
+  
 }

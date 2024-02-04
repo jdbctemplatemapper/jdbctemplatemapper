@@ -26,9 +26,10 @@ class TableColumnInfo {
   private final String schemaName;
   private final String catalogName;
   private List<ColumnInfo> columnInfos;
+  private String identifierQuoteString;
 
   TableColumnInfo(String tableName, String schemaName, String catalogName,
-      List<ColumnInfo> columnInfos) {
+      List<ColumnInfo> columnInfos, String identifierQuoteString) {
     this.tableName = tableName;
     this.schemaName = MapperUtils.isEmpty(schemaName) ? null : schemaName;
     this.catalogName = MapperUtils.isEmpty(catalogName) ? null : catalogName;
@@ -37,6 +38,7 @@ class TableColumnInfo {
     } else {
       this.columnInfos = columnInfos;
     }
+    this.identifierQuoteString = identifierQuoteString;
   }
 
   public String getTableName() {
@@ -53,5 +55,9 @@ class TableColumnInfo {
 
   public List<ColumnInfo> getColumnInfos() {
     return columnInfos;
+  }
+
+  public String getIdentifierQuoteString() {
+    return identifierQuoteString;
   }
 }

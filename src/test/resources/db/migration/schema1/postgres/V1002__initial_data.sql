@@ -73,5 +73,9 @@ INSERT INTO schema1.person
 ( person_id, first_name, last_name)
 VALUES( 'person101', 'mike', 'smith');
 
+INSERT INTO schema1.quote
+("Col 1")
+VALUES( 'some value');
+
 
 

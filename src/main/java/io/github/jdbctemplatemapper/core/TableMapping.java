@@ -39,8 +39,10 @@ class TableMapping {
   private String createdByPropertyName = null;
   private String updatedOnPropertyName = null;
   private String updatedByPropertyName = null;
-  
+
   private boolean autoAssignProperties = false;
+
+  private String identifierQuoteString = null;
 
   // model property to database column mapping.
   private List<PropertyMapping> propertyMappings;
@@ -52,7 +54,7 @@ class TableMapping {
 
   public TableMapping(Class<?> tableClass, String tableName, String schemaName, String catalogName,
       String commonDatabaseName, IdPropertyInfo idPropertyInfo,
-      List<PropertyMapping> propertyMappings) {
+      List<PropertyMapping> propertyMappings, String identifierQuoteString) {
     Assert.notNull(tableClass, "tableClass must not be null");
     Assert.notNull(tableName, "tableName must not be null");
     Assert.notNull(idPropertyInfo, "idPropertyInfo must not be null");
@@ -68,6 +70,7 @@ class TableMapping {
     this.idPropertyName = idPropertyInfo.getPropertyName();
     this.idAutoIncrement = idPropertyInfo.isIdAutoIncrement();
     this.propertyMappings = propertyMappings;
+    this.identifierQuoteString = identifierQuoteString;
 
     // initialize the maps
     int size = propertyMappings.size();
@@ -110,6 +113,10 @@ class TableMapping {
           propMapping);
 
       columnNameMap.put(propMapping.getColumnName(), propMapping);
+
+      propMapping.setIdentifierQuoteString(identifierQuoteString);
+
+
       propertyNameMap.put(propMapping.getPropertyName(), propMapping);
 
       cnt++;
@@ -152,6 +159,10 @@ class TableMapping {
     return schemaName;
   }
 
+  public String getIdentifierQuoteString() {
+    return identifierQuoteString;
+  }
+
   public String getIdPropertyName() {
     return getIdPropertyMapping().getPropertyName();
   }
@@ -178,9 +189,9 @@ class TableMapping {
     return propertyMappings;
   }
 
-  public PropertyMapping getPropertyMappingByColumnName(String columnName) {
-    return columnNameMap.get(columnName);
-  }
+  // public PropertyMapping getPropertyMappingByColumnName(String columnName) {
+  // return columnNameMap.get(columnName);
+  // }
 
   public PropertyMapping getPropertyMappingByPropertyName(String propertyName) {
     return propertyNameMap.get(propertyName);
@@ -192,24 +203,24 @@ class TableMapping {
 
   public String fullyQualifiedTableName() {
     if (MapperUtils.isNotEmpty(schemaName)) {
-      return schemaName + "." + tableName;
+      return getNameForSql(schemaName) + "." + getNameForSql(tableName);
     }
 
     if (MapperUtils.isNotEmpty(catalogName) && isMySql()) {
-      return catalogName + "." + tableName;
+      return getNameForSql(catalogName) + "." + getNameForSql(tableName);
     }
 
-    return tableName;
+    return getNameForSql(tableName);
   }
 
   // if there is a schema or catalog it tacks a "." to them.
   public String fullyQualifiedTablePrefix() {
     if (MapperUtils.isNotEmpty(schemaName)) {
-      return schemaName + ".";
+      return getNameForSql(schemaName) + ".";
     }
 
     if (MapperUtils.isNotEmpty(catalogName) && isMySql()) {
-      return catalogName + ".";
+      return getNameForSql(catalogName) + ".";
     }
 
     return "";
@@ -238,9 +249,33 @@ class TableMapping {
   public boolean isMySql() {
     return "mysql".equalsIgnoreCase(commonDatabaseName);
   }
-  
+
   public boolean hasAutoAssignProperties() {
     return autoAssignProperties;
+  }
+
+  public boolean isQuoteIdentifier() {
+    return identifierQuoteString == null ? false : true;
+  }
+
+  public String getTableNameForSql() {
+    return getNameForSql(tableName);
+  }
+  
+  public String getIdColumnNameForSql() {
+    return getNameForSql(getIdPropertyMapping().getColumnName());
+  }
+  
+  public String getColumnNameForSql(String columnName) {
+    return getNameForSql(columnName);
+  }
+  
+  public String getNameForSql(String name) {
+    if (identifierQuoteString == null) {
+      return name;
+    } else {
+      return identifierQuoteString + name + identifierQuoteString;
+    }
   }
 
 }

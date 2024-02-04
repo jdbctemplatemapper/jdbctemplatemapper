@@ -20,5 +20,5 @@ package io.github.jdbctemplatemapper.query;
  * @param <T> the type
  */
 public interface IQueryThroughJoinTable<T> {
-  IQueryThroughJoinColumns<T> throughJoinColumns(String ownerJoinColumn, String relatedJoinColumn);
+  IQueryThroughJoinColumns<T> throughJoinColumns(String typeJoinColumn, String relatedJoinColumn);
 }

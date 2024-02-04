@@ -15,6 +15,7 @@ package io.github.jdbctemplatemapper.core;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -33,12 +34,14 @@ import org.springframework.jdbc.support.DatabaseMetaDataCallback;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.jdbc.support.MetaDataAccessException;
 import org.springframework.util.Assert;
+import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 import io.github.jdbctemplatemapper.annotation.Column;
 import io.github.jdbctemplatemapper.annotation.CreatedBy;
 import io.github.jdbctemplatemapper.annotation.CreatedOn;
 import io.github.jdbctemplatemapper.annotation.Id;
 import io.github.jdbctemplatemapper.annotation.IdType;
+import io.github.jdbctemplatemapper.annotation.QuotedIdentifier;
 import io.github.jdbctemplatemapper.annotation.Table;
 import io.github.jdbctemplatemapper.annotation.UpdatedBy;
 import io.github.jdbctemplatemapper.annotation.UpdatedOn;
@@ -118,6 +121,7 @@ class MappingHelper {
                          .stream()
                          .collect(Collectors.toMap(o -> o.getColumnName(), o -> o));
 
+      String identifierQuoteString = identifierQuoteString(clazz);
       // key:propertyName, value:PropertyMapping. LinkedHashMap to maintain order of
       // properties
       Map<String, PropertyMapping> propNameToPropertyMapping = new LinkedHashMap<>();
@@ -130,7 +134,11 @@ class MappingHelper {
           if ("[DEFAULT]".equals(colName)) {
             colName = MapperUtils.toUnderscoreName(propertyName);
           }
-          colName = MapperUtils.toLowerCase(colName);
+          
+          if(identifierQuoteString == null) {
+            colName = MapperUtils.toLowerCase(colName);
+          }
+          
           if (!columnNameToColumnInfo.containsKey(colName)) {
             throw new AnnotationException(colName + " column not found in table " + tableName
                 + " for model property " + clazz.getSimpleName() + "." + propertyName);
@@ -159,7 +167,7 @@ class MappingHelper {
 
       tableMapping = new TableMapping(clazz, tableName, tableColumnInfo.getSchemaName(),
           tableColumnInfo.getCatalogName(), JdbcUtils.commonDatabaseName(getDatabaseProductName()),
-          idPropertyInfo, propertyMappings);
+          idPropertyInfo, propertyMappings, tableColumnInfo.getIdentifierQuoteString());
 
       modelToTableMappingCache.put(clazz.getName(), tableMapping);
     }
@@ -199,35 +207,32 @@ class MappingHelper {
 
     String catalog = getCatalogForTable(tableAnnotation);
     String schema = getSchemaForTable(tableAnnotation);
-
     validateMetaDataConfig(catalog, schema);
-
+    
     String tableName = tableAnnotation.name();
-    List<ColumnInfo> columnInfoList = getColumnInfoFromTableMetadata(tableName, schema, catalog);
+    
+    TableMetaDataProvider provider = JtmTableMetaDataProviderFactory.createMetaDataProvider(
+        jdbcTemplate.getDataSource(), catalog, schema, tableName, includeSynonyms);
+
+    String identifierQuoteString = identifierQuoteString(clazz);
+    List<ColumnInfo> columnInfoList = new ArrayList<>();
+
+    List<TableParameterMetaData> list = provider.getTableParameterMetaData();
+    for (TableParameterMetaData metaData : list) {
+      String colName = MapperUtils.toLowerCase(metaData.getParameterName());
+      if(identifierQuoteString != null) {
+        colName =  metaData.getParameterName();
+      }
+      ColumnInfo columnInfo = new ColumnInfo(colName, metaData.getSqlType());
+      columnInfoList.add(columnInfo);
+    }
+
     if (MapperUtils.isEmpty(columnInfoList)) {
       throw new AnnotationException(
           getTableMetaDataNotFoundErrMsg(clazz, tableName, schema, catalog));
     }
 
-    return new TableColumnInfo(tableName, schema, catalog, columnInfoList);
-  }
-
-  private List<ColumnInfo> getColumnInfoFromTableMetadata(String tableName, String schema,
-      String catalog) {
-    Assert.hasLength(tableName, "tableName must not be empty");
-
-    TableMetaDataProvider provider = JtmTableMetaDataProviderFactory.createMetaDataProvider(
-        jdbcTemplate.getDataSource(), catalog, schema, tableName, includeSynonyms);
-
-    List<ColumnInfo> columnInfoList = new ArrayList<>();
-
-    List<TableParameterMetaData> list = provider.getTableParameterMetaData();
-    for (TableParameterMetaData metaData : list) {
-      ColumnInfo columnInfo = new ColumnInfo(metaData.getParameterName(), metaData.getSqlType());
-      columnInfoList.add(columnInfo);
-    }
-
-    return columnInfoList;
+    return new TableColumnInfo(tableName, schema, catalog, columnInfoList, identifierQuoteString);
   }
 
   private String getDatabaseProductName() {
@@ -418,6 +423,22 @@ class MappingHelper {
     }
     errMsg += " for class " + clazz.getSimpleName();
     return errMsg;
+  }
+  
+  private String identifierQuoteString(Class<?> clazz) {
+    // check if version of spring.jdbc has support for it
+    /*
+    Method method = ReflectionUtils.findMethod(TableMetaDataProvider.class, "getIdentifierQuoteString");
+    if (method == null) {
+      new MapperException("Version of Spring Framework being used does not support quote identifiers. Spring Framework 6.1.2 (SpringBoot 3.2.1) and above supports quote identifiers.");
+    }
+    else {
+       String str = (String) ReflectionUtils.invokeMethod(method, provider);
+       identifierQuoteString = MapperUtils.isBlank(str) ? null : str;
+    }
+    */
+    QuotedIdentifier quoteIdentifierAnnotation = AnnotationUtils.findAnnotation(clazz, QuotedIdentifier.class);
+    return quoteIdentifierAnnotation == null ? null : "\"";
   }
 
 }

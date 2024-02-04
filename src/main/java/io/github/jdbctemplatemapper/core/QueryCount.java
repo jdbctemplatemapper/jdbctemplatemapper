@@ -205,7 +205,7 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
         MapperUtils.tableStrForFrom(typeTableAlias, typeTableMapping.fullyQualifiedTableName());
 
     String typeColumnPrefix =
-        MapperUtils.columnPrefix(typeTableAlias, typeTableMapping.getTableName());
+        MapperUtils.columnPrefix(typeTableAlias, typeTableMapping.getTableNameForSql());
 
     String sql = "SELECT count(*) as record_count ";
     sql += " FROM " + typeTableStr;
@@ -214,13 +214,13 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
           relatedTypeTableMapping.fullyQualifiedTableName());
 
       String relatedColumnPrefix =
-          MapperUtils.columnPrefix(relatedTableAlias, relatedTypeTableMapping.getTableName());
+          MapperUtils.columnPrefix(relatedTableAlias, relatedTypeTableMapping.getTableNameForSql());
 
       if (RelationshipType.HAS_ONE.equals(relationshipType)) {
         // joinColumn is on type table
         sql +=
-            " LEFT JOIN " + relatedTableStr + " on " + typeColumnPrefix + "." + joinColumnTypeSide
-                + " = " + relatedColumnPrefix + "." + relatedTypeTableMapping.getIdColumnName();
+            " LEFT JOIN " + relatedTableStr + " on " + typeColumnPrefix + "." + typeTableMapping.getColumnNameForSql(joinColumnTypeSide)
+                + " = " + relatedColumnPrefix + "." + relatedTypeTableMapping.getIdColumnNameForSql();
       }
     }
     return sql;

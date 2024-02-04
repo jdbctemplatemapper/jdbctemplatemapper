@@ -124,6 +124,12 @@ CREATE TABLE schema1.employee_skill (
 	CONSTRAINT employee_skill_pk PRIMARY KEY (id)
 );
 
+create table schema1.quote (
+	id serial NOT NULL,
+	"Col 1" varchar(20),
+	CONSTRAINT quote_pk PRIMARY KEY (id)
+)
+
 
 
 

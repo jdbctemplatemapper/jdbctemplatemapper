@@ -30,6 +30,7 @@ import io.github.jdbctemplatemapper.model.Order9;
 import io.github.jdbctemplatemapper.model.OrderLine;
 import io.github.jdbctemplatemapper.model.OrderLine7;
 import io.github.jdbctemplatemapper.model.PersonView;
+import io.github.jdbctemplatemapper.model.Quote;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
@@ -79,7 +80,13 @@ public class QueryTest {
 
     assertTrue(exception.getMessage().contains("limitOffsetClause cannot be null"));
   }
-
+  
+  @Test
+  public void quoteIdentifier_test() {
+     Query.type(Quote.class).execute(jtm);
+     assertTrue(true);
+  }
+  
   @Test
   public void hasOne_null_test() {
 

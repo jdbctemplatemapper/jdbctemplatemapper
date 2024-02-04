@@ -217,7 +217,7 @@ public final class JdbcTemplateMapper {
     TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
     String columnsSql = getBeanColumnsSqlInternal(tableMapping, clazz);
     String sql = "SELECT " + columnsSql + " FROM " + tableMapping.fullyQualifiedTableName()
-        + " WHERE " + tableMapping.getIdColumnName() + " = ?";
+        + " WHERE " + tableMapping.getIdColumnNameForSql() + " = ?";
 
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
 
@@ -478,7 +478,7 @@ public final class JdbcTemplateMapper {
     }
 
     Set<String> parameters = sqlAndParams.getParams();
-    
+
     if (tableMapping.hasAutoAssignProperties()) {
       PropertyMapping updatedByPropMapping = tableMapping.getUpdatedByPropertyMapping();
       if (updatedByPropMapping != null && recordOperatorResolver != null
@@ -549,7 +549,7 @@ public final class JdbcTemplateMapper {
     TableMapping tableMapping = mappingHelper.getTableMapping(obj.getClass());
 
     String sql = "DELETE FROM " + tableMapping.fullyQualifiedTableName() + " WHERE "
-        + tableMapping.getIdColumnName() + "= ?";
+        + tableMapping.getIdColumnNameForSql() + "= ?";
     BeanWrapper bw = getBeanWrapper(obj);
     Object id = bw.getPropertyValue(tableMapping.getIdPropertyName());
     return jdbcTemplate.update(sql, id);
@@ -568,7 +568,7 @@ public final class JdbcTemplateMapper {
 
     TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
     String sql = "DELETE FROM " + tableMapping.fullyQualifiedTableName() + " WHERE "
-        + tableMapping.getIdColumnName() + " = ?";
+        + tableMapping.getIdColumnNameForSql() + " = ?";
     return jdbcTemplate.update(sql, id);
   }
 
@@ -667,7 +667,8 @@ public final class JdbcTemplateMapper {
       } else {
         first = false;
       }
-      sqlBuilder.append(propMapping.getColumnName());
+      sqlBuilder.append(tableMapping.getNameForSql(propMapping.getColumnName()));
+
       sqlBuilder.append(" = :");
 
       if (versionPropMapping != null
@@ -682,7 +683,7 @@ public final class JdbcTemplateMapper {
 
     // the where clause
     sqlBuilder.append(
-        " WHERE " + tableMapping.getIdColumnName() + " = :" + tableMapping.getIdPropertyName());
+        " WHERE " + tableMapping.getIdColumnNameForSql() + " = :" + tableMapping.getIdPropertyName());
     params.add(tableMapping.getIdPropertyName());
     if (versionPropMapping != null) {
       sqlBuilder.append(" AND ")
@@ -755,7 +756,8 @@ public final class JdbcTemplateMapper {
       } else {
         first = false;
       }
-      sqlBuilder.append(propMapping.getColumnName());
+
+      sqlBuilder.append(propMapping.getColumnNameForSql());
       sqlBuilder.append(" = :");
 
       if (versionPropMapping != null
@@ -770,7 +772,7 @@ public final class JdbcTemplateMapper {
 
     // the where clause
     sqlBuilder.append(
-        " WHERE " + tableMapping.getIdColumnName() + " = :" + tableMapping.getIdPropertyName());
+        " WHERE " + tableMapping.getIdColumnNameForSql() + " = :" + tableMapping.getIdPropertyName());
     params.add(tableMapping.getIdPropertyName());
     if (versionPropMapping != null) {
       sqlBuilder.append(" AND ")
@@ -791,7 +793,7 @@ public final class JdbcTemplateMapper {
     if (columnsSql == null) {
       StringJoiner sj = new StringJoiner(", ", " ", " ");
       for (PropertyMapping propMapping : tableMapping.getPropertyMappings()) {
-        sj.add(propMapping.getColumnName() + " as "
+        sj.add(propMapping.getColumnNameForSql() + " as "
             + MapperUtils.toUnderscoreName(propMapping.getPropertyName()));
       }
       columnsSql = sj.toString();

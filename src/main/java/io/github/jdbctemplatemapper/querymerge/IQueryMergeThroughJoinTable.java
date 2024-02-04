@@ -20,6 +20,6 @@ package io.github.jdbctemplatemapper.querymerge;
  * @param <T> the type
  */
 public interface IQueryMergeThroughJoinTable<T> {
-  IQueryMergeThroughJoinColumns<T> throughJoinColumns(String ownerJoinColumn,
+  IQueryMergeThroughJoinColumns<T> throughJoinColumns(String typeJoinColumn,
       String relatedJoinColumn);
 }
