@@ -52,14 +52,11 @@ class MapperUtils {
   // schema/catalog(table prefix) and concatenate with tableName
   public static String getFullyQualifiedTableNameForThroughJoinTable(String throughJoinTable,
       TableMapping tableMapping) {
-    if (throughJoinTable != null) {
-      if (throughJoinTable.contains(".")) {
-        return throughJoinTable;
-      } else {
-        return tableMapping.fullyQualifiedTablePrefix() + throughJoinTable;
-      }
+    if (throughJoinTable.contains(".")) {
+      return throughJoinTable;
+    } else {
+      return tableMapping.fullyQualifiedTablePrefix() + throughJoinTable;
     }
-    return throughJoinTable;
   }
 
   /**
