@@ -41,7 +41,7 @@ import io.github.jdbctemplatemapper.annotation.CreatedBy;
 import io.github.jdbctemplatemapper.annotation.CreatedOn;
 import io.github.jdbctemplatemapper.annotation.Id;
 import io.github.jdbctemplatemapper.annotation.IdType;
-import io.github.jdbctemplatemapper.annotation.QuotedIdentifier;
+import io.github.jdbctemplatemapper.annotation.QuotedIdentifiers;
 import io.github.jdbctemplatemapper.annotation.Table;
 import io.github.jdbctemplatemapper.annotation.UpdatedBy;
 import io.github.jdbctemplatemapper.annotation.UpdatedOn;
@@ -437,7 +437,7 @@ class MappingHelper {
        identifierQuoteString = MapperUtils.isBlank(str) ? null : str;
     }
     */
-    QuotedIdentifier quoteIdentifierAnnotation = AnnotationUtils.findAnnotation(clazz, QuotedIdentifier.class);
+    QuotedIdentifiers quoteIdentifierAnnotation = AnnotationUtils.findAnnotation(clazz, QuotedIdentifiers.class);
     return quoteIdentifierAnnotation == null ? null : "\"";
   }
 

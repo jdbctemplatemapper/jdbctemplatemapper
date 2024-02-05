@@ -3,11 +3,11 @@ package io.github.jdbctemplatemapper.model;
 import io.github.jdbctemplatemapper.annotation.Column;
 import io.github.jdbctemplatemapper.annotation.Id;
 import io.github.jdbctemplatemapper.annotation.IdType;
-import io.github.jdbctemplatemapper.annotation.QuotedIdentifier;
+import io.github.jdbctemplatemapper.annotation.QuotedIdentifiers;
 import io.github.jdbctemplatemapper.annotation.Table;
 
 @Table(name = "quote")
-@QuotedIdentifier
+@QuotedIdentifiers
 public class Quote {
   @Id(type = IdType.AUTO_INCREMENT)
   private Integer id;
