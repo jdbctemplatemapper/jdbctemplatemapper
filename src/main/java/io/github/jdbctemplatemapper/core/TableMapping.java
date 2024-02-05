@@ -254,7 +254,7 @@ class TableMapping {
     return autoAssignProperties;
   }
 
-  public boolean isQuoteIdentifier() {
+  public boolean isQuotedIdentifier() {
     return identifierQuoteString == null ? false : true;
   }
 

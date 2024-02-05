@@ -363,7 +363,7 @@ public final class JdbcTemplateMapper {
       if (tableMapping.isIdAutoIncrement()) {
         jdbcInsert.usingGeneratedKeyColumns(tableMapping.getIdColumnName());
       }
-      if (tableMapping.isQuoteIdentifier()) {
+      if (tableMapping.isQuotedIdentifier()) {
         usingQuotedIdentifiers(jdbcInsert);
       }
       // for oracle synonym table metadata
