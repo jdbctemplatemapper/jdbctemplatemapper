@@ -13,6 +13,7 @@
  */
 package io.github.jdbctemplatemapper.core;
 
+import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,6 +33,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsertOperations;
 import org.springframework.util.Assert;
+import org.springframework.util.ReflectionUtils;
 import io.github.jdbctemplatemapper.exception.MapperException;
 import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
 
@@ -357,9 +359,12 @@ public final class JdbcTemplateMapper {
                                             .withSchemaName(tableMapping.getSchemaName())
                                             .withTableName(
                                                 tableNameForSimpleJdbcInsert(tableMapping));
-
+      
       if (tableMapping.isIdAutoIncrement()) {
         jdbcInsert.usingGeneratedKeyColumns(tableMapping.getIdColumnName());
+      }
+      if (tableMapping.isQuoteIdentifier()) {
+        usingQuotedIdentifiers(jdbcInsert);
       }
       // for oracle synonym table metadata
       if (includeSynonyms) {
@@ -682,8 +687,8 @@ public final class JdbcTemplateMapper {
     }
 
     // the where clause
-    sqlBuilder.append(
-        " WHERE " + tableMapping.getIdColumnNameForSql() + " = :" + tableMapping.getIdPropertyName());
+    sqlBuilder.append(" WHERE " + tableMapping.getIdColumnNameForSql() + " = :"
+        + tableMapping.getIdPropertyName());
     params.add(tableMapping.getIdPropertyName());
     if (versionPropMapping != null) {
       sqlBuilder.append(" AND ")
@@ -771,8 +776,8 @@ public final class JdbcTemplateMapper {
     }
 
     // the where clause
-    sqlBuilder.append(
-        " WHERE " + tableMapping.getIdColumnNameForSql() + " = :" + tableMapping.getIdPropertyName());
+    sqlBuilder.append(" WHERE " + tableMapping.getIdColumnNameForSql() + " = :"
+        + tableMapping.getIdPropertyName());
     params.add(tableMapping.getIdPropertyName());
     if (versionPropMapping != null) {
       sqlBuilder.append(" AND ")
@@ -823,6 +828,14 @@ public final class JdbcTemplateMapper {
       return null;
     } else {
       return obj.getClass().getName() + "-" + String.join("-", propertyNames);
+    }
+  }
+
+  private void usingQuotedIdentifiers(SimpleJdbcInsertOperations simpleJdbcInsertOperations) {
+    Method method =
+        ReflectionUtils.findMethod(SimpleJdbcInsertOperations.class, "usingQuotedIdentifiers");
+    if (method != null) {
+      ReflectionUtils.invokeMethod(method, simpleJdbcInsertOperations);
     }
   }
 
