@@ -121,7 +121,7 @@ class MappingHelper {
                          .stream()
                          .collect(Collectors.toMap(o -> o.getColumnName(), o -> o));
 
-      String identifierQuoteString = identifierQuoteString(clazz);
+      String identifierQuoteString = tableColumnInfo.getIdentifierQuoteString();
       // key:propertyName, value:PropertyMapping. LinkedHashMap to maintain order of
       // properties
       Map<String, PropertyMapping> propNameToPropertyMapping = new LinkedHashMap<>();
@@ -134,11 +134,11 @@ class MappingHelper {
           if ("[DEFAULT]".equals(colName)) {
             colName = MapperUtils.toUnderscoreName(propertyName);
           }
-          
-          if(identifierQuoteString == null) {
+
+          if (identifierQuoteString == null) {
             colName = MapperUtils.toLowerCase(colName);
           }
-          
+
           if (!columnNameToColumnInfo.containsKey(colName)) {
             throw new AnnotationException(colName + " column not found in table " + tableName
                 + " for model property " + clazz.getSimpleName() + "." + propertyName);
@@ -208,20 +208,20 @@ class MappingHelper {
     String catalog = getCatalogForTable(tableAnnotation);
     String schema = getSchemaForTable(tableAnnotation);
     validateMetaDataConfig(catalog, schema);
-    
+
     String tableName = tableAnnotation.name();
-    
+
     TableMetaDataProvider provider = JtmTableMetaDataProviderFactory.createMetaDataProvider(
         jdbcTemplate.getDataSource(), catalog, schema, tableName, includeSynonyms);
 
-    String identifierQuoteString = identifierQuoteString(clazz);
+    String identifierQuoteString = identifierQuoteString(clazz, provider);
     List<ColumnInfo> columnInfoList = new ArrayList<>();
 
     List<TableParameterMetaData> list = provider.getTableParameterMetaData();
     for (TableParameterMetaData metaData : list) {
       String colName = MapperUtils.toLowerCase(metaData.getParameterName());
-      if(identifierQuoteString != null) {
-        colName =  metaData.getParameterName();
+      if (identifierQuoteString != null) {
+        colName = metaData.getParameterName();
       }
       ColumnInfo columnInfo = new ColumnInfo(colName, metaData.getSqlType());
       columnInfoList.add(columnInfo);
@@ -386,13 +386,15 @@ class MappingHelper {
     String commonDatabaseName = JdbcUtils.commonDatabaseName(getDatabaseProductName());
     if ("mysql".equalsIgnoreCase(commonDatabaseName)) {
       if (MapperUtils.isNotEmpty(schemaName)) {
-        throw new MapperException(databaseProductName + " does not support schema. Try using catalog.");
+        throw new MapperException(
+            databaseProductName + " does not support schema. Try using catalog.");
       }
     }
 
     if ("oracle".equalsIgnoreCase(commonDatabaseName)) {
       if (MapperUtils.isNotEmpty(catalogName)) {
-        throw new MapperException(databaseProductName + " does not support catalog. Try using schema.");
+        throw new MapperException(
+            databaseProductName + " does not support catalog. Try using schema.");
       }
     }
   }
@@ -424,21 +426,23 @@ class MappingHelper {
     errMsg += " for class " + clazz.getSimpleName();
     return errMsg;
   }
-  
-  private String identifierQuoteString(Class<?> clazz) {
-    // check if version of spring.jdbc has support for it
-    /*
-    Method method = ReflectionUtils.findMethod(TableMetaDataProvider.class, "getIdentifierQuoteString");
-    if (method == null) {
-      new MapperException("Version of Spring Framework being used does not support quote identifiers. Spring Framework 6.1.2 (SpringBoot 3.2.1) and above supports quote identifiers.");
+
+  private String identifierQuoteString(Class<?> clazz, TableMetaDataProvider provider) {
+    String identifierQuoteString = null;
+    QuotedIdentifiers quotedIdentifiersAnnotation =
+        AnnotationUtils.findAnnotation(clazz, QuotedIdentifiers.class);
+    if (quotedIdentifiersAnnotation != null) {
+      // check if version of spring.jdbc has support for it
+      Method method = ReflectionUtils.findMethod(provider.getClass(), "getIdentifierQuoteString");
+      if (method == null) {
+        throw new MapperException(
+            "This version of Spring Framework does not support quoted identifiers. Spring Framework 6.1.2 (SpringBoot 3.2.1) and above supports quoted identifiers.");
+      } else {
+        String str = (String) ReflectionUtils.invokeMethod(method, provider);
+        identifierQuoteString = MapperUtils.isBlank(str) ? null : str;
+      }
     }
-    else {
-       String str = (String) ReflectionUtils.invokeMethod(method, provider);
-       identifierQuoteString = MapperUtils.isBlank(str) ? null : str;
-    }
-    */
-    QuotedIdentifiers quoteIdentifierAnnotation = AnnotationUtils.findAnnotation(clazz, QuotedIdentifiers.class);
-    return quoteIdentifierAnnotation == null ? null : "\"";
+    return identifierQuoteString;
   }
 
 }
