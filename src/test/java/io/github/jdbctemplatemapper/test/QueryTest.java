@@ -80,13 +80,13 @@ public class QueryTest {
 
     assertTrue(exception.getMessage().contains("limitOffsetClause cannot be null"));
   }
-  
+
   @Test
   public void quoteIdentifier_test() {
-     Query.type(Quote.class).execute(jtm);
-     assertTrue(true);
+    Query.type(Quote.class).execute(jtm);
+    assertTrue(true);
   }
-  
+
   @Test
   public void hasOne_null_test() {
 
@@ -476,7 +476,7 @@ public class QueryTest {
     List<Order> orders = Query.type(Order.class).execute(jtm);
     assertTrue(orders.size() == 3);
   }
-  
+
   @Test
   public void databaseView_success_test() {
     List<PersonView> list = Query.type(PersonView.class).execute(jtm);

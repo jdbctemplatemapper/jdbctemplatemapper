@@ -261,15 +261,15 @@ class TableMapping {
   public String getTableNameForSql() {
     return getIdentifierForSql(tableName);
   }
-  
+
   public String getIdColumnNameForSql() {
     return getIdentifierForSql(getIdPropertyMapping().getColumnName());
   }
-  
+
   public String getColumnNameForSql(String columnName) {
     return getIdentifierForSql(columnName);
   }
-  
+
   public String getIdentifierForSql(String name) {
     if (identifierQuoteString == null) {
       return name;

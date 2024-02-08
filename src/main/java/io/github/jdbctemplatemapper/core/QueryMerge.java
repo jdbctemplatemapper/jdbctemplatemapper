@@ -531,18 +531,16 @@ public class QueryMerge<T> implements IQueryMergeFluent<T> {
           relatedTypeTableAlias == null ? relatedTypeTableMapping.getTableNameForSql()
               : relatedTypeTableAlias;
 
-      sql = "SELECT " + MapperUtils.getTableNameOnly(throughJoinTable) + "."
-          + typeTableMapping.getIdentifierForSql(throughTypeJoinColumn) + " as "
-          + selectMapperType.getResultSetModelIdColumnLabel() + ", "
+      sql = "SELECT " + MapperUtils.getTableNameOnly(throughJoinTable) + "." + throughTypeJoinColumn
+          + " as " + selectMapperType.getResultSetModelIdColumnLabel() + ", "
           + selectMapperRelatedType.getColumnsSql() + " FROM "
           + MapperUtils.getFullyQualifiedTableNameForThroughJoinTable(throughJoinTable,
               typeTableMapping)
           + " LEFT JOIN " + relatedTableStr + " on "
-          + MapperUtils.getTableNameOnly(throughJoinTable) + "."
-          + relatedTypeTableMapping.getIdentifierForSql(throughRelatedTypeJoinColumn) + " = "
-          + onRelatedPrefix + "." + relatedTypeTableMapping.getIdColumnNameForSql() + " WHERE "
-          + MapperUtils.getTableNameOnly(throughJoinTable) + "."
-          + typeTableMapping.getIdentifierForSql(throughTypeJoinColumn) + " IN (:typeIds)";
+          + MapperUtils.getTableNameOnly(throughJoinTable) + "." + throughRelatedTypeJoinColumn
+          + " = " + onRelatedPrefix + "." + relatedTypeTableMapping.getIdColumnNameForSql()
+          + " WHERE " + MapperUtils.getTableNameOnly(throughJoinTable) + "." + throughTypeJoinColumn
+          + " IN (:typeIds)";
     } else {
       foundInCache = true;
     }

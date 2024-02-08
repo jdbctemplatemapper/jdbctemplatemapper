@@ -218,9 +218,9 @@ public class QueryCount<T> implements IQueryCountFluent<T> {
 
       if (RelationshipType.HAS_ONE.equals(relationshipType)) {
         // joinColumn is on type table
-        sql +=
-            " LEFT JOIN " + relatedTableStr + " on " + typeColumnPrefix + "." + typeTableMapping.getColumnNameForSql(joinColumnTypeSide)
-                + " = " + relatedColumnPrefix + "." + relatedTypeTableMapping.getIdColumnNameForSql();
+        sql += " LEFT JOIN " + relatedTableStr + " on " + typeColumnPrefix + "."
+            + typeTableMapping.getColumnNameForSql(joinColumnTypeSide) + " = " + relatedColumnPrefix
+            + "." + relatedTypeTableMapping.getIdColumnNameForSql();
       }
     }
     return sql;

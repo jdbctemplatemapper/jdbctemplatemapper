@@ -432,15 +432,15 @@ class MappingHelper {
     QuotedIdentifiers quotedIdentifiersAnnotation =
         AnnotationUtils.findAnnotation(clazz, QuotedIdentifiers.class);
     if (quotedIdentifiersAnnotation != null) {
-      // check if version of spring.jdbc has support for it
-      Method method = ReflectionUtils.findMethod(provider.getClass(), "getIdentifierQuoteString");
-      if (method == null) {
-        throw new MapperException(
-            "This version of Spring Framework does not support quoted identifiers. Spring Framework 6.1.2 (SpringBoot 3.2.1) and above supports quoted identifiers.");
-      } else {
-        String str = (String) ReflectionUtils.invokeMethod(method, provider);
-        identifierQuoteString = MapperUtils.isBlank(str) ? null : str;
-      }
+      /*
+       * // check if version of spring.jdbc has support for it Method method =
+       * ReflectionUtils.findMethod(provider.getClass(), "getIdentifierQuoteString"); if (method ==
+       * null) { throw new MapperException(
+       * "This version of Spring Framework does not support quoted identifiers. Spring Framework 6.1.2/SpringBoot 3.2.1 and above supports quoted identifiers."
+       * ); } else { String str = (String) ReflectionUtils.invokeMethod(method, provider);
+       * identifierQuoteString = MapperUtils.isBlank(str) ? null : str; }
+       */
+      identifierQuoteString = "\"";
     }
     return identifierQuoteString;
   }

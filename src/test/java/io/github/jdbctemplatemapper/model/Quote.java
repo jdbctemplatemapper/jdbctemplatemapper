@@ -11,8 +11,8 @@ import io.github.jdbctemplatemapper.annotation.Table;
 public class Quote {
   @Id(type = IdType.AUTO_INCREMENT)
   private Integer id;
-  
-  @Column(name="Col 1")
+
+  @Column(name = "Col 1")
   private String col1;
 
   public Integer getId() {

@@ -359,7 +359,7 @@ public final class JdbcTemplateMapper {
                                             .withSchemaName(tableMapping.getSchemaName())
                                             .withTableName(
                                                 tableNameForSimpleJdbcInsert(tableMapping));
-      
+
       if (tableMapping.isIdAutoIncrement()) {
         jdbcInsert.usingGeneratedKeyColumns(tableMapping.getIdColumnName());
       }
