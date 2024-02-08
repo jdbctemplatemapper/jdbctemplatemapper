@@ -672,7 +672,11 @@ public final class JdbcTemplateMapper {
       } else {
         first = false;
       }
+<<<<<<< HEAD
       sqlBuilder.append(tableMapping.getIdentifierForSql(propMapping.getColumnName()));
+=======
+      sqlBuilder.append(tableMapping.getStringForSql(propMapping.getColumnName()));
+>>>>>>> c825effdacf3c28489664aff7ff1ca3fd6d2678b
 
       sqlBuilder.append(" = :");
 
