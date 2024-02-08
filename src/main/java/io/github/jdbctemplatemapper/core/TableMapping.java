@@ -203,6 +203,7 @@ class TableMapping {
 
   public String fullyQualifiedTableName() {
     if (MapperUtils.isNotEmpty(schemaName)) {
+<<<<<<< HEAD
       return getIdentifierForSql(schemaName) + "." + getIdentifierForSql(tableName);
     }
 
@@ -211,16 +212,34 @@ class TableMapping {
     }
 
     return getIdentifierForSql(tableName);
+=======
+      return getStringForSql(schemaName) + "." + getStringForSql(tableName);
+    }
+
+    if (MapperUtils.isNotEmpty(catalogName) && isMySql()) {
+      return getStringForSql(catalogName) + "." + getStringForSql(tableName);
+    }
+
+    return getStringForSql(tableName);
+>>>>>>> c825effdacf3c28489664aff7ff1ca3fd6d2678b
   }
 
   // if there is a schema or catalog it tacks a "." to them.
   public String fullyQualifiedTablePrefix() {
     if (MapperUtils.isNotEmpty(schemaName)) {
+<<<<<<< HEAD
       return getIdentifierForSql(schemaName) + ".";
     }
 
     if (MapperUtils.isNotEmpty(catalogName) && isMySql()) {
       return getIdentifierForSql(catalogName) + ".";
+=======
+      return getStringForSql(schemaName) + ".";
+    }
+
+    if (MapperUtils.isNotEmpty(catalogName) && isMySql()) {
+      return getStringForSql(catalogName) + ".";
+>>>>>>> c825effdacf3c28489664aff7ff1ca3fd6d2678b
     }
 
     return "";
@@ -259,18 +278,33 @@ class TableMapping {
   }
 
   public String getTableNameForSql() {
+<<<<<<< HEAD
     return getIdentifierForSql(tableName);
+=======
+    return getStringForSql(tableName);
+>>>>>>> c825effdacf3c28489664aff7ff1ca3fd6d2678b
   }
 
   public String getIdColumnNameForSql() {
+<<<<<<< HEAD
     return getIdentifierForSql(getIdPropertyMapping().getColumnName());
+=======
+    return getStringForSql(getIdPropertyMapping().getColumnName());
+>>>>>>> c825effdacf3c28489664aff7ff1ca3fd6d2678b
   }
 
   public String getColumnNameForSql(String columnName) {
+<<<<<<< HEAD
     return getIdentifierForSql(columnName);
   }
 
   public String getIdentifierForSql(String name) {
+=======
+    return getStringForSql(columnName);
+  }
+  
+  public String getStringForSql(String name) {
+>>>>>>> c825effdacf3c28489664aff7ff1ca3fd6d2678b
     if (identifierQuoteString == null) {
       return name;
     } else {
