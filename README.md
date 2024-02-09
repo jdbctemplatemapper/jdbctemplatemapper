@@ -94,7 +94,7 @@ JdbcTemplateMapper should be prepared in a Spring application context and given 
 
 See an example of JdbcTemplateMapper configuration used in an application [here](https://github.com/jdbctemplatemapper/simple-crud-for-spring-jdbctemplate/blob/master/src/test/java/io/github/ajoseph88/jdbctemplatemapper/config/JdbcTemplateMapperConfig.java).
 
-Depending on the versions of springboot/database/driver, changes may be required for the properties.
+Example configurations for different databases are below. Depending on the versions of springboot/database/driver, changes may be required to the properties.
 
 **PostgreSQL**
 
