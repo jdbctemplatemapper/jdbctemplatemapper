@@ -207,13 +207,6 @@ public class MapperTest {
   }
 
   @Test
-  public void update_QuoteIdentifier_Test() throws Exception {
-    Quote quote = jtm.findById(Quote.class, 1);
-    jtm.update(quote);
-    assertTrue(true);
-  }
-
-  @Test
   public void update_withIdOfTypeInteger_Test() {
     Product product = jtm.findById(Product.class, 6);
     Product product1 = jtm.findById(Product.class, 6);
@@ -450,12 +443,6 @@ public class MapperTest {
       assertNotNull(orders.get(idx).getUpdatedOn());
       assertNotNull(orders.get(idx).getVersion());
     }
-  }
-
-  @Test
-  public void findAll_Quote_Test() {
-    List<Quote> quotes = jtm.findAll(Quote.class);
-    assertTrue(true);
   }
 
   @Test

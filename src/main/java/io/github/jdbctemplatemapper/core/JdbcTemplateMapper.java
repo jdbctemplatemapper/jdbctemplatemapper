@@ -214,15 +214,8 @@ public final class JdbcTemplateMapper {
    * @return the object of type T
    */
   public <T> T findById(Class<T> clazz, Object id) {
-    Assert.notNull(clazz, "Class must not be null");
-
-    TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
-    String columnsSql = getBeanColumnsSqlInternal(tableMapping, clazz);
-    String sql = "SELECT " + columnsSql + " FROM " + tableMapping.fullyQualifiedTableName()
-        + " WHERE " + tableMapping.getIdColumnNameForSql() + " = ?";
-
+    String sql = sqlFindById(clazz);
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
-
     try {
       Object obj = jdbcTemplate.queryForObject(sql, mapper, id);
       return clazz.cast(obj);
@@ -269,7 +262,7 @@ public final class JdbcTemplateMapper {
     String sql = "SELECT " + columnsSql + " FROM " + tableMapping.fullyQualifiedTableName();
 
     if (orderByColumnName != null) {
-      sql = sql + " ORDER BY " + orderByColumnName + " ASC";
+      sql = sql + " ORDER BY " + tableMapping.getColumnNameForSql(orderByColumnName) + " ASC";
     }
 
     RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
@@ -359,7 +352,7 @@ public final class JdbcTemplateMapper {
                                             .withSchemaName(tableMapping.getSchemaName())
                                             .withTableName(
                                                 tableNameForSimpleJdbcInsert(tableMapping));
-      
+
       if (tableMapping.isIdAutoIncrement()) {
         jdbcInsert.usingGeneratedKeyColumns(tableMapping.getIdColumnName());
       }
@@ -837,6 +830,19 @@ public final class JdbcTemplateMapper {
     if (method != null) {
       ReflectionUtils.invokeMethod(method, simpleJdbcInsertOperations);
     }
+  }
+
+  private String sqlFindById(Class<?> clazz) {
+    Assert.notNull(clazz, "Class must not be null");
+    TableMapping tableMapping = mappingHelper.getTableMapping(clazz);
+    String columnsSql = getBeanColumnsSqlInternal(tableMapping, clazz);
+    String sql = "SELECT " + columnsSql + " FROM " + tableMapping.fullyQualifiedTableName()
+        + " WHERE " + tableMapping.getIdColumnNameForSql() + " = ?";
+    return sql;
+  }
+
+  MappingHelper getMappingHelper() {
+    return mappingHelper;
   }
 
   SimpleCache<String, SimpleJdbcInsert> getInsertCache() {

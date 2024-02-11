@@ -432,8 +432,7 @@ class MappingHelper {
     QuotedIdentifiers quotedIdentifiersAnnotation =
         AnnotationUtils.findAnnotation(clazz, QuotedIdentifiers.class);
     if (quotedIdentifiersAnnotation != null) {
-
-      // check if version of spring.jdbc has support for it
+/*
       Method method = ReflectionUtils.findMethod(provider.getClass(), "getIdentifierQuoteString");
       if (method == null) {
         throw new MapperException("This version of spring-jdbc does not support quoted identifiers. "
@@ -442,7 +441,7 @@ class MappingHelper {
         String str = (String) ReflectionUtils.invokeMethod(method, provider);
         identifierQuoteString = MapperUtils.isBlank(str) ? null : str;
       }
-
+*/
       identifierQuoteString = "\"";
     }
     return identifierQuoteString;

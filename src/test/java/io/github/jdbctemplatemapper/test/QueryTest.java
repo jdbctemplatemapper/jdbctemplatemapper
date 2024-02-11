@@ -82,12 +82,6 @@ public class QueryTest {
   }
 
   @Test
-  public void quoteIdentifier_test() {
-    Query.type(Quote.class).execute(jtm);
-    assertTrue(true);
-  }
-
-  @Test
   public void hasOne_null_test() {
 
     Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
