@@ -122,6 +122,10 @@ class QueryValidator {
     String joinColumnPropertyName =
         typeTableMapping.getPropertyName(MapperUtils.toLowerCase(joinColumnTypeSide));
 
+    if(typeTableMapping.isQuotedIdentifier()) {
+      joinColumnPropertyName = typeTableMapping.getPropertyName(joinColumnTypeSide);
+    }
+    
     if (joinColumnPropertyName == null) {
       throw new QueryException("Invalid join column " + joinColumnTypeSide + " . Table "
           + typeTableMapping.getTableName() + " for class " + type.getSimpleName()
@@ -155,6 +159,11 @@ class QueryValidator {
     TableMapping relatedTypeTableMapping = jtm.getTableMapping(relatedType);
     String joinColumnPropertyName =
         relatedTypeTableMapping.getPropertyName(MapperUtils.toLowerCase(joinColumnManySide));
+    
+    if(typeTableMapping.isQuotedIdentifier()) {
+      joinColumnPropertyName = relatedTypeTableMapping.getPropertyName(joinColumnManySide);
+    }
+    
     if (joinColumnPropertyName == null) {
       throw new QueryException("Invalid join column " + joinColumnManySide + " . Table "
           + relatedTypeTableMapping.getTableName() + " for class " + relatedType.getSimpleName()
