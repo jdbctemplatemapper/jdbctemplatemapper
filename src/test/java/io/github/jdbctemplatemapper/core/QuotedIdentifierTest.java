@@ -12,7 +12,10 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.util.ReflectionUtils;
 import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
 import io.github.jdbctemplatemapper.core.Query;
+import io.github.jdbctemplatemapper.model.Order;
+import io.github.jdbctemplatemapper.model.OrderLine;
 import io.github.jdbctemplatemapper.model.Quote;
+import io.github.jdbctemplatemapper.model.QuoteDetail;
 import io.github.jdbctemplatemapper.core.MappingHelper;
 
 @SpringBootTest
@@ -56,7 +59,35 @@ public class QuotedIdentifierTest {
     jtm.update(quote);
     assertTrue(true);
   }
-
+  
+  
+  @Test
+  public void hasMany_Test() throws Exception {
+  List<Quote> quotes = Query.type(Quote.class)
+  .hasMany(QuoteDetail.class)
+  .joinColumnManySide("quote_id")
+  .populateProperty("details")
+  .execute(jtm);
+  
+  assertTrue(quotes.size() == 1);
+  assertTrue(quotes.get(0).getDetails().size() == 2);
+  
+  }
+  
+  @Test
+  public void hasOne_Test() throws Exception {
+  List<QuoteDetail> quoteDetails = Query.type(QuoteDetail.class)
+  .hasOne(Quote.class)
+  .joinColumnTypeSide("quote_id")
+  .populateProperty("quote")
+  .orderBy("quote_detail.\"Col 1\"")
+  .execute(jtm);
+  
+  assertTrue(quoteDetails.size() == 2);
+  assertTrue(quoteDetails.get(0).getQuote() != null);
+  
+  }
+  
   private Method getMethod(Class<?> clazz, String methodName, Class<?>... paramTypes) {
     Method method = ReflectionUtils.findMethod(clazz, methodName, paramTypes);
     method.setAccessible(true);

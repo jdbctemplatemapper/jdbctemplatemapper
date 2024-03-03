@@ -1,23 +1,24 @@
 package io.github.jdbctemplatemapper.model;
 
-import java.util.ArrayList;
-import java.util.List;
 import io.github.jdbctemplatemapper.annotation.Column;
 import io.github.jdbctemplatemapper.annotation.Id;
 import io.github.jdbctemplatemapper.annotation.IdType;
 import io.github.jdbctemplatemapper.annotation.QuotedIdentifiers;
 import io.github.jdbctemplatemapper.annotation.Table;
 
-@Table(name = "quote")
+@Table(name = "quote_detail")
 @QuotedIdentifiers
-public class Quote {
+public class QuoteDetail {
   @Id(type = IdType.AUTO_INCREMENT)
   private Integer id;
+  
+  @Column
+  private Integer quoteId;
+  
+  private Quote quote;
 
   @Column(name = "Col 1")
   private String col1;
-  
-  private List<QuoteDetail> details = new ArrayList<>();
 
   public Integer getId() {
     return id;
@@ -25,6 +26,14 @@ public class Quote {
 
   public void setId(Integer id) {
     this.id = id;
+  }
+
+  public Integer getQuoteId() {
+    return quoteId;
+  }
+
+  public void setQuoteId(Integer quoteId) {
+    this.quoteId = quoteId;
   }
 
   public String getCol1() {
@@ -35,14 +44,13 @@ public class Quote {
     this.col1 = col1;
   }
 
-  public List<QuoteDetail> getDetails() {
-    return details;
+  public Quote getQuote() {
+    return quote;
   }
 
-  public void setDetails(List<QuoteDetail> details) {
-    this.details = details;
+  public void setQuote(Quote quote) {
+    this.quote = quote;
   }
-  
-  
 
 }
+

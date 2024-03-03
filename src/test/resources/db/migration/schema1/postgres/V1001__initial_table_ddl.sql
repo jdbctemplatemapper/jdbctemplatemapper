@@ -128,7 +128,14 @@ create table schema1.quote (
 	id serial NOT NULL,
 	"Col 1" varchar(20),
 	CONSTRAINT quote_pk PRIMARY KEY (id)
-)
+);
+
+create table schema1.quote_detail (
+	id serial NOT NULL,
+	quote_id integer,
+	"Col 1" varchar(20),
+	CONSTRAINT quote_detail_pk PRIMARY KEY (id)
+);
 
 
 

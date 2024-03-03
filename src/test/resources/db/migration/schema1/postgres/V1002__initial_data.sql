@@ -75,7 +75,15 @@ VALUES( 'person101', 'mike', 'smith');
 
 INSERT INTO schema1.quote
 ("Col 1")
-VALUES( 'some value');
+VALUES( 'value1');
+
+INSERT INTO schema1.quote_detail
+("Col 1", "quote_id")
+VALUES( 'detail1', 1);
+
+INSERT INTO schema1.quote_detail
+("Col 1", "quote_id")
+VALUES( 'detail2', 1);
 
 
 
