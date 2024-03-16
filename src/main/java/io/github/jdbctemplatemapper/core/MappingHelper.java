@@ -247,7 +247,8 @@ class MappingHelper {
                 jdbcTemplate.getDataSource(), new DatabaseMetaDataCallback<String>() {
                   public String processMetaData(DatabaseMetaData dbMetaData)
                       throws SQLException, MetaDataAccessException {
-                    return dbMetaData.getDatabaseProductName();
+                    return dbMetaData.getDatabaseProductName() == null ? ""
+                        : dbMetaData.getDatabaseProductName();
                   }
                 });
           } catch (Exception e) {
@@ -432,16 +433,14 @@ class MappingHelper {
     QuotedIdentifiers quotedIdentifiersAnnotation =
         AnnotationUtils.findAnnotation(clazz, QuotedIdentifiers.class);
     if (quotedIdentifiersAnnotation != null) {
-/*
-      Method method = ReflectionUtils.findMethod(provider.getClass(), "getIdentifierQuoteString");
-      if (method == null) {
-        throw new MapperException("This version of spring-jdbc does not support quoted identifiers. "
-            + "Spring Framework 6.1.2/SpringBoot 3.2.1 and above have the corresponding spring-jdbc versions which support quoted identifiers.");
-      } else {
-        String str = (String) ReflectionUtils.invokeMethod(method, provider);
-        identifierQuoteString = MapperUtils.isBlank(str) ? null : str;
-      }
-*/
+      /*
+       * Method method = ReflectionUtils.findMethod(provider.getClass(),
+       * "getIdentifierQuoteString"); if (method == null) { throw new
+       * MapperException("This version of spring-jdbc does not support quoted identifiers. " +
+       * "Spring Framework 6.1.2/SpringBoot 3.2.1 and above have the corresponding spring-jdbc versions which support quoted identifiers."
+       * ); } else { String str = (String) ReflectionUtils.invokeMethod(method, provider);
+       * identifierQuoteString = MapperUtils.isBlank(str) ? null : str; }
+       */
       identifierQuoteString = "\"";
     }
     return identifierQuoteString;
