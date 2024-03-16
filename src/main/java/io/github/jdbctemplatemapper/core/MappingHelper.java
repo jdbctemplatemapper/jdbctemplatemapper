@@ -242,7 +242,8 @@ class MappingHelper {
                 jdbcTemplate.getDataSource(), new DatabaseMetaDataCallback<String>() {
                   public String processMetaData(DatabaseMetaData dbMetaData)
                       throws SQLException, MetaDataAccessException {
-                    return dbMetaData.getDatabaseProductName();
+                    return dbMetaData.getDatabaseProductName() == null ? ""
+                        : dbMetaData.getDatabaseProductName();
                   }
                 });
           } catch (Exception e) {
