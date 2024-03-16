@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 class SimpleCache<K, V> {
@@ -64,6 +65,10 @@ class SimpleCache<K, V> {
 
   public void clear() {
     cache.clear();
+  }
+  
+  public Set<K> keySet() {
+    return cache.keySet();
   }
 
 }
