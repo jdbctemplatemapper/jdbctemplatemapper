@@ -34,7 +34,6 @@ public class CachingTest {
     }
     cache.put(1000, "str1000");
 
-
     assertEquals(91, cache.getSize());
   }
 
