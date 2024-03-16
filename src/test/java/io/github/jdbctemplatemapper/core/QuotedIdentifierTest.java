@@ -7,16 +7,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.jdbc.core.simple.SimpleJdbcInsertOperations;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.util.ReflectionUtils;
-import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
-import io.github.jdbctemplatemapper.core.Query;
-import io.github.jdbctemplatemapper.model.Order;
-import io.github.jdbctemplatemapper.model.OrderLine;
 import io.github.jdbctemplatemapper.model.Quote;
 import io.github.jdbctemplatemapper.model.QuoteDetail;
-import io.github.jdbctemplatemapper.core.MappingHelper;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
