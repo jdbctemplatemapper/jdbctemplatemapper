@@ -26,6 +26,18 @@ public class CachingTest {
   private JdbcTemplateMapper jtm;
 
   @Test
+  public void simpleCache_shrink_test() {
+    // cache capacity 100, shrinks 10% when capacity reaches
+    SimpleCache<Integer, String> cache = new SimpleCache<>(100);
+    for (int i = 0; i < 100; i++) {
+      cache.put(i, "str" + i);
+    }
+    cache.put(1000, "str1000");
+
+    assertEquals(91, cache.getSize());
+  }
+  
+  @Test
   public void query_simpleQuery_caching() {
     SimpleCache<String, String> cache = jtm.getQuerySqlCache();
     cache.clear();
