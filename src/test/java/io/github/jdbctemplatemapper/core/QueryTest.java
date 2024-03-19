@@ -13,8 +13,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
-import io.github.jdbctemplatemapper.core.Query;
 import io.github.jdbctemplatemapper.exception.AnnotationException;
 import io.github.jdbctemplatemapper.exception.QueryException;
 import io.github.jdbctemplatemapper.model.Customer;
