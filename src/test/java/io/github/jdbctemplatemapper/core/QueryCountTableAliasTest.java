@@ -1,4 +1,4 @@
-package io.github.jdbctemplatemapper.test;
+package io.github.jdbctemplatemapper.core;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
