@@ -13,10 +13,16 @@
  */
 package io.github.jdbctemplatemapper.core;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.jdbc.support.JdbcUtils;
 
 /**
@@ -152,6 +158,27 @@ class MapperUtils {
 
   public static String toLowerCase(String str) {
     return str != null ? str.toLowerCase(Locale.US) : null;
+  }
+
+  // gets all unique fields including from super classes.
+  public static List<Field> getAllFields(Class<?> clazz) {
+    List<Field> fields = getAllFieldsInternal(clazz);
+
+    // there could be duplicate fields due to super classes. Get unique fields list by name
+    Set<String> set = new HashSet<>();
+    return fields.stream().filter(p -> set.add(p.getName())).collect(Collectors.toList());
+  }
+
+  // get all fields including fields in super classes.
+  private static List<Field> getAllFieldsInternal(Class<?> clazz) {
+    if (clazz == null) {
+      return Collections.emptyList();
+    }
+
+    List<Field> result = new ArrayList<>(getAllFields(clazz.getSuperclass()));
+    List<Field> fields = Arrays.stream(clazz.getDeclaredFields()).collect(Collectors.toList());
+    result.addAll(0, fields);
+    return result;
   }
 
 }

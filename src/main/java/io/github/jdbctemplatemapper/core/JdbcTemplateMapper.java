@@ -478,7 +478,7 @@ public final class JdbcTemplateMapper {
     }
 
     Set<String> parameters = sqlAndParams.getParams();
-    
+
     if (tableMapping.hasAutoAssignProperties()) {
       PropertyMapping updatedByPropMapping = tableMapping.getUpdatedByPropertyMapping();
       if (updatedByPropMapping != null && recordOperatorResolver != null

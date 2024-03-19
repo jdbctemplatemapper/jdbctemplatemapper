@@ -29,6 +29,7 @@ import io.github.jdbctemplatemapper.exception.OptimisticLockingException;
 import io.github.jdbctemplatemapper.model.Customer;
 import io.github.jdbctemplatemapper.model.NoTableAnnotationModel;
 import io.github.jdbctemplatemapper.model.Order;
+import io.github.jdbctemplatemapper.model.OrderInheritedAudit;
 import io.github.jdbctemplatemapper.model.OrderLine;
 import io.github.jdbctemplatemapper.model.Person;
 import io.github.jdbctemplatemapper.model.Person2;
@@ -426,8 +427,8 @@ public class MapperTest {
     assertNotNull(pv.getFirstName());
     assertNotNull(pv.getLastName());
   }
-  
-  
+
+
   @Test
   public void findAll_Test() {
     List<Order> orders = jtm.findAll(Order.class);
@@ -503,6 +504,33 @@ public class MapperTest {
   public void getColumnName_invalid_Test() {
     String columnName = jtm.getColumnName(Order.class, "x");
     assertNull(columnName);
+  }
+
+  @Test
+  public void annotationOrderInheritedAudit_Test() {
+
+    OrderInheritedAudit obj = new OrderInheritedAudit();
+    obj.setOrderDate(LocalDateTime.now());
+    obj.setCustomerId(2);
+
+    jtm.insert(obj);
+
+    // check if auto assigned properties have been assigned.
+    assertNotNull(obj.getCreatedOn());
+    assertNotNull(obj.getUpdatedOn());
+    assertEquals(1, obj.getVersion());
+    assertEquals("tester", obj.getCreatedBy());
+    assertEquals("tester", obj.getUpdatedBy());
+
+    OrderInheritedAudit obj2 = jtm.findById(OrderInheritedAudit.class, obj.getOrderId());
+    assertNotNull(obj2.getOrderId());
+    assertNotNull(obj2.getOrderDate());
+    assertNotNull(obj2.getCreatedOn());
+    assertNotNull(obj2.getUpdatedOn());
+    assertEquals(1, obj2.getVersion());
+    assertEquals("tester", obj2.getCreatedBy());
+    assertEquals("tester", obj2.getUpdatedBy());
+
   }
 
   @Test

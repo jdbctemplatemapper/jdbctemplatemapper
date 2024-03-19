@@ -36,7 +36,7 @@ public class CachingTest {
 
     assertEquals(91, cache.getSize());
   }
-  
+
   @Test
   public void query_simpleQuery_caching() {
     SimpleCache<String, String> cache = jtm.getQuerySqlCache();

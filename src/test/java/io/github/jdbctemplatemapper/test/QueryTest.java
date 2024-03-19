@@ -469,7 +469,7 @@ public class QueryTest {
     List<Order> orders = Query.type(Order.class).execute(jtm);
     assertTrue(orders.size() == 3);
   }
-  
+
   @Test
   public void databaseView_success_test() {
     List<PersonView> list = Query.type(PersonView.class).execute(jtm);
