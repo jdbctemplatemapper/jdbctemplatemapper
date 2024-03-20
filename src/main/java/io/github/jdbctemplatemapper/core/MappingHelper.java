@@ -122,7 +122,6 @@ class MappingHelper {
       // key:propertyName, value:PropertyMapping. LinkedHashMap to maintain order of
       // properties
       Map<String, PropertyMapping> propNameToPropertyMapping = new LinkedHashMap<>();
-      // for (Field field : clazz.getDeclaredFields()) {
       for (Field field : fields) {
         String propertyName = field.getName();
 
@@ -172,7 +171,6 @@ class MappingHelper {
     Id idAnnotation = null;
     String idPropertyName = null;
     boolean isIdAutoIncrement = false;
-    // for (Field field : clazz.getDeclaredFields()) {
     for (Field field : fields) {
       idAnnotation = AnnotationUtils.findAnnotation(field, Id.class);
       if (idAnnotation != null) {
