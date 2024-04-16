@@ -232,6 +232,8 @@ class MappingHelper {
   }
 
   private String getDatabaseProductName() {
+    // databaseProductName is not a volatile variable. Worst thing that can happen is it gets
+    // set multiple times if there is contention with no side affects
     if (this.databaseProductName != null) {
       return this.databaseProductName;
     } else {
