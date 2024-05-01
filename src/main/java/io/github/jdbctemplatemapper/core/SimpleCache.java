@@ -28,18 +28,22 @@ class SimpleCache<K, V> {
       if (cache.size() < capacity) {
         cache.putIfAbsent(key, value);
       } else {
-        // shrink cache by shrinkPercentage
-        int removeCnt = (int) (capacity * shrinkPercentage);
-        if (removeCnt > 0) {
-          List<K> keys = new ArrayList<>(cache.keySet());
-          // delete random entries
-          Collections.shuffle(keys);
-          for (K k : keys) {
-            cache.remove(k);
-            --removeCnt;
-            if (removeCnt <= 0) {
-              break;
-            }
+        synchronized (this) {
+          if (cache.size() >= capacity) {
+            // shrink cache by shrinkPercentage
+            int removeCnt = (int) (capacity * shrinkPercentage);
+            if (removeCnt > 0) {
+              List<K> keys = new ArrayList<>(cache.keySet());
+              // delete random entries
+              Collections.shuffle(keys);
+              for (K k : keys) {
+                cache.remove(k);
+                --removeCnt;
+                if (removeCnt <= 0) {
+                  break;
+                }
+              }
+            }   
           }
         }
         cache.putIfAbsent(key, value);

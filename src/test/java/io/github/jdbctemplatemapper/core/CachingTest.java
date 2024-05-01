@@ -32,7 +32,7 @@ public class CachingTest {
     for (int i = 0; i < 100; i++) {
       cache.put(i, "str" + i);
     }
-    cache.put(1000, "str1000");
+    cache.put(101, "str101");
 
     assertEquals(91, cache.getSize());
   }
