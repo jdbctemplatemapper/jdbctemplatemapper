@@ -12,7 +12,7 @@
 
     <groupId>io.github.jdbctemplatemapper</groupId>
     <artifactId>jdbctemplatemapper</artifactId>
-    <version>3.0.0</version>
+    <version>3.1.0</version>
     <name>jdbctemplatemapper</name>
     <description>
       A simple library to make the usage of Spring JdbcTemplate less verbose

@@ -82,7 +82,7 @@ Note that this is not an ORM. It's a wrapper around JdbcTemplate so there are no
   <dependency>
     <groupId>io.github.jdbctemplatemapper</groupId>
     <artifactId>jdbctemplatemapper</artifactId>
-    <version>3.0.0</version>
+    <version>3.1.0</version>
  </dependency>
  ```
  
