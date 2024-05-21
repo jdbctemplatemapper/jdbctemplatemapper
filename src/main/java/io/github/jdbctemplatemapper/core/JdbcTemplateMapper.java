@@ -74,7 +74,7 @@ public final class JdbcTemplateMapper {
   // update specified properties sql cache
   // Map key - class name and properties
   // value - the update sql and params
-  private SimpleCache<String, SqlAndParams> updatePropertiesCache = new SimpleCache<>(1000);
+  private SimpleCache<String, SqlAndParams> updatePropertiesCache = new SimpleCache<>(2000);
 
   // the column sql string with bean friendly column aliases for mapped properties of model.
   // Map key - class name
@@ -84,17 +84,17 @@ public final class JdbcTemplateMapper {
   // Query sql cache
   // Map key - see Query.getCacheKey()
   // value - the partial sql.
-  private SimpleCache<String, String> querySqlCache = new SimpleCache<>(1000);
+  private SimpleCache<String, String> querySqlCache = new SimpleCache<>(2000);
 
   // QueryMerge sql cache
   // Map key - see QueryMerge.getCacheKey()
   // value - the partial sql.
-  private SimpleCache<String, String> queryMergeSqlCache = new SimpleCache<>(1000);
+  private SimpleCache<String, String> queryMergeSqlCache = new SimpleCache<>(2000);
 
   // QueryCount sql cache
   // Map key - see QueryCount.getCacheKey()
   // value - the partial sql.
-  private SimpleCache<String, String> queryCountSqlCache = new SimpleCache<>(1000);
+  private SimpleCache<String, String> queryCountSqlCache = new SimpleCache<>(2000);
 
   // Spring BeanPropertyRowMapper uses this as its converter so use the same
   private DefaultConversionService conversionService =
@@ -478,7 +478,7 @@ public final class JdbcTemplateMapper {
     }
 
     Set<String> parameters = sqlAndParams.getParams();
-    
+
     if (tableMapping.hasAutoAssignProperties()) {
       PropertyMapping updatedByPropMapping = tableMapping.getUpdatedByPropertyMapping();
       if (updatedByPropMapping != null && recordOperatorResolver != null

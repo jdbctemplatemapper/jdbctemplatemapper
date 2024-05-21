@@ -39,7 +39,7 @@ class TableMapping {
   private String createdByPropertyName = null;
   private String updatedOnPropertyName = null;
   private String updatedByPropertyName = null;
-  
+
   private boolean autoAssignProperties = false;
 
   // model property to database column mapping.
@@ -238,7 +238,7 @@ class TableMapping {
   public boolean isMySql() {
     return "mysql".equalsIgnoreCase(commonDatabaseName);
   }
-  
+
   public boolean hasAutoAssignProperties() {
     return autoAssignProperties;
   }

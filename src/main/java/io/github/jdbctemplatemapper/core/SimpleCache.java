@@ -1,11 +1,15 @@
 package io.github.jdbctemplatemapper.core;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 class SimpleCache<K, V> {
   private Map<K, V> cache = new ConcurrentHashMap<>();
   private int capacity = -1; // no limit
+  private double shrinkPercentage = 0.1; // 10%
 
   public SimpleCache() {}
 
@@ -24,9 +28,24 @@ class SimpleCache<K, V> {
       if (cache.size() < capacity) {
         cache.putIfAbsent(key, value);
       } else {
-        // remove a random entry from cache and add new entry
-        K k = cache.keySet().iterator().next();
-        cache.remove(k);
+        synchronized (this) {
+          if (cache.size() >= capacity) {
+            // shrink cache by shrinkPercentage
+            int removeCnt = (int) (capacity * shrinkPercentage);
+            if (removeCnt > 0) {
+              List<K> keys = new ArrayList<>(cache.keySet());
+              // delete random entries
+              Collections.shuffle(keys);
+              for (K k : keys) {
+                cache.remove(k);
+                --removeCnt;
+                if (removeCnt <= 0) {
+                  break;
+                }
+              }
+            }   
+          }
+        }
         cache.putIfAbsent(key, value);
       }
     }

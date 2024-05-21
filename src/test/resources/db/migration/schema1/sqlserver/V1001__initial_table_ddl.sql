@@ -57,11 +57,6 @@ CREATE TABLE schema1.person (
 	CONSTRAINT person_pk PRIMARY KEY (person_id)
 );
 
-CREATE VIEW schema1.person_view AS
-SELECT person_id, first_name, last_name
-FROM schema1.person;
-
-
 CREATE TABLE schema1.type_check (
    	id int IDENTITY(1,1) NOT NULL,
    local_date_data date,
@@ -116,6 +111,13 @@ CREATE TABLE schema1.employee_skill (
 	skill_id integer,
 	CONSTRAINT employee_skill_pk PRIMARY KEY (id)
 );
+
+GO
+
+CREATE VIEW schema1.person_view AS
+SELECT person_id, first_name, last_name
+FROM schema1.person;
+
 
 
 

@@ -2,6 +2,7 @@ package io.github.jdbctemplatemapper.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import java.lang.reflect.Field;
 import java.util.List;
 import org.assertj.core.util.Arrays;
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import io.github.jdbctemplatemapper.model.OrderInheritedAudit;
 import io.github.jdbctemplatemapper.model.Person;
 
 @SpringBootTest
@@ -68,6 +70,12 @@ public class MapperUtilsTest {
         tableMapping);
     assertEquals("aaa.anothertablename", name.toLowerCase());
 
+  }
+
+  @Test
+  public void inheritedClass_fieldCount_test() {
+    List<Field> fields = MapperUtils.getAllFields(OrderInheritedAudit.class);
+    assertEquals(fields.size(), 9);
   }
 
 }

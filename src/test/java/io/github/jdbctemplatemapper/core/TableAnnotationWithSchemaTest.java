@@ -1,4 +1,4 @@
-package io.github.jdbctemplatemapper.test;
+package io.github.jdbctemplatemapper.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -10,10 +10,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
-import io.github.jdbctemplatemapper.core.Query;
-import io.github.jdbctemplatemapper.core.QueryCount;
-import io.github.jdbctemplatemapper.core.QueryMerge;
 import io.github.jdbctemplatemapper.model.CompanySchema2;
 import io.github.jdbctemplatemapper.model.CustomerSchema1;
 import io.github.jdbctemplatemapper.model.OfficeSchema2;

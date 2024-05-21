@@ -110,7 +110,8 @@ class MappingHelper {
       TableColumnInfo tableColumnInfo = getTableColumnInfo(clazz);
       String tableName = tableColumnInfo.getTableName();
 
-      IdPropertyInfo idPropertyInfo = getIdPropertyInfo(clazz);
+      List<Field> fields = MapperUtils.getAllFields(clazz);
+      IdPropertyInfo idPropertyInfo = getIdPropertyInfo(clazz, fields);
 
       // key:column name, value: ColumnInfo
       Map<String, ColumnInfo> columnNameToColumnInfo =
@@ -121,7 +122,7 @@ class MappingHelper {
       // key:propertyName, value:PropertyMapping. LinkedHashMap to maintain order of
       // properties
       Map<String, PropertyMapping> propNameToPropertyMapping = new LinkedHashMap<>();
-      for (Field field : clazz.getDeclaredFields()) {
+      for (Field field : fields) {
         String propertyName = field.getName();
 
         Column colAnnotation = AnnotationUtils.findAnnotation(field, Column.class);
@@ -166,11 +167,11 @@ class MappingHelper {
     return tableMapping;
   }
 
-  private IdPropertyInfo getIdPropertyInfo(Class<?> clazz) {
+  private IdPropertyInfo getIdPropertyInfo(Class<?> clazz, List<Field> fields) {
     Id idAnnotation = null;
     String idPropertyName = null;
     boolean isIdAutoIncrement = false;
-    for (Field field : clazz.getDeclaredFields()) {
+    for (Field field : fields) {
       idAnnotation = AnnotationUtils.findAnnotation(field, Id.class);
       if (idAnnotation != null) {
         idPropertyName = field.getName();
@@ -231,6 +232,8 @@ class MappingHelper {
   }
 
   private String getDatabaseProductName() {
+    // databaseProductName is not a volatile variable. Worst thing that can happen is it gets
+    // set multiple times if there is contention with no side affects
     if (this.databaseProductName != null) {
       return this.databaseProductName;
     } else {
@@ -242,7 +245,8 @@ class MappingHelper {
                 jdbcTemplate.getDataSource(), new DatabaseMetaDataCallback<String>() {
                   public String processMetaData(DatabaseMetaData dbMetaData)
                       throws SQLException, MetaDataAccessException {
-                    return dbMetaData.getDatabaseProductName();
+                    return dbMetaData.getDatabaseProductName() == null ? ""
+                        : dbMetaData.getDatabaseProductName();
                   }
                 });
           } catch (Exception e) {
@@ -381,13 +385,15 @@ class MappingHelper {
     String commonDatabaseName = JdbcUtils.commonDatabaseName(getDatabaseProductName());
     if ("mysql".equalsIgnoreCase(commonDatabaseName)) {
       if (MapperUtils.isNotEmpty(schemaName)) {
-        throw new MapperException(databaseProductName + " does not support schema. Try using catalog.");
+        throw new MapperException(
+            databaseProductName + " does not support schema. Try using catalog.");
       }
     }
 
     if ("oracle".equalsIgnoreCase(commonDatabaseName)) {
       if (MapperUtils.isNotEmpty(catalogName)) {
-        throw new MapperException(databaseProductName + " does not support catalog. Try using schema.");
+        throw new MapperException(
+            databaseProductName + " does not support catalog. Try using schema.");
       }
     }
   }

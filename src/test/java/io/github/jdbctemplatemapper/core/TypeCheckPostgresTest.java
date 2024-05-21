@@ -1,5 +1,6 @@
-package io.github.jdbctemplatemapper.test;
+package io.github.jdbctemplatemapper.core;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.math.BigDecimal;
@@ -22,14 +23,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import io.github.jdbctemplatemapper.core.JdbcTemplateMapper;
-import io.github.jdbctemplatemapper.core.SelectMapper;
 import io.github.jdbctemplatemapper.model.StatusEnum;
-import io.github.jdbctemplatemapper.model.TypeCheckSqlServer;
+import io.github.jdbctemplatemapper.model.TypeCheckPostgres;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
-public class TypeCheckSqlServerTest {
+public class TypeCheckPostgresTest {
 
   @Value("${spring.datasource.driver-class-name}")
   private String jdbcDriver;
@@ -39,52 +38,63 @@ public class TypeCheckSqlServerTest {
 
   @BeforeEach
   public void beforeMethod() {
-    // tests will only run if sqlserver
-    if (!jdbcDriver.contains("sqlserver")) {
+    // tests will only run if postgres
+    if (!jdbcDriver.contains("postgres")) {
       Assumptions.assumeTrue(false);
     }
   }
 
   @Test
-  public void insert_TypeCheckSqlServerTest() {
-    TypeCheckSqlServer obj = new TypeCheckSqlServer();
+  public void insert_TypeCheckPostgresTest() {
+    TypeCheckPostgres obj = new TypeCheckPostgres();
 
     obj.setLocalDateData(LocalDate.now());
     obj.setJavaUtilDateData(new Date());
     obj.setLocalDateTimeData(LocalDateTime.now());
     obj.setBigDecimalData(new BigDecimal("10.23"));
+    obj.setBooleanVal(true);
+    obj.setImage(new byte[] {10, 20, 30});
 
-    obj.setJavaUtilDateDtData(new Date());
+    obj.setJavaUtilDateTsData(new Date());
     obj.setStatus(StatusEnum.OPEN);
 
     jtm.insert(obj);
 
-    TypeCheckSqlServer tc = jtm.findById(TypeCheckSqlServer.class, obj.getId());
+    TypeCheckPostgres tc = jtm.findById(TypeCheckPostgres.class, obj.getId());
     assertNotNull(tc.getLocalDateData());
     assertNotNull(tc.getJavaUtilDateData());
     assertNotNull(tc.getLocalDateTimeData());
 
     assertTrue(tc.getBigDecimalData().compareTo(obj.getBigDecimalData()) == 0);
 
-    assertNotNull(tc.getJavaUtilDateDtData());
+    assertArrayEquals(obj.getImage(), tc.getImage());
+
+
+    assertTrue(tc.getBooleanVal());
+
+    assertNotNull(tc.getJavaUtilDateTsData());
+
     assertTrue(StatusEnum.OPEN == tc.getStatus());
   }
 
   @Test
-  public void update_TypeCheckSqlServerTest() {
-    TypeCheckSqlServer obj = new TypeCheckSqlServer();
+  public void update_TypeCheckPostgresTest() {
+    TypeCheckPostgres obj = new TypeCheckPostgres();
 
     obj.setLocalDateData(LocalDate.now());
     obj.setJavaUtilDateData(new Date());
     obj.setLocalDateTimeData(LocalDateTime.now());
     obj.setBigDecimalData(new BigDecimal("10.23"));
+    obj.setBooleanVal(true);
+    obj.setImage(new byte[] {10, 20, 30});
 
-    obj.setJavaUtilDateDtData(new Date());
+    obj.setJavaUtilDateTsData(new Date());
+
 
     jtm.insert(obj);
 
-    TypeCheckSqlServer tc = jtm.findById(TypeCheckSqlServer.class, obj.getId());
-    TypeCheckSqlServer tc1 = jtm.findById(TypeCheckSqlServer.class, obj.getId());
+    TypeCheckPostgres tc = jtm.findById(TypeCheckPostgres.class, obj.getId());
+    TypeCheckPostgres tc1 = jtm.findById(TypeCheckPostgres.class, obj.getId());
 
     Instant instant =
         LocalDate.now().plusDays(1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant();
@@ -97,50 +107,65 @@ public class TypeCheckSqlServerTest {
     tc1.setJavaUtilDateData(nextDay);
     tc1.setLocalDateTimeData(LocalDateTime.now().plusDays(1));
 
-    tc1.setJavaUtilDateDtData(nextDayDateTime);
 
     tc1.setBigDecimalData(new BigDecimal("11.34"));
+    tc1.setBooleanVal(false);
+
+    byte[] newImageVal = new byte[] {5};
+    tc1.setImage(newImageVal);
+
+
+    tc1.setJavaUtilDateTsData(nextDayDateTime);
+
     tc1.setStatus(StatusEnum.CLOSED);
 
     jtm.update(tc1);
 
-    TypeCheckSqlServer tc2 = jtm.findById(TypeCheckSqlServer.class, obj.getId());
+    TypeCheckPostgres tc2 = jtm.findById(TypeCheckPostgres.class, obj.getId());
 
     assertTrue(tc2.getLocalDateData().isAfter(tc.getLocalDateData()));
     assertTrue(tc2.getJavaUtilDateData().getTime() > tc.getJavaUtilDateData().getTime());
     assertTrue(tc2.getLocalDateTimeData().isAfter(tc.getLocalDateTimeData()));
 
+
     assertTrue(tc2.getBigDecimalData().compareTo(new BigDecimal("11.34")) == 0);
-    assertTrue(tc2.getJavaUtilDateDtData().getTime() > tc.getJavaUtilDateDtData().getTime());
+
+    assertArrayEquals(newImageVal, tc2.getImage());
+
+    assertTrue(!tc2.getBooleanVal());
+
+    assertTrue(tc2.getJavaUtilDateTsData().getTime() > tc.getJavaUtilDateTsData().getTime());
+
     assertTrue(StatusEnum.CLOSED == tc2.getStatus());
   }
 
   @Test
   public void selectMapper_test() {
-    TypeCheckSqlServer obj = new TypeCheckSqlServer();
+    TypeCheckPostgres obj = new TypeCheckPostgres();
 
     obj.setLocalDateData(LocalDate.now());
     obj.setJavaUtilDateData(new Date());
     obj.setLocalDateTimeData(LocalDateTime.now());
     obj.setBigDecimalData(new BigDecimal("10.23"));
+    obj.setBooleanVal(true);
+    obj.setImage(new byte[] {10, 20, 30});
 
-    obj.setJavaUtilDateDtData(new Date());
-
+    obj.setJavaUtilDateTsData(new Date());
 
     jtm.insert(obj);
 
-    SelectMapper<TypeCheckSqlServer> typeCheckMapper =
-        jtm.getSelectMapper(TypeCheckSqlServer.class, "tc");
+    SelectMapper<TypeCheckPostgres> typeCheckMapper =
+        jtm.getSelectMapper(TypeCheckPostgres.class, "tc");
 
     String sql =
         "select" + typeCheckMapper.getColumnsSql() + " from type_check tc" + " where tc.id = ?";
 
-    ResultSetExtractor<List<TypeCheckSqlServer>> rsExtractor =
-        new ResultSetExtractor<List<TypeCheckSqlServer>>() {
+    ResultSetExtractor<List<TypeCheckPostgres>> rsExtractor =
+        new ResultSetExtractor<List<TypeCheckPostgres>>() {
           @Override
-          public List<TypeCheckSqlServer> extractData(ResultSet rs)
+          public List<TypeCheckPostgres> extractData(ResultSet rs)
               throws SQLException, DataAccessException {
-            List<TypeCheckSqlServer> list = new ArrayList<>();
+            List<TypeCheckPostgres> list = new ArrayList<>();
             while (rs.next()) {
               list.add(typeCheckMapper.buildModel(rs));
             }
@@ -148,11 +173,11 @@ public class TypeCheckSqlServerTest {
           }
         };
 
-    List<TypeCheckSqlServer> list = jtm.getJdbcTemplate().query(sql, rsExtractor, obj.getId());
+    List<TypeCheckPostgres> list = jtm.getJdbcTemplate().query(sql, rsExtractor, obj.getId());
 
     assertTrue(list.size() == 1);
 
-    TypeCheckSqlServer tc = list.get(0);
+    TypeCheckPostgres tc = list.get(0);
 
     assertNotNull(tc.getLocalDateData());
     assertNotNull(tc.getJavaUtilDateData());
@@ -160,8 +185,12 @@ public class TypeCheckSqlServerTest {
 
     assertTrue(tc.getBigDecimalData().compareTo(obj.getBigDecimalData()) == 0);
 
-    assertNotNull(tc.getJavaUtilDateDtData());
+    assertArrayEquals(obj.getImage(), tc.getImage());
 
+    assertTrue(tc.getBooleanVal());
+
+
+    assertNotNull(tc.getJavaUtilDateTsData());
   }
 }
 
