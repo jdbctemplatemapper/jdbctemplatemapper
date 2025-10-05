@@ -1,4 +1,4 @@
-# JdbcTemplateMapper (End-of-Life)
+# End-of-Life
 
 **This project is no longer actively maintained as of [Sept 05 2025].**
 
