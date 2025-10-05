@@ -97,8 +97,10 @@ public final class JdbcTemplateMapper {
   private SimpleCache<String, String> queryCountSqlCache = new SimpleCache<>(2000);
 
   // Spring BeanPropertyRowMapper uses this as its converter so use the same
-  private DefaultConversionService conversionService =
-      (DefaultConversionService) DefaultConversionService.getSharedInstance();
+  //private DefaultConversionService conversionService =
+  //    (DefaultConversionService) DefaultConversionService.getSharedInstance();
+  
+  private DefaultConversionService conversionService = null;
 
   private boolean includeSynonyms = false;
 
@@ -219,7 +221,8 @@ public final class JdbcTemplateMapper {
     String sql = "SELECT " + columnsSql + " FROM " + tableMapping.fullyQualifiedTableName()
         + " WHERE " + tableMapping.getIdColumnName() + " = ?";
 
-    RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
+    BeanPropertyRowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
+    mapper.setConversionService(null);
 
     try {
       Object obj = jdbcTemplate.queryForObject(sql, mapper, id);
@@ -270,7 +273,8 @@ public final class JdbcTemplateMapper {
       sql = sql + " ORDER BY " + orderByColumnName + " ASC";
     }
 
-    RowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
+    BeanPropertyRowMapper<T> mapper = BeanPropertyRowMapper.newInstance(clazz);
+    mapper.setConversionService(null);
     return jdbcTemplate.query(sql, mapper);
   }
 
@@ -802,7 +806,7 @@ public final class JdbcTemplateMapper {
 
   private BeanWrapper getBeanWrapper(Object obj) {
     BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(obj);
-    bw.setConversionService(conversionService);
+    //bw.setConversionService(conversionService);
     return bw;
   }
 
